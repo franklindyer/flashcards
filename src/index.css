@@ -1,0 +1,122 @@
+#flashcard-widget {
+    width: 80%;
+    margin: auto;
+}
+
+#flashcard-container {
+    background-color: lightgray;
+    height: 400px;
+    padding: 10px;
+    overflow: hidden;
+}
+
+.flashcard {
+    height: 80%;
+    background-color: white;
+    aspect-ratio: 2;
+    border-radius: 10px;
+    drop-shadow: 2px 2px solid gray;
+    margin: auto;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 10vw;
+}
+
+.flashcard-slide-in, .flashcard-slide-out {
+    animation-timing-function: ease-in-out; 
+    -webkit-animation-timing-function: ease-in-out;     
+    animation-duration: 0.8s;   
+    -webkit-animation-duration: 0.8s;
+    visibility: visible !important; 
+}
+
+.flashcard-slide-in {
+    animation-name: slide-in;
+    -webkit-animation-name: slide-in; 
+    animation-timing-function: ease-in-out; 
+    -webkit-animation-timing-function: ease-in-out;     
+    animation-duration: 0.8s;   
+    -webkit-animation-duration: 0.8s;
+}
+
+.flashcard-slide-out {
+    animation-name: slide-out;
+    -webkit-animation-name: slide-out;
+}
+
+.flashcard-incorrect {
+    background-color: #ffeeee;
+    animation: card-incorrect 1s linear forwards;
+    -webkit-animation: card-incorrect 1s linear forwards;
+    visibility: visible !important; 
+}
+
+.flashcard-answer-box {
+    width: 70%;
+    display: block;
+    margin: auto;
+    font-size: 20px;
+    padding: 5px;
+    border-radius: 5px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+#flashcard-answer-hint {
+    opacity: 50%;
+    color: red;
+}
+
+// Animations
+
+@keyframes slide-in {
+    0% { transform: translateX(-200%); }
+    100% { transform: translateX(0%); }
+}
+
+@-webkit-keyframes slide-in {
+    0% { transform: translateX(-200%); }
+    100% { transform: translateX(0%); }
+}
+
+@keyframes slide-out {
+    0% { transform: translateX(0%); background-color: #eeffee; }
+    100% { transform: translateX(200%); display: none; background-color: #ffffff; }
+}
+
+@-webkit-keyframes slide-out {
+    0% { transform: translateX(0%); background-color: #eeffee; }
+    100% { transform: translateX(200%); display: none; background-color: #ffffff; }
+}
+
+@keyframes card-incorrect {
+  10%, 90% {
+    transform: translate3d(-1px, 0, 0);
+  }
+  20%, 80% {
+    transform: translate3d(2px, 0, 0);
+  }
+  30%, 50%, 70% {
+    transform: translate3d(-4px, 0, 0);
+  }
+  40%, 60% {
+    transform: translate3d(4px, 0, 0);
+  }
+}
+
+@-webkit-keyframes card-incorrect {
+  10%, 90% {
+    transform: translate3d(-1px, 0, 0);
+  }
+  20%, 80% {
+    transform: translate3d(2px, 0, 0);
+  }
+  30%, 50%, 70% {
+    transform: translate3d(-4px, 0, 0);
+  }
+  40%, 60% {
+    transform: translate3d(4px, 0, 0);
+  }
+}
