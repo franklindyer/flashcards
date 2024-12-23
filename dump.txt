@@ -1,13 +1,8 @@
 rm -r dist/*
 tsc
-src/index.ts(81,9): error TS2741: Property 'element' is missing in type '{ stateToMenu: (st: [string, string][]) => HTMLDivElement; menuToState: (menu: HTMLElement) => [string, string][]; }' but required in type 'FlashcardGenEditor<[string, string][]>'.
-src/index.ts(167,17): error TS1312: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
-src/index.ts(168,21): error TS1312: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
-src/index.ts(168,24): error TS7006: Parameter 'elt' implicitly has an 'any' type.
-src/index.ts(169,21): error TS1312: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
-src/index.ts(169,24): error TS7006: Parameter 'txt' implicitly has an 'any' type.
-src/index.ts(175,5): error TS2322: Type 'HTMLInputElement' is not assignable to type 'null'.
-src/index.ts(176,5): error TS2322: Type '{ element: null; menuToState: (elt: any) => any; stateToMenu: (txt: any) => HTMLInputElement; }' is not assignable to type 'FlashcardGenEditor<string>'.
-  Types of property 'element' are incompatible.
-    Type 'null' is not assignable to type 'HTMLElement'.
-src/index.ts(301,5): error TS2741: Property 'element' is missing in type '{ stateToMenu: (_: null) => never; menuToState: (_: HTMLElement) => null; }' but required in type 'FlashcardGenEditor<null>'.
+src/index.ts(117,33): error TS2349: This expression is not callable.
+  Type 'Number' has no call signatures.
+src/index.ts(117,38): error TS7006: Parameter 'card' implicitly has an 'any' type.
+src/index.ts(117,64): error TS7006: Parameter 'p' implicitly has an 'any' type.
+src/index.ts(117,88): error TS7006: Parameter 'a' implicitly has an 'any' type.
+src/index.ts(117,91): error TS7006: Parameter 'b' implicitly has an 'any' type.

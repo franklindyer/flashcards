@@ -74,7 +74,6 @@ function uniformRandomFGen(cards: [string, string][]):
     var gen = {
         ftemp: {
             generator: function(seed: number, st: [string, string][]) {
-                console.log(seed);
                 return {
                     params: seed,
                     prompt: st[seed][0],
@@ -86,8 +85,6 @@ function uniformRandomFGen(cards: [string, string][]):
         },
         state: cards,
         seeder: function(st: [string, string][]) {
-            console.log(st);
-            console.log(st.length);
             return Math.floor(Math.random() * arrayLen(st));
         },
         updater: (correct: boolean, card: Flashcard<number>, st: [string, string][]) => st,
@@ -97,15 +94,14 @@ function uniformRandomFGen(cards: [string, string][]):
     return gen;
 }
 
-/*
-function evilFGen(cards: [string, string, [string]][], alpha: number): 
-    FlashcardGenerator<number, [[string, string, [string]][], IDictionary<number>]> {
+function evilFGen(cards: [string, string, string[]][], alpha: number): 
+    FlashcardGenerator<number, [[string, string, string[]][], IDictionary<number>]> {
     return {
         ftemp: {
             generator: function(seed: number, st) {
                 return {
                     params: seed,
-                    prompt: [seed][0],
+                    prompt: st[0][seed][0],
                     answers: [st[0][seed][1]],
                     hint: st[0][seed][1],
                     uuid: guidGenerator()
@@ -114,31 +110,43 @@ function evilFGen(cards: [string, string, [string]][], alpha: number):
         },
         state: [cards, zeroDict([...new Set(cards.map((c) => c[2]).flat())])],
         seeder: function(st) {
-            var keys = Object.keys(st).map((n) => +n);
-            var weights = st[1].map((card) => 1 + card[2].map((p) => st[p]).reduce((a, b) => a + b, 0));
+            var weights = st[0].map((card) => 1 + card[2].map((p) => st[1][p]).reduce((a, b) => a + b, 0));
             return weightedRandomIndex(weights);
         },
         updater: function(correct, card, st) {
-            if (correct)
-                return st;
             var props = st[0][card.params][2];
-            for (var k in st) {
-                st[1][k] = alpha*st[1][k];
-            }
             for (var i in props) {
-                st[1][props[i]] += 1;
+                if (correct) {
+                    st[1][props[i]] *= alpha;
+                } else {
+                    st[1][props[i]] += 1;
+                }
             }
             return st;
         },
-        history: []
+        history: [],
+        editor: (st) => {
+            var propWeights = st[1];
+            var cards = st[0].map((c) => [c[0], c[1], c[2].join('|')]);
+            var editor = multipleEditors(cards, ["", "", ""], (c) => fixedNumEditors(c, singleTextFieldEditor))
+            var newWeights = zeroDict([...new Set(cards.map((c) => c[2]).flat())]);
+            for (var i in propWeights) {
+                if (propWeights[i] in Object.keys(newWeights)) {
+                    newWeights[propWeights[i]] = propWeights[propWeights[i]]
+                }
+            }
+            return {
+                element: editor.element,
+                menuToState: () => {
+                    return [editor.menuToState().map((c) => [c[0], c[1], c[2].split('|')]), newWeights];
+                }
+            };
+        }
     }
 }
-*/
 
 function nextCard<a, s>(fgen: FlashcardGenerator<a, s>): Flashcard<a> {
-    console.log(fgen.state);
     var seed = fgen.seeder(fgen.state);
-    console.log(seed); 
     var card = fgen.ftemp.generator(seed, fgen.state);
     return card;
 }
@@ -167,6 +175,27 @@ function doubleTextFieldEditor(txts: [string, string]): FlashcardGenEditor<[stri
     editor.element.appendChild(children[0].element);
     editor.element.appendChild(children[1].element);
     return editor;
+}
+
+function fixedNumEditors<a>(ls: a[], ed: (st: a) => FlashcardGenEditor<a>):
+    FlashcardGenEditor<a[]> {
+    var children: FlashcardGenEditor<a>[] = [];
+    var editor: FlashcardGenEditor<a[]> = {
+        element: document.createElement("div"),
+        menuToState: () => arrayReindex(children.map((c) => c.menuToState()))
+    }
+    
+    var statePartEditorFactory = (statePart: a) => {
+        var newEditor = ed(statePart);
+        children.push(newEditor);
+        editor.element.appendChild(newEditor.element);
+    }
+    for (var i in ls) {
+        statePartEditorFactory(ls[i])
+    }
+
+    return editor;
+
 }
 
 function multipleEditors<a>(ls: a[], empty: a, ed: (st: a) => FlashcardGenEditor<a>): 
@@ -274,11 +303,15 @@ function runFlashcardController<a, s>(fgen: FlashcardGenerator<a, s>) {
         closeEditor.onclick = (e) => {
             fgen.state = editor.menuToState();
             deckOverlay.style.display = "none";
+            flashcardLoop();
         }
     }
+    var lastCardId: string = null!;
     var flashcardLoop = () => {
         isCorrect = false;
+        document.getElementById(lastCardId)?.remove();
         var card = nextCard(fgen);
+        lastCardId = card.uuid;
         slideCardIntoDiv("flashcard-container", card);
         setHintText("");
         var firstCorrect = true;
@@ -341,8 +374,7 @@ var additionQuizzer: FlashcardGenerator<[number, number], number> = {
     }
 }
 
-/*
-var ruPrepQuizzer: FlashcardGenerator<number, IDictionary<number>> = evilFGen([
+var ruPrepQuizzer = evilFGen([
     ["forest", "лес", ["simple"]],
     ["garden", "сад", ["simple"]],
     ["house", "дом", ["simple"]],
@@ -350,7 +382,7 @@ var ruPrepQuizzer: FlashcardGenerator<number, IDictionary<number>> = evilFGen([
     ["in the garden", "в саду", ["prep"]],
     ["in the house", "в доме", ["prep"]]
 ], 0.9);
-*/
+/*
 var ruPrepQuizzer: FlashcardGenerator<number, [string, string][]> = uniformRandomFGen([
     ["forest", "лес"],
     ["garden", "сад"],
@@ -358,6 +390,6 @@ var ruPrepQuizzer: FlashcardGenerator<number, [string, string][]> = uniformRando
     ["in the forest", "в лесу"],
     ["in the garden", "в саду"],
     ["in the house", "в доме"]
-]);
+]); */
 
-window.onload = () => { runFlashcardController(additionQuizzer); }
+window.onload = () => { runFlashcardController(ruPrepQuizzer); }
