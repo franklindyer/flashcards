@@ -306,7 +306,7 @@ function runFlashcardController<a, s>(fgen: FlashcardGenerator<a, s>) {
 
 // Demos
 
-/* var additionQuizzer: FlashcardGenerator<[number, number], null> = {
+var additionQuizzer: FlashcardGenerator<[number, number], number> = {
     ftemp: {
         generator: function(seed: [number, number]) {
             return {
@@ -318,19 +318,28 @@ function runFlashcardController<a, s>(fgen: FlashcardGenerator<a, s>) {
             }
         }
     },
-    state: null,
-    seeder: function(_: null) {
-        var g = () => Math.floor(Math.random() * 100);
+    state: 10,
+    seeder: function(m: number) {
+        var g = () => Math.floor(Math.random() * m);
         return [g(), g()];
     },
-    updater: (correct, card, st) => null,
+    updater: (correct, card, st) => st,
     history: [],
-    editor: function(_): FlashcardGenEditor<null> {
-        element: null!,
-        stateToMenu: (_) => null!,
-        menuToState: () => null!
+    editor: (m: number) => {
+        var editor = {
+            element: document.createElement("div"),
+            menuToState: () => +(<HTMLInputElement>editor.element.children[0]).value
+        };
+        var inputNum = document.createElement("input");
+        editor.element.textContent = "Maximum value: ";
+        inputNum.type = "number";
+        inputNum.min = "1";
+        inputNum.max = "1000";
+        inputNum.value = m.toString();
+        editor.element.appendChild(inputNum);
+        return editor;
     }
-} */
+}
 
 /*
 var ruPrepQuizzer: FlashcardGenerator<number, IDictionary<number>> = evilFGen([
@@ -351,4 +360,4 @@ var ruPrepQuizzer: FlashcardGenerator<number, [string, string][]> = uniformRando
     ["in the house", "в доме"]
 ]);
 
-window.onload = () => { runFlashcardController(ruPrepQuizzer); }
+window.onload = () => { runFlashcardController(additionQuizzer); }
