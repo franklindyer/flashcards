@@ -12,16 +12,22 @@ type Flashcard<a> = {
     uuid: string
 }
 
-type FlashcardTemplate<a> = {
-    generator: (seed: a) => Flashcard<a>
+type FlashcardTemplate<a, s> = {
+    generator: (seed: a, st: s) => Flashcard<a>
+}
+
+type FlashcardGenEditor<s> = {
+    element: HTMLElement,
+    menuToState: () => s
 }
 
 type FlashcardGenerator<a, s> = {
-    ftemp: FlashcardTemplate<a>,
+    ftemp: FlashcardTemplate<a, s>,
     state: s,
     seeder: (st: s) => a,
     updater: (correct: boolean, card: Flashcard<a>, st: s) => s,
-    history: [Flashcard<a>, boolean][]
+    history: [Flashcard<a>, boolean][],
+    editor: (st: s) => FlashcardGenEditor<s>
 }
 
 // Utilities
@@ -49,68 +55,91 @@ function weightedRandomIndex(weights: number[]): number {
     return ind;
 }
 
+function arrayLen<a>(ls: a[]): number {
+    var n = 0;
+    for (var i in ls) {
+        if (ls[i] !== undefined) n++;
+    }
+    return n;
+}
+
+function arrayReindex<a>(ls: a[]): a[] { 
+    return ls.filter((_) => true);
+}
+
 // Logic
 
-function uniformRandomFGen(cards: [string, string][]): FlashcardGenerator<number, null> {
-    return {
+function uniformRandomFGen(cards: [string, string][]): 
+    FlashcardGenerator<number, [string, string][]> {
+    var gen = {
         ftemp: {
-            generator: function(seed: number) {
+            generator: function(seed: number, st: [string, string][]) {
+                console.log(seed);
                 return {
                     params: seed,
-                    prompt: cards[seed][0],
-                    answers: [cards[seed][1]],
-                    hint: cards[seed][1],
+                    prompt: st[seed][0],
+                    answers: [st[seed][1]],
+                    hint: st[seed][1],
                     uuid: guidGenerator() 
                 }
             }
         },
-        state: null,
-        seeder: function(_: null) {
-            return Math.floor(Math.random() * cards.length);
+        state: cards,
+        seeder: function(st: [string, string][]) {
+            console.log(st);
+            console.log(st.length);
+            return Math.floor(Math.random() * arrayLen(st));
         },
-        updater: (correct, card, st) => null,
-        history: []
+        updater: (correct: boolean, card: Flashcard<number>, st: [string, string][]) => st,
+        history: [],
+        editor: (ls: [string, string][]) => multipleEditors(ls, ["", ""], doubleTextFieldEditor)
     }
+    return gen;
 }
 
+/*
 function evilFGen(cards: [string, string, [string]][], alpha: number): 
-    FlashcardGenerator<number, IDictionary<number>> {
+    FlashcardGenerator<number, [[string, string, [string]][], IDictionary<number>]> {
     return {
         ftemp: {
-            generator: function(seed: number) {
+            generator: function(seed: number, st) {
                 return {
                     params: seed,
-                    prompt: cards[seed][0],
-                    answers: [cards[seed][1]],
-                    hint: cards[seed][1],
+                    prompt: [seed][0],
+                    answers: [st[0][seed][1]],
+                    hint: st[0][seed][1],
                     uuid: guidGenerator()
                 }
             }
         },
-        state: zeroDict([...new Set(cards.map((c) => c[2]).flat())]),
-        seeder: function(st: IDictionary<number>) {
+        state: [cards, zeroDict([...new Set(cards.map((c) => c[2]).flat())])],
+        seeder: function(st) {
             var keys = Object.keys(st).map((n) => +n);
-            var weights = cards.map((card) => 1 + card[2].map((p) => st[p]).reduce((a, b) => a + b, 0));
+            var weights = st[1].map((card) => 1 + card[2].map((p) => st[p]).reduce((a, b) => a + b, 0));
             return weightedRandomIndex(weights);
         },
         updater: function(correct, card, st) {
             if (correct)
                 return st;
-            var props = cards[card.params][2];
+            var props = st[0][card.params][2];
             for (var k in st) {
-                st[k] = alpha*st[k];
+                st[1][k] = alpha*st[1][k];
             }
             for (var i in props) {
-                st[props[i]] += 1;
+                st[1][props[i]] += 1;
             }
             return st;
         },
         history: []
     }
 }
+*/
 
 function nextCard<a, s>(fgen: FlashcardGenerator<a, s>): Flashcard<a> {
-    var card = fgen.ftemp.generator(fgen.seeder(fgen.state));
+    console.log(fgen.state);
+    var seed = fgen.seeder(fgen.state);
+    console.log(seed); 
+    var card = fgen.ftemp.generator(seed, fgen.state);
     return card;
 }
 
@@ -119,6 +148,61 @@ function isGuessCorrect<a>(card: Flashcard<a>, guess: string): boolean {
 }
 
 // View
+
+function singleTextFieldEditor(txt: string): FlashcardGenEditor<string> {
+    var editor: FlashcardGenEditor<string> = {
+        element: document.createElement("input"),
+        menuToState: () => (<HTMLInputElement>editor.element).value
+    };
+    (<HTMLInputElement>editor.element).value = txt;
+    return editor;
+}
+
+function doubleTextFieldEditor(txts: [string, string]): FlashcardGenEditor<[string, string]> {
+    var children = [singleTextFieldEditor(txts[0]), singleTextFieldEditor(txts[1])];
+    var editor: FlashcardGenEditor<[string, string]> = {
+        element: document.createElement("div"),
+        menuToState: () => <[string, string]>children.map((c) => c.menuToState())
+    }
+    editor.element.appendChild(children[0].element);
+    editor.element.appendChild(children[1].element);
+    return editor;
+}
+
+function multipleEditors<a>(ls: a[], empty: a, ed: (st: a) => FlashcardGenEditor<a>): 
+    FlashcardGenEditor<a[]> {
+    var children: FlashcardGenEditor<a>[] = [];
+    var editor: FlashcardGenEditor<a[]> = {
+        element: document.createElement("div"),
+        menuToState: () => arrayReindex(children.map((c) => c.menuToState()))
+    }
+    
+    var addBtn = document.createElement("button");
+    addBtn.classList.add("add-new-field-button");
+    addBtn.textContent = "Add another";
+    var statePartEditorFactory = (statePart: a) => {
+        var newEditor = ed(statePart);
+        children.push(newEditor);
+        var ind = children.length - 1;
+        var statePartDiv = document.createElement("div");
+        statePartDiv.appendChild(newEditor.element);
+        var delBtn = document.createElement("button");
+        delBtn.textContent = "remove";
+        delBtn.onclick = (e) => {
+            delete children[ind];
+            editor.element.removeChild(statePartDiv);
+        }
+        statePartDiv.appendChild(delBtn);
+        editor.element.appendChild(statePartDiv);
+    }
+    addBtn.onclick = (e) => { statePartEditorFactory(empty); };
+    editor.element.appendChild(addBtn);
+    for (var i in ls) {
+        statePartEditorFactory(ls[i])
+    }
+
+    return editor;
+}
 
 function buildCardDiv<a>(card: Flashcard<a>) {
     var cardDiv = document.createElement("div");
@@ -178,6 +262,20 @@ function runFlashcardController<a, s>(fgen: FlashcardGenerator<a, s>) {
         }
         return isCorrect; 
     }
+    var editDeck = <HTMLInputElement>document.getElementById("deck-edit-button");
+    editDeck.onclick = (e) => {
+        var editor = fgen.editor(fgen.state);
+        var deckEditor = document.getElementById("flashcard-deck-editor")!;
+        var deckEditorOverlay = document.getElementById("flashcard-deck-editor-overlay")!;
+        deckEditor.replaceChildren(editor.element);
+        deckEditorOverlay.style.display = "block";
+        var closeEditor = <HTMLInputElement>document.getElementById("flashcard-deck-editor-close");
+        var deckOverlay = <HTMLInputElement>document.getElementById("flashcard-deck-editor-overlay")!;
+        closeEditor.onclick = (e) => {
+            fgen.state = editor.menuToState();
+            deckOverlay.style.display = "none";
+        }
+    }
     var flashcardLoop = () => {
         isCorrect = false;
         var card = nextCard(fgen);
@@ -208,7 +306,7 @@ function runFlashcardController<a, s>(fgen: FlashcardGenerator<a, s>) {
 
 // Demos
 
-var additionQuizzer: FlashcardGenerator<[number, number], null> = {
+/* var additionQuizzer: FlashcardGenerator<[number, number], null> = {
     ftemp: {
         generator: function(seed: [number, number]) {
             return {
@@ -226,9 +324,15 @@ var additionQuizzer: FlashcardGenerator<[number, number], null> = {
         return [g(), g()];
     },
     updater: (correct, card, st) => null,
-    history: []
-}
+    history: [],
+    editor: function(_): FlashcardGenEditor<null> {
+        element: null!,
+        stateToMenu: (_) => null!,
+        menuToState: () => null!
+    }
+} */
 
+/*
 var ruPrepQuizzer: FlashcardGenerator<number, IDictionary<number>> = evilFGen([
     ["forest", "лес", ["simple"]],
     ["garden", "сад", ["simple"]],
@@ -237,5 +341,14 @@ var ruPrepQuizzer: FlashcardGenerator<number, IDictionary<number>> = evilFGen([
     ["in the garden", "в саду", ["prep"]],
     ["in the house", "в доме", ["prep"]]
 ], 0.9);
+*/
+var ruPrepQuizzer: FlashcardGenerator<number, [string, string][]> = uniformRandomFGen([
+    ["forest", "лес"],
+    ["garden", "сад"],
+    ["house", "дом"],
+    ["in the forest", "в лесу"],
+    ["in the garden", "в саду"],
+    ["in the house", "в доме"]
+]);
 
 window.onload = () => { runFlashcardController(ruPrepQuizzer); }
