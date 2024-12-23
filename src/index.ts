@@ -15,7 +15,7 @@ type FlashcardTemplate<a> = {
 type FlashcardGenerator<a> = {
     ftemp: FlashcardTemplate<a>,
     seeder: () => a,
-    history: Flashcard<a>[]
+    history: [Flashcard<a>, boolean][]
 }
 
 // Logic
@@ -50,7 +50,6 @@ function uniformRandomFGen(cards: [string, string][]): FlashcardGenerator<number
 
 function nextCard<a>(fgen: FlashcardGenerator<a>): Flashcard<a> {
     var card = fgen.ftemp.generator(fgen.seeder());
-    fgen.history.push(card);
     return card;
 }
 
@@ -96,6 +95,16 @@ function setHintText(hint: string) {
     hintBox!.value = hint;
 }
 
+function updateProgressBar<a>(fgen: FlashcardGenerator<a>) {
+    var progressBar = document.getElementById("flashcard-progress-bar")!;
+    var cardsDone: number = fgen.history.length;
+    var cardsCorrect = fgen.history.filter((x) => x[1]).length;
+    var percent = Math.floor(100*cardsCorrect/cardsDone);
+    var progressMsg = `${cardsDone} cards complete, ${percent}% correct`;
+    progressBar.textContent = progressMsg;
+    progressBar.style.backgroundColor = `rgba(${225-percent/3},${155+percent}, 150)`;
+}
+
 function runFlashcardController<a>(fgen: FlashcardGenerator<a>) {
     var isCorrect = false;
     var guessBox = <HTMLInputElement>document.getElementById("flashcard-answer-input");
@@ -114,12 +123,21 @@ function runFlashcardController<a>(fgen: FlashcardGenerator<a>) {
         var card = nextCard(fgen);
         slideCardIntoDiv("flashcard-container", card);
         setHintText("");
+        var firstCorrect = true;
+        var addedToHistory = false;
         guessBox!.onkeydown = (e) => {
             if (e.key == "Enter") {
                 if (guessController(card)) {
                     guessBox.value = "";
                     slideCardOutOfDiv(card.uuid);
                     setTimeout(() => flashcardLoop(), 1000);
+                } else {
+                    firstCorrect = false;
+                }
+                if (!addedToHistory) {
+                    fgen.history.push([card, firstCorrect]);
+                    addedToHistory = true;
+                    updateProgressBar(fgen);
                 }
             }
         }

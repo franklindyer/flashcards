@@ -8,6 +8,7 @@
     height: 400px;
     padding: 10px;
     overflow: hidden;
+    position: relative;
 }
 
 .flashcard {
@@ -51,6 +52,15 @@
     animation: card-incorrect 1s linear forwards;
     -webkit-animation: card-incorrect 1s linear forwards;
     visibility: visible !important; 
+}
+
+#flashcard-progress-bar {
+    border-radius: 5px;
+    padding: 5px;
+    margin: 10px;
+    font-family: Menlo;
+    position: absolute;
+    bottom: 0;
 }
 
 .flashcard-answer-box {
