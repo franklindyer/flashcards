@@ -1,5 +1,9 @@
 // Types
 
+interface IDictionary<a> {
+    [key: string]: a;
+}
+
 type Flashcard<a> = {
     params: a,
     prompt: string,
@@ -9,16 +13,18 @@ type Flashcard<a> = {
 }
 
 type FlashcardTemplate<a> = {
-    generator: (seed: a) => Flashcard<a>,
+    generator: (seed: a) => Flashcard<a>
 }
 
-type FlashcardGenerator<a> = {
+type FlashcardGenerator<a, s> = {
     ftemp: FlashcardTemplate<a>,
-    seeder: () => a,
+    state: s,
+    seeder: (st: s) => a,
+    updater: (correct: boolean, card: Flashcard<a>, st: s) => s,
     history: [Flashcard<a>, boolean][]
 }
 
-// Logic
+// Utilities
 
 // https://stackoverflow.com/questions/6860853/generate-random-string-for-div-id
 function guidGenerator(): string {
@@ -28,7 +34,24 @@ function guidGenerator(): string {
     return (S4()+S4()+"-"+S4()+"-"+S4()+"-"+S4()+"-"+S4()+S4()+S4());
 }
 
-function uniformRandomFGen(cards: [string, string][]): FlashcardGenerator<number> {
+function zeroDict(keys: string[]): IDictionary<number> {
+    var d: IDictionary<number> = {};
+    for (var k in keys) {
+        d[keys[k]] = 0;
+    }
+    return d;
+}
+
+function weightedRandomIndex(weights: number[]): number {
+    var weightSums = weights.map((sum => value => sum += value)(0));
+    var totalSum = weights.reduce((a, b) => a + b, 0);
+    var ind = weightSums.findIndex((w) => w >= Math.random()*totalSum);
+    return ind;
+}
+
+// Logic
+
+function uniformRandomFGen(cards: [string, string][]): FlashcardGenerator<number, null> {
     return {
         ftemp: {
             generator: function(seed: number) {
@@ -41,15 +64,53 @@ function uniformRandomFGen(cards: [string, string][]): FlashcardGenerator<number
                 }
             }
         },
-        seeder: function() {
+        state: null,
+        seeder: function(_: null) {
             return Math.floor(Math.random() * cards.length);
+        },
+        updater: (correct, card, st) => null,
+        history: []
+    }
+}
+
+function evilFGen(cards: [string, string, [string]][], alpha: number): 
+    FlashcardGenerator<number, IDictionary<number>> {
+    return {
+        ftemp: {
+            generator: function(seed: number) {
+                return {
+                    params: seed,
+                    prompt: cards[seed][0],
+                    answers: [cards[seed][1]],
+                    hint: cards[seed][1],
+                    uuid: guidGenerator()
+                }
+            }
+        },
+        state: zeroDict([...new Set(cards.map((c) => c[2]).flat())]),
+        seeder: function(st: IDictionary<number>) {
+            var keys = Object.keys(st).map((n) => +n);
+            var weights = cards.map((card) => 1 + card[2].map((p) => st[p]).reduce((a, b) => a + b, 0));
+            return weightedRandomIndex(weights);
+        },
+        updater: function(correct, card, st) {
+            if (correct)
+                return st;
+            var props = cards[card.params][2];
+            for (var k in st) {
+                st[k] = alpha*st[k];
+            }
+            for (var i in props) {
+                st[props[i]] += 1;
+            }
+            return st;
         },
         history: []
     }
 }
 
-function nextCard<a>(fgen: FlashcardGenerator<a>): Flashcard<a> {
-    var card = fgen.ftemp.generator(fgen.seeder());
+function nextCard<a, s>(fgen: FlashcardGenerator<a, s>): Flashcard<a> {
+    var card = fgen.ftemp.generator(fgen.seeder(fgen.state));
     return card;
 }
 
@@ -95,7 +156,7 @@ function setHintText(hint: string) {
     hintBox!.value = hint;
 }
 
-function updateProgressBar<a>(fgen: FlashcardGenerator<a>) {
+function updateProgressBar<a, s>(fgen: FlashcardGenerator<a, s>) {
     var progressBar = document.getElementById("flashcard-progress-bar")!;
     var cardsDone: number = fgen.history.length;
     var cardsCorrect = fgen.history.filter((x) => x[1]).length;
@@ -105,10 +166,9 @@ function updateProgressBar<a>(fgen: FlashcardGenerator<a>) {
     progressBar.style.backgroundColor = `rgba(${225-percent/3},${155+percent}, 150)`;
 }
 
-function runFlashcardController<a>(fgen: FlashcardGenerator<a>) {
+function runFlashcardController<a, s>(fgen: FlashcardGenerator<a, s>) {
     var isCorrect = false;
     var guessBox = <HTMLInputElement>document.getElementById("flashcard-answer-input");
-    console.log(guessBox);
     var guessController = function(card: Flashcard<a>) {
         var correct = isGuessCorrect(card, guessBox!.value);
         isCorrect = correct;
@@ -136,6 +196,7 @@ function runFlashcardController<a>(fgen: FlashcardGenerator<a>) {
                 }
                 if (!addedToHistory) {
                     fgen.history.push([card, firstCorrect]);
+                    fgen.state = fgen.updater(firstCorrect, card, fgen.state);
                     addedToHistory = true;
                     updateProgressBar(fgen);
                 }
@@ -147,7 +208,7 @@ function runFlashcardController<a>(fgen: FlashcardGenerator<a>) {
 
 // Demos
 
-var additionQuizzer: FlashcardGenerator<[number, number]> = {
+var additionQuizzer: FlashcardGenerator<[number, number], null> = {
     ftemp: {
         generator: function(seed: [number, number]) {
             return {
@@ -159,11 +220,22 @@ var additionQuizzer: FlashcardGenerator<[number, number]> = {
             }
         }
     },
-    seeder: function() {
+    state: null,
+    seeder: function(_: null) {
         var g = () => Math.floor(Math.random() * 100);
         return [g(), g()];
     },
+    updater: (correct, card, st) => null,
     history: []
 }
 
-window.onload = () => { runFlashcardController(additionQuizzer); }
+var ruPrepQuizzer: FlashcardGenerator<number, IDictionary<number>> = evilFGen([
+    ["forest", "лес", ["simple"]],
+    ["garden", "сад", ["simple"]],
+    ["house", "дом", ["simple"]],
+    ["in the forest", "в лесу", ["prep"]],
+    ["in the garden", "в саду", ["prep"]],
+    ["in the house", "в доме", ["prep"]]
+], 0.9);
+
+window.onload = () => { runFlashcardController(ruPrepQuizzer); }
