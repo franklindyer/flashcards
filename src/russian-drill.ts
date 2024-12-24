@@ -1,6 +1,7 @@
 import {
     guidGenerator,
     FlashcardGenerator,
+    FlashcardGenEditor,
     singleTextFieldEditor,
     validatedTextFieldEditor,
     doubleTextFieldEditor,
@@ -60,15 +61,22 @@ var ruVerbQuizzer: FlashcardGenerator<[number, string, string], [string, string]
     },
     updater: (correct, card, st) => st,
     history: [],
-    editor: (vbs: [string, string][]) => multipleEditors(
-        vbs,
-        ["", ""],
-        (vb) => combineEditors(
-            vb,
-            (s: string) => singleTextFieldEditor(s),
-            (s: string) => validatedTextFieldEditor(s, (ruStr) => window.ruVerbs(ruStr) !== undefined)
-        )
-    )
+    editor: (vbs: [string, string][]) => {
+        var validator = (ruStr: string) => window.ruVerbs(ruStr) !== undefined;
+        var editor: FlashcardGenEditor<[string, string][]> = multipleEditors(
+            vbs,
+            ["", ""],
+            (vb) => combineEditors(
+                vb,
+                (s: string) => singleTextFieldEditor(s),
+                (s: string) => validatedTextFieldEditor(s, validator) 
+            )
+        );
+        return {
+            element: editor.element,
+            menuToState: () => editor.menuToState().filter((c) => validator(c[1])) 
+        };
+    }
 }
 
 var ruPrepQuizzer = evilFGen([

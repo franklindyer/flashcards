@@ -102,6 +102,18 @@
     overflow-y: scroll;
 }
 
+#flashcard-deck-editor input {
+    display: inline-block;
+    margin: 5px;
+    padding: 5px;
+    border-radius: 5px;
+}
+
+#flashcard-deck-editor button {
+    display: inline-block;
+    margin: 5px;
+}
+
 #flashcard-deck-editor-close {
     display: block;
 }

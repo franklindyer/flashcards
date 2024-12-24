@@ -4,7 +4,7 @@ interface IDictionary<a> {
     [key: string]: a;
 }
 
-type Flashcard<a> = {
+export type Flashcard<a> = {
     params: a,
     prompt: string,
     answers: string[],
@@ -12,11 +12,11 @@ type Flashcard<a> = {
     uuid: string
 }
 
-type FlashcardTemplate<a, s> = {
+export type FlashcardTemplate<a, s> = {
     generator: (seed: a, st: s) => Flashcard<a>
 }
 
-type FlashcardGenEditor<s> = {
+export type FlashcardGenEditor<s> = {
     element: HTMLElement,
     menuToState: () => s
 }
@@ -243,6 +243,7 @@ export function multipleEditors<a>(ls: a[], empty: a, ed: (st: a) => FlashcardGe
         var ind = children.length - 1;
         var statePartDiv = document.createElement("div");
         statePartDiv.appendChild(newEditor.element);
+        newEditor.element.style.display = "inline-block";
         var delBtn = document.createElement("button");
         delBtn.textContent = "remove";
         delBtn.onclick = (e) => {
