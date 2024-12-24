@@ -91,6 +91,10 @@
     display: none;
 }
 
+#flashcard-decklist-overlay {
+    display: none;
+}
+
 .menu-overlay {
     width: 50%;
     height: 80%;
@@ -100,6 +104,19 @@
     padding: 20px;
     background-color: white;
     overflow-y: scroll;
+}
+
+.deck-editor-entry {
+    margin: 10px;
+    padding: 5px;
+    border-radius: 10px;
+    background-color: #eeeeff;
+    width: 90%;
+    box-shadow: 0 6px #9999aa;
+}
+
+.deck-editor-entry:hover {
+    background-color: #ddddee;
 }
 
 #flashcard-deck-editor input {

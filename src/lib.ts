@@ -22,7 +22,6 @@ export type FlashcardGenEditor<s> = {
 }
 
 export type FlashcardGenerator<a, s> = {
-    name: string,
     ftemp: FlashcardTemplate<a, s>,
     state: s,
     seeder: (st: s) => a,
@@ -84,10 +83,9 @@ function arrayReindex<a>(ls: a[]): a[] {
 
 // Logic
 
-function uniformRandomFGen(name: string, cards: [string, string][]): 
+function uniformRandomFGen(cards: [string, string][]): 
     FlashcardGenerator<number, [string, string][]> {
     var gen = {
-        name: name,
         ftemp: {
             generator: function(seed: number, st: [string, string][]) {
                 return {
@@ -110,10 +108,9 @@ function uniformRandomFGen(name: string, cards: [string, string][]):
     return gen;
 }
 
-export function evilFGen(name: string, cards: [string, string, string[]][], alpha: number): 
+export function evilFGen(cards: [string, string, string[]][], alpha: number): 
     FlashcardGenerator<number, [[string, string, string[]][], IDictionary<number>]> {
     return {
-        name: name,
         ftemp: {
             generator: function(seed: number, st) {
                 return {
@@ -303,6 +300,11 @@ function slideCardOutOfDiv(cardId: string) {
     cardDiv!.onanimationend = () => { cardDiv!.style.display = "none"; };
 }
 
+function clearCardDiv() {
+    var cardDiv = document.getElementsByClassName("flashcard")[0];
+    cardDiv?.remove();
+}
+
 function markCardIncorrect(cardId: string) {
     var cardDiv = document.getElementById(cardId);
     cardDiv?.classList?.add("flashcard-incorrect");
@@ -324,6 +326,28 @@ function updateProgressBar<a, s>(fgen: FlashcardGenerator<a, s>) {
     progressBar.textContent = progressMsg;
     progressBar.style.backgroundColor = `rgba(${225-percent/3},${155+percent}, 150)`;
 }
+
+function generateDecklistMenu(decklist: IDictionary<FlashcardDeck<any>>) {
+    var decklistEditor = <HTMLElement>document.getElementById("flashcard-decklist-editor");
+    decklistEditor.innerHTML = "";
+    var decklistOverlay = <HTMLElement>document.getElementById("flashcard-decklist-overlay");
+    for (var k in decklist) {
+        console.log(k);
+        console.log(decklist[k]);
+        var deckDiv = document.createElement("div");
+        var slug = decklist[k].slug;
+        deckDiv.textContent = decklist[k].name;
+        deckDiv.classList.add("deck-editor-entry");
+        deckDiv.onclick = ((s) => (e) => {
+            console.log(s);
+            decklistOverlay.style.display = "none";
+            runFlashcardController(s);
+        })(slug);
+        decklistEditor.appendChild(deckDiv);
+    }
+}
+
+// Saving and loading decks
 
 export function loadRegistryFromLocal() {
     var registryStr = localStorage.getItem("decks");
@@ -364,18 +388,6 @@ export async function loadDeckGenFromRegistry(reg: FlashcardGenRegistry, slug: s
     gen.state = deck.state;
     await Promise.all(deck.resources.map((rname) => reg.resources[rname]()));
     return gen;
-}
-
-function loadDeckFromLocal<a, s>(deckname: string, fgen: FlashcardGenerator<a, s>): boolean {
-    if (localStorage.getItem("decks") === null) {
-        localStorage.setItem("decks", "{}");
-    }
-    var decks = JSON.parse(<string>localStorage.getItem("decks"));
-    if (typeof(decks[deckname]) == typeof(fgen.state)) {
-        fgen.state = decks[deckname];
-        return true;
-    }
-    return false;
 }
 
 // export function runFlashcardController<a, s>(fgen: FlashcardGenerator<a, s>) {
@@ -420,6 +432,14 @@ export async function runFlashcardController(slug: string) {
             flashcardLoop();
         }
     }
+    var decklistBtn = <HTMLElement>document.getElementById("deck-list-button");
+    decklistBtn.onclick = (e) => {
+        clearCardDiv();
+        var decklistOverlay = <HTMLElement>document.getElementById("flashcard-decklist-overlay");
+        generateDecklistMenu(reg!.decks);
+        decklistOverlay.style.display = "block";
+    }
+    
     var lastCardId: string = null!;
     var flashcardLoop = () => {
         isCorrect = false;
@@ -455,8 +475,16 @@ export async function runFlashcardController(slug: string) {
 
 // Demos
 
+var keyValueQuizzer = uniformRandomFGen([
+    ["acyclic saturated hydrocarbon", "alkane"],
+    ["hydrocarbon with a carbon-carbon double bond", "alkene"],
+    ["unsaturated hydrocarbon with a carbon-carbon triple bond", "alkyne"],
+    ["organic compound with at least one hydroxyl group", "alcohol"],
+    ["organic compound with an oxygen bound to two separate carbons", "ether"],
+    ["organic compound with an R-C-OH functional group", "aldehyde"]
+]);
+
 var additionQuizzer: FlashcardGenerator<[number, number], number> = {
-    name: "addition-quiz",
     ftemp: {
         generator: function(seed: [number, number]) {
             return {
@@ -498,11 +526,19 @@ export var defaultDecks: IDictionary<FlashcardDeck<any>> = {
         decktype: "addition-quizzer",
         resources: [],
         state: 20
+    },
+    "key-value-quiz-deck": {
+        name: "Simple key-value quiz deck",
+        slug: "key-value-quiz-deck",
+        decktype: "key-value-quizzer",
+        resources: [],
+        state: keyValueQuizzer.state
     }
 }
 
 export var providedGenerators: IDictionary<FlashcardGenerator<any, any>> = {
-    "addition-quizzer": additionQuizzer  
+    "addition-quizzer": additionQuizzer,
+    "key-value-quizzer": keyValueQuizzer 
 }
 
 export var indexedResources: IDictionary<() => Promise<any>> = {};

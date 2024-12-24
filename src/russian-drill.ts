@@ -40,7 +40,6 @@ const subjPresentCols = [
 ];
 
 var ruVerbQuizzer: FlashcardGenerator<[number, string, string], [string, string][]> = {
-    name: "russian-verb-conjugations",
     ftemp: {
         generator: function(seed: [number, string, string]) {
             var answer = `${ruNomPron[seed[0]]} ${window.ruVerbs(seed[2])[subjPresentCols[seed[0]]]}`;
@@ -82,7 +81,7 @@ var ruVerbQuizzer: FlashcardGenerator<[number, string, string], [string, string]
     }
 }
 
-var ruPrepQuizzer = evilFGen("evil-russian-preposition", [
+var ruPrepQuizzer = evilFGen([
     ["forest", "лес", ["simple"]],
     ["garden", "сад", ["simple"]],
     ["house", "дом", ["simple"]],
