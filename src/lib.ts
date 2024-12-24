@@ -332,14 +332,11 @@ function generateDecklistMenu(decklist: IDictionary<FlashcardDeck<any>>) {
     decklistEditor.innerHTML = "";
     var decklistOverlay = <HTMLElement>document.getElementById("flashcard-decklist-overlay");
     for (var k in decklist) {
-        console.log(k);
-        console.log(decklist[k]);
         var deckDiv = document.createElement("div");
         var slug = decklist[k].slug;
         deckDiv.textContent = decklist[k].name;
         deckDiv.classList.add("deck-editor-entry");
         deckDiv.onclick = ((s) => (e) => {
-            console.log(s);
             decklistOverlay.style.display = "none";
             runFlashcardController(s);
         })(slug);
@@ -397,7 +394,6 @@ export async function runFlashcardController(slug: string) {
         console.log("Could not load flashcard registry.");
         return;
     }
-    console.log(reg);
     var fgenMaybe: FlashcardGenerator<any, any> | null = await loadDeckGenFromRegistry(reg, slug);
     if (fgenMaybe === null) {
         console.log("Could not load flashcard deck.");
@@ -457,7 +453,7 @@ export async function runFlashcardController(slug: string) {
                     slideCardOutOfDiv(card.uuid);
                     setTimeout(() => flashcardLoop(), 1000);
                 } else {
-                    guessBox.oninput = () => { guessBox.value = ""; guessBox.oninput = () => {}; }
+                    guessBox.oninput = (e) => { guessBox.value = guessBox.value.slice(-1); guessBox.oninput = () => {}; }
                     firstCorrect = false;
                 }
                 if (!addedToHistory) {

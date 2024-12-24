@@ -16,13 +16,15 @@ import {
 const papa = require("papaparse");
 
 declare global {
+    var ruAdjectives: any
+    var ruNouns: any
     var ruVerbs: any
 }
 
-var ruVerbsRes = () => fetch("/data/verbs.csv").then((r) => r.text()).then((s) => {
+var ruDataPromise = (filename: string, objname: string) => 
+    fetch(`/data/${filename}.csv`).then((r) => r.text()).then((s) => {
     var csvData = papa.parse(s, { header: true, dynamicTyping: true }).data;
-    console.log(csvData[1]);
-    window.ruVerbs = (bareVerb: string) => {
+    (<any>window)[objname] = (bareVerb: string) => {
         var v = csvData.find((k: any) => k.bare === bareVerb);
         return v; 
     }
@@ -38,6 +40,19 @@ const subjPresentCols = [
     "presfut_pl2",
     "presfut_pl3"
 ];
+
+function makeTranslationEditor(ls: [string, string][], validator: (s: string) => boolean):
+    FlashcardGenEditor<[string, string][]> {
+    return multipleEditors(
+        ls,
+        ["", ""],
+        (item) => combineEditors(
+            item,
+            (s: string) => singleTextFieldEditor(s),
+            (s: string) => validatedTextFieldEditor(s, validator)
+        )
+    )
+}
 
 var ruVerbQuizzer: FlashcardGenerator<[number, string, string], [string, string][]> = {
     ftemp: {
@@ -65,7 +80,7 @@ var ruVerbQuizzer: FlashcardGenerator<[number, string, string], [string, string]
     history: [],
     editor: (vbs: [string, string][]) => {
         var validator = (ruStr: string) => window.ruVerbs(ruStr) !== undefined;
-        var editor: FlashcardGenEditor<[string, string][]> = multipleEditors(
+/*        var editor: FlashcardGenEditor<[string, string][]> = multipleEditors(
             vbs,
             ["", ""],
             (vb) => combineEditors(
@@ -73,11 +88,72 @@ var ruVerbQuizzer: FlashcardGenerator<[number, string, string], [string, string]
                 (s: string) => singleTextFieldEditor(s),
                 (s: string) => validatedTextFieldEditor(s, validator) 
             )
-        );
+        ); */
+        var editor = makeTranslationEditor(vbs, validator);
         return {
             element: editor.element,
             menuToState: () => editor.menuToState().filter((c) => validator(c[1])) 
         };
+    }
+}
+
+var ruAdjQuizzer: FlashcardGenerator<
+    [[string, string], [string, string]], 
+    [[string, string][], [string, string][]]> = {
+    ftemp: {
+        generator: function(seed: [[string, string], [string, string]]) {
+            var nouns = window.ruNouns;
+            var adjs = window.ruAdjectives;
+            var adjDecl = `decl_${nouns(seed[0][1]).gender}_nom`;
+            var answer = `${adjs(seed[1][1])[adjDecl]} ${nouns(seed[0][1]).bare}`;
+            answer = answer.replace("'", "");
+            return {
+                params: seed,
+                prompt: `${seed[1][0]} ${seed[0][0]}`,
+                hint: answer,
+                answers: [answer],
+                uuid: guidGenerator()
+            }
+        }
+    },
+    state: [
+        [
+            ["day", "день"],
+            ["night", "ночь"],
+            ["morning", "утро"]
+        ],
+        [
+            ["good", "добрый"],
+            ["bad", "плохой"],
+            ["this", "этот"],
+            ["that", "тот"]
+        ]
+    ],
+    seeder: function(st: [[string, string][], [string, string][]]) {
+        var noun = st[0][Math.floor(Math.random() * st[0].length)];
+        var adj = st[1][Math.floor(Math.random() * st[1].length)];
+        return [noun, adj]
+    },
+    updater: (correct, card, st) => st,
+    history: [],
+    editor: (dat: [[string, string][], [string, string][]]) => {
+        var nounValidator = (ruStr: string) => window.ruNouns(ruStr) !== undefined;
+        var adjValidator = (ruStr: string) => window.ruAdjectives(ruStr) !== undefined;
+        var nounEditor = makeTranslationEditor(dat[0], nounValidator);
+        var adjEditor = makeTranslationEditor(dat[1], adjValidator);
+        var contDiv = document.createElement("div");
+        var nounTitle = document.createElement("h3");
+        nounTitle.textContent = "Nouns";
+        var adjTitle = document.createElement("h3");
+        adjTitle.textContent = "Adjectives";
+        contDiv.appendChild(nounTitle);
+        contDiv.appendChild(nounEditor.element);
+        contDiv.appendChild(adjTitle);
+        contDiv.appendChild(adjEditor.element);
+        return {
+            element: contDiv,
+            menuToState: () => [nounEditor.menuToState(), adjEditor.menuToState()]
+        }
     }
 }
 
@@ -97,5 +173,18 @@ defaultDecks["russian-verb-deck"] = {
     resources: ["russian-verbs"],
     state: ruVerbQuizzer.state
 };
+
+defaultDecks["russian-adj-deck"] = {
+    name: "Russian adjective declinations",
+    slug: "russian-adj-deck",
+    decktype: "russian-adj-driller",
+    resources: ["russian-nouns", "russian-adjectives"],
+    state: ruAdjQuizzer.state
+};
+
 providedGenerators["russian-verb-driller"] = ruVerbQuizzer;
-indexedResources["russian-verbs"] = ruVerbsRes;
+providedGenerators["russian-adj-driller"] = ruAdjQuizzer;
+
+indexedResources["russian-verbs"] = () => ruDataPromise("ru-verbs", "ruVerbs");
+indexedResources["russian-nouns"] = () => ruDataPromise("ru-nouns", "ruNouns");
+indexedResources["russian-adjectives"] = () => ruDataPromise("ru-adjectives", "ruAdjectives");
