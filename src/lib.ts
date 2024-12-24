@@ -31,6 +31,20 @@ export type FlashcardGenerator<a, s> = {
     editor: (st: s) => FlashcardGenEditor<s>
 }
 
+export type FlashcardDeck<s> = {
+    name: string,
+    slug: string,
+    decktype: string,
+    resources: string[]
+    state: s
+}
+
+export type FlashcardGenRegistry = {
+    decks: IDictionary<FlashcardDeck<any>>,
+    generators: IDictionary<FlashcardGenerator<any, any>>,
+    resources: IDictionary<() => Promise<any>>
+}
+
 // Utilities
 
 // https://stackoverflow.com/questions/6860853/generate-random-string-for-div-id
@@ -311,10 +325,45 @@ function updateProgressBar<a, s>(fgen: FlashcardGenerator<a, s>) {
     progressBar.style.backgroundColor = `rgba(${225-percent/3},${155+percent}, 150)`;
 }
 
-function saveDeckToLocal<a, s>(deckname: string, fgen: FlashcardGenerator<a, s>) {
-    var decks = JSON.parse(<string>localStorage.getItem("decks"));
-    decks[deckname] = fgen.state;
-    localStorage.setItem("decks", JSON.stringify(decks));
+export function loadRegistryFromLocal() {
+    var registryStr = localStorage.getItem("decks");
+    if (!registryStr) {
+        var starterRegistry = {
+            decks: defaultDecks,
+            generators: providedGenerators,
+            resources: indexedResources
+        }
+        return starterRegistry;
+    }
+    var registry = JSON.parse(registryStr);
+    return {
+        decks: <IDictionary<FlashcardDeck<any>>>registry,
+        generators: providedGenerators,
+        resources: indexedResources
+    };
+}
+
+export function saveDeckToLocal(
+    reg: FlashcardGenRegistry,
+    deck: FlashcardDeck<any>,
+    gen: FlashcardGenerator<any, any>) {
+    reg.decks[deck.slug].state = gen.state;
+    var registryStr = JSON.stringify(reg.decks);
+    localStorage.setItem("decks", registryStr);
+}
+
+export async function loadDeckGenFromRegistry(reg: FlashcardGenRegistry, slug: string) {
+    var deck: FlashcardDeck<any> | undefined = reg.decks[slug];
+    if (deck === undefined) {
+        return null;
+    }
+    var gen: FlashcardGenerator<any, any> | undefined = reg.generators[deck.decktype];
+    if (deck === undefined) {
+        return null;
+    }
+    gen.state = deck.state;
+    await Promise.all(deck.resources.map((rname) => reg.resources[rname]()));
+    return gen;
 }
 
 function loadDeckFromLocal<a, s>(deckname: string, fgen: FlashcardGenerator<a, s>): boolean {
@@ -329,12 +378,24 @@ function loadDeckFromLocal<a, s>(deckname: string, fgen: FlashcardGenerator<a, s
     return false;
 }
 
-export function runFlashcardController<a, s>(fgen: FlashcardGenerator<a, s>) {
-    loadDeckFromLocal(fgen.name, fgen);
+// export function runFlashcardController<a, s>(fgen: FlashcardGenerator<a, s>) {
+export async function runFlashcardController(slug: string) {
+    var reg: FlashcardGenRegistry | null = loadRegistryFromLocal();
+    if (reg === null) {
+        console.log("Could not load flashcard registry.");
+        return;
+    }
+    console.log(reg);
+    var fgenMaybe: FlashcardGenerator<any, any> | null = await loadDeckGenFromRegistry(reg, slug);
+    if (fgenMaybe === null) {
+        console.log("Could not load flashcard deck.");
+        return;
+    }
+    var fgen: FlashcardGenerator<any, any> = fgenMaybe!;
 
     var isCorrect = false;
     var guessBox = <HTMLInputElement>document.getElementById("flashcard-answer-input");
-    var guessController = function(card: Flashcard<a>) {
+    var guessController = function(card: Flashcard<any>) {
         var correct = isGuessCorrect(card, guessBox!.value);
         isCorrect = correct;
         if (!correct) {
@@ -355,7 +416,7 @@ export function runFlashcardController<a, s>(fgen: FlashcardGenerator<a, s>) {
         closeEditor.onclick = (e) => {
             fgen.state = editor.menuToState();
             deckOverlay.style.display = "none";
-            saveDeckToLocal(fgen.name, fgen);
+            saveDeckToLocal(reg!, reg!.decks[slug], fgen);
             flashcardLoop();
         }
     }
@@ -384,6 +445,7 @@ export function runFlashcardController<a, s>(fgen: FlashcardGenerator<a, s>) {
                     fgen.state = fgen.updater(firstCorrect, card, fgen.state);
                     addedToHistory = true;
                     updateProgressBar(fgen);
+                    saveDeckToLocal(reg!, reg!.decks[slug], fgen);
                 }
             }
         }
@@ -429,11 +491,18 @@ var additionQuizzer: FlashcardGenerator<[number, number], number> = {
     }
 }
 
-var ruPrepQuizzer = evilFGen("evil-russian-prepositions", [
-    ["forest", "лес", ["simple"]],
-    ["garden", "сад", ["simple"]],
-    ["house", "дом", ["simple"]],
-    ["in the forest", "в лесу", ["prep"]],
-    ["in the garden", "в саду", ["prep"]],
-    ["in the house", "в доме", ["prep"]]
-], 0.9);
+export var defaultDecks: IDictionary<FlashcardDeck<any>> = {
+    "addition-quiz-deck": {
+        name: "Addition quizzer",
+        slug: "addition-quiz-deck",
+        decktype: "addition-quizzer",
+        resources: [],
+        state: 20
+    }
+}
+
+export var providedGenerators: IDictionary<FlashcardGenerator<any, any>> = {
+    "addition-quizzer": additionQuizzer  
+}
+
+export var indexedResources: IDictionary<() => Promise<any>> = {};

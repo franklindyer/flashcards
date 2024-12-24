@@ -8,7 +8,10 @@ import {
     combineEditors,
     multipleEditors,
     evilFGen, 
-    runFlashcardController
+    runFlashcardController,
+    defaultDecks,
+    providedGenerators,
+    indexedResources
     } from "./lib";
 const papa = require("papaparse");
 
@@ -16,14 +19,13 @@ declare global {
     var ruVerbs: any
 }
 
-var ruVerbs = fetch("/data/verbs.csv").then((r) => r.text()).then((s) => {
+var ruVerbsRes = () => fetch("/data/verbs.csv").then((r) => r.text()).then((s) => {
     var csvData = papa.parse(s, { header: true, dynamicTyping: true }).data;
     console.log(csvData[1]);
     window.ruVerbs = (bareVerb: string) => {
         var v = csvData.find((k: any) => k.bare === bareVerb);
         return v; 
     }
-    runFlashcardController(ruVerbQuizzer);
 });
 
 const enNomPron = ["I", "you", "he", "we", "y'all", "they"];
@@ -89,4 +91,12 @@ var ruPrepQuizzer = evilFGen("evil-russian-preposition", [
     ["in the house", "в доме", ["prep"]]
 ], 0.9);
 
-// window.onload = () => { runFlashcardController(ruVerbQuizzer); }
+defaultDecks["russian-verb-deck"] = {
+    name: "Russian present-tense verb conjugations",
+    slug: "russian-verb-deck",
+    decktype: "russian-verb-driller",
+    resources: ["russian-verbs"],
+    state: ruVerbQuizzer.state
+};
+providedGenerators["russian-verb-driller"] = ruVerbQuizzer;
+indexedResources["russian-verbs"] = ruVerbsRes;

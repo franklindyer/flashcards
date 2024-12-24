@@ -79,7 +79,7 @@
     color: red;
 }
 
-#flashcard-deck-editor-overlay {
+.fullscreen-overlay {
     background-color: rgba(255, 255, 255, 0.8);
     z-index: 1;
     position: absolute;
@@ -91,7 +91,7 @@
     display: none;
 }
 
-#flashcard-deck-editor {
+.menu-overlay {
     width: 50%;
     height: 80%;
     border-radius: 10px;

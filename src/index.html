@@ -5,10 +5,6 @@
     </head>
     <body>
         <script>var exports = {};</script>
-<!--  	    <script src="/lib.js"></script>
-  	    <script src="/russian-drill.js"></script>
-  	    <script src="/index.js"></script> -->
-        <script src="/bundle.js"></script>
         <div id="flashcard-widget">
             <div id="flashcard-container">
                 <div id="flashcard-progress-bar"></div>
@@ -16,10 +12,15 @@
             <input class="flashcard-answer-box" id="flashcard-answer-hint" type="text" disabled/>
             <input class="flashcard-answer-box" id="flashcard-answer-input" type="text" />
             <button id="deck-edit-button">Edit deck</button>
+            <button id="deck-list-button">View decks</button>
         </div>
-        <div id="flashcard-deck-editor-overlay">
+        <div id="flashcard-deck-editor-overlay" class="fullscreen-overlay">
             <button id="flashcard-deck-editor-close">Done</button>
-            <div id="flashcard-deck-editor">hi</div>
+            <div id="flashcard-deck-editor" class="menu-overlay"></div>
         </div>
+        <div id="flashcard-decklist-overlay" class="fullscreen-overlay">
+            <div id="flashcard-decklist-editor" class="menu-overlay"></div>
+        </div>
+        <script src="/bundle.js"></script>
     </body>
 </html>
