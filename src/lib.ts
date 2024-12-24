@@ -21,7 +21,7 @@ type FlashcardGenEditor<s> = {
     menuToState: () => s
 }
 
-type FlashcardGenerator<a, s> = {
+export type FlashcardGenerator<a, s> = {
     ftemp: FlashcardTemplate<a, s>,
     state: s,
     seeder: (st: s) => a,
@@ -33,7 +33,7 @@ type FlashcardGenerator<a, s> = {
 // Utilities
 
 // https://stackoverflow.com/questions/6860853/generate-random-string-for-div-id
-function guidGenerator(): string {
+export function guidGenerator(): string {
     var S4 = function() {
        return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
     };
@@ -157,7 +157,7 @@ function isGuessCorrect<a>(card: Flashcard<a>, guess: string): boolean {
 
 // View
 
-function singleTextFieldEditor(txt: string): FlashcardGenEditor<string> {
+export function singleTextFieldEditor(txt: string): FlashcardGenEditor<string> {
     var editor: FlashcardGenEditor<string> = {
         element: document.createElement("input"),
         menuToState: () => (<HTMLInputElement>editor.element).value
@@ -166,7 +166,20 @@ function singleTextFieldEditor(txt: string): FlashcardGenEditor<string> {
     return editor;
 }
 
-function doubleTextFieldEditor(txts: [string, string]): FlashcardGenEditor<[string, string]> {
+export function validatedTextFieldEditor(txt: string, pred: (s: string) => boolean):
+    FlashcardGenEditor<string> {
+    var editor = singleTextFieldEditor(txt);
+    editor.element.oninput = (e) => {
+        if (!pred((<HTMLInputElement>editor.element).value)) {
+            editor.element.style.backgroundColor = "#ffeeee";
+        } else {
+            editor.element.style.backgroundColor = "white";
+        }
+    }
+    return editor;
+}
+
+export function doubleTextFieldEditor(txts: [string, string]): FlashcardGenEditor<[string, string]> {
     var children = [singleTextFieldEditor(txts[0]), singleTextFieldEditor(txts[1])];
     var editor: FlashcardGenEditor<[string, string]> = {
         element: document.createElement("div"),
@@ -177,7 +190,22 @@ function doubleTextFieldEditor(txts: [string, string]): FlashcardGenEditor<[stri
     return editor;
 }
 
-function fixedNumEditors<a>(ls: a[], ed: (st: a) => FlashcardGenEditor<a>):
+export function combineEditors<a, b>(
+    st: [a, b], 
+    gen1: (x: a) => FlashcardGenEditor<a>,
+    gen2: (x: b) => FlashcardGenEditor<b>): 
+    FlashcardGenEditor<[a, b]> {
+    var children = [gen1(st[0]), gen2(st[1])];
+    var editor: FlashcardGenEditor<[a, b]> = {
+        element: document.createElement("div"),
+        menuToState: () => [<a>children[0].menuToState(), <b>children[1].menuToState()]
+    }
+    editor.element.appendChild(children[0].element);
+    editor.element.appendChild(children[1].element);
+    return editor;
+}
+
+export function fixedNumEditors<a>(ls: a[], ed: (st: a) => FlashcardGenEditor<a>):
     FlashcardGenEditor<a[]> {
     var children: FlashcardGenEditor<a>[] = [];
     var editor: FlashcardGenEditor<a[]> = {
@@ -198,7 +226,7 @@ function fixedNumEditors<a>(ls: a[], ed: (st: a) => FlashcardGenEditor<a>):
 
 }
 
-function multipleEditors<a>(ls: a[], empty: a, ed: (st: a) => FlashcardGenEditor<a>): 
+export function multipleEditors<a>(ls: a[], empty: a, ed: (st: a) => FlashcardGenEditor<a>): 
     FlashcardGenEditor<a[]> {
     var children: FlashcardGenEditor<a>[] = [];
     var editor: FlashcardGenEditor<a[]> = {
