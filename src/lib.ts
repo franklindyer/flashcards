@@ -22,6 +22,7 @@ export type FlashcardGenEditor<s> = {
 }
 
 export type FlashcardGenerator<a, s> = {
+    name: string,
     ftemp: FlashcardTemplate<a, s>,
     state: s,
     seeder: (st: s) => a,
@@ -69,9 +70,10 @@ function arrayReindex<a>(ls: a[]): a[] {
 
 // Logic
 
-function uniformRandomFGen(cards: [string, string][]): 
+function uniformRandomFGen(name: string, cards: [string, string][]): 
     FlashcardGenerator<number, [string, string][]> {
     var gen = {
+        name: name,
         ftemp: {
             generator: function(seed: number, st: [string, string][]) {
                 return {
@@ -94,9 +96,10 @@ function uniformRandomFGen(cards: [string, string][]):
     return gen;
 }
 
-export function evilFGen(cards: [string, string, string[]][], alpha: number): 
+export function evilFGen(name: string, cards: [string, string, string[]][], alpha: number): 
     FlashcardGenerator<number, [[string, string, string[]][], IDictionary<number>]> {
     return {
+        name: name,
         ftemp: {
             generator: function(seed: number, st) {
                 return {
@@ -308,7 +311,27 @@ function updateProgressBar<a, s>(fgen: FlashcardGenerator<a, s>) {
     progressBar.style.backgroundColor = `rgba(${225-percent/3},${155+percent}, 150)`;
 }
 
+function saveDeckToLocal<a, s>(deckname: string, fgen: FlashcardGenerator<a, s>) {
+    var decks = JSON.parse(<string>localStorage.getItem("decks"));
+    decks[deckname] = fgen.state;
+    localStorage.setItem("decks", JSON.stringify(decks));
+}
+
+function loadDeckFromLocal<a, s>(deckname: string, fgen: FlashcardGenerator<a, s>): boolean {
+    if (localStorage.getItem("decks") === null) {
+        localStorage.setItem("decks", "{}");
+    }
+    var decks = JSON.parse(<string>localStorage.getItem("decks"));
+    if (typeof(decks[deckname]) == typeof(fgen.state)) {
+        fgen.state = decks[deckname];
+        return true;
+    }
+    return false;
+}
+
 export function runFlashcardController<a, s>(fgen: FlashcardGenerator<a, s>) {
+    loadDeckFromLocal(fgen.name, fgen);
+
     var isCorrect = false;
     var guessBox = <HTMLInputElement>document.getElementById("flashcard-answer-input");
     var guessController = function(card: Flashcard<a>) {
@@ -332,6 +355,7 @@ export function runFlashcardController<a, s>(fgen: FlashcardGenerator<a, s>) {
         closeEditor.onclick = (e) => {
             fgen.state = editor.menuToState();
             deckOverlay.style.display = "none";
+            saveDeckToLocal(fgen.name, fgen);
             flashcardLoop();
         }
     }
@@ -352,6 +376,7 @@ export function runFlashcardController<a, s>(fgen: FlashcardGenerator<a, s>) {
                     slideCardOutOfDiv(card.uuid);
                     setTimeout(() => flashcardLoop(), 1000);
                 } else {
+                    guessBox.oninput = () => { guessBox.value = ""; guessBox.oninput = () => {}; }
                     firstCorrect = false;
                 }
                 if (!addedToHistory) {
@@ -369,6 +394,7 @@ export function runFlashcardController<a, s>(fgen: FlashcardGenerator<a, s>) {
 // Demos
 
 var additionQuizzer: FlashcardGenerator<[number, number], number> = {
+    name: "addition-quiz",
     ftemp: {
         generator: function(seed: [number, number]) {
             return {
@@ -403,7 +429,7 @@ var additionQuizzer: FlashcardGenerator<[number, number], number> = {
     }
 }
 
-var ruPrepQuizzer = evilFGen([
+var ruPrepQuizzer = evilFGen("evil-russian-prepositions", [
     ["forest", "лес", ["simple"]],
     ["garden", "сад", ["simple"]],
     ["house", "дом", ["simple"]],
@@ -411,12 +437,3 @@ var ruPrepQuizzer = evilFGen([
     ["in the garden", "в саду", ["prep"]],
     ["in the house", "в доме", ["prep"]]
 ], 0.9);
-/*
-var ruPrepQuizzer: FlashcardGenerator<number, [string, string][]> = uniformRandomFGen([
-    ["forest", "лес"],
-    ["garden", "сад"],
-    ["house", "дом"],
-    ["in the forest", "в лесу"],
-    ["in the garden", "в саду"],
-    ["in the house", "в доме"]
-]); */
