@@ -81,6 +81,17 @@ function arrayReindex<a>(ls: a[]): a[] {
     return ls.filter((_) => true);
 }
 
+// https://stackoverflow.com/questions/3665115/how-to-create-a-file-in-memory-for-user-to-download-but-not-through-server
+function downloadText(filename: string, text: string) {
+  var element = document.createElement('a');
+  element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+  element.setAttribute('download', filename);
+  element.style.display = 'none';
+  document.body.appendChild(element);
+  element.click();
+  document.body.removeChild(element);
+}
+
 // Logic
 
 function uniformRandomFGen(cards: [string, string][]): 
@@ -434,6 +445,30 @@ export async function runFlashcardController(slug: string) {
         var decklistOverlay = <HTMLElement>document.getElementById("flashcard-decklist-overlay");
         generateDecklistMenu(reg!.decks);
         decklistOverlay.style.display = "block";
+    }
+    var exportBtn = <HTMLElement>document.getElementById("export-deck-button");
+    exportBtn.onclick = (e) => {
+        downloadText(`${slug}.txt`, JSON.stringify(reg!.decks[slug]));
+    }
+    var importBtn = <HTMLElement>document.getElementById("import-deck-button");
+    var fileUploadInput = <HTMLElement>document.getElementById("deck-upload-file");
+    importBtn.onclick = (e) => {
+        fileUploadInput.click();
+        fileUploadInput.onchange = (e) => {
+            var files = (<HTMLInputElement>fileUploadInput).files;
+            if (files === null)
+                return;
+            var file = files[0];
+            if (file === null)
+                return;
+            var reader = new FileReader();
+            reader.onload = (e) => {
+                fgen.state = JSON.parse(<string>e.target!.result).state;
+                saveDeckToLocal(reg!, reg!.decks[slug], fgen);
+            };
+            console.log(file); 
+            reader.readAsText(file, "UTF-8");
+        }
     }
     
     var lastCardId: string = null!;
