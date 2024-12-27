@@ -2,6 +2,7 @@ import {
     guidGenerator,
     FlashcardGenerator,
     FlashcardGenEditor,
+    boolEditor,
     singleTextFieldEditor,
     validatedTextFieldEditor,
     doubleTextFieldEditor,
@@ -30,6 +31,9 @@ const GermanWordsList = require('german-words-dict/dist/words.json');
 
 const EnglishVerbs = require('english-verbs');
 const EnglishVerbHelper = require('english-verbs-helper');
+const EnglishPlurals = require('english-plurals')
+const EnglishPluralsIrregular = require('english-plurals-list/dist/plurals.json');
+const EnglishPlural = require("pluralize-me");
 
 type GermanSVOSettings = {
     subjPronProb: number,
@@ -192,7 +196,7 @@ function englishObjPronoun(gen: Genders, num: Numbers, per: Persons): string {
 }
 
 function englishMakePlural(noun: string): string {
-    return `${noun}s`;
+    return EnglishPlural.plural(noun);
 }
 
 function generateSVOPhrase(st: GermanSVOState): [string, string] {
@@ -251,9 +255,6 @@ function generateSVOPhrase(st: GermanSVOState): [string, string] {
     return [sentenceEn, sentenceDe];
 }
 
-console.log(GermanVerbsLib.getConjugation(GermanVerbsDict, "anschauen", 'PRASENS', 1, 'S'));
-for (var i = 0; i < 20; i++) console.log(generateSVOPhrase(sampleGermanSVOState));
-
 function makeTranslationEditor(ls: [string, string][], validator: (s: string) => boolean):
     FlashcardGenEditor<[string, string][]> {
     return multipleEditors(
@@ -264,6 +265,45 @@ function makeTranslationEditor(ls: [string, string][], validator: (s: string) =>
             (s: string) => singleTextFieldEditor(s),
             (s: string) => validatedTextFieldEditor(s, validator)
         )
+    )
+}
+
+function makeNounEditor(noun: GermanNoun):
+    FlashcardGenEditor<GermanNoun> {
+    var englishVerbField = validatedTextFieldEditor(noun.en, (wd) => true);
+    var germanVerbField = validatedTextFieldEditor(noun.de, (wd) => wd in GermanWordsList);
+    var subjField = boolEditor("Subject?", noun.canBeSubj);
+    subjField.element.style.display = "inline-block";
+    var objField = boolEditor("Object?", noun.canBeObj);
+    objField.element.style.display = "inline-block";
+    var contDiv = document.createElement("div");
+    [englishVerbField, germanVerbField, subjField, objField].map((el) => contDiv.appendChild(el.element));
+    return {
+        element: contDiv,
+        menuToState: () => { return {
+            en: englishVerbField.menuToState(),
+            de: germanVerbField.menuToState(),
+            hint: "",
+            tags: [],
+            canBeSubj: subjField.menuToState(),
+            canBeObj: objField.menuToState()
+        }}
+    }
+}
+
+function makeNounsEditor(nouns: GermanNoun[]):
+    FlashcardGenEditor<GermanNoun[]> {
+    return multipleEditors(
+        nouns,
+        {
+            en: "",
+            de: "",
+            hint: "",
+            tags: [],
+            canBeSubj: false,
+            canBeObj: true
+        },
+        makeNounEditor
     )
 }
 
@@ -288,7 +328,8 @@ var deSVOQuizzer: FlashcardGenerator<[string, string], GermanSVOState> = {
     editor: (st: GermanSVOState) => {
         var validateVerbDe = (deStr: string) => deStr in GermanVerbsDict;
         var validateNounDe = (deStr: string) => deStr in GermanWordsList;
-        var editNouns = makeTranslationEditor(st.nouns.map((nn) => [nn.en, nn.de]), validateNounDe);
+//        var editNouns = makeTranslationEditor(st.nouns.map((nn) => [nn.en, nn.de]), validateNounDe);
+        var editNouns = makeNounsEditor(st.nouns);
         var editVerbs = makeTranslationEditor(st.verbs.map((vb) => [vb.en, vb.de]), validateVerbDe);
         var contDiv = document.createElement("div");
         var nounTitle = document.createElement("h3"); 
@@ -299,14 +340,7 @@ var deSVOQuizzer: FlashcardGenerator<[string, string], GermanSVOState> = {
         return {
             element: contDiv,
             menuToState: () => {
-                var nouns: GermanNoun[] = editNouns.menuToState().map((wd) => { return {
-                    en: wd[0],
-                    de: wd[1],
-                    tags: [],
-                    hint: "",
-                    canBeSubj: true,
-                    canBeObj: true
-                }});
+                var nouns: GermanNoun[] = editNouns.menuToState();
                 var verbs: GermanVerb[] = editVerbs.menuToState().map((wd) => { return {
                     en: wd[0],
                     de: wd[1],

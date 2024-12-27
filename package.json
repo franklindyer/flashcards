@@ -12,6 +12,8 @@
   "description": "",
   "dependencies": {
     "csv-parse": "^5.6.0",
+    "english-plurals": "^3.3.1",
+    "english-plurals-list": "^3.3.1",
     "english-verbs": "^1.1.4",
     "english-verbs-helper": "^3.3.1",
     "firebase": "^11.1.0",
@@ -21,6 +23,7 @@
     "german-words": "^5.3.1",
     "german-words-dict": "^3.3.1",
     "papaparse": "^5.4.1",
+    "pluralize-me": "^1.1.1",
     "terser-webpack-plugin": "^5.3.11",
     "typescript": "^5.7.2",
     "uuid": "^11.0.3"

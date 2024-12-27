@@ -182,6 +182,26 @@ function isGuessCorrect<a>(card: Flashcard<a>, guess: string): boolean {
 
 // View
 
+export function boolEditor(label: string, val: boolean): FlashcardGenEditor<boolean> {
+    var checkbox = document.createElement("input");
+    var editor: FlashcardGenEditor<boolean> = {
+        element: null!,
+        menuToState: () => (<HTMLInputElement>checkbox).checked
+    };
+    (<HTMLInputElement>checkbox).type = "checkbox";
+    (<HTMLInputElement>checkbox).checked = val;
+    var guid = guidGenerator();
+    checkbox.id = guid;
+    var elementLabel = document.createElement("label");
+    elementLabel.htmlFor = guid;
+    elementLabel.textContent = label;
+    var boxWithLabel = document.createElement("div");
+    boxWithLabel.appendChild(checkbox);
+    boxWithLabel.appendChild(elementLabel);
+    editor.element = boxWithLabel;
+    return editor;
+}
+
 export function singleTextFieldEditor(txt: string): FlashcardGenEditor<string> {
     var editor: FlashcardGenEditor<string> = {
         element: document.createElement("input"),
