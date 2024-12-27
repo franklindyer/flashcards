@@ -29,5 +29,8 @@ module.exports = {
     static: path.join(__dirname, "dist"),
     compress: false,
     port: 4000,
+    client: {
+        overlay: false
+    }
    },
 };

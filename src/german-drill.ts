@@ -13,7 +13,315 @@ import {
     providedGenerators,
     indexedResources
     } from "./lib";
+import {
+    Genders,
+    Numbers
+    } from "german-determiners"
+import {
+    Persons
+    } from "german-verbs"
 const papa = require("papaparse");
+
+const GermanVerbsLib = require('german-verbs');
+const GermanVerbsDict = require('german-verbs-dict/dist/verbs.json');
+const GermanDets = require('german-determiners');
+const GermanWords = require('german-words');
+const GermanWordsList = require('german-words-dict/dist/words.json');
+
+const EnglishVerbs = require('english-verbs');
+const EnglishVerbHelper = require('english-verbs-helper');
+
+type GermanSVOSettings = {
+    subjPronProb: number,
+    objPronProb: number,
+    pluralProb: number
+}
+
+type GermanVerb = {
+    en: string,
+    de: string,
+    hint: string,
+    tags: string[]
+}
+
+type GermanNoun = {
+    en: string,
+    de: string,
+    hint: string,
+    tags: string[],
+    canBeSubj: boolean,
+    canBeObj: boolean
+}
+
+type GermanSVOState = {
+    settings: GermanSVOSettings,
+    verbs: GermanVerb[],
+    nouns: GermanNoun[]
+}
+
+const sampleGermanSVOState: GermanSVOState = {
+    settings: {
+        subjPronProb: 0.3,
+        objPronProb: 0.1,
+        pluralProb: 0.4
+    },
+    verbs: [
+        {
+            en: "love",
+            de: "lieben",
+            hint: "",
+            tags: []
+        },
+        {
+            en: "kill",
+            de: "töten",
+            hint: "",
+            tags: []
+        }
+    ],
+    nouns: [
+        {
+            en: "man",
+            de: "Mann",
+            hint: "",
+            tags: [],
+            canBeSubj: true,
+            canBeObj: true
+        },
+        {
+            en: "woman",
+            de: "Frau",
+            hint: "",
+            tags: [],
+            canBeSubj: true,
+            canBeObj: true
+        },
+        {
+            en: "dog",
+            de: "Hund",
+            hint: "",
+            tags: [],
+            canBeSubj: true,
+            canBeObj: true
+        }
+    ]
+}
+
+function germanSubjPronoun(gen: Genders, num: Numbers, per: Persons): string {
+    switch(per) {
+        case 1:
+            return num == 'S' ? "ich" : "wir"; 
+        case 2:
+            return num == 'S' ? "du" : "ihr";
+        case 3:
+            if (num == 'P') return "sie";
+            else {
+                switch(gen) {
+                    case 'M':
+                        return "er";
+                    case 'F':
+                        return "sie";
+                    case 'N':
+                        return "es";
+                }
+            }
+    }
+}
+
+function germanObjPronoun(gen: Genders, num: Numbers, per: Persons): string {
+    switch(per) {
+        case 1:
+            return num == 'S' ? "mich" : "uns"; 
+        case 2:
+            return num == 'S' ? "dich" : "euch";
+        case 3:
+            if (num == 'P') return "sie";
+            else {
+                switch(gen) {
+                    case 'M':
+                        return "ihn";
+                    case 'F':
+                        return "sie";
+                    case 'N':
+                        return "es";
+                }
+            }
+    }
+}
+
+function englishSubjPronoun(gen: Genders, num: Numbers, per: Persons): string {
+    switch(per) {
+        case 1:
+            return num == 'S' ? "I" : "we"; 
+        case 2:
+            return num == 'S' ? "you" : "y'all";
+        case 3:
+            if (num == 'P') return "they";
+            else {
+                switch(gen) {
+                    case 'M':
+                        return "he";
+                    case 'F':
+                        return "she";
+                    case 'N':
+                        return "it";
+                }
+            }
+    }
+}
+
+function englishObjPronoun(gen: Genders, num: Numbers, per: Persons): string {
+    switch(per) {
+        case 1:
+            return num == 'S' ? "me" : "us"; 
+        case 2:
+            return num == 'S' ? "you" : "y'all";
+        case 3:
+            if (num == 'P') return "them";
+            else {
+                switch(gen) {
+                    case 'M':
+                        return "him";
+                    case 'F':
+                        return "her";
+                    case 'N':
+                        return "it";
+                }
+            }
+    }
+}
+
+function englishMakePlural(noun: string): string {
+    return `${noun}s`;
+}
+
+function generateSVOPhrase(st: GermanSVOState): [string, string] {
+    var subjGender, objGender: Genders;
+    var subjNumber, objNumber: Numbers;
+    var subjPerson, objPerson: Persons;
+    var subjPhraseEn, subjPhraseDe: string;
+    var verbPhraseEn, verbPhraseDe: string;
+    var objPhraseEn, objPhraseDe: string;
+    var sentenceEn, sentenceDe: string;
+
+    var subjNouns = st.nouns.filter((noun) => noun.canBeSubj);
+    subjNumber = <Numbers>(Math.random() < st.settings.pluralProb ? 'P' : 'S'); 
+    objNumber = <Numbers>(Math.random() < st.settings.pluralProb ? 'P' : 'S'); 
+    if (subjNouns.length == 0 || Math.random() < st.settings.subjPronProb) {
+        subjGender = <Genders>['M', 'F', 'N'][Math.floor(Math.random() * 3)];
+        subjPerson = <Persons>[1, 2, 3][Math.floor(Math.random() * 3)];
+        subjPhraseEn = englishSubjPronoun(subjGender, subjNumber, subjPerson);
+        subjPhraseDe = germanSubjPronoun(subjGender, subjNumber, subjPerson);
+    } else {
+        var subjNoun = subjNouns[Math.floor(Math.random() * subjNouns.length)];
+        subjPerson = 3;
+        subjGender = GermanWords.getGenderGermanWord(null, GermanWordsList, subjNoun.de);
+        var subjDet = GermanDets.getDet('DEFINITE', 'NOMINATIVE', null, null, subjGender, subjNumber);
+        var subjNounEn = subjNumber == 'S' ? subjNoun.en : englishMakePlural(subjNoun.en);
+        var subjNounDe = GermanWords.getCaseGermanWord(null, GermanWordsList, subjNoun.de, 'NOMINATIVE', subjNumber);
+        subjPhraseEn = `the ${subjNounEn}`;
+        subjPhraseDe = `${subjDet} ${subjNounDe}`;
+    }
+    
+    var chosenVerb = st.verbs[Math.floor(Math.random() * st.verbs.length)];
+    var personIndEn = (subjNumber == 'S' ? 0 : 3) + subjPerson - 1;
+    verbPhraseEn = EnglishVerbHelper.getConjugation(null, chosenVerb.en, 'PRESENT', personIndEn);
+    var verbConjDe = GermanVerbsLib.getConjugation(GermanVerbsDict, chosenVerb.de, 'PRASENS', subjPerson, subjNumber);
+
+    var objNouns = st.nouns.filter((noun) => noun.canBeObj);
+    if (objNouns.length == 0 || Math.random() < st.settings.objPronProb) {
+        objGender = <Genders>['M', 'F', 'N'][Math.floor(Math.random() * 3)];
+        objPerson = <Persons>[1, 2, 3][Math.floor(Math.random() * 3)];
+        objPhraseEn = englishObjPronoun(objGender, objNumber, objPerson);
+        objPhraseDe = germanObjPronoun(objGender, objNumber, objPerson);
+    } else {
+        var objNoun = objNouns[Math.floor(Math.random() * objNouns.length)];
+        objPerson = 3;
+        objGender = GermanWords.getGenderGermanWord(null, GermanWordsList, objNoun.de); 
+        var objDet = GermanDets.getDet('DEFINITE', 'ACCUSATIVE', null, null, objGender, objNumber);
+        var objNounEn = objNumber == 'S' ? objNoun.en : englishMakePlural(objNoun.en);
+        var objNounDe = GermanWords.getCaseGermanWord(null, GermanWordsList, objNoun.de, 'ACCUSATIVE', objNumber);
+        objPhraseEn = `the ${objNounEn}`;
+        objPhraseDe = `${objDet} ${objNounDe}`;
+    }
+
+    sentenceEn = `${subjPhraseEn} ${verbPhraseEn} ${objPhraseEn}`;
+    sentenceDe = `${subjPhraseDe} ${verbConjDe[0]} ${objPhraseDe}${verbConjDe.length > 1 ? verbConjDe[1] : ""}`;
+    
+    return [sentenceEn, sentenceDe];
+}
+
+console.log(GermanVerbsLib.getConjugation(GermanVerbsDict, "anschauen", 'PRASENS', 1, 'S'));
+for (var i = 0; i < 20; i++) console.log(generateSVOPhrase(sampleGermanSVOState));
+
+function makeTranslationEditor(ls: [string, string][], validator: (s: string) => boolean):
+    FlashcardGenEditor<[string, string][]> {
+    return multipleEditors(
+        ls,
+        ["", ""],
+        (item) => combineEditors(
+            item,
+            (s: string) => singleTextFieldEditor(s),
+            (s: string) => validatedTextFieldEditor(s, validator)
+        )
+    )
+}
+
+var deSVOQuizzer: FlashcardGenerator<[string, string], GermanSVOState> = {
+    ftemp: {
+        generator: function(seed: [string, string]) {
+            return {
+                params: seed,
+                prompt: seed[0],
+                answers: [seed[1]],
+                hint: seed[1],
+                uuid: guidGenerator()
+            }
+        }
+    },
+    state: sampleGermanSVOState,
+    seeder: function(st: GermanSVOState) {
+        return generateSVOPhrase(st);
+    },
+    updater: (correct, card, st) => st,
+    history: [],
+    editor: (st: GermanSVOState) => {
+        var validateVerbDe = (deStr: string) => deStr in GermanVerbsDict;
+        var validateNounDe = (deStr: string) => deStr in GermanWordsList;
+        var editNouns = makeTranslationEditor(st.nouns.map((nn) => [nn.en, nn.de]), validateNounDe);
+        var editVerbs = makeTranslationEditor(st.verbs.map((vb) => [vb.en, vb.de]), validateVerbDe);
+        var contDiv = document.createElement("div");
+        var nounTitle = document.createElement("h3"); 
+        var verbTitle = document.createElement("h3");
+        nounTitle.textContent = "Nouns";
+        verbTitle.textContent = "Verbs";
+        [nounTitle, editNouns.element, verbTitle, editVerbs.element].map((el) => contDiv.appendChild(el));
+        return {
+            element: contDiv,
+            menuToState: () => {
+                var nouns: GermanNoun[] = editNouns.menuToState().map((wd) => { return {
+                    en: wd[0],
+                    de: wd[1],
+                    tags: [],
+                    hint: "",
+                    canBeSubj: true,
+                    canBeObj: true
+                }});
+                var verbs: GermanVerb[] = editVerbs.menuToState().map((wd) => { return {
+                    en: wd[0],
+                    de: wd[1],
+                    hint: "",
+                    tags: []
+                }});
+                return {
+                    settings: st.settings,
+                    nouns: nouns,
+                    verbs: verbs
+                };
+            }
+        }
+    }
+}
 
 declare global {
     var deVerbs: any
@@ -87,5 +395,13 @@ defaultDecks["german-verb-deck"] = {
     resources: ["german-verbs"],
     state: deVerbQuizzer.state
 };
+defaultDecks["german-svo-deck"] = {
+    name: "German SVO sentences",
+    slug: "german-svo-deck",
+    decktype: "german-svo-driller",
+    resources: [],
+    state: deSVOQuizzer.state
+};
+providedGenerators["german-svo-driller"] = deSVOQuizzer;
 providedGenerators["german-verb-driller"] = deVerbQuizzer;
 indexedResources["german-verbs"] = deVerbsRes;

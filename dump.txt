@@ -1,8 +1,4 @@
-rm -r dist/*
-tsc
-src/index.ts(117,33): error TS2349: This expression is not callable.
-  Type 'Number' has no call signatures.
-src/index.ts(117,38): error TS7006: Parameter 'card' implicitly has an 'any' type.
-src/index.ts(117,64): error TS7006: Parameter 'p' implicitly has an 'any' type.
-src/index.ts(117,88): error TS7006: Parameter 'a' implicitly has an 'any' type.
-src/index.ts(117,91): error TS7006: Parameter 'b' implicitly has an 'any' type.
+
+> web-flashcards@1.0.0 develop
+> webpack-dev-server
+
