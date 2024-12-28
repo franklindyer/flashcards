@@ -202,9 +202,9 @@ function spacedRepUpdater(
 function spacedRepMenu(st: SpacedRepState): FlashcardGenEditor<SpacedRepState> {
     var contDiv = document.createElement("div");
     var conf = st.settings;
-    var initHoursEditor = scrollNumberEditor("Initial interval (hours): ", conf.initialHours, 1, 240);
-    var correctFactor = scrollNumberEditor("Correct factor: ", conf.correctFactor, 1, 10);
-    var incorrectFactor = scrollNumberEditor("Incorrect factor: ", conf.incorrectFactor, 0, 1);
+    var initHoursEditor = scrollNumberEditor("Initial interval (hours): ", conf.initialHours, 1, 240, 1);
+    var correctFactor = scrollNumberEditor("Correct factor: ", conf.correctFactor, 1, 10, 0.1);
+    var incorrectFactor = scrollNumberEditor("Incorrect factor: ", conf.incorrectFactor, 0, 1, 0.01);
     function makeCardEditor(c: SpacedRepCard): FlashcardGenEditor<SpacedRepCard> {
         var ed = doubleTextFieldEditor([c.prompt, c.answers.join('|')]);
         var cardInfo = document.createElement("a");
@@ -294,7 +294,7 @@ const sampleSpacedRepState: SpacedRepState = {
     settings: {
         initialHours: 8,
         correctFactor: 1.2,
-        incorrectFactor: 4,
+        incorrectFactor: 0.5,
         newBatchSize: 10,
         dueBatchSize: 20
     },

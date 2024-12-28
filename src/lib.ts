@@ -228,13 +228,14 @@ export function floatEditor(label: string, val: number, min: number, max: number
     }
 }
 
-export function scrollNumberEditor(label: string, val: number, min: number, max: number):
+export function scrollNumberEditor(label: string, val: number, min: number, max: number, step: number):
     FlashcardGenEditor<number> {
     var scroller = document.createElement("input");
     scroller.type = "number";
     scroller.max = max.toString();
     scroller.min = min.toString();
     scroller.value = val.toString();
+    scroller.step = step.toString();
     var scrollerLabel = document.createElement("a");
     scrollerLabel.textContent = label;
     var scrollerCont = document.createElement("div");
@@ -243,7 +244,7 @@ export function scrollNumberEditor(label: string, val: number, min: number, max:
     scrollerCont.style.display = "block";
     return {
         element: scrollerCont,
-        menuToState: () => parseInt(scroller.value)
+        menuToState: () => parseFloat(scroller.value)
     }
 }
 
