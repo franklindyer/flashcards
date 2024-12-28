@@ -3,6 +3,7 @@ import {
     FlashcardGenerator,
     FlashcardGenEditor,
     boolEditor,
+    floatEditor,
     singleTextFieldEditor,
     validatedTextFieldEditor,
     doubleTextFieldEditor,
@@ -250,7 +251,7 @@ function generateSVOPhrase(st: GermanSVOState): [string, string] {
     }
 
     sentenceEn = `${subjPhraseEn} ${verbPhraseEn} ${objPhraseEn}`;
-    sentenceDe = `${subjPhraseDe} ${verbConjDe[0]} ${objPhraseDe}${verbConjDe.length > 1 ? verbConjDe[1] : ""}`;
+    sentenceDe = `${subjPhraseDe} ${verbConjDe[0]} ${objPhraseDe}${verbConjDe.length > 1 ? ` ${verbConjDe[1]}` : ""}`;
     
     return [sentenceEn, sentenceDe];
 }
@@ -328,7 +329,10 @@ var deSVOQuizzer: FlashcardGenerator<[string, string], GermanSVOState> = {
     editor: (st: GermanSVOState) => {
         var validateVerbDe = (deStr: string) => deStr in GermanVerbsDict;
         var validateNounDe = (deStr: string) => deStr in GermanWordsList;
-//        var editNouns = makeTranslationEditor(st.nouns.map((nn) => [nn.en, nn.de]), validateNounDe);
+        var conf = st.settings;
+        var sliderSubjPron = floatEditor("Probability of subject pronouns", conf.subjPronProb, 0, 1);
+        var sliderObjPron = floatEditor("Probability of object pronouns", conf.objPronProb, 0, 1);
+        var sliderPlural = floatEditor("Probability of plurals", conf.pluralProb, 0, 1);
         var editNouns = makeNounsEditor(st.nouns);
         var editVerbs = makeTranslationEditor(st.verbs.map((vb) => [vb.en, vb.de]), validateVerbDe);
         var contDiv = document.createElement("div");
@@ -336,7 +340,16 @@ var deSVOQuizzer: FlashcardGenerator<[string, string], GermanSVOState> = {
         var verbTitle = document.createElement("h3");
         nounTitle.textContent = "Nouns";
         verbTitle.textContent = "Verbs";
-        [nounTitle, editNouns.element, verbTitle, editVerbs.element].map((el) => contDiv.appendChild(el));
+        var components = [
+            sliderSubjPron.element,
+            sliderObjPron.element,
+            sliderPlural.element,
+            nounTitle,
+            editNouns.element,
+            verbTitle,
+            editVerbs.element
+        ];
+        components.map((el) => contDiv.appendChild(el));
         return {
             element: contDiv,
             menuToState: () => {
@@ -348,7 +361,11 @@ var deSVOQuizzer: FlashcardGenerator<[string, string], GermanSVOState> = {
                     tags: []
                 }});
                 return {
-                    settings: st.settings,
+                    settings: {
+                        subjPronProb: sliderSubjPron.menuToState(),
+                        objPronProb: sliderObjPron.menuToState(),
+                        pluralProb: sliderPlural.menuToState()
+                    },
                     nouns: nouns,
                     verbs: verbs
                 };

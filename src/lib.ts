@@ -202,6 +202,31 @@ export function boolEditor(label: string, val: boolean): FlashcardGenEditor<bool
     return editor;
 }
 
+export function floatEditor(label: string, val: number, min: number, max: number): 
+    FlashcardGenEditor<number> {
+    var slider = document.createElement("input");
+    slider.type = "range";
+    slider.min = min.toString();
+    slider.max = max.toString();
+    slider.value = val.toString();
+    slider.step = ((max-min)/100.0).toString();
+    slider.style.display = "inline-block";
+    slider.style.verticalAlign = "middle";
+    var guid = guidGenerator();
+    slider.id = guid;
+    var sliderLabel = document.createElement("label");
+    sliderLabel.textContent = label;
+    sliderLabel.htmlFor = guid;
+    sliderLabel.style.verticalAlign = "middle";
+    var guid = guidGenerator();
+    var contDiv = document.createElement("div");
+    [slider, sliderLabel].map((el) => contDiv.appendChild(el));
+    return {
+        element: contDiv,
+        menuToState: () => parseFloat(slider.value)
+    }
+}
+
 export function singleTextFieldEditor(txt: string): FlashcardGenEditor<string> {
     var editor: FlashcardGenEditor<string> = {
         element: document.createElement("input"),
