@@ -9,6 +9,7 @@ export type Flashcard<a> = {
     prompt: string,
     answers: string[],
     hint: string,
+    info?: string,
     uuid: string
 }
 
@@ -356,6 +357,12 @@ function buildCardDiv<a>(card: Flashcard<a>) {
     cardDiv.classList.add("flashcard");
     cardDiv.textContent = card.prompt;
     cardDiv.id = card.uuid;
+    if (card.info !== null) {
+        var cardInfo = document.createElement("span");
+        cardInfo.classList.add("flashcard-info");
+        cardInfo.textContent = card.info!;
+        cardDiv.appendChild(cardInfo);
+    }
     var fontSize = 100.0/(10.0*Math.log(10+card.prompt.length));
     cardDiv.style.fontSize = `${fontSize}vw`; 
     return cardDiv;

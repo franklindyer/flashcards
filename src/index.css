@@ -23,6 +23,15 @@
     justify-content: center;
     align-items: center;
     font-size: 10vw;
+    position: relative;
+}
+
+.flashcard-info {
+    color: lightgray;
+    font-size: 16px;
+    position: absolute;
+    bottom: 5px;
+    left: 5px;
 }
 
 .flashcard-slide-in, .flashcard-slide-out {

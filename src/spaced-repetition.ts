@@ -54,7 +54,8 @@ type SpacedRepState = {
 
 type SpacedRepCardSeed = {
     tag: "card",
-    index: number
+    index: number,
+    info?: string
 };
 
 type SpacedRepMenuSeed = {
@@ -125,28 +126,33 @@ function pickNextSpacedRepSeed(st: SpacedRepState): SpacedRepSeed {
     var newInds: number[] 
         = inds.filter((i) => st.cards[i].due == null);
     var dueInds: number[] 
-        = inds.filter((i) => (st.cards[i].due != null && st.cards[i].due < new Date()));
+        = inds.filter((i) => (st.cards[i].due != null && st.cards[i].due! < new Date()));
     var menuCard: SpacedRepMenuSeed = {
         tag: "menu",
         numDue: dueInds.length,
         numNew: newInds.length
     }
+    var cardSeed: SpacedRepCardSeed;
     switch (st.studying) {
         case SpacedRepStudying.NewCards:
             if (newInds.length === 0) {
                 return menuCard;
             }
             var ind = Math.floor(Math.random() * newInds.length);
-            return getSpacedRepCardSeed(newInds[ind]);
+            cardSeed = getSpacedRepCardSeed(newInds[ind]);
+            break;
         case SpacedRepStudying.DueCards:
             if (dueInds.length === 0) {
                 return menuCard;
             }
             var ind = Math.floor(Math.random() * dueInds.length);
-            return getSpacedRepCardSeed(dueInds[ind]);
+            cardSeed = getSpacedRepCardSeed(dueInds[ind]);
+            break;
         case SpacedRepStudying.NotStudying:
             return menuCard;
     }
+    cardSeed.info = `${st.leftInBatch} cards remain`;
+    return cardSeed;
 }
 
 function spacedRepUpdater(
@@ -266,6 +272,7 @@ function spacedRepGen(st: SpacedRepState):
                             prompt: card.prompt,
                             answers: card.answers,
                             hint: card.answers[0],
+                            info: seed.info,
                             uuid: guidGenerator()
                         };
                     case "menu":
