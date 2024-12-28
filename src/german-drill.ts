@@ -324,7 +324,7 @@ var deSVOQuizzer: FlashcardGenerator<[string, string], GermanSVOState> = {
     seeder: function(st: GermanSVOState) {
         return generateSVOPhrase(st);
     },
-    updater: (correct, card, st) => st,
+    updater: (correct, answer, card, st) => st,
     history: [],
     editor: (st: GermanSVOState) => {
         var validateVerbDe = (deStr: string) => deStr in GermanVerbsDict;
@@ -419,7 +419,7 @@ var deVerbQuizzer: FlashcardGenerator<[number, string, string], [string, string]
         var vb = vbs[Math.floor(Math.random() * vbs.length)];
         return [pronInd, vb[0], vb[1]];
     },
-    updater: (correct, card, st) => st,
+    updater: (correct, answer, card, st) => st,
     history: [],
     editor: (vbs: [string, string][]) => {
         var validator = (deStr: string) => window.deVerbs(deStr) !== undefined;

@@ -76,19 +76,10 @@ var ruVerbQuizzer: FlashcardGenerator<[number, string, string], [string, string]
         var vb = vbs[Math.floor(Math.random() * vbs.length)];
         return [pronInd, vb[0], vb[1]];
     },
-    updater: (correct, card, st) => st,
+    updater: (correct, answer, card, st) => st,
     history: [],
     editor: (vbs: [string, string][]) => {
         var validator = (ruStr: string) => window.ruVerbs(ruStr) !== undefined;
-/*        var editor: FlashcardGenEditor<[string, string][]> = multipleEditors(
-            vbs,
-            ["", ""],
-            (vb) => combineEditors(
-                vb,
-                (s: string) => singleTextFieldEditor(s),
-                (s: string) => validatedTextFieldEditor(s, validator) 
-            )
-        ); */
         var editor = makeTranslationEditor(vbs, validator);
         return {
             element: editor.element,
@@ -134,7 +125,7 @@ var ruAdjQuizzer: FlashcardGenerator<
         var adj = st[1][Math.floor(Math.random() * st[1].length)];
         return [noun, adj]
     },
-    updater: (correct, card, st) => st,
+    updater: (correct, answer, card, st) => st,
     history: [],
     editor: (dat: [[string, string][], [string, string][]]) => {
         var nounValidator = (ruStr: string) => window.ruNouns(ruStr) !== undefined;

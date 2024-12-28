@@ -1,6 +1,6 @@
 // Types
 
-interface IDictionary<a> {
+export interface IDictionary<a> {
     [key: string]: a;
 }
 
@@ -25,7 +25,7 @@ export type FlashcardGenerator<a, s> = {
     ftemp: FlashcardTemplate<a, s>,
     state: s,
     seeder: (st: s) => a,
-    updater: (correct: boolean, card: Flashcard<a>, st: s) => s,
+    updater: (correct: boolean, answer: string, card: Flashcard<a>, st: s) => s,
     history: [Flashcard<a>, boolean][],
     editor: (st: s) => FlashcardGenEditor<s>
 }
@@ -112,7 +112,7 @@ function uniformRandomFGen(cards: [string, string][]):
         seeder: function(st: [string, string][]) {
             return Math.floor(Math.random() * arrayLen(st));
         },
-        updater: (correct: boolean, card: Flashcard<number>, st: [string, string][]) => st,
+        updater: (correct: boolean, answer: string, card: Flashcard<number>, st: [string, string][]) => st,
         history: [],
         editor: (ls: [string, string][]) => multipleEditors(ls, ["", ""], doubleTextFieldEditor)
     }
@@ -138,7 +138,7 @@ export function evilFGen(cards: [string, string, string[]][], alpha: number):
             var weights = st[0].map((card) => 1 + card[2].map((p) => st[1][p]).reduce((a, b) => a + b, 0));
             return weightedRandomIndex(weights);
         },
-        updater: function(correct, card, st) {
+        updater: function(correct, answer, card, st) {
             var props = st[0][card.params][2];
             for (var i in props) {
                 if (correct) {
@@ -224,6 +224,25 @@ export function floatEditor(label: string, val: number, min: number, max: number
     return {
         element: contDiv,
         menuToState: () => parseFloat(slider.value)
+    }
+}
+
+export function scrollNumberEditor(label: string, val: number, min: number, max: number):
+    FlashcardGenEditor<number> {
+    var scroller = document.createElement("input");
+    scroller.type = "number";
+    scroller.max = max.toString();
+    scroller.min = min.toString();
+    scroller.value = val.toString();
+    var scrollerLabel = document.createElement("a");
+    scrollerLabel.textContent = label;
+    var scrollerCont = document.createElement("div");
+    scrollerCont.appendChild(scrollerLabel);
+    scrollerCont.appendChild(scroller);
+    scrollerCont.style.display = "block";
+    return {
+        element: scrollerCont,
+        menuToState: () => parseInt(scroller.value)
     }
 }
 
@@ -529,19 +548,20 @@ export async function runFlashcardController(slug: string) {
         guessBox!.onkeydown = (e) => {
             if (e.key == "Enter") {
                 if (guessController(card)) {
+                    var finalAnswer = guessBox.value;
                     guessBox.value = "";
                     slideCardOutOfDiv(card.uuid);
                     setTimeout(() => flashcardLoop(), 1000);
+                    if (!addedToHistory) {
+                        fgen.history.push([card, firstCorrect]);
+                        fgen.state = fgen.updater(firstCorrect, finalAnswer, card, fgen.state);
+                        addedToHistory = true;
+                        updateProgressBar(fgen);
+                        saveDeckToLocal(reg!, reg!.decks[slug], fgen);
+                    }
                 } else {
                     guessBox.oninput = (e) => { guessBox.value = guessBox.value.slice(-1); guessBox.oninput = () => {}; }
                     firstCorrect = false;
-                }
-                if (!addedToHistory) {
-                    fgen.history.push([card, firstCorrect]);
-                    fgen.state = fgen.updater(firstCorrect, card, fgen.state);
-                    addedToHistory = true;
-                    updateProgressBar(fgen);
-                    saveDeckToLocal(reg!, reg!.decks[slug], fgen);
                 }
             }
         }
@@ -577,7 +597,7 @@ var additionQuizzer: FlashcardGenerator<[number, number], number> = {
         var g = () => Math.floor(Math.random() * m);
         return [g(), g()];
     },
-    updater: (correct, card, st) => st,
+    updater: (correct, answer, card, st) => st,
     history: [],
     editor: (m: number) => {
         var editor = {
