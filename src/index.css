@@ -133,8 +133,10 @@
     margin: 5px;
 }
 
-.deck-name-editor-button {
+.deck-delete-button, .deck-name-editor-button, .deck-clone-button {
     float: right;
+    margin-left: 2px;
+    margin-right: 2px;
 }
 
 #flashcard-deck-editor input {

@@ -214,8 +214,8 @@ export function floatEditor(label: string, val: number, min: number, max: number
     slider.type = "range";
     slider.min = min.toString();
     slider.max = max.toString();
-    slider.value = val.toString();
     slider.step = ((max-min)/100.0).toString();
+    slider.value = val.toString();
     slider.style.display = "inline-block";
     slider.style.verticalAlign = "middle";
     var guid = guidGenerator();
@@ -475,7 +475,33 @@ function generateDecklistMenu(
             e.cancelBubble = true;
             if (e.stopPropagation) e.stopPropagation();
         })(decklist[k], deckDiv);
+        var deckDeleteBtn = document.createElement("button");
+        deckDeleteBtn.classList.add("deck-delete-button");
+        deckDeleteBtn.textContent = "Delete";
+        deckDeleteBtn.onclick = ((dk) => (e) => {
+            var confirmation = confirm(`Are you sure you want to delete "${dk.name}"?`);
+            if (confirmation) {
+                delete decklist[dk.slug];
+            }
+            e.cancelBubble = true;
+            if (e.stopPropagation) e.stopPropagation();
+            generateDecklistMenu(decklist, onfinish);
+        })(decklist[k]);
+        var deckCloneBtn = document.createElement("button");
+        deckCloneBtn.classList.add("deck-clone-button");
+        deckCloneBtn.textContent = "Clone";
+        deckCloneBtn.onclick = ((dk) => (e) => {
+            var guid = guidGenerator();
+            var deckClone = <FlashcardDeck<any>>JSON.parse(JSON.stringify(dk));
+            deckClone.slug = guid;
+            decklist[guid] = deckClone;
+            e.cancelBubble = true;
+            if (e.stopPropagation) e.stopPropagation();
+            generateDecklistMenu(decklist, onfinish);
+        })(decklist[k])
         deckDiv.appendChild(deckEditBtn);
+        deckDiv.appendChild(deckDeleteBtn);
+        deckDiv.appendChild(deckCloneBtn);
         decklistEditor.appendChild(deckDiv);
     }
 }
