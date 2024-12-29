@@ -122,10 +122,11 @@
     background-color: #eeeeff;
     width: 90%;
     box-shadow: 0 6px #9999aa;
+    opacity: 0.8;
 }
 
 .deck-editor-entry:hover {
-    background-color: #ddddee;
+    opacity: 1.0;
 }
 
 .deck-editor-entry input {

@@ -13,7 +13,8 @@ import {
     multipleEditors,
     defaultDecks,
     providedGenerators,
-    indexedResources
+    indexedResources,
+    defaultDeckView
     } from "./lib";
 
 enum SpacedRepCardStatus {
@@ -318,6 +319,7 @@ defaultDecks["spaced-repetition-deck"] = {
     slug: "spaced-repetition-deck",
     decktype: "spaced-repetition-driller",
     resources: [],
+    view: defaultDeckView,
     state: sampleSpacedRepState
 };
 providedGenerators["spaced-repetition-driller"] = spacedRepGen(sampleSpacedRepState);

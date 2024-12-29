@@ -40,7 +40,7 @@ export type FlashcardDeck<s> = {
     slug: string,
     decktype: string,
     resources: string[],
-    view?: FlashcardDeckView,
+    view: FlashcardDeckView,
     state: s
 }
 
@@ -417,10 +417,11 @@ function updateProgressBar<a, s>(fgen: FlashcardGenerator<a, s>) {
 
 function generateDeckNameEditor(deck: FlashcardDeck<any>): FlashcardGenEditor<FlashcardDeck<any>> {
     var nicknameEditor = singleTextFieldEditor(deck.name);
+    var colorEditor = singleTextFieldEditor(deck.view.color); 
     var closeBtn = document.createElement("button");
     closeBtn.textContent = "Save";
     var contDiv = document.createElement("div");
-    [nicknameEditor.element, closeBtn].map((el) => contDiv.appendChild(el));
+    [nicknameEditor.element, colorEditor.element, closeBtn].map((el) => contDiv.appendChild(el));
     contDiv.onclick = (e) => {
         e.cancelBubble = true;
         if (e.stopPropagation) e.stopPropagation();
@@ -429,6 +430,7 @@ function generateDeckNameEditor(deck: FlashcardDeck<any>): FlashcardGenEditor<Fl
         element: contDiv,
         menuToState: () => {
             deck.name = nicknameEditor.menuToState();
+            deck.view.color = colorEditor.menuToState();
             contDiv.remove();
             return deck;
         }
@@ -675,6 +677,10 @@ var additionQuizzer: FlashcardGenerator<[number, number], number> = {
     }
 }
 
+export var defaultDeckView: FlashcardDeckView = {
+    color: "#eeeeff"
+};
+
 export var defaultDecks: IDictionary<FlashcardDeck<any>> = {
     "addition-quiz-deck": {
         name: "Addition quizzer",
@@ -691,6 +697,7 @@ export var defaultDecks: IDictionary<FlashcardDeck<any>> = {
         slug: "key-value-quiz-deck",
         decktype: "key-value-quizzer",
         resources: [],
+        view: defaultDeckView,
         state: keyValueQuizzer.state
     }
 }
