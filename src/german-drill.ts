@@ -444,6 +444,9 @@ defaultDecks["german-verb-deck"] = {
     slug: "german-verb-deck",
     decktype: "german-verb-driller",
     resources: ["german-verbs"],
+    view: {
+        color: "#ffffdd"
+    },
     state: deVerbQuizzer.state
 };
 defaultDecks["german-svo-deck"] = {
@@ -451,6 +454,9 @@ defaultDecks["german-svo-deck"] = {
     slug: "german-svo-deck",
     decktype: "german-svo-driller",
     resources: [],
+    view: {
+        color: "#ffffdd"
+    },
     state: deSVOQuizzer.state
 };
 providedGenerators["german-svo-driller"] = deSVOQuizzer;

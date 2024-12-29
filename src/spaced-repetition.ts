@@ -126,7 +126,9 @@ function pickNextSpacedRepSeed(st: SpacedRepState): SpacedRepSeed {
     var newInds: number[] 
         = inds.filter((i) => st.cards[i].due == null);
     var dueInds: number[] 
-        = inds.filter((i) => (st.cards[i].due != null && st.cards[i].due! < new Date()));
+        = inds.filter((i) => (st.cards[i].due != null && new Date(st.cards[i].due!) < new Date()));
+    console.log(st);
+    console.log(dueInds);
     var menuCard: SpacedRepMenuSeed = {
         tag: "menu",
         numDue: dueInds.length,
@@ -174,12 +176,14 @@ function spacedRepUpdater(
             if (cardState.due === null) {
                 if (cardState.streak >= 3) {
                     cardState.lastInterval = st.settings.initialHours;
-                    cardState.due = <Date>JSON.parse(JSON.stringify(new Date()));
+                    cardState.due = new Date();
                     cardState.due!.setHours(cardState.due!.getHours() + cardState.lastInterval);
                 }
-            } else {
-                cardState.due.setHours(cardState.due.getHours() + cardState.lastInterval); 
+            } else if (correct) {
+                cardState.due = new Date();
+                cardState.due!.setHours(cardState.due!.getHours() + cardState.lastInterval); 
             }
+            cardState.due = <Date>JSON.parse(JSON.stringify(cardState.due));
             st.leftInBatch += -1;
             if (st.leftInBatch === 0) {
                 st.studying = SpacedRepStudying.NotStudying;

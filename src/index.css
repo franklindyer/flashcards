@@ -128,10 +128,18 @@
     background-color: #ddddee;
 }
 
+.deck-editor-entry input {
+    margin: 5px;
+}
+
+.deck-name-editor-button {
+    float: right;
+}
+
 #flashcard-deck-editor input {
     display: inline-block;
     margin: 5px;
-    padding: 5px;
+    padding: 2px;
     border-radius: 5px;
 }
 

@@ -162,6 +162,9 @@ defaultDecks["russian-verb-deck"] = {
     slug: "russian-verb-deck",
     decktype: "russian-verb-driller",
     resources: ["russian-verbs"],
+    view: {
+        color: "#eee0ff"
+    },
     state: ruVerbQuizzer.state
 };
 
@@ -170,6 +173,9 @@ defaultDecks["russian-adj-deck"] = {
     slug: "russian-adj-deck",
     decktype: "russian-adj-driller",
     resources: ["russian-nouns", "russian-adjectives"],
+    view: {
+        color: "#eee0ff"
+    },
     state: ruAdjQuizzer.state
 };
 

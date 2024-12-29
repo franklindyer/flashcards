@@ -31,11 +31,16 @@ export type FlashcardGenerator<a, s> = {
     editor: (st: s) => FlashcardGenEditor<s>
 }
 
+export type FlashcardDeckView = {
+    color: string
+}
+
 export type FlashcardDeck<s> = {
     name: string,
     slug: string,
     decktype: string,
-    resources: string[]
+    resources: string[],
+    view?: FlashcardDeckView,
     state: s
 }
 
@@ -410,19 +415,65 @@ function updateProgressBar<a, s>(fgen: FlashcardGenerator<a, s>) {
     progressBar.style.backgroundColor = `rgba(${225-percent/3},${155+percent}, 150)`;
 }
 
-function generateDecklistMenu(decklist: IDictionary<FlashcardDeck<any>>) {
+function generateDeckNameEditor(deck: FlashcardDeck<any>): FlashcardGenEditor<FlashcardDeck<any>> {
+    var nicknameEditor = singleTextFieldEditor(deck.name);
+    var closeBtn = document.createElement("button");
+    closeBtn.textContent = "Save";
+    var contDiv = document.createElement("div");
+    [nicknameEditor.element, closeBtn].map((el) => contDiv.appendChild(el));
+    contDiv.onclick = (e) => {
+        e.cancelBubble = true;
+        if (e.stopPropagation) e.stopPropagation();
+    };
+    var ed = {
+        element: contDiv,
+        menuToState: () => {
+            deck.name = nicknameEditor.menuToState();
+            contDiv.remove();
+            return deck;
+        }
+    }
+    return ed;
+}
+
+function generateDecklistMenu(
+    decklist: IDictionary<FlashcardDeck<any>>,
+    onfinish: (st: IDictionary<FlashcardDeck<any>>) => void) {
+
     var decklistEditor = <HTMLElement>document.getElementById("flashcard-decklist-editor");
     decklistEditor.innerHTML = "";
     var decklistOverlay = <HTMLElement>document.getElementById("flashcard-decklist-overlay");
+   
+    Object.keys(decklist).sort(); 
     for (var k in decklist) {
         var deckDiv = document.createElement("div");
         var slug = decklist[k].slug;
         deckDiv.textContent = decklist[k].name;
         deckDiv.classList.add("deck-editor-entry");
+        if (decklist[k].view !== undefined) {
+            deckDiv.style.backgroundColor = decklist[k].view!.color;
+        }
         deckDiv.onclick = ((s) => (e) => {
             decklistOverlay.style.display = "none";
+            onfinish(decklist);
             runFlashcardController(s);
         })(slug);
+        var deckEditBtn = document.createElement("button");
+        deckEditBtn.textContent = "Rename";
+        deckEditBtn.classList.add("deck-name-editor-button");
+        deckEditBtn.onclick = ((dk, deckDiv) => (e) => {
+            var ed = generateDeckNameEditor(dk);
+            var closeBtn = ed.element.getElementsByTagName("button")[0];
+            closeBtn.onclick = (e) => {
+                var newDeck = ed.menuToState();
+                decklist[dk.slug] = newDeck;
+                generateDecklistMenu(decklist, onfinish);
+            };
+            deckDiv.replaceChildren(ed.element);
+            e.cancelBubble = true;
+            if (e.stopPropagation) e.stopPropagation();
+        })(decklist[k], deckDiv);
+        deckDiv.appendChild(deckEditBtn);
         decklistEditor.appendChild(deckDiv);
     }
 }
@@ -515,7 +566,9 @@ export async function runFlashcardController(slug: string) {
     decklistBtn.onclick = (e) => {
         clearCardDiv();
         var decklistOverlay = <HTMLElement>document.getElementById("flashcard-decklist-overlay");
-        generateDecklistMenu(reg!.decks);
+        generateDecklistMenu(reg!.decks, (ds) => {
+            localStorage.setItem("decks", JSON.stringify(ds));
+        });
         decklistOverlay.style.display = "block";
     }
     var exportBtn = <HTMLElement>document.getElementById("export-deck-button");
@@ -538,7 +591,6 @@ export async function runFlashcardController(slug: string) {
                 fgen.state = JSON.parse(<string>e.target!.result).state;
                 saveDeckToLocal(reg!, reg!.decks[slug], fgen);
             };
-            console.log(file); 
             reader.readAsText(file, "UTF-8");
         }
     }
@@ -629,6 +681,9 @@ export var defaultDecks: IDictionary<FlashcardDeck<any>> = {
         slug: "addition-quiz-deck",
         decktype: "addition-quizzer",
         resources: [],
+        view: {
+            color: "#ffeeee"
+        },
         state: 20
     },
     "key-value-quiz-deck": {
