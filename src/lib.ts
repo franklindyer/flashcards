@@ -301,10 +301,10 @@ export function combineEditors<a, b>(
     return editor;
 }
 
-export function fixedNumEditors<a>(ls: a[], ed: (st: a) => FlashcardGenEditor<a>):
-    FlashcardGenEditor<a[]> {
-    var children: FlashcardGenEditor<a>[] = [];
-    var editor: FlashcardGenEditor<a[]> = {
+export function fixedNumEditors<a, b>(ls: a[], ed: (st: a) => FlashcardGenEditor<b>):
+    FlashcardGenEditor<b[]> {
+    var children: FlashcardGenEditor<b>[] = [];
+    var editor: FlashcardGenEditor<b[]> = {
         element: document.createElement("div"),
         menuToState: () => arrayReindex(children.map((c) => c.menuToState()))
     }
@@ -461,8 +461,9 @@ function generateDecklistMenu(
             runFlashcardController(s);
         })(slug);
         var deckEditBtn = document.createElement("button");
-        deckEditBtn.textContent = "Rename";
-        deckEditBtn.classList.add("deck-name-editor-button");
+//        deckEditBtn.textContent = "Rename";
+        deckEditBtn.innerHTML = "<img src='/edit.png'/>";
+        deckEditBtn.classList.add("deck-editor-button");
         deckEditBtn.onclick = ((dk, deckDiv) => (e) => {
             var ed = generateDeckNameEditor(dk);
             var closeBtn = ed.element.getElementsByTagName("button")[0];
@@ -476,8 +477,9 @@ function generateDecklistMenu(
             if (e.stopPropagation) e.stopPropagation();
         })(decklist[k], deckDiv);
         var deckDeleteBtn = document.createElement("button");
-        deckDeleteBtn.classList.add("deck-delete-button");
-        deckDeleteBtn.textContent = "Delete";
+        deckDeleteBtn.classList.add("deck-editor-button");
+//        deckDeleteBtn.textContent = "Delete";
+        deckDeleteBtn.innerHTML = "<img src='/trash.png'/>";
         deckDeleteBtn.onclick = ((dk) => (e) => {
             var confirmation = confirm(`Are you sure you want to delete "${dk.name}"?`);
             if (confirmation) {
@@ -488,8 +490,9 @@ function generateDecklistMenu(
             generateDecklistMenu(decklist, onfinish);
         })(decklist[k]);
         var deckCloneBtn = document.createElement("button");
-        deckCloneBtn.classList.add("deck-clone-button");
-        deckCloneBtn.textContent = "Clone";
+        deckCloneBtn.classList.add("deck-editor-button");
+//        deckCloneBtn.textContent = "Clone";
+        deckCloneBtn.innerHTML = "<img src='/copy.png'/>";
         deckCloneBtn.onclick = ((dk) => (e) => {
             var guid = guidGenerator();
             var deckClone = <FlashcardDeck<any>>JSON.parse(JSON.stringify(dk));

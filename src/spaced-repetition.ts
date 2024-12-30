@@ -10,6 +10,7 @@ import {
     singleTextFieldEditor,
     doubleTextFieldEditor,
     combineEditors,
+    fixedNumEditors,
     multipleEditors,
     defaultDecks,
     providedGenerators,
@@ -43,7 +44,8 @@ type SpacedRepSettings = {
     correctFactor: number,
     incorrectFactor: number,
     newBatchSize: number,
-    dueBatchSize: number
+    dueBatchSize: number,
+    activeTags: string[]
 }
 
 type SpacedRepState = {
@@ -74,12 +76,12 @@ function getSpacedRepCardSeed(ind: number): SpacedRepCardSeed {
     }
 }
 
-function makeSpacedRepCard(prompt: string, answers: string[]): SpacedRepCard {
+function makeSpacedRepCard(prompt: string, answers: string[], tags: string[]): SpacedRepCard {
     return {
         guid: guidGenerator(),
         prompt: prompt,
         answers: answers,
-        tags: [],
+        tags: ["all"].concat(tags),
         due: null,
         lastInterval: 0,
         streak: 0
@@ -124,12 +126,12 @@ function getSpacedRepMenuCard(menuSeed: SpacedRepMenuSeed): Flashcard<SpacedRepS
 
 function pickNextSpacedRepSeed(st: SpacedRepState): SpacedRepSeed {
     var inds = [...Array(st.cards.length).keys()];
+    var isActiveTag = (tg: string) => st.settings.activeTags.includes(tg);
+    inds = inds.filter((i) => st.cards[i].tags.map(isActiveTag).includes(true));
     var newInds: number[] 
         = inds.filter((i) => st.cards[i].due == null);
     var dueInds: number[] 
         = inds.filter((i) => (st.cards[i].due != null && new Date(st.cards[i].due!) < new Date()));
-    console.log(st);
-    console.log(dueInds);
     var menuCard: SpacedRepMenuSeed = {
         tag: "menu",
         numDue: dueInds.length,
@@ -191,7 +193,6 @@ function spacedRepUpdater(
             }
             break;
         case "menu":
-            console.log("DOING MENU CARD");
             if (answer === "new") {
                 st.leftInBatch = st.settings.newBatchSize;
                 st.studying = SpacedRepStudying.NewCards;
@@ -210,8 +211,23 @@ function spacedRepMenu(st: SpacedRepState): FlashcardGenEditor<SpacedRepState> {
     var initHoursEditor = scrollNumberEditor("Initial interval (hours): ", conf.initialHours, 1, 240, 1);
     var correctFactor = scrollNumberEditor("Correct factor: ", conf.correctFactor, 1, 10, 0.1);
     var incorrectFactor = scrollNumberEditor("Incorrect factor: ", conf.incorrectFactor, 0, 1, 0.01);
+
+    var allTags = [...new Set(st.cards.map((c) => c.tags).flat())];
+    var allTagStatuses = allTags.map((s) => st.settings.activeTags.includes(s));
+    var activeTagsDiv = document.createElement("div");
+    activeTagsDiv.innerHTML = `<h3>Active tags</h3>`;
+    var makeTagSelector = (s: string): FlashcardGenEditor<string[]> => {
+        var ed = boolEditor(s, st.settings.activeTags.includes(s));
+        return {
+            element: ed.element,
+            menuToState: () => ed.menuToState() ? [s] : []
+        }
+    }
+    var activeTagsEditor = fixedNumEditors(allTags, makeTagSelector); 
+    activeTagsDiv.appendChild(activeTagsEditor.element);
+
     function makeCardEditor(c: SpacedRepCard): FlashcardGenEditor<SpacedRepCard> {
-        var ed = doubleTextFieldEditor([c.prompt, c.answers.join('|')]);
+        var ed = fixedNumEditors([c.prompt, c.answers.join('|'), c.tags.join(',')], singleTextFieldEditor);
         var cardInfo = document.createElement("a");
         cardInfo.style.color = "lightgray";
         cardInfo.style.marginLeft = "10px";
@@ -231,7 +247,7 @@ function spacedRepMenu(st: SpacedRepState): FlashcardGenEditor<SpacedRepState> {
                     guid: c.guid,
                     prompt: tp[0],
                     answers: tp[1].split('|'),
-                    tags: [],
+                    tags: tp[2].split(','),
                     due: c.due,
                     lastInterval: c.lastInterval,
                     streak: c.streak
@@ -239,11 +255,16 @@ function spacedRepMenu(st: SpacedRepState): FlashcardGenEditor<SpacedRepState> {
             }
         }
     };
-    var cardsEditor = multipleEditors(st.cards, makeSpacedRepCard("", []), makeCardEditor);
+    var cardsEditor = multipleEditors(st.cards, makeSpacedRepCard("", [], []), makeCardEditor);
+    var cardsEditorTitle = document.createElement("h3");
+    cardsEditorTitle.textContent = "Cards";
+    cardsEditor.element.prepend(cardsEditorTitle);
+
     var components = [
         initHoursEditor.element,
         correctFactor.element,
         incorrectFactor.element,
+        activeTagsDiv,
         cardsEditor.element
     ];
     components.map((el) => contDiv.appendChild(el));
@@ -256,6 +277,7 @@ function spacedRepMenu(st: SpacedRepState): FlashcardGenEditor<SpacedRepState> {
                 incorrectFactor: incorrectFactor.menuToState(),
                 newBatchSize: 10,
                 dueBatchSize: 20,
+                activeTags: activeTagsEditor.menuToState().flat()
             },
             studying: SpacedRepStudying.NotStudying,
             cards: cardsEditor.menuToState(),
@@ -301,15 +323,18 @@ const sampleSpacedRepState: SpacedRepState = {
         correctFactor: 1.2,
         incorrectFactor: 0.5,
         newBatchSize: 10,
-        dueBatchSize: 20
+        dueBatchSize: 20,
+        activeTags: ["all"]
     },
     studying: SpacedRepStudying.NotStudying,
     cards: [
-        makeSpacedRepCard("dog", ["perro"]),
-        makeSpacedRepCard("cat", ["gato"]),
-        makeSpacedRepCard("apple", ["manzana"]),
-        makeSpacedRepCard("orange", ["naranja"]),
-        makeSpacedRepCard("fascism", ["fascismo"])
+        makeSpacedRepCard("dog", ["perro"], ["animal"]),
+        makeSpacedRepCard("cat", ["gato"], ["animal"]),
+        makeSpacedRepCard("frog", ["rana"], ["animal"]),
+        makeSpacedRepCard("bird", ["pájaro"], ["animal"]),
+        makeSpacedRepCard("apple", ["manzana"], []),
+        makeSpacedRepCard("orange", ["naranja"], []),
+        makeSpacedRepCard("fascism", ["fascismo"], [])
     ],
     leftInBatch: 0
 }
