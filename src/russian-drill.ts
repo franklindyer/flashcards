@@ -13,12 +13,16 @@ import {
     providedGenerators,
     indexedResources
     } from "./lib";
+import {
+    geometricProgressFGen
+    } from "./progression";
 const papa = require("papaparse");
 
 declare global {
     var ruAdjectives: any
     var ruNouns: any
     var ruVerbs: any
+    var ruFreqlist: any
 }
 
 var ruDataPromise = (filename: string, objname: string) => 
@@ -28,6 +32,14 @@ var ruDataPromise = (filename: string, objname: string) =>
         var v = csvData.find((k: any) => k.bare === bareVerb);
         return v; 
     }
+});
+
+var ruFreqlistPromise = () => 
+    fetch("/data/ru-freqlist.csv").then((r) => r.text()).then((s) => {
+        var csvData = papa.parse(s, { header: false }).data;
+        (<any>window)["ruFreqlist"] = (n: number) => {
+            return csvData[n];
+        }
 });
 
 const enNomPron = ["I", "you", "he", "we", "y'all", "they"];
@@ -148,14 +160,10 @@ var ruAdjQuizzer: FlashcardGenerator<
     }
 }
 
-var ruPrepQuizzer = evilFGen([
-    ["forest", "лес", ["simple"]],
-    ["garden", "сад", ["simple"]],
-    ["house", "дом", ["simple"]],
-    ["in the forest", "в лесу", ["prep"]],
-    ["in the garden", "в саду", ["prep"]],
-    ["in the house", "в доме", ["prep"]]
-], 0.9);
+var ruFreqQuizzer = geometricProgressFGen((n: number) => {
+    var record = window.ruFreqlist(n);
+    return [record[1], record[0].split(" ")[0].split("/")[0], ""];
+}, 1000);
 
 defaultDecks["russian-verb-deck"] = {
     name: "Russian present-tense verb conjugations",
@@ -179,9 +187,22 @@ defaultDecks["russian-adj-deck"] = {
     state: ruAdjQuizzer.state
 };
 
+defaultDecks["russian-freq-deck"] = {
+    name: "Russian 1000 most common words",
+    slug: "russian-freq-deck",
+    decktype: "russian-freq-driller",
+    resources: ["russian-freqlist"],
+    view: {
+        color: "#eee0ff"
+    },
+    state: ruFreqQuizzer.state
+}
+
 providedGenerators["russian-verb-driller"] = ruVerbQuizzer;
 providedGenerators["russian-adj-driller"] = ruAdjQuizzer;
+providedGenerators["russian-freq-driller"] = ruFreqQuizzer; 
 
 indexedResources["russian-verbs"] = () => ruDataPromise("ru-verbs", "ruVerbs");
 indexedResources["russian-nouns"] = () => ruDataPromise("ru-nouns", "ruNouns");
 indexedResources["russian-adjectives"] = () => ruDataPromise("ru-adjectives", "ruAdjectives");
+indexedResources["russian-freqlist"] = () => ruFreqlistPromise();

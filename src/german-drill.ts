@@ -16,6 +16,9 @@ import {
     indexedResources
     } from "./lib";
 import {
+    geometricProgressFGen
+    } from "./progression";
+import {
     Genders,
     Numbers
     } from "german-determiners"
@@ -376,14 +379,21 @@ var deSVOQuizzer: FlashcardGenerator<[string, string], GermanSVOState> = {
 
 declare global {
     var deVerbs: any
+    var deFreqlist: any
 }
 
 var deVerbsRes = () => fetch("/data/de-verbs.csv").then((r) => r.text()).then((s) => {
     var csvData = papa.parse(s, { header: true, dynamicTyping: true }).data;
-    console.log(csvData[1]);
     window.deVerbs = (bareVerb: string) => {
         var v = csvData.find((k: any) => k.Infinitive === bareVerb);
         return v; 
+    }
+});
+
+var deFreqlistRes = () => fetch("/data/de-freqlist.csv").then((r) => r.text()).then((s) => {
+    var csvData = papa.parse(s, { header: false, delimiter: '|', dynamicTyping: true }).data;
+     window.deFreqlist = (n: number) => {
+        return csvData[n];
     }
 });
 
@@ -439,6 +449,11 @@ var deVerbQuizzer: FlashcardGenerator<[number, string, string], [string, string]
     }
 }
 
+var deFreqQuizzer = geometricProgressFGen((n: number) => {
+    var record = window.deFreqlist(n);
+    return <[string, string, string]>[record[1], record[0], record[3]];
+}, 1000);
+
 defaultDecks["german-verb-deck"] = {
     name: "German present-tense verb conjugations",
     slug: "german-verb-deck",
@@ -459,6 +474,18 @@ defaultDecks["german-svo-deck"] = {
     },
     state: deSVOQuizzer.state
 };
+defaultDecks["german-freqlist-deck"] = {
+    name: "German 1000 frequent words",
+    slug: "german-freqlist-deck",
+    decktype: "german-freq-driller",
+    resources: ["german-freqlist"],
+    view: {
+        color: "#ffffdd"
+    },
+    state: deFreqQuizzer.state
+}
 providedGenerators["german-svo-driller"] = deSVOQuizzer;
 providedGenerators["german-verb-driller"] = deVerbQuizzer;
+providedGenerators["german-freq-driller"] = deFreqQuizzer;
 indexedResources["german-verbs"] = deVerbsRes;
+indexedResources["german-freqlist"] = deFreqlistRes;
