@@ -5,11 +5,11 @@
 assets by status 19.2 MiB [cached] 1 asset
 runtime modules 27.4 KiB 12 modules
 orphan modules 32.5 KiB [orphan] 4 modules
-javascript modules 227 KiB
+javascript modules 234 KiB
   modules by path ./node_modules/ 172 KiB 19 modules
-  modules by path ./src/*.ts 55.3 KiB
+  modules by path ./src/*.ts 61.8 KiB
     ./src/index.ts 279 bytes [built] [code generated]
-    ./src/lib.ts 24.7 KiB [built] [code generated]
+    ./src/lib.ts 24.8 KiB [built] [code generated]
     ./src/spaced-repetition.ts 10.3 KiB [built] [code generated]
     + 3 modules
 json modules 18.7 MiB
@@ -18,229 +18,103 @@ json modules 18.7 MiB
   ./node_modules/english-plurals-list/dist/plurals.json 43.6 KiB [built] [code generated]
   ./node_modules/english-verbs/english_verbs.json 174 KiB [built] [code generated]
 
-ERROR in ./src/progression.ts 9:8
-Module parse failed: Unexpected token (9:8)
-File was processed with these loaders:
- * ./node_modules/ts-loader/index.js
-You may need an additional loader to handle the result of these loaders.
-|         ftemp: {
-|             generator: 
->         }
-|     };
-|     {
- @ ./src/index.ts 7:0-24
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-drill.ts
+./src/russian-drill.ts 287:10-14
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-drill.ts(287,11)
+      TS1005: ',' expected.
+ @ ./src/index.ts 6:0-26
 
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts
-./src/progression.ts 23:74-76
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts(23,75)
-      TS1005: '{' expected.
- @ ./src/index.ts 7:0-24
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-drill.ts
+./src/russian-drill.ts 287:21-29
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-drill.ts(287,22)
+      TS1005: ',' expected.
+ @ ./src/index.ts 6:0-26
 
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts
-./src/progression.ts 23:77-78
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts(23,78)
-      TS1136: Property assignment expected.
- @ ./src/index.ts 7:0-24
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-drill.ts
+./src/russian-drill.ts 288:10-19
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-drill.ts(288,11)
+      TS1005: ',' expected.
+ @ ./src/index.ts 6:0-26
 
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts
-./src/progression.ts 32:9-10
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts(32,10)
-      TS1128: Declaration or statement expected.
- @ ./src/index.ts 7:0-24
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-drill.ts
+./src/russian-drill.ts 288:26-39
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-drill.ts(288,27)
+      TS1005: ',' expected.
+ @ ./src/index.ts 6:0-26
 
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts
-./src/progression.ts 35:17-18
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts(35,18)
-      TS1005: ';' expected.
- @ ./src/index.ts 7:0-24
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-drill.ts
+./src/russian-drill.ts 289:10-16
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-drill.ts(289,11)
+      TS1005: ',' expected.
+ @ ./src/index.ts 6:0-26
 
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts
-./src/progression.ts 36:17-18
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts(36,18)
-      TS1005: ';' expected.
- @ ./src/index.ts 7:0-24
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-drill.ts
+./src/russian-drill.ts 289:23-34
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-drill.ts(289,24)
+      TS1005: ',' expected.
+ @ ./src/index.ts 6:0-26
 
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts
-./src/progression.ts 37:9-10
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts(37,10)
-      TS1128: Declaration or statement expected.
- @ ./src/index.ts 7:0-24
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-drill.ts
+./src/russian-drill.ts 290:10-20
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-drill.ts(290,11)
+      TS1005: ',' expected.
+ @ ./src/index.ts 6:0-26
 
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts
-./src/progression.ts 38:24-25
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts(38,25)
-      TS1003: Identifier expected.
- @ ./src/index.ts 7:0-24
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-drill.ts
+./src/russian-drill.ts 290:27-40
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-drill.ts(290,28)
+      TS1005: ',' expected.
+ @ ./src/index.ts 6:0-26
 
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts
-./src/progression.ts 38:53-55
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts(38,54)
-      TS1144: '{' or ';' expected.
- @ ./src/index.ts 7:0-24
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-drill.ts
+./src/russian-drill.ts 291:10-16
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-drill.ts(291,11)
+      TS1005: ',' expected.
+ @ ./src/index.ts 6:0-26
 
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts
-./src/progression.ts 43:9-10
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts(43,10)
-      TS1128: Declaration or statement expected.
- @ ./src/index.ts 7:0-24
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-drill.ts
+./src/russian-drill.ts 291:23-34
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-drill.ts(291,24)
+      TS1005: ',' expected.
+ @ ./src/index.ts 6:0-26
 
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts
-./src/progression.ts 52:15-16
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts(52,16)
-      TS1005: ';' expected.
- @ ./src/index.ts 7:0-24
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-drill.ts
+./src/russian-drill.ts 292:10-18
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-drill.ts(292,11)
+      TS1005: ',' expected.
+ @ ./src/index.ts 6:0-26
 
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts
-./src/progression.ts 53:14-15
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts(53,15)
-      TS1005: ';' expected.
- @ ./src/index.ts 7:0-24
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-drill.ts
+./src/russian-drill.ts 292:25-41
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-drill.ts(292,26)
+      TS1005: ',' expected.
+ @ ./src/index.ts 6:0-26
 
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts
-./src/progression.ts 53:45-46
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts(53,46)
-      TS1005: '=>' expected.
- @ ./src/index.ts 7:0-24
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-drill.ts
+./src/russian-drill.ts 293:10-18
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-drill.ts(293,11)
+      TS1005: ',' expected.
+ @ ./src/index.ts 6:0-26
 
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts
-./src/progression.ts 64:4-5
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts(64,5)
-      TS1128: Declaration or statement expected.
- @ ./src/index.ts 7:0-24
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-drill.ts
+./src/russian-drill.ts 293:25-40
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-drill.ts(293,26)
+      TS1005: ',' expected.
+ @ ./src/index.ts 6:0-26
 
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts
-./src/progression.ts 65:0-1
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts(65,1)
-      TS1128: Declaration or statement expected.
- @ ./src/index.ts 7:0-24
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-drill.ts
+./src/russian-drill.ts 294:10-20
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-drill.ts(294,11)
+      TS1005: ',' expected.
+ @ ./src/index.ts 6:0-26
 
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts
-./src/progression.ts 21:4-10
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts(21,5)
-      TS2739: Type '{ ftemp: { generator: (seed: number, st: GeometricProgressState) => never; }; }' is missing the following properties from type 'FlashcardGenerator<number, GeometricProgressState>': state, seeder, updater, history, editor
- @ ./src/index.ts 7:0-24
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-drill.ts
+./src/russian-drill.ts 294:27-41
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-drill.ts(294,28)
+      TS1005: ',' expected.
+ @ ./src/index.ts 6:0-26
 
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts
-./src/progression.ts 25:20-26
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts(25,21)
-      TS2353: Object literal may only specify known properties, and 'params' does not exist in type 'FlashcardGenerator<number, GeometricProgressState>'.
- @ ./src/index.ts 7:0-24
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts
-./src/progression.ts 25:28-32
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts(25,29)
-      TS2304: Cannot find name 'seed'.
- @ ./src/index.ts 7:0-24
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts
-./src/progression.ts 26:28-30
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts(26,29)
-      TS2304: Cannot find name 'st'.
- @ ./src/index.ts 7:0-24
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts
-./src/progression.ts 26:37-41
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts(26,38)
-      TS2304: Cannot find name 'seed'.
- @ ./src/index.ts 7:0-24
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts
-./src/progression.ts 27:30-32
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts(27,31)
-      TS2304: Cannot find name 'st'.
- @ ./src/index.ts 7:0-24
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts
-./src/progression.ts 27:39-43
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts(27,40)
-      TS2304: Cannot find name 'seed'.
- @ ./src/index.ts 7:0-24
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts
-./src/progression.ts 28:26-28
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts(28,27)
-      TS2304: Cannot find name 'st'.
- @ ./src/index.ts 7:0-24
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts
-./src/progression.ts 28:35-39
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts(28,36)
-      TS2304: Cannot find name 'seed'.
- @ ./src/index.ts 7:0-24
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts
-./src/progression.ts 34:23-26
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts(34,24)
-      TS2695: Left side of comma operator is unused and has no side effects.
- @ ./src/index.ts 7:0-24
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts
-./src/progression.ts 35:12-17
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts(35,13)
-      TS2304: Cannot find name 'alpha'.
- @ ./src/index.ts 7:0-24
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts
-./src/progression.ts 35:19-23
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts(35,20)
-      TS2695: Left side of comma operator is unused and has no side effects.
- @ ./src/index.ts 7:0-24
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts
-./src/progression.ts 36:12-17
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts(36,13)
-      TS2304: Cannot find name 'cards'.
- @ ./src/index.ts 7:0-24
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts
-./src/progression.ts 36:19-24
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts(36,20)
-      TS2304: Cannot find name 'cards'.
- @ ./src/index.ts 7:0-24
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts
-./src/progression.ts 38:8-14
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts(38,9)
-      TS1344: 'A label is not allowed here.
- @ ./src/index.ts 7:0-24
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts
-./src/progression.ts 38:24
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts(38,25)
-      TS7010: '(Missing)', which lacks return-type annotation, implicitly has an 'any' return type.
- @ ./src/index.ts 7:0-24
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts
-./src/progression.ts 40:57-59
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts(40,58)
-      TS2304: Cannot find name 'st'.
- @ ./src/index.ts 7:0-24
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts
-./src/progression.ts 41:34-36
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts(41,35)
-      TS2304: Cannot find name 'st'.
- @ ./src/index.ts 7:0-24
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts
-./src/progression.ts 44:17-109
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts(44,18)
-      TS2695: Left side of comma operator is unused and has no side effects.
- @ ./src/index.ts 7:0-24
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts
-./src/progression.ts 52:17-19
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts(52,18)
-      TS2695: Left side of comma operator is unused and has no side effects.
- @ ./src/index.ts 7:0-24
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts
-./src/progression.ts 53:8-14
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/progression.ts(53,9)
-      TS2304: Cannot find name 'editor'.
- @ ./src/index.ts 7:0-24
-
-35 errors have detailed information that is not shown.
+16 errors have detailed information that is not shown.
 Use 'stats.errorDetails: true' resp. '--stats-error-details' to show it.
 
-webpack 5.97.1 compiled with 36 errors in 2281 ms
+webpack 5.97.1 compiled with 16 errors in 2309 ms

@@ -52,6 +52,10 @@ export type FlashcardGenRegistry = {
 
 // Utilities
 
+export function fconst<a, b>(y: b): (x: a) => b {
+    return (_) => y;
+}
+
 // https://stackoverflow.com/questions/6860853/generate-random-string-for-div-id
 export function guidGenerator(): string {
     var S4 = function() {

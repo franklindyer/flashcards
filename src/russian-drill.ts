@@ -1,4 +1,5 @@
 import {
+    fconst,
     guidGenerator,
     FlashcardGenerator,
     FlashcardGenEditor,
@@ -41,6 +42,113 @@ var ruFreqlistPromise = () =>
             return csvData[n];
         }
 });
+
+enum RussianCase {
+    CaseNominative = 0,
+    CaseAccusative,
+    CaseDative,
+    CasePrepositional,
+    CaseInstrumental,
+    CaseGenitive
+}
+
+enum RussianPerson {
+    Person1st,
+    Person2nd,
+    Person3rd
+}
+
+enum RussianGender {
+    GenderMale,
+    GenderFemale,
+    GenderNeuter
+}
+
+enum RussianNumber {
+    NumberSingular,
+    NumberPlural
+}
+
+enum RussianTense {
+    TensePresent,
+    TenseFuture,
+    TensePast
+}
+
+function ruConjVerb(
+    vb: string, 
+    tense: RussianTense, 
+    gdr: RussianGender, 
+    psn: RussianPerson,
+    nbr: RussianNumber): string {
+    var record = window.ruVerbs(vb);
+    var key = "";
+    switch(tense) {
+        case RussianTense.TensePresent:
+            switch(psn) {
+                case RussianPerson.Person1st:
+                    key = (nbr === RussianNumber.NumberSingular) ? "presfut_sg1" : "presfut_pl1";
+                    break;
+                case RussianPerson.Person2nd:
+                    key = (nbr === RussianNumber.NumberSingular) ? "presfut_sg2" : "presfut_pl2";
+                    break;
+                case RussianPerson.Person3rd:
+                    key = (nbr === RussianNumber.NumberSingular) ? "presfut_sg3" : "presfut_pl3";
+                    break;
+                default:
+                    break;
+            }
+            break;
+        case RussianTense.TensePast:
+            if (nbr === RussianNumber.NumberPlural) {
+                key = "past_pl";
+            } else {
+                switch(gdr) {
+                    case RussianGender.GenderMale:
+                        key = "past_m";
+                        break;
+                    case RussianGender.GenderFemale:
+                        key = "past_f";
+                        break;
+                    case RussianGender.GenderNeuter:
+                        key = "past_n";
+                        break;
+                    default:
+                        break;
+                }
+            }
+            break;
+        case RussianTense.TenseFuture:
+            key = "";
+            break;
+    }
+    return record[key];
+}
+
+function ruDeclineAdj(
+    adj: string, 
+    cs: RussianCase, 
+    gdr: RussianGender,
+    nbr: RussianNumber): string {
+    var record = window.ruAdjectives(adj);  
+    var gdrStr = "";
+    if (nbr === RussianNumber.NumberPlural) gdrStr = "pl";
+    else if (gdr === RussianGender.GenderMale) gdrStr = "m";
+    else if (gdr === RussianGender.GenderFemale) gdrStr = "f";
+    else if (gdr === RussianGender.GenderNeuter) gdrStr = "n";
+    var cStr = ["nom", "acc", "dat", "prep", "inst", "gen"][cs];
+    return record[`decl_${gdrStr}_${cStr}`];
+}
+
+function ruDeclineNoun(
+    nn: string,
+    cs: RussianCase,
+    nbr: RussianNumber): string {
+    var record = window.ruNouns(nn);
+    var numStr = (nbr === RussianNumber.NumberPlural) ? "pl" : "sg";
+    var cStr = ["nom", "acc", "dat", "prep", "inst", "gen"][cs];
+    return record[`${numStr}_${cStr}`];
+}
 
 const enNomPron = ["I", "you", "he", "we", "y'all", "they"];
 const ruNomPron = ["я", "ты", "он", "мы", "вы", "они"];
@@ -162,8 +270,29 @@ var ruAdjQuizzer: FlashcardGenerator<
 
 var ruFreqQuizzer = geometricProgressFGen((n: number) => {
     var record = window.ruFreqlist(n);
-    return [record[1], record[0].split(" ")[0].split("/")[0], ""];
+    return [record[1], record[0].split(" ")[0].split("/")[0], `"${record[2].split('|')[1]}"`];
 }, 1000);
+
+function stpl(templ: string): (x: string) => string {
+    return (y) => templ.replace("{}", y);
+}
+
+type RuAdjQuizState = {
+    nouns: [string, string][],
+    adjs: [string, string][],
+    enabledCases: RussianCase[]
+}
+
+var ruAdjTemplates: any = [
+    [stpl("{}"), stpl("the {}"), RussianCase.CaseNominative],
+    [stpl("есть {}"), stpl("there is {}"), RussianCase.CaseNominative],
+    [stpl("в {}"), stpl("in the {}"), RussianCase.CasePrepositional],
+    [stpl("около {}"), stpl("near the {}"), RussianCase.CaseGenitive],
+    [stpl("у {}"), stpl("by the {}"), RussianCase.CaseGenitive],
+    [stpl("без {}"), stpl("without the {}"), RussianCase.CaseGenitive],
+    [stpl("нет {}"), stpl("there's no {}"), RussianCase.CaseGenitive],
+    [stpl("дайте {}"), stpl("gimme the {}"), RussianCase.CaseAccusative]
+];
 
 defaultDecks["russian-verb-deck"] = {
     name: "Russian present-tense verb conjugations",
