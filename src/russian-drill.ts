@@ -129,7 +129,8 @@ function ruDeclineAdj(
     adj: string, 
     cs: RussianCase, 
     gdr: RussianGender,
-    nbr: RussianNumber): string {
+    nbr: RussianNumber,
+    isAnimate: boolean = false): string {
     var record = window.ruAdjectives(adj);  
     var gdrStr = "";
     if (nbr === RussianNumber.NumberPlural) gdrStr = "pl";
@@ -137,7 +138,9 @@ function ruDeclineAdj(
     else if (gdr === RussianGender.GenderFemale) gdrStr = "f";
     else if (gdr === RussianGender.GenderNeuter) gdrStr = "n";
     var cStr = ["nom", "acc", "dat", "prep", "inst", "gen"][cs];
-    return record[`decl_${gdrStr}_${cStr}`];
+    var decls = record[`decl_${gdrStr}_${cStr}`].split(',');
+    // There is a problem - sometimes the CSV file contains a special "animate" declination
+    return decls[0];
 }
 
 function ruDeclineNoun(
@@ -148,6 +151,13 @@ function ruDeclineNoun(
     var numStr = (nbr === RussianNumber.NumberPlural) ? "pl" : "sg";
     var cStr = ["nom", "acc", "dat", "prep", "inst", "gen"][cs];
     return record[`${numStr}_${cStr}`];
+}
+
+function ruGetGender(nn: string) {
+    var record = window.ruNouns(nn);
+    if (record["gender"] == "m") return RussianGender.GenderMale;
+    if (record["gender"] == "f") return RussianGender.GenderFemale;
+    return RussianGender.GenderNeuter; 
 }
 
 const enNomPron = ["I", "you", "he", "we", "y'all", "they"];
@@ -280,7 +290,31 @@ function stpl(templ: string): (x: string) => string {
 type RuAdjQuizState = {
     nouns: [string, string][],
     adjs: [string, string][],
+    pluralProb: number,
     enabledCases: RussianCase[]
+}
+
+var sampleRuAdjCaseState: RuAdjQuizState = {
+    nouns: [
+        ["wine", "вино"],
+        ["vodka", "водка"],
+        ["water", "вода"],
+        ["juice", "сок"],
+        ["milk", "молоко"]
+    ],
+    adjs: [
+        ["good", "хороший"],
+        ["Russian", "русский"],
+        ["Canadian", "канадский"],
+        ["bad", "плохой"],
+        ["tasty", "вкусный"]
+    ],
+    enabledCases: [
+        RussianCase.CaseNominative,
+        RussianCase.CaseAccusative,
+        RussianCase.CasePrepositional
+    ],
+    pluralProb: 0.5
 }
 
 var ruAdjTemplates: any = [
@@ -293,6 +327,40 @@ var ruAdjTemplates: any = [
     [stpl("нет {}"), stpl("there's no {}"), RussianCase.CaseGenitive],
     [stpl("дайте {}"), stpl("gimme the {}"), RussianCase.CaseAccusative]
 ];
+
+var ruAdjCaseQuizzer: FlashcardGenerator<[string, string], RuAdjQuizState> = {
+    ftemp: {
+        generator: function(seed: [string, string]) {
+            return {
+                params: seed,
+                prompt: seed[0],
+                answers: [seed[1]],
+                hint: seed[1],
+                uuid: guidGenerator()
+            }
+        }
+    },
+    state: sampleRuAdjCaseState,
+    seeder: function(st: RuAdjQuizState) {
+        var chosenCase = st.enabledCases[Math.floor(Math.random() * st.enabledCases.length)];
+        var tplChoices = ruAdjTemplates.filter((tpl: any) => tpl[2] == chosenCase);
+        var tpl: [(x: string) => string, (x: string) => string] 
+            = tplChoices[Math.floor(Math.random() * tplChoices.length)];
+        var chosenAdj = st.adjs[Math.floor(Math.random() * st.adjs.length)];
+        var chosenNoun = st.nouns[Math.floor(Math.random() * st.nouns.length)];
+        var chosenNumber = (Math.random() < st.pluralProb) ? RussianNumber.NumberPlural : RussianNumber.NumberSingular;
+        var inflNoun = ruDeclineNoun(chosenNoun[1], chosenCase, chosenNumber);
+        var inflAdj = ruDeclineAdj(chosenAdj[1], chosenCase, ruGetGender(chosenNoun[1]), chosenNumber); 
+        var enPhrase = `${chosenAdj[0]} ${chosenNoun[0]}`;
+        var ruPhrase = `${inflAdj} ${inflNoun}`;
+        return [tpl[1](ruPhrase), tpl[0](enPhrase)]
+    },
+    updater: (correct, answer, card, st) => st,
+    history: [],
+    editor: (st: RuAdjQuizState) => {
+        return null!
+    }
+}
 
 defaultDecks["russian-verb-deck"] = {
     name: "Russian present-tense verb conjugations",
@@ -316,6 +384,17 @@ defaultDecks["russian-adj-deck"] = {
     state: ruAdjQuizzer.state
 };
 
+defaultDecks["russian-adj-case-deck"] = {
+    name: "Russian adjective declinaitions in various cases",
+    slug: "russian-adj-case-deck",
+    decktype: "russian-adj-case-driller",
+    resources: ["russian-nouns", "russian-adjectives"],
+    view: {
+        color: "#eee0ff"
+    },
+    state: ruAdjCaseQuizzer.state
+}
+
 defaultDecks["russian-freq-deck"] = {
     name: "Russian 1000 most common words",
     slug: "russian-freq-deck",
@@ -329,6 +408,7 @@ defaultDecks["russian-freq-deck"] = {
 
 providedGenerators["russian-verb-driller"] = ruVerbQuizzer;
 providedGenerators["russian-adj-driller"] = ruAdjQuizzer;
+providedGenerators["russian-adj-case-driller"] = ruAdjCaseQuizzer;
 providedGenerators["russian-freq-driller"] = ruFreqQuizzer; 
 
 indexedResources["russian-verbs"] = () => ruDataPromise("ru-verbs", "ruVerbs");
