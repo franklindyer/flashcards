@@ -3,11 +3,15 @@ import {
     guidGenerator,
     FlashcardGenerator,
     FlashcardGenEditor,
+    boolEditor,
     singleTextFieldEditor,
     validatedTextFieldEditor,
     doubleTextFieldEditor,
+    floatEditor,
+    makeTranslationEditor,
     combineEditors,
     multipleEditors,
+    tableEditor,
     evilFGen, 
     runFlashcardController,
     defaultDecks,
@@ -18,6 +22,8 @@ import {
     geometricProgressFGen
     } from "./progression";
 const papa = require("papaparse");
+
+const EnglishPlural = require("pluralize-me");
 
 declare global {
     var ruAdjectives: any
@@ -138,8 +144,13 @@ function ruDeclineAdj(
     else if (gdr === RussianGender.GenderFemale) gdrStr = "f";
     else if (gdr === RussianGender.GenderNeuter) gdrStr = "n";
     var cStr = ["nom", "acc", "dat", "prep", "inst", "gen"][cs];
-    var decls = record[`decl_${gdrStr}_${cStr}`].split(',');
+    var col = `decl_${gdrStr}_${cStr}`;
+    var decls = record[col].split(',');
     // There is a problem - sometimes the CSV file contains a special "animate" declination
+    if (col === "decl_m_acc") {
+        if (isAnimate) decls = decls.filter((s: string) => s.endsWith("го"));
+        else decls = decls.filter((s: string) => !s.endsWith("го"));
+    }
     return decls[0];
 }
 
@@ -160,6 +171,12 @@ function ruGetGender(nn: string) {
     return RussianGender.GenderNeuter; 
 }
 
+function ruIsAnimate(nn: string): boolean {
+    var record = window.ruNouns(nn);
+    if (record["animate"] === "1") return true;
+    return false;
+}
+
 const enNomPron = ["I", "you", "he", "we", "y'all", "they"];
 const ruNomPron = ["я", "ты", "он", "мы", "вы", "они"];
 const subjPresentCols = [
@@ -170,19 +187,6 @@ const subjPresentCols = [
     "presfut_pl2",
     "presfut_pl3"
 ];
-
-function makeTranslationEditor(ls: [string, string][], validator: (s: string) => boolean):
-    FlashcardGenEditor<[string, string][]> {
-    return multipleEditors(
-        ls,
-        ["", ""],
-        (item) => combineEditors(
-            item,
-            (s: string) => singleTextFieldEditor(s),
-            (s: string) => validatedTextFieldEditor(s, validator)
-        )
-    )
-}
 
 var ruVerbQuizzer: FlashcardGenerator<[number, string, string], [string, string][]> = {
     ftemp: {
@@ -218,66 +222,6 @@ var ruVerbQuizzer: FlashcardGenerator<[number, string, string], [string, string]
     }
 }
 
-var ruAdjQuizzer: FlashcardGenerator<
-    [[string, string], [string, string]], 
-    [[string, string][], [string, string][]]> = {
-    ftemp: {
-        generator: function(seed: [[string, string], [string, string]]) {
-            var nouns = window.ruNouns;
-            var adjs = window.ruAdjectives;
-            var adjDecl = `decl_${nouns(seed[0][1]).gender}_nom`;
-            var answer = `${adjs(seed[1][1])[adjDecl]} ${nouns(seed[0][1]).bare}`;
-            answer = answer.replace("'", "");
-            return {
-                params: seed,
-                prompt: `${seed[1][0]} ${seed[0][0]}`,
-                hint: answer,
-                answers: [answer],
-                uuid: guidGenerator()
-            }
-        }
-    },
-    state: [
-        [
-            ["day", "день"],
-            ["night", "ночь"],
-            ["morning", "утро"]
-        ],
-        [
-            ["good", "добрый"],
-            ["bad", "плохой"],
-            ["this", "этот"],
-            ["that", "тот"]
-        ]
-    ],
-    seeder: function(st: [[string, string][], [string, string][]]) {
-        var noun = st[0][Math.floor(Math.random() * st[0].length)];
-        var adj = st[1][Math.floor(Math.random() * st[1].length)];
-        return [noun, adj]
-    },
-    updater: (correct, answer, card, st) => st,
-    history: [],
-    editor: (dat: [[string, string][], [string, string][]]) => {
-        var nounValidator = (ruStr: string) => window.ruNouns(ruStr) !== undefined;
-        var adjValidator = (ruStr: string) => window.ruAdjectives(ruStr) !== undefined;
-        var nounEditor = makeTranslationEditor(dat[0], nounValidator);
-        var adjEditor = makeTranslationEditor(dat[1], adjValidator);
-        var contDiv = document.createElement("div");
-        var nounTitle = document.createElement("h3");
-        nounTitle.textContent = "Nouns";
-        var adjTitle = document.createElement("h3");
-        adjTitle.textContent = "Adjectives";
-        contDiv.appendChild(nounTitle);
-        contDiv.appendChild(nounEditor.element);
-        contDiv.appendChild(adjTitle);
-        contDiv.appendChild(adjEditor.element);
-        return {
-            element: contDiv,
-            menuToState: () => [nounEditor.menuToState(), adjEditor.menuToState()]
-        }
-    }
-}
-
 var ruFreqQuizzer = geometricProgressFGen((n: number) => {
     var record = window.ruFreqlist(n);
     return [record[1], record[0].split(" ")[0].split("/")[0], `"${record[2].split('|')[1]}"`];
@@ -291,7 +235,7 @@ type RuAdjQuizState = {
     nouns: [string, string][],
     adjs: [string, string][],
     pluralProb: number,
-    enabledCases: RussianCase[]
+    enabledCases: boolean[][]
 }
 
 var sampleRuAdjCaseState: RuAdjQuizState = {
@@ -310,9 +254,8 @@ var sampleRuAdjCaseState: RuAdjQuizState = {
         ["tasty", "вкусный"]
     ],
     enabledCases: [
-        RussianCase.CaseNominative,
-        RussianCase.CaseAccusative,
-        RussianCase.CasePrepositional
+        [true, true, false, true, false, true],
+        [true, true, false, true, false, true]
     ],
     pluralProb: 0.5
 }
@@ -342,23 +285,62 @@ var ruAdjCaseQuizzer: FlashcardGenerator<[string, string], RuAdjQuizState> = {
     },
     state: sampleRuAdjCaseState,
     seeder: function(st: RuAdjQuizState) {
-        var chosenCase = st.enabledCases[Math.floor(Math.random() * st.enabledCases.length)];
+        console.log(ruDeclineNoun("водка", RussianCase.CaseNominative, RussianNumber.NumberPlural));
+
+        console.log(st.enabledCases)
+        var allowedCases = [0,1,2,3,4,5].filter((i) => st.enabledCases[0][i] || st.enabledCases[1][i]);
+        console.log(allowedCases);
+        var chosenCase = allowedCases[Math.floor(Math.random() * allowedCases.length)];
         var tplChoices = ruAdjTemplates.filter((tpl: any) => tpl[2] == chosenCase);
         var tpl: [(x: string) => string, (x: string) => string] 
             = tplChoices[Math.floor(Math.random() * tplChoices.length)];
         var chosenAdj = st.adjs[Math.floor(Math.random() * st.adjs.length)];
         var chosenNoun = st.nouns[Math.floor(Math.random() * st.nouns.length)];
-        var chosenNumber = (Math.random() < st.pluralProb) ? RussianNumber.NumberPlural : RussianNumber.NumberSingular;
+        var chosenNumber 
+            = (window.ruNouns(chosenNoun[1])["sg_only"] !== 1 && Math.random() < st.pluralProb) 
+                ? RussianNumber.NumberPlural : RussianNumber.NumberSingular;
         var inflNoun = ruDeclineNoun(chosenNoun[1], chosenCase, chosenNumber);
-        var inflAdj = ruDeclineAdj(chosenAdj[1], chosenCase, ruGetGender(chosenNoun[1]), chosenNumber); 
+        var inflAdj = ruDeclineAdj(chosenAdj[1], chosenCase, ruGetGender(chosenNoun[1]), chosenNumber, ruIsAnimate(chosenNoun[1])); 
+        chosenNoun[0] = (chosenNumber == RussianNumber.NumberPlural) ? EnglishPlural.plural(chosenNoun[0]) : chosenNoun[0]; 
         var enPhrase = `${chosenAdj[0]} ${chosenNoun[0]}`;
-        var ruPhrase = `${inflAdj} ${inflNoun}`;
-        return [tpl[1](ruPhrase), tpl[0](enPhrase)]
+        var ruPhrase = `${inflAdj} ${inflNoun}`.replace(/'/g, "");
+        return [tpl[1](enPhrase), tpl[0](ruPhrase)];
     },
     updater: (correct, answer, card, st) => st,
     history: [],
     editor: (st: RuAdjQuizState) => {
-        return null!
+        var contDiv = document.createElement("div");
+        var sliderPlural = floatEditor("Probability of plurals", st.pluralProb, 0, 1);
+        var nounsHdr = document.createElement("h3");
+        nounsHdr.textContent = "Nouns";
+        var editNouns = makeTranslationEditor(st.nouns, (nn) => window.ruNouns(nn) !== undefined); 
+        var adjsHdr = document.createElement("h3");
+        adjsHdr.textContent = "Adjectives";
+        var editAdjs = makeTranslationEditor(st.adjs, (adj) => window.ruAdjectives(adj) !== undefined);
+        var selectCombos = tableEditor(
+            st.enabledCases,
+            ["Singular", "Plural"],
+            ["Nom", "Acc", "Dat", "Prep", "Inst", "Gen"],
+            (b) => boolEditor("", b) 
+        ); 
+        var combosHdr = document.createElement("h3");
+        combosHdr.textContent = "Enabled cases and numbers";
+        [sliderPlural.element,
+            combosHdr,
+            selectCombos.element,
+            nounsHdr,
+            editNouns.element,
+            adjsHdr,
+            editAdjs.element].map((el) => contDiv.appendChild(el));
+        return {
+            element: contDiv,
+            menuToState: () => { return {
+                nouns: editNouns.menuToState(),
+                adjs: editAdjs.menuToState(),
+                enabledCases: selectCombos.menuToState(),
+                pluralProb: sliderPlural.menuToState()
+            } }
+        }
     }
 }
 
@@ -371,17 +353,6 @@ defaultDecks["russian-verb-deck"] = {
         color: "#eee0ff"
     },
     state: ruVerbQuizzer.state
-};
-
-defaultDecks["russian-adj-deck"] = {
-    name: "Russian adjective declinations",
-    slug: "russian-adj-deck",
-    decktype: "russian-adj-driller",
-    resources: ["russian-nouns", "russian-adjectives"],
-    view: {
-        color: "#eee0ff"
-    },
-    state: ruAdjQuizzer.state
 };
 
 defaultDecks["russian-adj-case-deck"] = {
@@ -407,7 +378,6 @@ defaultDecks["russian-freq-deck"] = {
 }
 
 providedGenerators["russian-verb-driller"] = ruVerbQuizzer;
-providedGenerators["russian-adj-driller"] = ruAdjQuizzer;
 providedGenerators["russian-adj-case-driller"] = ruAdjCaseQuizzer;
 providedGenerators["russian-freq-driller"] = ruFreqQuizzer; 
 

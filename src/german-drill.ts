@@ -6,6 +6,7 @@ import {
     floatEditor,
     singleTextFieldEditor,
     validatedTextFieldEditor,
+    makeTranslationEditor,
     doubleTextFieldEditor,
     combineEditors,
     multipleEditors,
@@ -259,7 +260,7 @@ function generateSVOPhrase(st: GermanSVOState): [string, string] {
     return [sentenceEn, sentenceDe];
 }
 
-function makeTranslationEditor(ls: [string, string][], validator: (s: string) => boolean):
+/* function makeTranslationEditor(ls: [string, string][], validator: (s: string) => boolean):
     FlashcardGenEditor<[string, string][]> {
     return multipleEditors(
         ls,
@@ -270,7 +271,7 @@ function makeTranslationEditor(ls: [string, string][], validator: (s: string) =>
             (s: string) => validatedTextFieldEditor(s, validator)
         )
     )
-}
+}*/
 
 function makeNounEditor(noun: GermanNoun):
     FlashcardGenEditor<GermanNoun> {

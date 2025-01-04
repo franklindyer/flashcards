@@ -305,6 +305,55 @@ export function combineEditors<a, b>(
     return editor;
 }
 
+export function tableEditor<a>(
+    st: a[][],
+    rownames: string[],
+    colnames: string[],
+    gen: (x: a) => FlashcardGenEditor<a>):
+    FlashcardGenEditor<a[][]> {
+    var rows = st.length;
+    var cols = st[0].length;
+    var tbl = document.createElement("table");
+    var eds: FlashcardGenEditor<a>[][] = [];
+    for (var i = 0; i < rows+1; i++) {
+        var tblrow = document.createElement("tr");
+        for (var j = 0; j < cols+1; j++) {
+            var tblcell = document.createElement("td");
+            if (i === 0 && j !== 0) {
+                tblcell.textContent = colnames[j-1];
+            } else if (i !== 0 && j === 0) {
+                tblcell.textContent = rownames[i-1];
+            } else if (i !== 0 && j !== 0) {
+                var ed = gen(st[i-1][j-1]);
+                tblcell.appendChild(ed.element)
+                eds[eds.length-1].push(ed);
+            }
+            tblrow.appendChild(tblcell);
+        }
+        if (i < rows) {
+            eds.push([]);
+        }
+        tbl.appendChild(tblrow);
+    }
+    return {
+        element: tbl,
+        menuToState: () => eds.map((r) => r.map((ed) => ed.menuToState()))
+    }
+}
+
+export function makeTranslationEditor(ls: [string, string][], validator: (s: string) => boolean):
+    FlashcardGenEditor<[string, string][]> {
+    return multipleEditors(
+        ls,
+        ["", ""],
+        (item) => combineEditors(
+            item,
+            (s: string) => singleTextFieldEditor(s),
+            (s: string) => validatedTextFieldEditor(s, validator),
+        )
+    )
+}
+
 export function fixedNumEditors<a, b>(ls: a[], ed: (st: a) => FlashcardGenEditor<b>):
     FlashcardGenEditor<b[]> {
     var children: FlashcardGenEditor<b>[] = [];
