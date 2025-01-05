@@ -157,11 +157,12 @@ function ruDeclineAdj(
 function ruDeclineNoun(
     nn: string,
     cs: RussianCase,
-    nbr: RussianNumber): string {
+    nbr: RussianNumber,
+    which: number = 0): string {
     var record = window.ruNouns(nn);
     var numStr = (nbr === RussianNumber.NumberPlural) ? "pl" : "sg";
     var cStr = ["nom", "acc", "dat", "prep", "inst", "gen"][cs];
-    return record[`${numStr}_${cStr}`];
+    return record[`${numStr}_${cStr}`].split(', ')[which];
 }
 
 function ruGetGender(nn: string) {
