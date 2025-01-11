@@ -6,3 +6,4 @@ build:
 	cp src/*.png dist/
 	mkdir dist/data
 	cp data/* dist/data/
+	npx webpack

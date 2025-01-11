@@ -1,0 +1,31 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset='utf-8' />
+        <link rel="stylesheet" href="/index.css">
+        <script src="https://cdn.canvasjs.com/canvasjs.min.js"></script>
+    </head>
+    <body>
+        <script>var exports = {};</script>
+        <div id="flashcard-widget">
+            <div id="flashcard-container">
+                <div id="flashcard-progress-bar"></div>
+            </div>
+            <input class="flashcard-answer-box" id="flashcard-answer-hint" type="text" disabled/>
+            <input class="flashcard-answer-box" id="flashcard-answer-input" type="text" />
+            <button id="deck-edit-button">Edit deck</button>
+            <button id="deck-list-button">View decks</button>
+            <button id="export-deck-button">Export deck</button>
+            <input id="deck-upload-file" type="file" style="display: none" />
+            <button id="import-deck-button">Import deck</button>
+        </div>
+        <div id="flashcard-deck-editor-overlay" class="fullscreen-overlay">
+            <button id="flashcard-deck-editor-close">Done</button>
+            <div id="flashcard-deck-editor" class="menu-overlay"></div>
+        </div>
+        <div id="flashcard-decklist-overlay" class="fullscreen-overlay">
+            <div id="flashcard-decklist-editor" class="menu-overlay"></div>
+        </div>
+        <script src="/bundle.js"></script>
+    </body>
+</html>
