@@ -255,7 +255,12 @@ function spacedRepMenu(st: SpacedRepState): FlashcardGenEditor<SpacedRepState> {
             }
         }
     };
-    var cardsEditor = multipleEditors(st.cards, makeSpacedRepCard("", [], []), makeCardEditor);
+    var cardsEditor = multipleEditors(
+        st.cards, 
+        makeSpacedRepCard("", [], []), 
+        makeCardEditor,
+        true,
+        (s, cd) => cd.prompt.includes(s) || cd.answers.some((a) => a.includes(s)));
     var cardsEditorTitle = document.createElement("h3");
     cardsEditorTitle.textContent = "Cards";
     cardsEditor.element.prepend(cardsEditorTitle);
@@ -328,6 +333,7 @@ const sampleSpacedRepState: SpacedRepState = {
     },
     studying: SpacedRepStudying.NotStudying,
     cards: [
+        makeSpacedRepCard("boy", ["niño", "chico"], []),
         makeSpacedRepCard("dog", ["perro"], ["animal"]),
         makeSpacedRepCard("cat", ["gato"], ["animal"]),
         makeSpacedRepCard("frog", ["rana"], ["animal"]),

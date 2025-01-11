@@ -350,7 +350,9 @@ export function makeTranslationEditor(ls: [string, string][], validator: (s: str
             item,
             (s: string) => singleTextFieldEditor(s),
             (s: string) => validatedTextFieldEditor(s, validator),
-        )
+        ),
+        true,
+        (s, cd) => cd[0].includes(s) || cd[1].includes(s)
     )
 }
 
@@ -375,7 +377,12 @@ export function fixedNumEditors<a, b>(ls: a[], ed: (st: a) => FlashcardGenEditor
 
 }
 
-export function multipleEditors<a>(ls: a[], empty: a, ed: (st: a) => FlashcardGenEditor<a>): 
+export function multipleEditors<a>(
+    ls: a[], 
+    empty: a, 
+    ed: (st: a) => FlashcardGenEditor<a>,
+    includeSearch: boolean = false,
+    searchFxn: (s: string, st: a) => boolean = (s: string, x: a) => true): 
     FlashcardGenEditor<a[]> {
     var children: FlashcardGenEditor<a>[] = [];
     var editor: FlashcardGenEditor<a[]> = {
@@ -386,6 +393,7 @@ export function multipleEditors<a>(ls: a[], empty: a, ed: (st: a) => FlashcardGe
     var addBtn = document.createElement("button");
     addBtn.classList.add("add-new-field-button");
     addBtn.textContent = "Add another";
+    var statePartDivs: HTMLElement[] = [];
     var statePartEditorFactory = (statePart: a) => {
         var newEditor = ed(statePart);
         children.push(newEditor);
@@ -397,13 +405,32 @@ export function multipleEditors<a>(ls: a[], empty: a, ed: (st: a) => FlashcardGe
         delBtn.textContent = "remove";
         delBtn.onclick = (e) => {
             delete children[ind];
+            delete statePartDivs[ind];
             editor.element.removeChild(statePartDiv);
         }
         statePartDiv.appendChild(delBtn);
         editor.element.appendChild(statePartDiv);
+        statePartDivs.push(statePartDiv);
     }
     addBtn.onclick = (e) => { statePartEditorFactory(empty); };
     editor.element.appendChild(addBtn);
+
+    if (includeSearch) {
+        var searchBar = document.createElement("input");
+        searchBar.placeholder = "Search...";
+        searchBar.oninput = (e) => {
+            for (var i in children) {
+                var ed = children[i];
+                if (searchFxn(searchBar.value, ed.menuToState())) {
+                    statePartDivs[i].style.display = "block";
+                } else {
+                    statePartDivs[i].style.display = "none";
+                }
+            }        
+        }
+        editor.element.appendChild(searchBar);
+    }
+
     for (var i in ls) {
         statePartEditorFactory(ls[i])
     }

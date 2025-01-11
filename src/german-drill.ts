@@ -295,7 +295,9 @@ function makeNounsEditor(nouns: GermanNoun[]):
             canBeSubj: false,
             canBeObj: true
         },
-        makeNounEditor
+        makeNounEditor,
+        true,
+        (s, cd) => cd.en.includes(s) || cd.de.includes(s)
     )
 }
 
@@ -428,7 +430,9 @@ var deVerbQuizzer: FlashcardGenerator<[number, string, string], [string, string]
                 vb,
                 (s: string) => singleTextFieldEditor(s),
                 (s: string) => validatedTextFieldEditor(s, validator) 
-            )
+            ),
+            true,
+            (s, cd) => cd[0].includes(s) || cd[1].includes(s)
         );
         return {
             element: editor.element,
