@@ -260,19 +260,6 @@ function generateSVOPhrase(st: GermanSVOState): [string, string] {
     return [sentenceEn, sentenceDe];
 }
 
-/* function makeTranslationEditor(ls: [string, string][], validator: (s: string) => boolean):
-    FlashcardGenEditor<[string, string][]> {
-    return multipleEditors(
-        ls,
-        ["", ""],
-        (item) => combineEditors(
-            item,
-            (s: string) => singleTextFieldEditor(s),
-            (s: string) => validatedTextFieldEditor(s, validator)
-        )
-    )
-}*/
-
 function makeNounEditor(noun: GermanNoun):
     FlashcardGenEditor<GermanNoun> {
     var englishVerbField = validatedTextFieldEditor(noun.en, (wd) => true);

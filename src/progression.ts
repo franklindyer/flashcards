@@ -8,6 +8,7 @@ import {
     providedGenerators,
     indexedResources
 } from "./lib";
+import { lambertW0 } from "lambert-w-function";
 
 // Update function is p <- alpha * p when incorrect, p <- (1-alpha) + alpha * p
 export type GeometricProgressState = {
@@ -39,7 +40,10 @@ export function geometricProgressFGen(getter: (n: number) => [string, string, st
         },
         seeder: function(st: GeometricProgressState) {
             var u = Math.random();
-            var geom = Math.floor(Math.log(u)/Math.log(st.geomParam));
+            // var geom = Math.floor(Math.log(u)/Math.log(st.geomParam));
+            var p = st.geomParam;
+            var logp = Math.log(p);
+            var geom = Math.floor((logp/(1-p) + lambertW0(u * (1-1/p) * Math.exp(logp/(1-p)) / logp))/logp);
             if (geom > maxnum) {
                 geom = Math.floor(Math.random() * maxnum);
             }
@@ -50,6 +54,8 @@ export function geometricProgressFGen(getter: (n: number) => [string, string, st
                 st.geomParam = (1-st.alpha) + st.alpha*st.geomParam;
             } else {
                 st.geomParam = (st.geomParam - (1-st.alpha))/st.alpha;
+                if (st.geomParam < 0)
+                    st.geomParam = 0.5;
             }
             return st;
         },

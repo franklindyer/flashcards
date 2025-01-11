@@ -292,13 +292,14 @@ var ruAdjCaseQuizzer: FlashcardGenerator<[string, string], RuAdjQuizState> = {
         var allowedCases = [0,1,2,3,4,5].filter((i) => st.enabledCases[0][i] || st.enabledCases[1][i]);
         console.log(allowedCases);
         var chosenCase = allowedCases[Math.floor(Math.random() * allowedCases.length)];
+        var canBePlural = st.enabledCases[1][chosenCase];
         var tplChoices = ruAdjTemplates.filter((tpl: any) => tpl[2] == chosenCase);
         var tpl: [(x: string) => string, (x: string) => string] 
             = tplChoices[Math.floor(Math.random() * tplChoices.length)];
         var chosenAdj = st.adjs[Math.floor(Math.random() * st.adjs.length)];
         var chosenNoun = st.nouns[Math.floor(Math.random() * st.nouns.length)];
         var chosenNumber 
-            = (window.ruNouns(chosenNoun[1])["sg_only"] !== 1 && Math.random() < st.pluralProb) 
+            = (window.ruNouns(chosenNoun[1])["sg_only"] !== 1 && canBePlural && Math.random() < st.pluralProb) 
                 ? RussianNumber.NumberPlural : RussianNumber.NumberSingular;
         var inflNoun = ruDeclineNoun(chosenNoun[1], chosenCase, chosenNumber);
         var inflAdj = ruDeclineAdj(chosenAdj[1], chosenCase, ruGetGender(chosenNoun[1]), chosenNumber, ruIsAnimate(chosenNoun[1])); 
