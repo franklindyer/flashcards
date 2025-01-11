@@ -64,8 +64,24 @@ export function geometricProgressFGen(getter: (n: number) => [string, string, st
             var contDiv = document.createElement("div");
             var score = Math.floor(-1/Math.log(st.geomParam));
             contDiv.innerHTML = `<a>Current score: ${score}</a>`;
-            var alphaEditor = floatEditor("Tuning parameter: ", Math.pow(st.alpha, 10), 0, 1);
+            var alphaEditor = floatEditor("Tuning parameter", Math.pow(st.alpha, 10), 0, 1);
             contDiv.appendChild(alphaEditor.element);
+            
+            var nearbyWordsHdr = document.createElement("h3");
+            nearbyWordsHdr.textContent = "Words that are near your score level";
+            var wordsMin = Math.max(0, score-5);
+            var wordsMax = Math.min(st.maxnum, score+5);
+            var nearbyWords = [...Array(wordsMax-wordsMin).keys()].map((x) => getter(x+wordsMin));
+            contDiv.appendChild(nearbyWordsHdr);
+            for (var i in nearbyWords) {
+                var wd = nearbyWords[i];
+                var ind = wordsMin + parseInt(i);
+                var wdDiv = document.createElement("div");
+                wdDiv.classList.add("upcoming-word-preview-box");
+                wdDiv.textContent = `${ind}) ${wd[1]}`;
+                contDiv.appendChild(wdDiv);
+            }
+
             return {
                 element: contDiv,
                 menuToState: () => { return {
