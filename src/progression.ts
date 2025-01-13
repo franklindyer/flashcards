@@ -14,7 +14,8 @@ import { lambertW0 } from "lambert-w-function";
 export type GeometricProgressState = {
     geomParam: number,
     alpha: number,
-    maxnum: number
+    maxnum: number,
+    scoreHist: number[]
 }
 
 export function geometricProgressFGen(getter: (n: number) => [string, string, string], maxnum: number):
@@ -34,9 +35,10 @@ export function geometricProgressFGen(getter: (n: number) => [string, string, st
             }
         },
         state: {
-            geomParam: 0.95,
+            geomParam: 0.5,
             alpha: 0.95,
-            maxnum: maxnum
+            maxnum: maxnum,
+            scoreHist: []
         },
         seeder: function(st: GeometricProgressState) {
             var u = Math.random();
@@ -57,6 +59,7 @@ export function geometricProgressFGen(getter: (n: number) => [string, string, st
                 if (st.geomParam < 0)
                     st.geomParam = 0.5;
             }
+            st.scoreHist.push(Math.floor(-1/Math.log(st.geomParam)));
             return st;
         },
         history: [],
@@ -87,7 +90,8 @@ export function geometricProgressFGen(getter: (n: number) => [string, string, st
                 menuToState: () => { return {
                     geomParam: st.geomParam,
                     alpha: Math.pow(alphaEditor.menuToState(), 0.1),
-                    maxnum: st.maxnum
+                    maxnum: st.maxnum,
+                    scoreHist: st.scoreHist
                 }}
             }
         }

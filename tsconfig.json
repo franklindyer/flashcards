@@ -12,7 +12,12 @@
   "rootDir": "src",
   "module": "commonjs",
   "types": ["node"],
-  "moduleResolution": "node"
+  "moduleResolution": "node",
+  "paths": {
+    "plotly.js": [
+      "../node_modules/plotly.js/lib/core.js"
+    ]
+  }
 },
 "include": ["src/**/*"],
 "exclude": ["node_modules"]
