@@ -5,48 +5,92 @@
 assets by status 19.2 MiB [cached] 1 asset
 runtime modules 27.4 KiB 12 modules
 orphan modules 32.5 KiB [orphan] 4 modules
-javascript modules 244 KiB
+javascript modules 262 KiB
   modules by path ./node_modules/ 174 KiB 20 modules
-  modules by path ./src/*.ts 70.1 KiB
-    ./src/index.ts 346 bytes [built] [code generated]
+  modules by path ./src/*.ts 88.4 KiB
+    ./src/index.ts 379 bytes [built] [code generated]
     ./src/lib.ts 24.9 KiB [built] [code generated]
     ./src/demos.ts 2.22 KiB [built] [code generated]
-    + 6 modules
+    + 7 modules
 json modules 18.7 MiB
   ./node_modules/german-verbs-dict/dist/verbs.json 5.2 MiB [built] [code generated]
   ./node_modules/german-words-dict/dist/words.json 13.3 MiB [built] [code generated]
   ./node_modules/english-plurals-list/dist/plurals.json 43.6 KiB [built] [code generated]
   ./node_modules/english-verbs/english_verbs.json 174 KiB [built] [code generated]
 
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/evil.ts
-./src/evil.ts 30:26-39
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/evil.ts(30,27)
-      TS2304: Cannot find name 'guidGenerator'.
- @ ./src/index.ts 10:0-17
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-templating.ts
+./src/russian-templating.ts 122:4-12
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-templating.ts(122,5)
+      TS1068: Unexpected token. A constructor, method, accessor, or property was expected.
+ @ ./src/index.ts 11:0-31
 
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/evil.ts
-./src/evil.ts 38:24-25
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/evil.ts(38,25)
-      TS2304: Cannot find name 'c'.
- @ ./src/index.ts 10:0-17
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-templating.ts
+./src/russian-templating.ts 131:0-1
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-templating.ts(131,1)
+      TS1128: Declaration or statement expected.
+ @ ./src/index.ts 11:0-31
 
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/evil.ts
-./src/evil.ts 39:25-26
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/evil.ts(39,26)
-      TS2304: Cannot find name 'c'.
- @ ./src/index.ts 10:0-17
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-templating.ts
+./src/russian-templating.ts 123:37-41
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-templating.ts(123,38)
+      TS2683: 'this' implicitly has type 'any' because it does not have a type annotation.
+ @ ./src/index.ts 11:0-31
 
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/evil.ts
-./src/evil.ts 50:4-10
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/evil.ts(50,5)
-      TS2322: Type '{ ftemp: { generator: (seed: number, st: EvilFlashcard[]) => { params: number; prompt: string; answers: string[]; hint: string; uuid: any; }; }; state: { cards: { correct: number; incorrect: number; prompt: any; answers: any; tags: string[]; }[]; initWeight: number; punishParam: number; }; seeder: never; updater: ne...' is not assignable to type 'FlashcardGenerator<number, EvilQuizzerState>'.
-  The types of 'ftemp.generator' are incompatible between these types.
-    Type '(seed: number, st: EvilFlashcard[]) => { params: number; prompt: string; answers: string[]; hint: string; uuid: any; }' is not assignable to type '(seed: number, st: EvilQuizzerState) => Flashcard<number>'.
-      Types of parameters 'st' and 'st' are incompatible.
-        Type 'EvilQuizzerState' is missing the following properties from type 'EvilFlashcard[]': length, pop, push, concat, and 35 more.
- @ ./src/index.ts 10:0-17
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-templating.ts
+./src/russian-templating.ts 123:50-54
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-templating.ts(123,51)
+      TS2683: 'this' implicitly has type 'any' because it does not have a type annotation.
+ @ ./src/index.ts 11:0-31
 
-4 errors have detailed information that is not shown.
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-templating.ts
+./src/russian-templating.ts 123:69-70
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-templating.ts(123,70)
+      TS7006: Parameter 'w' implicitly has an 'any' type.
+ @ ./src/index.ts 11:0-31
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-templating.ts
+./src/russian-templating.ts 128:37-41
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-templating.ts(128,38)
+      TS2683: 'this' implicitly has type 'any' because it does not have a type annotation.
+ @ ./src/index.ts 11:0-31
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-templating.ts
+./src/russian-templating.ts 128:50-54
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-templating.ts(128,51)
+      TS2683: 'this' implicitly has type 'any' because it does not have a type annotation.
+ @ ./src/index.ts 11:0-31
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-templating.ts
+./src/russian-templating.ts 128:69-70
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-templating.ts(128,70)
+      TS7006: Parameter 'w' implicitly has an 'any' type.
+ @ ./src/index.ts 11:0-31
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-templating.ts
+./src/russian-templating.ts 322:25-33
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-templating.ts(322,26)
+      TS2339: Property 'pickVerb' does not exist on type 'EnRuWordLibrary'.
+ @ ./src/index.ts 11:0-31
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-templating.ts
+./src/russian-templating.ts 342:25-33
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-templating.ts(342,26)
+      TS2339: Property 'pickNoun' does not exist on type 'EnRuWordLibrary'.
+ @ ./src/index.ts 11:0-31
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-templating.ts
+./src/russian-templating.ts 364:25-33
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-templating.ts(364,26)
+      TS2339: Property 'pickNoun' does not exist on type 'EnRuWordLibrary'.
+ @ ./src/index.ts 11:0-31
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-templating.ts
+./src/russian-templating.ts 371:25-33
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-templating.ts(371,26)
+      TS2339: Property 'pickNoun' does not exist on type 'EnRuWordLibrary'.
+ @ ./src/index.ts 11:0-31
+
+12 errors have detailed information that is not shown.
 Use 'stats.errorDetails: true' resp. '--stats-error-details' to show it.
 
-webpack 5.97.1 compiled with 4 errors in 2555 ms
+webpack 5.97.1 compiled with 12 errors in 2414 ms

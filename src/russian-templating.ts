@@ -1,3 +1,10 @@
+import {
+    IDictionary
+} from "./lib";
+import {
+    weightedRandom
+} from "./weighted-rand";
+
 const papa = require("papaparse"); 
 const EnglishPlural = require("pluralize-me");
 const EnglishVerbs = require('english-verbs');
@@ -94,19 +101,52 @@ type EnRuVerbInflector = {
     person: RussianPerson
 }
 
-type EnRuWordLibrary = {
-    nouns: EnRuNoun[],
-    verbs: EnRuVerb[]
-}
+class EnRuWordLibrary {
+    nouns: EnRuNoun[];
+    verbs: EnRuVerb[];
 
-function pickNoun(lib: EnRuWordLibrary, tag: string) {
-    var options = (tag === "") ? lib.nouns : lib.nouns.filter((w) => w.tags.includes(tag));
-    return options[Math.floor(Math.random() * options.length)];
-}
+    tagWeights: IDictionary<number>;
+    genderWeights: IDictionary<number>;
+    numberWeights: IDictionary<number>;
+    personWeights: IDictionary<number>;
+    caseWeights: IDictionary<number>;
 
-function pickVerb(lib: EnRuWordLibrary, tag: string) {
-    var options = (tag === "") ? lib.verbs : lib.verbs.filter((w) => w.tags.includes(tag));
-    return options[Math.floor(Math.random() * options.length)];
+    constructor(nouns: EnRuNoun[], verbs: EnRuVerb[]) {
+        this.nouns = nouns;
+        this.verbs = verbs;
+
+        this.tagWeights = {};
+        this.genderWeights = {0: 1, 1: 1, 2: 1};
+        this.numberWeights = {0: 1, 1: 1};
+        this.personWeights = {0: 1, 1: 1, 2: 1};
+        this.caseWeights = {0: 1, 1: 1, 2: 1, 3: 1, 4: 1, 5: 1};
+    }
+
+    pickNoun(tag: string = "") {
+        var options = (tag === "") ? this.nouns : this.nouns.filter((w) => w.tags.includes(tag));
+        return options[Math.floor(Math.random() * options.length)];
+    }
+
+    pickVerb(tag: string = "") {
+        var options = (tag === "") ? this.verbs : this.verbs.filter((w) => w.tags.includes(tag));
+        return options[Math.floor(Math.random() * options.length)];
+    }
+
+    pickVerbWithAnySubjTag(tags: string[], tag: string = "") {
+        var options = this.verbs.filter((v) => tags.includes(v.subjTag));
+        options = (tag === "") ? options : options.filter((w) => w.tags.includes(tag));
+        return options[Math.floor(Math.random() * options.length)];
+    }
+
+    pickGender(): RussianGender {
+        return weightedRandom([0, 1, 2], (k) => this.genderWeights[k], Math.random());
+    }
+    pickNumber(): RussianNumber {
+        return weightedRandom([0, 1], (k) => this.numberWeights[k], Math.random());
+    }
+    pickPerson(): RussianPerson {
+        return weightedRandom([0, 1, 2], (k) => this.personWeights[k], Math.random());
+    }
 }
 
 export function getRussianGender(ruNoun: string): RussianGender {
@@ -119,13 +159,59 @@ export function getRussianGender(ruNoun: string): RussianGender {
     else                                            return RussianGender.GenderMale;
 }
 
+function getPronoun(num: RussianNumber, psn: RussianPerson, gdr: RussianGender): EnRuNoun {
+    var tr = ["", ""];
+    if (num === RussianNumber.NumberSingular) {
+        if (psn === RussianPerson.Person1st) tr = ["I", "я"];
+        else if (psn === RussianPerson.Person2nd) tr = ["you", "ты"];
+        else if (gdr === RussianGender.GenderMale) tr = ["he", "он"];
+        else if (gdr === RussianGender.GenderFemale) tr = ["she", "она"];
+        else if (gdr === RussianGender.GenderNeuter) tr = ["it", "оно"];
+    } else {
+        if (psn === RussianPerson.Person1st) tr = ["we", "мы"];
+        else if (psn === RussianPerson.Person2nd) tr = ["y'all", "вы"];
+        else if (psn === RussianPerson.Person3rd) tr = ["they", "они"];
+    }
+    return {
+        enForm: tr[0],
+        ruForm: tr[1],
+        number: num,
+        person: psn,
+        gender: gdr,
+        tags: ["pronoun"]
+    };
+}
+
+const enProns: IDictionary<string[]> = {
+    "I": ["I", "me", "me", "me", "me", "me"],
+    "you": ["you", "you", "you", "you", "you", "you"],
+    "he": ["he", "him", "him", "him", "him", "him"],
+    "she": ["she", "her", "her", "her", "her", "her"],
+    "it": ["it", "it", "it", "it", "it", "it"],
+    "we": ["we", "us", "us", "us", "us", "us"],
+    "y'all": ["y'all", "y'all", "y'all", "y'all", "y'all", "y'all"],
+    "they": ["they", "them", "them", "them", "them", "them"]
+};
+
+const ruProns: IDictionary<string[]> = {
+    "я": ["я", "меня", "мне", "меня", "мне", ""],
+    "ты": ["ты", "тебя", "тебе", "тебя", "тебе", ""],
+    "он": ["он", "его", "ему", "нём", "его", ""],
+    "она": ["она", "её", "ей", "ней", "её", ""],
+    "оно": ["оно", "его", "ему", "нём", "его", ""],
+    "мы": ["мы", "нас", "нам", "нас", "нас", ""],
+    "вы": ["вы", "вас", "вам", "вас", "вас", ""],
+    "они": ["они", "их", "им", "них", "их", ""]
+};
+
 function inflectNoun(n: EnRuNoun, inf: EnRuNounInflector): [string, string] {
+    if (n.tags.includes("pronoun"))
+        return [enProns[n.enForm][inf.case], ruProns[n.ruForm][inf.case]];
     var ruRecord = window.ruNouns(n.ruForm);
     var numStr = (n.number === RussianNumber.NumberPlural) ? "pl" : "sg";
     var cStr = ["nom", "acc", "dat", "prep", "gen", "inst"][inf.case];
     var ruInfl = ruRecord[`${numStr}_${cStr}`].split(', ')[0]; // We may not always want the 1st one...
     ruInfl = ruInfl.replace("'", "");
-    // TODO: In English, we actually need to do some inflecting if it is a pronoun!
     // return [`${n.enForm}(${inf.case})`, `${n.ruForm}(${inf.case})`];
     return [n.enForm, ruInfl];
 }
@@ -242,7 +328,7 @@ class WordRepo {
     }
 
     pickV(tense: RussianTense = 0, tag: string = "") {
-        var v = pickVerb(this.lib, tag);
+        var v = this.lib.pickVerb(tag);
         this.addV(v, tense);
         return this; 
     }
@@ -250,6 +336,18 @@ class WordRepo {
     dupV(vId: number, tense: RussianTense = 0) {
         // this.addV(objCloner(this.verbs[vId][0]), tense);
         this.addV(this.verbs[vId][0], tense);
+        return this;
+    }
+
+    conjV(vId: number, nId: number, tense: RussianTense = 1) {
+        var n = this.nouns[nId][0];
+        var vInf: EnRuVerbInflector = {
+            tense: tense,
+            gender: n.gender,
+            number: n.number,
+            person: n.person
+        };
+        this.verbs[vId][1] = vInf;
         return this;
     }
 
@@ -262,8 +360,22 @@ class WordRepo {
     }
 
     pickN(tag: string = "", cs: RussianCase = caseNOM) {
-        var n = pickNoun(this.lib, tag);
+        var n = this.lib.pickNoun(tag);
         this.addN(n, cs);
+        return this;
+    }
+
+    addPron(nId: number, cs: RussianCase = caseNOM) {
+        var n = this.nouns[nId][0];
+        var pron = getPronoun(n.number, n.person, n.gender);
+        this.addN(pron, cs);
+        return this;
+    }
+
+    pickPron(cs: RussianCase = caseNOM) {
+        var pron = getPronoun(this.lib.pickNumber(), this.lib.pickPerson(), this.lib.pickGender());
+        pron.tags.push("agent");
+        this.addN(pron, cs);
         return this;
     }
 
@@ -277,15 +389,22 @@ class WordRepo {
 
     pickSubj(vId: number) {
         var tag = this.verbs[vId][0].subjTag;
-        var n = pickNoun(this.lib, tag);
+        var n = this.lib.pickNoun(tag);
         this.addSubj(n, vId);
         return this;
     }
 
     pickObj(vId: number) {
         var tag = this.verbs[vId][0].objTag;
-        var n = pickNoun(this.lib, tag);
+        var n = this.lib.pickNoun(tag);
         this.addN(n, RussianCase.CaseAccusative);
+        return this;
+    }
+
+    pickAxn(nId: number, tag: string = "", tense: RussianTense = 0) {
+        var n = this.lib.nouns[nId];
+        var v = this.lib.pickVerbWithAnySubjTag(n.tags, tag);
+        this.addV(v, tense);
         return this;
     }
 
@@ -315,10 +434,12 @@ function makeLib() {
         makeSingularNoun("street", "улица", ["on-place", "hasloc"]),
         makeSingularNoun("apartment", "квартира", ["in-place", "hasloc"]),
         makeSingularNoun("bathroom", "туалет", ["hasloc", "in-place"]),
-        makeSingularNoun("kitchen", "кухня", ["hasloc", "in-place"]),
+        makeSingularNoun("kitchen", "кухня", ["hasloc", "at-place"]),
         makeSingularNoun("bridge", "мост", ["buildable", "at-place", "hasloc"]),
         makeSingularNoun("Russia", "Россия", ["in-place", "country"]),
         makeSingularNoun("Ukraine", "Украина", ["at-place", "country"]),
+        makeSingularNoun("concert", "концерт", ["at-place", "event"]),
+        makeSingularNoun("lesson", "урок", ["event"])
     ]
 
     var verbLibrary: EnRuVerb[] = [
@@ -330,25 +451,25 @@ function makeLib() {
         makeTransVerb("open", "открывать", "agent", "openable", []),
         makeTransVerb("build", "строить", "agent", "buildable", []),
         makeTransVerb("love", "любить", "agent", "", ["of-verb"]),
-        makeIntransVerb("start", "начинать", "agent", ["of-verb"]),
+        makeTransVerb("start", "начинать", "agent", "event", ["of-verb"]),
     ]
 
-    var lib: EnRuWordLibrary = {
-        nouns: nounLibrary,
-        verbs: verbLibrary
-    }
+    var lib = new EnRuWordLibrary(nounLibrary, verbLibrary);
 
     return lib;
 }
 
 var tpls = [
     (wr: any) => wr.pickN("inhab").format("where's (the) {n0}?", "где {n0}?"),
+    (wr: any) => wr.pickPron().pickAxn(0, "intrans").conjV(0, 0).format("{n0} {v0}", "{n0} {v0}"),
     (wr: any) => wr.pickV(1, "intrans").pickSubj(0).format("{n0} {v0}", "{n0} {v0}"),
     (wr: any) => wr.pickV(1, "intrans").dupV(0).pickSubj(0).format("{n0} do/does not {v1}", "{n0} не {v0}"),
     (wr: any) => wr.pickN("inhab").pickN("in-place", casePRP).format("{n0} is in {n1}", "{n0} в {n1}"),
     (wr: any) => wr.pickN("inhab").pickN("on-place", casePRP).format("{n0} is in {n1}", "{n0} на {n1}"),
     (wr: any) => wr.pickV(1, "trans").pickSubj(0).pickObj(0).format("{n0} {v0} {n1}", "{n0} {v0} {n1}"),
-    (wr: any) => wr.pickV(1, "of-verb").pickV(0, "intrans").pickSubj(0).format("{n0} {v0} to {v1}", "{n0} {v0} {v1}")
+    (wr: any) => wr.pickV(1, "of-verb").pickSubj(0).pickAxn(0, "intrans").format("{n0} {v0} to {v1}", "{n0} {v0} {v1}")
+// THIS ONE IS PROBLEMATIC, FOR NOW
+//    (wr: any) => wr.pickV(1, "of-verb").pickV(0, "intrans").pickSubj(1).format("{n0} {v0} to {v1}", "{n0} {v0} {v1}")
 ]
 
 ruDataPromise("ru-nouns", "ruNouns").then((_) => { ruDataPromise("ru-verbs", "ruVerbs").then((_) => {
