@@ -19,9 +19,10 @@ function geometricProgressFGen(getter, maxnum) {
             }
         },
         state: {
-            geomParam: 0.95,
+            geomParam: 0.5,
             alpha: 0.95,
-            maxnum: maxnum
+            maxnum: maxnum,
+            scoreHist: []
         },
         seeder: function (st) {
             var u = Math.random();
@@ -43,6 +44,7 @@ function geometricProgressFGen(getter, maxnum) {
                 if (st.geomParam < 0)
                     st.geomParam = 0.5;
             }
+            st.scoreHist.push(Math.floor(-1 / Math.log(st.geomParam)));
             return st;
         },
         history: [],
@@ -72,7 +74,8 @@ function geometricProgressFGen(getter, maxnum) {
                     return {
                         geomParam: st.geomParam,
                         alpha: Math.pow(alphaEditor.menuToState(), 0.1),
-                        maxnum: st.maxnum
+                        maxnum: st.maxnum,
+                        scoreHist: st.scoreHist
                     };
                 }
             };

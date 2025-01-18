@@ -16,13 +16,14 @@ declare global {
     var ruVerbs: any
 }
 
-var ruDataPromise = (filename: string, objname: string) =>
+export var ruDataPromise = (filename: string, objname: string) =>
     fetch(`/data/${filename}.csv`).then((r) => r.text()).then((s) => { 
     var csvData = papa.parse(s, { header: true, dynamicTyping: true }).data;
     (<any>window)[objname] = (bareVerb: string) => { 
         var v = csvData.find((k: any) => k.bare === bareVerb);
         if (v === undefined)
-            v = csvData.find((k: any) => k.pl_nom.replace("'", "") === bareVerb);
+            console.log(bareVerb);
+        //     v = csvData.find((k: any) => k["pl_nom"].replace("'", "") === bareVerb);
         return v;
     }
 });
@@ -40,12 +41,12 @@ enum RussianCase {
     CaseInstrumental
 }
 
-const caseNOM = RussianCase.CaseNominative;
-const caseACC = RussianCase.CaseAccusative;
-const caseDAT = RussianCase.CaseDative;
-const casePRP = RussianCase.CasePrepositional;
-const caseGEN = RussianCase.CaseGenitive;
-const caseINS = RussianCase.CaseInstrumental;
+export const caseNOM = RussianCase.CaseNominative;
+export const caseACC = RussianCase.CaseAccusative;
+export const caseDAT = RussianCase.CaseDative;
+export const casePRP = RussianCase.CasePrepositional;
+export const caseGEN = RussianCase.CaseGenitive;
+export const caseINS = RussianCase.CaseInstrumental;
 
 enum RussianPerson {
     Person1st,
@@ -72,7 +73,7 @@ enum RussianTense {
 
 const enTenseStrings = ["PRESENT", "PRESENT", "PAST"];
 
-type EnRuNoun = {
+export type EnRuNoun = {
     enForm: string,
     ruForm: string,
     gender: RussianGender,
@@ -85,7 +86,7 @@ type EnRuNounInflector = {
     case: RussianCase
 }
 
-type EnRuVerb = {
+export type EnRuVerb = {
     enForm: string,
     ruForm: string,
     tags: string[],
@@ -101,7 +102,7 @@ type EnRuVerbInflector = {
     person: RussianPerson
 }
 
-class EnRuWordLibrary {
+export class EnRuWordLibrary {
     nouns: EnRuNoun[];
     verbs: EnRuVerb[];
 
@@ -305,7 +306,7 @@ export function makeTransVerb(enForm: string, ruForm: string, subjTag: string, o
     }
 }
 
-class WordRepo {
+export class WordRepo {
     lib: EnRuWordLibrary;
     nouns: [EnRuNoun, EnRuNounInflector][];
     verbs: [EnRuVerb, EnRuVerbInflector][];
@@ -372,9 +373,10 @@ class WordRepo {
         return this;
     }
 
-    pickPron(cs: RussianCase = caseNOM) {
+    pickPron(tags: string[] = [], cs: RussianCase = caseNOM) {
         var pron = getPronoun(this.lib.pickNumber(), this.lib.pickPerson(), this.lib.pickGender());
         pron.tags.push("agent");
+        tags.map((t) => pron.tags.push(t));
         this.addN(pron, cs);
         return this;
     }
@@ -472,7 +474,7 @@ var tpls = [
 //    (wr: any) => wr.pickV(1, "of-verb").pickV(0, "intrans").pickSubj(1).format("{n0} {v0} to {v1}", "{n0} {v0} {v1}")
 ]
 
-ruDataPromise("ru-nouns", "ruNouns").then((_) => { ruDataPromise("ru-verbs", "ruVerbs").then((_) => {
+/* ruDataPromise("ru-nouns", "ruNouns").then((_) => { ruDataPromise("ru-verbs", "ruVerbs").then((_) => {
     var lib = makeLib();
 
     for (var i in [...Array(40).keys()]) {
@@ -481,4 +483,4 @@ ruDataPromise("ru-nouns", "ruNouns").then((_) => { ruDataPromise("ru-verbs", "ru
         var res = tpl(repo); 
         console.log(res);
     }
-})})
+})}) */

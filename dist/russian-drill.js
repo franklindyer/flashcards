@@ -17,6 +17,7 @@ var ruFreqlistPromise = () => fetch("/data/ru-freqlist.csv").then((r) => r.text(
         return csvData[n];
     };
 });
+// GRAMMATICAL UTILS
 var RussianCase;
 (function (RussianCase) {
     RussianCase[RussianCase["CaseNominative"] = 0] = "CaseNominative";
@@ -147,6 +148,7 @@ const subjPresentCols = [
     "presfut_pl2",
     "presfut_pl3"
 ];
+// QUIZZERS
 var ruVerbQuizzer = {
     ftemp: {
         generator: function (seed) {
