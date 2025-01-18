@@ -49,6 +49,8 @@ var ruFreqlistPromise = () =>
         }
 });
 
+// GRAMMATICAL UTILS
+
 enum RussianCase {
     CaseNominative = 0,
     CaseAccusative,
@@ -188,6 +190,32 @@ const subjPresentCols = [
     "presfut_pl2",
     "presfut_pl3"
 ];
+
+type RussianSVTemplate = {
+    subject: [string, string],
+    verb: [string, string],
+    number: RussianNumber,
+    tense: RussianTense
+}
+
+type RussianSPronVTemplate = {
+    person: RussianPerson,
+    number: RussianNumber,
+    gender:  RussianGender,
+    verb: [string, string],
+    tense: RussianTense
+}
+
+type RussianSVOTemplate = {
+    subject: [string, string],
+    subjectNumber: RussianNumber,
+    object: [string, string],
+    objectNumber: RussianNumber,
+    verb: [string, string],
+    tense: RussianTense
+}
+
+// QUIZZERS
 
 var ruVerbQuizzer: FlashcardGenerator<[number, string, string], [string, string][]> = {
     ftemp: {

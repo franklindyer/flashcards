@@ -9,4 +9,6 @@ import './progression'
 import './weighted-rand'
 import './evil'
 
+import './russian-templating'
+
 runFlashcardController("addition-quiz-deck")
