@@ -2,7 +2,9 @@ import {
     IDictionary,
     guidGenerator,
     Flashcard,
+    FlashcardGenEditor,
     FlashcardGenerator,
+    boolEditor,
     defaultDecks,
     providedGenerators,
     indexedResources
@@ -30,6 +32,24 @@ type PengQuizzerStats = {
 type PengQuizzerState = {
     activeChapters: string[],
     stats: PengQuizzerStats
+}
+
+function makePengMenu(st: PengQuizzerState): FlashcardGenEditor<PengQuizzerState> {
+    var chapters = Object.keys(penguinChapters);
+    var contDiv = document.createElement("div");
+    var chapterBoxes: IDictionary<FlashcardGenEditor<boolean>> = {};
+    for (var i in chapters) {
+        var ed = boolEditor(`Chapter ${chapters[i]}`, st.activeChapters.includes(chapters[i]));
+        chapterBoxes[chapters[i]] = ed;
+        contDiv.appendChild(ed.element);
+    }
+    return {
+        element: contDiv,
+        menuToState: () => { return {
+            activeChapters: Object.keys(chapterBoxes).filter((k: string) => chapterBoxes[k].menuToState()),
+            stats: st.stats
+        }}
+    }
 }
 
 // The templates need to NOT be serialized into the state object!
@@ -180,17 +200,30 @@ var ruPenguinQuizzer: FlashcardGenerator<WordRepo, PengQuizzerState> = {
             }
         }
     },
-    state: null!,
+    state: {
+        activeChapters: ["3"],
+        stats: {
+            nounStats: {},
+            verbStats: {},
+            genderStats: [],
+            numberStats: [],
+            personStats: []
+        }
+    },
     seeder: function(st: PengQuizzerState) {
-        var tpl = allTpls[Math.floor(Math.random() * allTpls.length)];
-        var repo = new WordRepo(lib);
+        var selNouns = st.activeChapters.map((k) => penguinChapters[k][0]).flat();
+        var selVerbs = st.activeChapters.map((k) => penguinChapters[k][1]).flat();
+        var selTpls = st.activeChapters.map((k) => penguinChapters[k][2]).flat();
+        var selLib = new EnRuWordLibrary(selNouns, selVerbs);
+        var tpl = selTpls[Math.floor(Math.random() * selTpls.length)];
+        var repo = new WordRepo(selLib);
         var res = tpl(repo);
         console.log(res);
         return res;
     },
     updater: (correct, answer, card, st) => st,
     history: [],
-    editor: null!
+    editor: makePengMenu
 }
 
 defaultDecks["russian-penguin-deck"] = {

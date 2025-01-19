@@ -216,6 +216,9 @@ function inflectNoun(n: EnRuNoun, inf: EnRuNounInflector): [string, string] {
     if (n.tags.includes("pronoun"))
         return [enProns[n.enForm][inf.case], ruProns[n.ruForm][inf.case]];
     var ruRecord = window.ruNouns(n.ruForm);
+    if (ruRecord["indeclinable"] === "1" || ruRecord["indeclinable"] == 1) {
+        return [n.enForm, n.ruForm];
+    }
     var numStr = (n.number === RussianNumber.NumberPlural) ? "pl" : "sg";
     var cStr = ["nom", "acc", "dat", "prep", "gen", "inst"][inf.case];
     console.log(n);
