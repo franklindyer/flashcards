@@ -125,6 +125,8 @@ export class EnRuWordLibrary {
 
     pickNoun(tag: string = "") {
         var options = (tag === "") ? this.nouns : this.nouns.filter((w) => w.tags.includes(tag));
+        console.log(tag);
+        console.log(options.length);
         return options[Math.floor(Math.random() * options.length)];
     }
 
@@ -211,6 +213,7 @@ function inflectNoun(n: EnRuNoun, inf: EnRuNounInflector): [string, string] {
     var ruRecord = window.ruNouns(n.ruForm);
     var numStr = (n.number === RussianNumber.NumberPlural) ? "pl" : "sg";
     var cStr = ["nom", "acc", "dat", "prep", "gen", "inst"][inf.case];
+    console.log(n);
     var ruInfl = ruRecord[`${numStr}_${cStr}`].split(', ')[0]; // We may not always want the 1st one...
     ruInfl = ruInfl.replace("'", "");
     // return [`${n.enForm}(${inf.case})`, `${n.ruForm}(${inf.case})`];
@@ -267,9 +270,11 @@ function inflectVerb(v: EnRuVerb, inf: EnRuVerbInflector): [string, string] {
     return [enInfl, ruInfl];
 }
 
-export function makeSingularNoun(enForm: string, ruForm: string, tags: string[] = []): EnRuNoun {
-    var ruNoun = window.ruNouns(ruForm);
-    var gender = getRussianGender(ruForm);
+export function makeSingularNoun(enForm: string, ruForm: string, gdr: string, tags: string[] = []): EnRuNoun {
+    // var gender = getRussianGender(ruForm);
+    var gender = RussianGender.GenderNeuter;
+    if (gdr === "m") gender = RussianGender.GenderMale;
+    else if (gdr === "f") gender = RussianGender.GenderFemale;
     return {
         enForm: enForm,
         ruForm: ruForm,
@@ -411,6 +416,8 @@ export class WordRepo {
     }
 
     format(enTpl: string, ruTpl: string): [string, string] {
+        console.log(this.nouns);
+        console.log(this.verbs);
         for (var i in this.nouns) {
             var infl = inflectNoun(this.nouns[i][0], this.nouns[i][1]);
             enTpl = enTpl.replace(`{n${i}}`, infl[0]);
@@ -425,6 +432,7 @@ export class WordRepo {
     } 
 }
 
+/*
 function makeLib() {
     var nounLibrary = [
         makeSingularNoun("girl", "девушка", ["agent", "inhab", "hasloc"]),
@@ -472,7 +480,7 @@ var tpls = [
     (wr: any) => wr.pickV(1, "of-verb").pickSubj(0).pickAxn(0, "intrans").format("{n0} {v0} to {v1}", "{n0} {v0} {v1}")
 // THIS ONE IS PROBLEMATIC, FOR NOW
 //    (wr: any) => wr.pickV(1, "of-verb").pickV(0, "intrans").pickSubj(1).format("{n0} {v0} to {v1}", "{n0} {v0} {v1}")
-]
+] */
 
 /* ruDataPromise("ru-nouns", "ruNouns").then((_) => { ruDataPromise("ru-verbs", "ruVerbs").then((_) => {
     var lib = makeLib();
