@@ -34,7 +34,8 @@
     "pluralize-me": "^1.1.1",
     "terser-webpack-plugin": "^5.3.11",
     "typescript": "^5.7.2",
-    "uuid": "^11.0.3"
+    "uuid": "^11.0.3",
+    "uuid-by-string": "^4.0.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

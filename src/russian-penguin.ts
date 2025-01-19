@@ -1,5 +1,7 @@
 import {
+    IDictionary,
     guidGenerator,
+    Flashcard,
     FlashcardGenerator,
     defaultDecks,
     providedGenerators,
@@ -17,8 +19,17 @@ import {
     casePRP
 } from "./russian-templating";
 
+type PengQuizzerStats = {
+    nounStats: IDictionary<[number, number]>,
+    verbStats: IDictionary<[number, number]>,
+    genderStats: number[],
+    numberStats: number[],
+    personStats: number[]
+}
+
 type PengQuizzerState = {
-    x: number
+    activeChapters: string[],
+    stats: PengQuizzerStats
 }
 
 // The templates need to NOT be serialized into the state object!
@@ -45,7 +56,7 @@ var ch3Nouns = [
     makeSingularNoun("window", "окно", "n", ["hasloc", "openable"]),
     makeSingularNoun("dad", "папа", "m", ["agent", "person", "hasloc"]),
     makeSingularNoun("rouble", "рубль", "f", ["item"]),
-    makeSingularNoun("Siberia", "Сибирь", "f", ["in-place", "hasloc"]),
+    makeSingularNoun("Siberia", "Сибирь", "f", ["in-place", "hasloc", "region"]),
     makeSingularNoun("sour cream", "сметана", "f", ["food", "item", "hasloc"]),
     makeSingularNoun("taxi", "такси", "n", ["hasloc", "vehicle"]),
     makeSingularNoun("exercise", "упражнение", "n", ["nonphysical"]),
@@ -65,7 +76,7 @@ var ch3Tpl = [
 // CHAPTER 4
 
 var ch4Nouns = [
-    makeSingularNoun("bus", "автобус", "m", ["hasloc", "vehicle"]),
+    makeSingularNoun("bus", "автобус", "m", ["hasloc", "vehicle", "at-place"]),
     makeSingularNoun("hotel", "гостиница", "f", ["hasloc", "building", "in-place"]),
     makeSingularNoun("London", "Лондон", "m", ["in-place", "hasloc", "city"]),
     makeSingularNoun("metro", "метро", "n", ["in-place", "hasloc"]),
@@ -74,15 +85,15 @@ var ch4Nouns = [
     makeSingularNoun("Russia", "Россия", "f", ["in-place", "hasloc", "country"]),
     makeSingularNoun("language", "язык", "m", ["nonphysical"]),
     makeSingularNoun("trolleybus", "троллейбус", "m", ["hasloc", "vehicle"]),
-    makeSingularNoun("street", "улица", "f", ["at-place", "hasloc"])
+    makeSingularNoun("street", "улица", "f", ["at-place", "hasloc", "region"])
 ];
 
 var ch4Verbs = [
-    makeIntransVerb("speak", "говорить", "agent", []),
+    makeIntransVerb("speak", "говорить", "agent", ["about-topic"]),
     makeIntransVerb("go", "ехать", "agent", [], "by transport"),
     makeIntransVerb("live", "жить", "agent", ["within-place"]),
     makeIntransVerb("work", "работать", "person", ["within-place"]),
-    makeTransVerb("smoke", "курить", "person", "smokeable", ["intrans"]),
+    makeTransVerb("smoke", "курить", "person", "smokeable", ["intrans", "within-place"]),
     makeTransVerb("understand", "понимать", "agent", "nonphysical", ["intrans"]),
     makeTransVerb("study", "изучать", "person", "subject", ["intrans"])
 ];
@@ -94,24 +105,77 @@ var ch4Tpl = [
                     .format("{n0} {v0}", "{n0} {v0}"),
     (wr: any) => wr.pickV(1, "intrans").pickSubj(0)
                     .format("{n0} do/does not {v0}", "{n0} не {v0}"),
+    (wr: any) => wr.pickPron(["person"]).pickAxn(0, "intrans").conjV(0, 0)
+                    .format("{n0} do/does not {v0}", "{n0} не {v0}"),
     (wr: any) => wr.pickN("in-place", casePRP)
-                    .format("in {n0}", "в {n0}")
+                    .format("in/at {n0}", "в {n0}")
 ];
 
-var allNouns = [ch3Nouns, ch4Nouns].flat();
-var allVerbs = [ch3Verbs, ch4Verbs].flat();
-var allTpls = [ch3Tpl, ch4Tpl].flat();
+// CHAPTER 5
+
+var ch5Nouns = [
+    makeSingularNoun("englishman", "англичанин", "m", ["agent", "person", "hasloc"]),
+    makeSingularNoun("station", "вокзал", "m", ["at-place", "hasloc"]),
+    makeSingularNoun("institute", "институт", "m", ["in-place", "hasloc"]),
+    makeSingularNoun("Crimea", "Крым", "m", ["in-place", "region"]),
+    makeSingularNoun("forest", "лес", "m", ["in-place", "hasloc"]),
+    makeSingularNoun("sea", "море", "n", ["in-place", "hasloc", "body-water"]),
+    makeSingularNoun("museum", "музей", "m", ["in-place", "hasloc", "building"]),
+    makeSingularNoun("number", "номер", "m", ["nonphysical"]),
+    makeSingularNoun("letter", "письмо", "n", ["item", "hasloc", "topical"]),
+    makeSingularNoun("town square", "площадь", "f", ["at-place", "hasloc"]),
+    makeSingularNoun("post office", "почта", "f", ["at-place", "hasloc", "building"]),
+    makeSingularNoun("restaurant", "ресторан", "m", ["in-place", "building", "hasloc"]),
+    makeSingularNoun("garden", "сад", "m", ["in-place", "hasloc"]),
+    makeSingularNoun("bathroom", "туалет", "m", ["in-place", "hasloc"]),
+    makeSingularNoun("Ukraine", "Украина", "f", ["at-place", "country", "region"]),
+    makeSingularNoun("university", "университет", "m", ["in-place", "hasloc"]),
+    makeSingularNoun("tsar", "царь", "m", ["agent", "person", "hasloc"])
+];
+
+var ch5Verbs = [
+    makeIntransVerb("speak", "говорить", "agent", ["about-topic"]),
+    makeIntransVerb("live", "жить", "agent", ["within-place"]),
+    makeIntransVerb("work", "работать", "person", ["within-place"]),
+    makeTransVerb("smoke", "курить", "person", "smokeable", ["intrans", "within-place"])
+]
+
+var ch5Tpl = [
+    (wr: any) => wr.pickN("in-place", casePRP)
+                    .format("in/at {n0}", "в {n0}"),
+    (wr: any) => wr.pickN("at-place", casePRP)
+                    .format("in/at {n0}", "на {n0}"),
+    (wr: any) => wr.pickN("hasloc").pickN("in-place", casePRP)
+                    .format("{n0} is in/at {n1}", "{n0} в {n1}"),
+    (wr: any) => wr.pickN("hasloc").pickN("at-place", casePRP)
+                    .format("{n0} is in/at {n1}", "{n0} на {n1}"),
+    (wr: any) => wr.pickV(1, "within-place").pickSubj(0).pickN("in-place", casePRP)
+                    .format("{n0} {v0} in/at {n1}", "{n0} {v0} в {n1}"),
+    (wr: any) => wr.pickV(1, "within-place").pickSubj(0).pickN("at-place", casePRP)
+                    .format("{n0} {v0} in/at {n1}", "{n0} {v0} на {n1}"),
+]
+
+var allNouns = [ch3Nouns, ch4Nouns, ch5Nouns].flat();
+var allVerbs = [ch3Verbs, ch4Verbs, ch5Verbs].flat();
+var allTpls = [ch3Tpl, ch4Tpl, ch5Tpl].flat();
+
+var penguinChapters: IDictionary<[EnRuNoun[], EnRuVerb[], any]> = {
+    "3": [ch3Nouns, ch3Verbs, ch3Tpl],
+    "4": [ch4Nouns, ch4Verbs, ch4Tpl],
+    "5": [ch5Nouns, ch5Verbs, ch5Tpl]
+}
 
 var lib = new EnRuWordLibrary(allNouns, allVerbs);
 
-var ruPenguinQuizzer: FlashcardGenerator<[string, string], PengQuizzerState> = {
+var ruPenguinQuizzer: FlashcardGenerator<WordRepo, PengQuizzerState> = {
     ftemp: {
-        generator: function(seed: [string, string]) {
+        generator: function(seed: WordRepo): Flashcard<WordRepo> {
+            var res = seed.resolve();
             return {
                 params: seed,
-                prompt: seed[0],
-                answers: [seed[1]],
-                hint: seed[1],
+                prompt: res[0],
+                answers: [res[1]],
+                hint: res[1],
                 uuid: guidGenerator()
             }
         }

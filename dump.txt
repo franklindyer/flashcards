@@ -3,15 +3,16 @@
 > webpack-dev-server
 
 assets by status 19.2 MiB [cached] 1 asset
-runtime modules 27.4 KiB 12 modules
+runtime modules 27.4 KiB 13 modules
 orphan modules 32.5 KiB [orphan] 4 modules
-javascript modules 270 KiB
-  modules by path ./node_modules/ 174 KiB 20 modules
-  modules by path ./src/*.ts 95.4 KiB
+javascript modules 296 KiB
+  modules by path ./node_modules/ 215 KiB 24 modules
+  modules by path ./src/*.ts 81.7 KiB
     ./src/index.ts 409 bytes [built] [code generated]
     ./src/lib.ts 24.9 KiB [built] [code generated]
     ./src/demos.ts 2.22 KiB [built] [code generated]
-    + 8 modules
+    ./src/spaced-repetition.ts 10.5 KiB [built] [code generated]
+    + 6 modules
 json modules 18.7 MiB
   ./node_modules/german-verbs-dict/dist/verbs.json 5.2 MiB [built] [code generated]
   ./node_modules/german-words-dict/dist/words.json 13.3 MiB [built] [code generated]
@@ -19,78 +20,66 @@ json modules 18.7 MiB
   ./node_modules/english-verbs/english_verbs.json 174 KiB [built] [code generated]
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
-./src/russian-penguin.ts 78:11-12
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(78,12)
-      TS1005: ',' expected.
+./src/russian-penguin.ts 23:43-44
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(23,44)
+      TS1005: '=>' expected.
  @ ./src/index.ts 12:0-28
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
-./src/russian-penguin.ts 78:18-20
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(78,19)
-      TS1005: ',' expected.
+./src/russian-penguin.ts 24:43-44
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(24,44)
+      TS1005: '=>' expected.
  @ ./src/index.ts 12:0-28
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
-./src/russian-penguin.ts 82:4-5
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(82,5)
-      TS1128: Declaration or statement expected.
+./src/russian-penguin.ts 23:28-34
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(23,29)
+      TS2300: Duplicate identifier 'number'.
  @ ./src/index.ts 12:0-28
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
-./src/russian-penguin.ts 89:0-1
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(89,1)
-      TS1128: Declaration or statement expected.
+./src/russian-penguin.ts 23:28-34
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(23,29)
+      TS7051: Parameter has a name but no type. Did you mean 'arg0: number'?
  @ ./src/index.ts 12:0-28
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
-./src/russian-penguin.ts 78:13-16
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(78,14)
-      TS2693: 'any' only refers to a type, but is being used as a value here.
+./src/russian-penguin.ts 23:36-42
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(23,37)
+      TS2300: Duplicate identifier 'number'.
  @ ./src/index.ts 12:0-28
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
-./src/russian-penguin.ts 78:21-23
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(78,22)
-      TS2304: Cannot find name 'wr'.
+./src/russian-penguin.ts 23:36-42
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(23,37)
+      TS7051: Parameter has a name but no type. Did you mean 'arg1: number'?
  @ ./src/index.ts 12:0-28
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
-./src/russian-penguin.ts 85:20-28
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(85,21)
-      TS2304: Cannot find name 'ch3Nouns'.
+./src/russian-penguin.ts 24:28-34
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(24,29)
+      TS2300: Duplicate identifier 'number'.
  @ ./src/index.ts 12:0-28
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
-./src/russian-penguin.ts 85:30-38
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(85,31)
-      TS2304: Cannot find name 'ch4Nouns'.
+./src/russian-penguin.ts 24:28-34
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(24,29)
+      TS7051: Parameter has a name but no type. Did you mean 'arg0: number'?
  @ ./src/index.ts 12:0-28
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
-./src/russian-penguin.ts 86:20-28
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(86,21)
-      TS2304: Cannot find name 'ch3Verbs'.
+./src/russian-penguin.ts 24:36-42
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(24,37)
+      TS2300: Duplicate identifier 'number'.
  @ ./src/index.ts 12:0-28
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
-./src/russian-penguin.ts 86:30-38
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(86,31)
-      TS2304: Cannot find name 'ch4Verbs'.
+./src/russian-penguin.ts 24:36-42
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(24,37)
+      TS7051: Parameter has a name but no type. Did you mean 'arg1: number'?
  @ ./src/index.ts 12:0-28
 
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
-./src/russian-penguin.ts 87:19-25
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(87,20)
-      TS2304: Cannot find name 'ch3Tpl'.
- @ ./src/index.ts 12:0-28
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
-./src/russian-penguin.ts 87:27-33
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(87,28)
-      TS2304: Cannot find name 'ch4Tpl'.
- @ ./src/index.ts 12:0-28
-
-12 errors have detailed information that is not shown.
+10 errors have detailed information that is not shown.
 Use 'stats.errorDetails: true' resp. '--stats-error-details' to show it.
 
-webpack 5.97.1 compiled with 12 errors in 2389 ms
+webpack 5.97.1 compiled with 10 errors in 2618 ms
