@@ -5,11 +5,11 @@
 assets by status 19.2 MiB [cached] 1 asset
 runtime modules 27.4 KiB 13 modules
 orphan modules 32.5 KiB [orphan] 4 modules
-javascript modules 296 KiB
+javascript modules 309 KiB
   modules by path ./node_modules/ 215 KiB 24 modules
-  modules by path ./src/*.ts 81.7 KiB
+  modules by path ./src/*.ts 94.7 KiB
     ./src/index.ts 409 bytes [built] [code generated]
-    ./src/lib.ts 24.9 KiB [built] [code generated]
+    ./src/lib.ts 25.1 KiB [built] [code generated]
     ./src/demos.ts 2.22 KiB [built] [code generated]
     ./src/spaced-repetition.ts 10.5 KiB [built] [code generated]
     + 6 modules
@@ -20,66 +20,63 @@ json modules 18.7 MiB
   ./node_modules/english-verbs/english_verbs.json 174 KiB [built] [code generated]
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
-./src/russian-penguin.ts 23:43-44
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(23,44)
-      TS1005: '=>' expected.
+./src/russian-penguin.ts 241:31-34
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(241,32)
+      TS2349: This expression is not callable.
+  Type '[EnRuNoun[], EnRuVerb[], EnRuAdjective[], any]' has no call signatures.
  @ ./src/index.ts 12:0-28
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
-./src/russian-penguin.ts 24:43-44
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(24,44)
-      TS1005: '=>' expected.
+./src/russian-penguin.ts 241:36-37
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(241,37)
+      TS7006: Parameter 'k' implicitly has an 'any' type.
  @ ./src/index.ts 12:0-28
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
-./src/russian-penguin.ts 23:28-34
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(23,29)
-      TS2300: Duplicate identifier 'number'.
+./src/russian-penguin.ts 242:31-34
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(242,32)
+      TS2349: This expression is not callable.
+  Type '[EnRuNoun[], EnRuVerb[], EnRuAdjective[], any]' has no call signatures.
  @ ./src/index.ts 12:0-28
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
-./src/russian-penguin.ts 23:28-34
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(23,29)
-      TS7051: Parameter has a name but no type. Did you mean 'arg0: number'?
+./src/russian-penguin.ts 242:36-37
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(242,37)
+      TS7006: Parameter 'k' implicitly has an 'any' type.
  @ ./src/index.ts 12:0-28
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
-./src/russian-penguin.ts 23:36-42
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(23,37)
-      TS2300: Duplicate identifier 'number'.
+./src/russian-penguin.ts 243:30-33
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(243,31)
+      TS2349: This expression is not callable.
+  Type '[EnRuNoun[], EnRuVerb[], EnRuAdjective[], any]' has no call signatures.
  @ ./src/index.ts 12:0-28
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
-./src/russian-penguin.ts 23:36-42
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(23,37)
-      TS7051: Parameter has a name but no type. Did you mean 'arg1: number'?
+./src/russian-penguin.ts 243:35-36
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(243,36)
+      TS7006: Parameter 'k' implicitly has an 'any' type.
  @ ./src/index.ts 12:0-28
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
-./src/russian-penguin.ts 24:28-34
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(24,29)
-      TS2300: Duplicate identifier 'number'.
+./src/russian-penguin.ts 264:48-49
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(264,49)
+      TS7006: Parameter 'n' implicitly has an 'any' type.
  @ ./src/index.ts 12:0-28
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
-./src/russian-penguin.ts 24:28-34
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(24,29)
-      TS7051: Parameter has a name but no type. Did you mean 'arg0: number'?
+./src/russian-penguin.ts 265:48-49
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(265,49)
+      TS7006: Parameter 'v' implicitly has an 'any' type.
  @ ./src/index.ts 12:0-28
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
-./src/russian-penguin.ts 24:36-42
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(24,37)
-      TS2300: Duplicate identifier 'number'.
+./src/russian-penguin.ts 266:46-47
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(266,47)
+      TS7006: Parameter 'a' implicitly has an 'any' type.
  @ ./src/index.ts 12:0-28
 
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
-./src/russian-penguin.ts 24:36-42
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(24,37)
-      TS7051: Parameter has a name but no type. Did you mean 'arg1: number'?
- @ ./src/index.ts 12:0-28
-
-10 errors have detailed information that is not shown.
+9 errors have detailed information that is not shown.
 Use 'stats.errorDetails: true' resp. '--stats-error-details' to show it.
 
-webpack 5.97.1 compiled with 10 errors in 2618 ms
+webpack 5.97.1 compiled with 9 errors in 2631 ms

@@ -1,6 +1,7 @@
 import {
     IDictionary,
     guidGenerator,
+    ensureKeys,
     Flashcard,
     FlashcardGenEditor,
     FlashcardGenerator,
@@ -228,14 +229,18 @@ var penguinGlobalSubs: [RegExp, string][] = [
     [/(\s|^)в Крыме/, "$1в Крыму"],
     [/(\s|^)о ([аоэуиАОЭУИ])/, "$1об $2"],
     [/(\s|^) мне/, "обо мне"]
-]
+];
 
 var penguinChapters: IDictionary<[EnRuNoun[], EnRuVerb[], EnRuAdjective[], any]> = {
     "3": [ch3Nouns, ch3Verbs, [], ch3Tpl],
     "4": [ch4Nouns, ch4Verbs, [], ch4Tpl],
     "5": [ch5Nouns, ch5Verbs, [], ch5Tpl],
     "6": [ch6Nouns, ch6Verbs, ch6Adjs, ch6Tpl]
-}
+};
+
+var allNouns = Object.keys(penguinChapters).map((k) => penguinChapters[k][0]).flat();
+var allVerbs = Object.keys(penguinChapters).map((k) => penguinChapters[k][1]).flat();
+var allAdjs = Object.keys(penguinChapters).map((k) => penguinChapters[k][2]).flat();
 
 var ruPenguinQuizzer: FlashcardGenerator<WordRepo, PengQuizzerState> = {
     ftemp: {
@@ -256,9 +261,9 @@ var ruPenguinQuizzer: FlashcardGenerator<WordRepo, PengQuizzerState> = {
     state: {
         activeChapters: ["3"],
         stats: {
-            nounStats: {},
-            verbStats: {},
-            adjStats: {},
+            nounStats: {}, // ensureKeys(allNouns.map((n) => n.guid), [0,0], {}),
+            verbStats: {}, // ensureKeys(allVerbs.map((v) => v.guid), [0,0], {}),
+            adjStats: {}, // ensureKeys(allAdjs.map((a) => a.guid), [0,0], {}),
             genderStats: [],
             numberStats: [],
             personStats: []
@@ -270,6 +275,11 @@ var ruPenguinQuizzer: FlashcardGenerator<WordRepo, PengQuizzerState> = {
         var selAdjs = st.activeChapters.map((k) => penguinChapters[k][2]).flat();
         var selTpls = st.activeChapters.map((k) => penguinChapters[k][3]).flat();
         var selLib = new EnRuWordLibrary(selNouns, selVerbs, selAdjs);
+        
+        selLib.nounWeights = selLib.makeWeights(st.stats.nounStats);        
+        selLib.verbWeights = selLib.makeWeights(st.stats.verbStats);        
+        selLib.adjWeights = selLib.makeWeights(st.stats.adjStats);        
+
         var tpl = selTpls[Math.floor(Math.random() * selTpls.length)];
         var repo = new WordRepo(selLib);
         repo.substitutions = penguinGlobalSubs;

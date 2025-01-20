@@ -127,9 +127,16 @@ type EnRuAdjectiveInflector = {
 }
 
 export class EnRuWordLibrary {
+    startingWeight: number;
+    punishmentParam: number;
+
     nouns: EnRuNoun[];
     verbs: EnRuVerb[];
     adjs: EnRuAdjective[];
+
+    nounWeights: IDictionary<number>;
+    verbWeights: IDictionary<number>;
+    adjWeights: IDictionary<number>;    
 
     tagWeights: IDictionary<number>;
     genderWeights: IDictionary<number>;
@@ -138,9 +145,16 @@ export class EnRuWordLibrary {
     caseWeights: IDictionary<number>;
 
     constructor(nouns: EnRuNoun[], verbs: EnRuVerb[], adjs: EnRuAdjective[]) {
+        this.startingWeight = 10;
+        this.punishmentParam = 1.5;
+
         this.nouns = nouns;
         this.verbs = verbs;
         this.adjs = adjs;
+
+        this.nounWeights = {};
+        this.verbWeights = {};
+        this.adjWeights = {};
 
         this.tagWeights = {};
         this.genderWeights = {0: 1, 1: 1, 2: 1};
@@ -149,25 +163,33 @@ export class EnRuWordLibrary {
         this.caseWeights = {0: 1, 1: 1, 2: 1, 3: 1, 4: 1, 5: 1};
     }
 
+    makeWeights(stats: IDictionary<[number, number]>) {
+        var weights: IDictionary<number> = {};
+        for (var k in stats) {
+            weights[k] = (Math.pow(stats[k][1],this.punishmentParam)+this.startingWeight)/(stats[k][0]+1);
+        }
+        return weights;
+    }
+
     pickNoun(tag: string = "") {
         var options = (tag === "") ? this.nouns : this.nouns.filter((w) => w.tags.includes(tag));
-        return options[Math.floor(Math.random() * options.length)];
+        return weightedRandom(options, (n) => (n.guid in this.nounWeights) ? this.nounWeights[n.guid] : this.startingWeight, Math.random());
     }
 
     pickVerb(tag: string = "") {
         var options = (tag === "") ? this.verbs : this.verbs.filter((w) => w.tags.includes(tag));
-        return options[Math.floor(Math.random() * options.length)];
+        return weightedRandom(options, (v) => (v.guid in this.verbWeights) ? this.verbWeights[v.guid] : this.startingWeight, Math.random());
     }
 
     pickAdj(tags: string[] = []) {
         var options = this.adjs.filter((a) => tags.includes(a.nounTag));
-        return options[Math.floor(Math.random() * options.length)]; 
+        return weightedRandom(options, (a) => (a.guid in this.adjWeights) ? this.adjWeights[a.guid] : this.startingWeight, Math.random());
     }
 
     pickVerbWithAnySubjTag(tags: string[], tag: string = "") {
         var options = this.verbs.filter((v) => tags.includes(v.subjTag));
         options = (tag === "") ? options : options.filter((w) => w.tags.includes(tag));
-        return options[Math.floor(Math.random() * options.length)];
+        return weightedRandom(options, (v) => this.verbWeights[v.guid], Math.random());
     }
 
     pickGender(): RussianGender {

@@ -72,6 +72,14 @@ function zeroDict(keys: string[]): IDictionary<number> {
     return d;
 }
 
+export function ensureKeys<a>(keys: string[], defaultVal: a, d: IDictionary<a>): IDictionary<a> {
+    for (var i in keys) {
+        var k = keys[i];
+        if (!(k in d)) d[k] = defaultVal;
+    }
+    return d;
+}
+
 function weightedRandomIndex(weights: number[]): number {
     var weightSums = weights.map((sum => value => sum += value)(0));
     var totalSum = weights.reduce((a, b) => a + b, 0);
