@@ -33,10 +33,7 @@ type PengQuizzerStats = {
     nounStats: IDictionary<[number, number]>,
     verbStats: IDictionary<[number, number]>,
     adjStats: IDictionary<[number, number]>,
-    tplStats: IDictionary<[number, number]>,
-    genderStats: number[],
-    numberStats: number[],
-    personStats: number[]
+    tplStats: IDictionary<[number, number]>
 }
 
 type PengQuizzerState = {
@@ -266,10 +263,7 @@ var ruPenguinQuizzer: FlashcardGenerator<WordRepo, PengQuizzerState> = {
             nounStats: {}, // ensureKeys(allNouns.map((n) => n.guid), [0,0], {}),
             verbStats: {}, // ensureKeys(allVerbs.map((v) => v.guid), [0,0], {}),
             adjStats: {}, // ensureKeys(allAdjs.map((a) => a.guid), [0,0], {}),
-            tplStats: {},
-            genderStats: [],
-            numberStats: [],
-            personStats: []
+            tplStats: {}
         }
     },
     seeder: function(st: PengQuizzerState) {
