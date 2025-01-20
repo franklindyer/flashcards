@@ -124,11 +124,11 @@ var ch4Verbs = [
 ];
 
 var ch4Tpl = [
-//    makeTpl((wr: any) => wr.pickPron(["person"]).pickAxn(0, "intrans").conjV(0, 0)
-//                    .format("{n0} {v0}", "{n0} {v0}")),
-    makeTpl((wr: any) => wr.pickV(1, "intrans").pickSubj(0)
+    makeTpl((wr: any) => wr.pickPron(["person"]).pickAxn(0, "intrans").conjV(0, 0)
                     .format("{n0} {v0}", "{n0} {v0}")),
     makeTpl((wr: any) => wr.pickV(1, "intrans").pickSubj(0)
+                    .format("{n0} {v0}", "{n0} {v0}")),
+    makeTpl((wr: any) => wr.pickV(0, "intrans").pickSubj(0)
                     .format("{n0} do/does not {v0}", "{n0} не {v0}")),
     makeTpl((wr: any) => wr.pickPron(["person"]).pickAxn(0, "intrans").conjV(0, 0)
                     .format("{n0} do/does not {v0}", "{n0} не {v0}")),
@@ -187,11 +187,23 @@ var ch6Nouns = [
     makeSingularNoun("year", "год", "m", false, ["timerange"]),
     makeSingularNoun("grandfather", "дедушка", "m", true, ["person", "agent", "hasloc", "relative"]),
     makeSingularNoun("wife", "жена", "f", true, ["person", "agent", "hasloc", "relative"]),
-    makeSingularNoun("husband", "муж", "m", true, ["person", "agent", "hasloc", "relative"])
+    makeSingularNoun("husband", "муж", "m", true, ["person", "agent", "hasloc", "relative"]),
+    makeSingularNoun("(first) name", "имя", "n", false, ["nonphysical"]),
+    makeSingularNoun("shop", "магазин", "m", false, ["in-place", "hasloc", "building"]),
+    makeSingularNoun("minute", "минута", "f", false, ["timerange"]),
+    makeSingularNoun("music", "музыка", "f", false, ["nonphysical", "audible"]),
+    makeSingularNoun("week", "неделя", "f", false, ["timerange"]),
+    makeSingularNoun("father", "отец", "m", true, ["person", "agent", "hasloc", "relative"]),
+    makeSingularNoun("patronymic", "отчество", "n", false, ["nonphysical"]),
+    makeSingularNoun("work", "работа", "f", false, ["event", "at-place"]),
+    makeSingularNoun("son", "сын", "m", true, ["person", "agent", "hasloc", "relative"]),
+    makeSingularNoun("hour", "час", "m", false, ["timerange"]),
+    makeSingularNoun("surname", "фамилия", "f", false, ["nonphysical"])
 ];
 
 var ch6Verbs = [
-    makeTransVerb("love", "любить", "agent", "", [])
+    makeTransVerb("love", "любить", "agent", "", []),
+    makeIntransVerb("fare", "поживать", "person", [], "get along"),
 ];
 
 var ch6Adjs = [
@@ -217,12 +229,15 @@ var ch6Tpl = [
     makeTpl((wr: any) => wr.pickN("relative").pickA(0)
                     .format("{a0} {n0}", "{a0} {n0}")),
     makeTpl((wr: any) => wr.pickN("item", caseACC)
-                    .format("thanks for (the) {n0}", "спасибо за {n0}"))
+                    .format("thanks for (the) {n0}", "спасибо за {n0}")),
+    makeTpl((wr: any) => wr.pickN("timerange", caseACC)
+                    .format("in/within a {n0}", "через {n0}")),
 ];
 
 // Text substitutions in Russian answers needed for things like contraction / special forms
 
 var penguinGlobalSubs: [RegExp, string][] = [
+    [/(\s|^)a ([aeiou])/, "$1an $2"],
     [/(\s|^)в лесе/, "$1в лесу"],
     [/(\s|^)в саде/, "$1в саду"],
     [/(\s|^)в Крыме/, "$1в Крыму"],
