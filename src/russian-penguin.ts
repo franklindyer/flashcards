@@ -28,6 +28,7 @@ import {
 type PengQuizzerStats = {
     nounStats: IDictionary<[number, number]>,
     verbStats: IDictionary<[number, number]>,
+    adjStats: IDictionary<[number, number]>,
     genderStats: number[],
     numberStats: number[],
     personStats: number[]
@@ -257,6 +258,7 @@ var ruPenguinQuizzer: FlashcardGenerator<WordRepo, PengQuizzerState> = {
         stats: {
             nounStats: {},
             verbStats: {},
+            adjStats: {},
             genderStats: [],
             numberStats: [],
             personStats: []
@@ -274,7 +276,28 @@ var ruPenguinQuizzer: FlashcardGenerator<WordRepo, PengQuizzerState> = {
         var res = tpl(repo);
         return res;
     },
-    updater: (correct, answer, card, st) => st,
+    updater: (correct, answer, card, st) => {
+        var incVec = correct ? [1, 0] : [0, 1];
+        for (var k in card.params.nouns) {
+            var n = card.params.nouns[k][0];
+            if (!(n.guid in st.stats.nounStats)) st.stats.nounStats[n.guid] = [0, 0];
+            st.stats.nounStats[n.guid][0] += incVec[0];
+            st.stats.nounStats[n.guid][1] += incVec[1];
+        }
+        for (var k in card.params.verbs) {
+            var v = card.params.verbs[k][0];
+            if (!(v.guid in st.stats.verbStats)) st.stats.verbStats[v.guid] = [0, 0];
+            st.stats.verbStats[v.guid][0] += incVec[0];
+            st.stats.verbStats[v.guid][1] += incVec[1];
+        }
+        for (var k in card.params.adjs) {
+            var a = card.params.adjs[k][0];
+            if (!(a.guid in st.stats.adjStats)) st.stats.adjStats[a.guid] = [0, 0];
+            st.stats.adjStats[a.guid][0] += incVec[0];
+            st.stats.adjStats[a.guid][1] += incVec[1];
+        }
+        return st;
+    },
     history: [],
     editor: makePengMenu
 }
