@@ -15,12 +15,15 @@ import {
     EnRuNoun,
     EnRuVerb,
     EnRuAdjective,
+    EnRuPhraseTpl,
     EnRuWordLibrary,
     WordRepo,
     makeSingularNoun,
     makeTransVerb,
     makeIntransVerb,
     makeAdj,
+    makeTpl,
+    applyTpl,
     caseNOM,
     caseACC,
     casePRP
@@ -30,6 +33,7 @@ type PengQuizzerStats = {
     nounStats: IDictionary<[number, number]>,
     verbStats: IDictionary<[number, number]>,
     adjStats: IDictionary<[number, number]>,
+    tplStats: IDictionary<[number, number]>,
     genderStats: number[],
     numberStats: number[],
     personStats: number[]
@@ -91,12 +95,10 @@ var ch3Nouns = [
     makeSingularNoun("chocolate", "шоколад", "m", false, ["food", "item", "hasloc"])
 ];
 
-var ch3Verbs: EnRuVerb[] = [];
-
 var ch3Tpl = [
-    (wr: any) => wr.pickN("item").format("this is {n0}", "это {n0}"),
-    (wr: any) => wr.pickN("hasloc").format("where's (the) {n0}?", "где {n0}?"),
-    (wr: any) => wr.pickN("hasloc").format("there's (the) {n0}", "вот {n0}")
+    makeTpl((wr: any) => wr.pickN("item").format("this is {n0}", "это {n0}")),
+    makeTpl((wr: any) => wr.pickN("hasloc").format("where's (the) {n0}?", "где {n0}?")),
+    makeTpl((wr: any) => wr.pickN("hasloc").format("there's (the) {n0}", "вот {n0}"))
 ];
 
 // CHAPTER 4
@@ -125,16 +127,16 @@ var ch4Verbs = [
 ];
 
 var ch4Tpl = [
-    (wr: any) => wr.pickPron(["person"]).pickAxn(0, "intrans").conjV(0, 0)
-                    .format("{n0} {v0}", "{n0} {v0}"),
-    (wr: any) => wr.pickV(1, "intrans").pickSubj(0)
-                    .format("{n0} {v0}", "{n0} {v0}"),
-    (wr: any) => wr.pickV(1, "intrans").pickSubj(0)
-                    .format("{n0} do/does not {v0}", "{n0} не {v0}"),
-    (wr: any) => wr.pickPron(["person"]).pickAxn(0, "intrans").conjV(0, 0)
-                    .format("{n0} do/does not {v0}", "{n0} не {v0}"),
-    (wr: any) => wr.pickN("in-place", casePRP)
-                    .format("in/at {n0}", "в {n0}")
+//    makeTpl((wr: any) => wr.pickPron(["person"]).pickAxn(0, "intrans").conjV(0, 0)
+//                    .format("{n0} {v0}", "{n0} {v0}")),
+    makeTpl((wr: any) => wr.pickV(1, "intrans").pickSubj(0)
+                    .format("{n0} {v0}", "{n0} {v0}")),
+    makeTpl((wr: any) => wr.pickV(1, "intrans").pickSubj(0)
+                    .format("{n0} do/does not {v0}", "{n0} не {v0}")),
+    makeTpl((wr: any) => wr.pickPron(["person"]).pickAxn(0, "intrans").conjV(0, 0)
+                    .format("{n0} do/does not {v0}", "{n0} не {v0}")),
+    makeTpl((wr: any) => wr.pickN("in-place", casePRP)
+                    .format("in/at {n0}", "в {n0}"))
 ];
 
 // CHAPTER 5
@@ -167,18 +169,18 @@ var ch5Verbs = [
 ]
 
 var ch5Tpl = [
-    (wr: any) => wr.pickN("in-place", casePRP)
-                    .format("in/at {n0}", "в {n0}"),
-    (wr: any) => wr.pickN("at-place", casePRP)
-                    .format("in/at {n0}", "на {n0}"),
-    (wr: any) => wr.pickN("hasloc").pickN("in-place", casePRP)
-                    .format("{n0} is in/at {n1}", "{n0} в {n1}"),
-    (wr: any) => wr.pickN("hasloc").pickN("at-place", casePRP)
-                    .format("{n0} is in/at {n1}", "{n0} на {n1}"),
-    (wr: any) => wr.pickV(1, "within-place").pickSubj(0).pickN("in-place", casePRP)
-                    .format("{n0} {v0} in/at {n1}", "{n0} {v0} в {n1}"),
-    (wr: any) => wr.pickV(1, "within-place").pickSubj(0).pickN("at-place", casePRP)
-                    .format("{n0} {v0} in/at {n1}", "{n0} {v0} на {n1}"),
+    makeTpl((wr: any) => wr.pickN("in-place", casePRP)
+                    .format("in/at {n0}", "в {n0}")),
+    makeTpl((wr: any) => wr.pickN("at-place", casePRP)
+                    .format("in/at {n0}", "на {n0}")),
+    makeTpl((wr: any) => wr.pickN("hasloc").pickN("in-place", casePRP)
+                    .format("{n0} is in/at {n1}", "{n0} в {n1}")),
+    makeTpl((wr: any) => wr.pickN("hasloc").pickN("at-place", casePRP)
+                    .format("{n0} is in/at {n1}", "{n0} на {n1}")),
+    makeTpl((wr: any) => wr.pickV(1, "within-place").pickSubj(0).pickN("in-place", casePRP)
+                    .format("{n0} {v0} in/at {n1}", "{n0} {v0} в {n1}")),
+    makeTpl((wr: any) => wr.pickV(1, "within-place").pickSubj(0).pickN("at-place", casePRP)
+                    .format("{n0} {v0} in/at {n1}", "{n0} {v0} на {n1}")),
 ]
 
 // CHAPTER 6
@@ -213,12 +215,12 @@ var ch6Adjs = [
 ];
 
 var ch6Tpl = [
-    (wr: any) => wr.pickN("item").pickA(0)
-                    .format("{a0} {n0}", "{a0} {n0}"),
-    (wr: any) => wr.pickN("relative").pickA(0)
-                    .format("{a0} {n0}", "{a0} {n0}"),
-    (wr: any) => wr.pickN("item", caseACC)
-                    .format("thanks for (the) {n0}", "спасибо за {n0}")
+    makeTpl((wr: any) => wr.pickN("item").pickA(0)
+                    .format("{a0} {n0}", "{a0} {n0}")),
+    makeTpl((wr: any) => wr.pickN("relative").pickA(0)
+                    .format("{a0} {n0}", "{a0} {n0}")),
+    makeTpl((wr: any) => wr.pickN("item", caseACC)
+                    .format("thanks for (the) {n0}", "спасибо за {n0}"))
 ];
 
 // Text substitutions in Russian answers needed for things like contraction / special forms
@@ -231,8 +233,8 @@ var penguinGlobalSubs: [RegExp, string][] = [
     [/(\s|^) мне/, "обо мне"]
 ];
 
-var penguinChapters: IDictionary<[EnRuNoun[], EnRuVerb[], EnRuAdjective[], any]> = {
-    "3": [ch3Nouns, ch3Verbs, [], ch3Tpl],
+var penguinChapters: IDictionary<[EnRuNoun[], EnRuVerb[], EnRuAdjective[], EnRuPhraseTpl[]]> = {
+    "3": [ch3Nouns, [], [], ch3Tpl],
     "4": [ch4Nouns, ch4Verbs, [], ch4Tpl],
     "5": [ch5Nouns, ch5Verbs, [], ch5Tpl],
     "6": [ch6Nouns, ch6Verbs, ch6Adjs, ch6Tpl]
@@ -264,6 +266,7 @@ var ruPenguinQuizzer: FlashcardGenerator<WordRepo, PengQuizzerState> = {
             nounStats: {}, // ensureKeys(allNouns.map((n) => n.guid), [0,0], {}),
             verbStats: {}, // ensureKeys(allVerbs.map((v) => v.guid), [0,0], {}),
             adjStats: {}, // ensureKeys(allAdjs.map((a) => a.guid), [0,0], {}),
+            tplStats: {},
             genderStats: [],
             numberStats: [],
             personStats: []
@@ -274,16 +277,17 @@ var ruPenguinQuizzer: FlashcardGenerator<WordRepo, PengQuizzerState> = {
         var selVerbs = st.activeChapters.map((k) => penguinChapters[k][1]).flat();
         var selAdjs = st.activeChapters.map((k) => penguinChapters[k][2]).flat();
         var selTpls = st.activeChapters.map((k) => penguinChapters[k][3]).flat();
-        var selLib = new EnRuWordLibrary(selNouns, selVerbs, selAdjs);
+        var selLib = new EnRuWordLibrary(selNouns, selVerbs, selAdjs, selTpls);
         
-        selLib.nounWeights = selLib.makeWeights(st.stats.nounStats);        
-        selLib.verbWeights = selLib.makeWeights(st.stats.verbStats);        
-        selLib.adjWeights = selLib.makeWeights(st.stats.adjStats);        
+        selLib.nounWeights = selLib.makeWeights(st.stats.nounStats);
+        selLib.verbWeights = selLib.makeWeights(st.stats.verbStats);
+        selLib.adjWeights = selLib.makeWeights(st.stats.adjStats);
+        selLib.tplWeights = selLib.makeWeights(st.stats.tplStats);
 
-        var tpl = selTpls[Math.floor(Math.random() * selTpls.length)];
+        var tpl = selLib.pickTpl(); 
         var repo = new WordRepo(selLib);
         repo.substitutions = penguinGlobalSubs;
-        var res = tpl(repo);
+        var res = applyTpl(tpl, repo);
         return res;
     },
     updater: (correct, answer, card, st) => {
@@ -306,6 +310,9 @@ var ruPenguinQuizzer: FlashcardGenerator<WordRepo, PengQuizzerState> = {
             st.stats.adjStats[a.guid][0] += incVec[0];
             st.stats.adjStats[a.guid][1] += incVec[1];
         }
+        if (!(card.params.tplGuid in st.stats.tplStats)) st.stats.tplStats[card.params.tplGuid] = [0, 0];
+        st.stats.tplStats[card.params.tplGuid][0] += incVec[0];
+        st.stats.tplStats[card.params.tplGuid][1] += incVec[1];
         return st;
     },
     history: [],

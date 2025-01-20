@@ -5,9 +5,9 @@
 assets by status 19.2 MiB [cached] 1 asset
 runtime modules 27.4 KiB 13 modules
 orphan modules 32.5 KiB [orphan] 4 modules
-javascript modules 309 KiB
+javascript modules 311 KiB
   modules by path ./node_modules/ 215 KiB 24 modules
-  modules by path ./src/*.ts 94.7 KiB
+  modules by path ./src/*.ts 96.6 KiB
     ./src/index.ts 409 bytes [built] [code generated]
     ./src/lib.ts 25.1 KiB [built] [code generated]
     ./src/demos.ts 2.22 KiB [built] [code generated]
@@ -20,63 +20,402 @@ json modules 18.7 MiB
   ./node_modules/english-verbs/english_verbs.json 174 KiB [built] [code generated]
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
-./src/russian-penguin.ts 241:31-34
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(241,32)
-      TS2349: This expression is not callable.
-  Type '[EnRuNoun[], EnRuVerb[], EnRuAdjective[], any]' has no call signatures.
+./src/russian-penguin.ts 176:14-15
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(176,15)
+      TS1005: ',' expected.
  @ ./src/index.ts 12:0-28
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
-./src/russian-penguin.ts 241:36-37
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(241,37)
-      TS7006: Parameter 'k' implicitly has an 'any' type.
+./src/russian-penguin.ts 176:21-23
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(176,22)
+      TS1005: ',' expected.
  @ ./src/index.ts 12:0-28
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
-./src/russian-penguin.ts 242:31-34
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(242,32)
-      TS2349: This expression is not callable.
-  Type '[EnRuNoun[], EnRuVerb[], EnRuAdjective[], any]' has no call signatures.
+./src/russian-penguin.ts 177:52-53
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(177,53)
+      TS1005: ';' expected.
  @ ./src/index.ts 12:0-28
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
-./src/russian-penguin.ts 242:36-37
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(242,37)
-      TS7006: Parameter 'k' implicitly has an 'any' type.
+./src/russian-penguin.ts 177:53-54
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(177,54)
+      TS1128: Declaration or statement expected.
  @ ./src/index.ts 12:0-28
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
-./src/russian-penguin.ts 243:30-33
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(243,31)
-      TS2349: This expression is not callable.
-  Type '[EnRuNoun[], EnRuVerb[], EnRuAdjective[], any]' has no call signatures.
+./src/russian-penguin.ts 178:14-15
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(178,15)
+      TS1005: ',' expected.
  @ ./src/index.ts 12:0-28
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
-./src/russian-penguin.ts 243:35-36
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(243,36)
-      TS7006: Parameter 'k' implicitly has an 'any' type.
+./src/russian-penguin.ts 178:21-23
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(178,22)
+      TS1005: ';' expected.
  @ ./src/index.ts 12:0-28
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
-./src/russian-penguin.ts 264:48-49
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(264,49)
-      TS7006: Parameter 'n' implicitly has an 'any' type.
+./src/russian-penguin.ts 179:64-65
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(179,65)
+      TS1005: ';' expected.
  @ ./src/index.ts 12:0-28
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
-./src/russian-penguin.ts 265:48-49
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(265,49)
-      TS7006: Parameter 'v' implicitly has an 'any' type.
+./src/russian-penguin.ts 179:65-66
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(179,66)
+      TS1128: Declaration or statement expected.
  @ ./src/index.ts 12:0-28
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
-./src/russian-penguin.ts 266:46-47
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(266,47)
-      TS7006: Parameter 'a' implicitly has an 'any' type.
+./src/russian-penguin.ts 180:14-15
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(180,15)
+      TS1005: ',' expected.
  @ ./src/index.ts 12:0-28
 
-9 errors have detailed information that is not shown.
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 180:21-23
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(180,22)
+      TS1005: ';' expected.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 181:65-66
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(181,66)
+      TS1005: ';' expected.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 181:66-67
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(181,67)
+      TS1128: Declaration or statement expected.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 182:14-15
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(182,15)
+      TS1005: ',' expected.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 182:21-23
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(182,22)
+      TS1005: ';' expected.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 183:71-72
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(183,72)
+      TS1005: ';' expected.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 183:72-73
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(183,73)
+      TS1128: Declaration or statement expected.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 184:14-15
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(184,15)
+      TS1005: ',' expected.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 184:21-23
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(184,22)
+      TS1005: ';' expected.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 185:72-73
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(185,73)
+      TS1005: ';' expected.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 185:73-74
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(185,74)
+      TS1128: Declaration or statement expected.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 186:0-1
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(186,1)
+      TS1128: Declaration or statement expected.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 220:14-15
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(220,15)
+      TS1005: ',' expected.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 220:21-23
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(220,22)
+      TS1005: ',' expected.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 221:53-54
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(221,54)
+      TS1005: ';' expected.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 221:54-55
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(221,55)
+      TS1128: Declaration or statement expected.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 222:14-15
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(222,15)
+      TS1005: ',' expected.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 222:21-23
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(222,22)
+      TS1005: ';' expected.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 223:53-54
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(223,54)
+      TS1005: ';' expected.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 223:54-55
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(223,55)
+      TS1128: Declaration or statement expected.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 224:14-15
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(224,15)
+      TS1005: ',' expected.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 224:21-23
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(224,22)
+      TS1005: ';' expected.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 225:71-72
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(225,72)
+      TS1005: ';' expected.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 226:0-1
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(226,1)
+      TS1128: Declaration or statement expected.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 18:4-17
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(18,5)
+      TS2459: Module '"./russian-templating"' declares 'EnRuPhraseTpl' locally, but it is not exported.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 176:12-14
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(176,13)
+      TS2304: Cannot find name 'wr'.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 176:16-19
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(176,17)
+      TS2554: Expected 1 arguments, but got 2.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 176:16-19
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(176,17)
+      TS2693: 'any' only refers to a type, but is being used as a value here.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 176:24-26
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(176,25)
+      TS2304: Cannot find name 'wr'.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 178:12-14
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(178,13)
+      TS2304: Cannot find name 'wr'.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 178:16-19
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(178,17)
+      TS2554: Expected 1 arguments, but got 2.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 178:16-19
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(178,17)
+      TS2693: 'any' only refers to a type, but is being used as a value here.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 178:24-26
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(178,25)
+      TS2304: Cannot find name 'wr'.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 180:12-14
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(180,13)
+      TS2304: Cannot find name 'wr'.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 180:16-19
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(180,17)
+      TS2554: Expected 1 arguments, but got 2.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 180:16-19
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(180,17)
+      TS2693: 'any' only refers to a type, but is being used as a value here.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 180:24-26
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(180,25)
+      TS2304: Cannot find name 'wr'.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 182:12-14
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(182,13)
+      TS2304: Cannot find name 'wr'.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 182:16-19
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(182,17)
+      TS2554: Expected 1 arguments, but got 2.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 182:16-19
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(182,17)
+      TS2693: 'any' only refers to a type, but is being used as a value here.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 182:24-26
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(182,25)
+      TS2304: Cannot find name 'wr'.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 184:12-14
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(184,13)
+      TS2304: Cannot find name 'wr'.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 184:16-19
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(184,17)
+      TS2554: Expected 1 arguments, but got 2.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 184:16-19
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(184,17)
+      TS2693: 'any' only refers to a type, but is being used as a value here.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 184:24-26
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(184,25)
+      TS2304: Cannot find name 'wr'.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 220:12-14
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(220,13)
+      TS2304: Cannot find name 'wr'.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 220:16-19
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(220,17)
+      TS2554: Expected 1 arguments, but got 2.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 220:16-19
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(220,17)
+      TS2693: 'any' only refers to a type, but is being used as a value here.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 220:24-26
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(220,25)
+      TS2304: Cannot find name 'wr'.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 222:12-14
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(222,13)
+      TS2304: Cannot find name 'wr'.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 222:16-19
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(222,17)
+      TS2554: Expected 1 arguments, but got 2.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 222:16-19
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(222,17)
+      TS2693: 'any' only refers to a type, but is being used as a value here.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 222:24-26
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(222,25)
+      TS2304: Cannot find name 'wr'.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 224:12-14
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(224,13)
+      TS2304: Cannot find name 'wr'.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 224:16-19
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(224,17)
+      TS2554: Expected 1 arguments, but got 2.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 224:16-19
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(224,17)
+      TS2693: 'any' only refers to a type, but is being used as a value here.
+ @ ./src/index.ts 12:0-28
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts
+./src/russian-penguin.ts 224:24-26
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/russian-penguin.ts(224,25)
+      TS2304: Cannot find name 'wr'.
+ @ ./src/index.ts 12:0-28
+
+66 errors have detailed information that is not shown.
 Use 'stats.errorDetails: true' resp. '--stats-error-details' to show it.
 
-webpack 5.97.1 compiled with 9 errors in 2631 ms
+webpack 5.97.1 compiled with 66 errors in 2968 ms

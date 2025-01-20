@@ -126,6 +126,11 @@ type EnRuAdjectiveInflector = {
     animacy: RussianAnimacy
 }
 
+export type EnRuPhraseTpl = {
+    tpl: any, // These should be functions on WordRepos, but the type signature is a pain in the ass
+    guid: string
+}
+
 export class EnRuWordLibrary {
     startingWeight: number;
     punishmentParam: number;
@@ -133,10 +138,12 @@ export class EnRuWordLibrary {
     nouns: EnRuNoun[];
     verbs: EnRuVerb[];
     adjs: EnRuAdjective[];
+    tpls: EnRuPhraseTpl[]; 
 
     nounWeights: IDictionary<number>;
     verbWeights: IDictionary<number>;
     adjWeights: IDictionary<number>;    
+    tplWeights: IDictionary<number>;
 
     tagWeights: IDictionary<number>;
     genderWeights: IDictionary<number>;
@@ -144,17 +151,19 @@ export class EnRuWordLibrary {
     personWeights: IDictionary<number>;
     caseWeights: IDictionary<number>;
 
-    constructor(nouns: EnRuNoun[], verbs: EnRuVerb[], adjs: EnRuAdjective[]) {
+    constructor(nouns: EnRuNoun[], verbs: EnRuVerb[], adjs: EnRuAdjective[], tpls: EnRuPhraseTpl[]) {
         this.startingWeight = 10;
         this.punishmentParam = 1.5;
 
         this.nouns = nouns;
         this.verbs = verbs;
         this.adjs = adjs;
+        this.tpls = tpls;
 
         this.nounWeights = {};
         this.verbWeights = {};
         this.adjWeights = {};
+        this.tplWeights = {};
 
         this.tagWeights = {};
         this.genderWeights = {0: 1, 1: 1, 2: 1};
@@ -189,7 +198,11 @@ export class EnRuWordLibrary {
     pickVerbWithAnySubjTag(tags: string[], tag: string = "") {
         var options = this.verbs.filter((v) => tags.includes(v.subjTag));
         options = (tag === "") ? options : options.filter((w) => w.tags.includes(tag));
-        return weightedRandom(options, (v) => this.verbWeights[v.guid], Math.random());
+        return weightedRandom(options, (v) => (v.guid in this.verbWeights) ? this.verbWeights[v.guid] : this.startingWeight, Math.random());
+    }
+
+    pickTpl() {
+        return weightedRandom(this.tpls, (t) => (t.guid in this.tplWeights) ? this.tplWeights[t.guid] : this.startingWeight, Math.random());
     }
 
     pickGender(): RussianGender {
@@ -413,6 +426,18 @@ export function makeAdj(enForm: string, ruForm: string, nounTag: string, tags: s
     }
 }
 
+export function makeTpl(tpl: any): EnRuPhraseTpl {
+    return {
+        tpl: tpl,
+        guid: guidGenerator()
+    }
+}
+
+export function applyTpl(tpl: EnRuPhraseTpl, wr: WordRepo) {
+    wr.tplGuid = tpl.guid;
+    return tpl.tpl(wr);
+}
+
 export class WordRepo {
     lib: EnRuWordLibrary;
     nouns: [EnRuNoun, EnRuNounInflector][];
@@ -421,6 +446,7 @@ export class WordRepo {
     substitutions: [RegExp, string][];
     enFormat: string;
     ruFormat: string;
+    tplGuid: string;
 
     constructor(lib: EnRuWordLibrary) {
         this.nouns = [];
@@ -430,6 +456,7 @@ export class WordRepo {
         this.lib = lib;
         this.enFormat = "";
         this.ruFormat = "";
+        this.tplGuid = "";
     }
 
     addV(v: EnRuVerb, tense: RussianTense = 0) {
@@ -548,7 +575,7 @@ export class WordRepo {
     }
 
     pickAxn(nId: number, tag: string = "", tense: RussianTense = 0) {
-        var n = this.lib.nouns[nId];
+        var n = this.nouns[nId][0];
         var v = this.lib.pickVerbWithAnySubjTag(n.tags, tag);
         this.addV(v, tense);
         return this;
