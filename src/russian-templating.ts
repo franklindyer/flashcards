@@ -23,8 +23,6 @@ export var ruDataPromise = (filename: string, objname: string) =>
     var csvData = papa.parse(s, { header: true, dynamicTyping: true }).data;
     (<any>window)[objname] = (bareVerb: string) => { 
         var v = csvData.find((k: any) => k.bare === bareVerb);
-        if (v === undefined)
-            console.log(bareVerb);
         //     v = csvData.find((k: any) => k["pl_nom"].replace("'", "") === bareVerb);
         return v;
     }
@@ -67,6 +65,11 @@ enum RussianNumber {
     NumberPlural
 }
 
+enum RussianAnimacy {
+    AnimacyAnimate,
+    AnimacyInanimate
+}
+
 enum RussianTense {
     TenseInfinitive,
     TensePresent,
@@ -81,6 +84,7 @@ export type EnRuNoun = {
     gender: RussianGender,
     number: RussianNumber,
     person: RussianPerson,
+    animacy: RussianAnimacy,
     tags: string[],
     guid: string
 }
@@ -106,9 +110,26 @@ type EnRuVerbInflector = {
     person: RussianPerson
 }
 
+export type EnRuAdjective = {
+    enForm: string,
+    ruForm: string,
+    tags: string[],
+    nounTag: string,
+    hint: string,
+    guid: string
+}
+
+type EnRuAdjectiveInflector = {
+    gender: RussianGender,
+    number: RussianNumber,
+    case: RussianCase,
+    animacy: RussianAnimacy
+}
+
 export class EnRuWordLibrary {
     nouns: EnRuNoun[];
     verbs: EnRuVerb[];
+    adjs: EnRuAdjective[];
 
     tagWeights: IDictionary<number>;
     genderWeights: IDictionary<number>;
@@ -116,9 +137,10 @@ export class EnRuWordLibrary {
     personWeights: IDictionary<number>;
     caseWeights: IDictionary<number>;
 
-    constructor(nouns: EnRuNoun[], verbs: EnRuVerb[]) {
+    constructor(nouns: EnRuNoun[], verbs: EnRuVerb[], adjs: EnRuAdjective[]) {
         this.nouns = nouns;
         this.verbs = verbs;
+        this.adjs = adjs;
 
         this.tagWeights = {};
         this.genderWeights = {0: 1, 1: 1, 2: 1};
@@ -129,14 +151,17 @@ export class EnRuWordLibrary {
 
     pickNoun(tag: string = "") {
         var options = (tag === "") ? this.nouns : this.nouns.filter((w) => w.tags.includes(tag));
-        console.log(tag);
-        console.log(options.length);
         return options[Math.floor(Math.random() * options.length)];
     }
 
     pickVerb(tag: string = "") {
         var options = (tag === "") ? this.verbs : this.verbs.filter((w) => w.tags.includes(tag));
         return options[Math.floor(Math.random() * options.length)];
+    }
+
+    pickAdj(tags: string[] = []) {
+        var options = this.adjs.filter((a) => tags.includes(a.nounTag));
+        return options[Math.floor(Math.random() * options.length)]; 
     }
 
     pickVerbWithAnySubjTag(tags: string[], tag: string = "") {
@@ -166,7 +191,7 @@ export function getRussianGender(ruNoun: string): RussianGender {
     else                                            return RussianGender.GenderMale;
 }
 
-function getPronoun(num: RussianNumber, psn: RussianPerson, gdr: RussianGender): EnRuNoun {
+function getPronoun(num: RussianNumber, psn: RussianPerson, gdr: RussianGender, anm?: RussianAnimacy): EnRuNoun {
     var tr = ["", ""];
     if (num === RussianNumber.NumberSingular) {
         if (psn === RussianPerson.Person1st) tr = ["I", "я"];
@@ -179,12 +204,19 @@ function getPronoun(num: RussianNumber, psn: RussianPerson, gdr: RussianGender):
         else if (psn === RussianPerson.Person2nd) tr = ["y'all", "вы"];
         else if (psn === RussianPerson.Person3rd) tr = ["they", "они"];
     }
+    if (anm === null) {
+        if (psn === RussianPerson.Person3rd && gdr === RussianGender.GenderNeuter)
+            anm = RussianAnimacy.AnimacyInanimate;
+        else 
+            anm = RussianAnimacy.AnimacyAnimate;
+    }
     return {
         enForm: tr[0],
         ruForm: tr[1],
         number: num,
         person: psn,
         gender: gdr,
+        animacy: anm!,
         tags: ["pronoun"],
         guid: getUuid(tr[1])
     };
@@ -221,7 +253,6 @@ function inflectNoun(n: EnRuNoun, inf: EnRuNounInflector): [string, string] {
     }
     var numStr = (n.number === RussianNumber.NumberPlural) ? "pl" : "sg";
     var cStr = ["nom", "acc", "dat", "prep", "gen", "inst"][inf.case];
-    console.log(n);
     var ruInfl = ruRecord[`${numStr}_${cStr}`].split(', ')[0]; // We may not always want the 1st one...
     ruInfl = ruInfl.replace("'", "");
     // return [`${n.enForm}(${inf.case})`, `${n.ruForm}(${inf.case})`];
@@ -278,7 +309,32 @@ function inflectVerb(v: EnRuVerb, inf: EnRuVerbInflector): [string, string] {
     return [enInfl, ruInfl];
 }
 
-export function makeSingularNoun(enForm: string, ruForm: string, gdr: string, tags: string[] = []): EnRuNoun {
+function inflectAdj(a: EnRuAdjective, inf: EnRuAdjectiveInflector): [string, string] {
+    var ruRecord = window.ruAdjectives(a.ruForm);
+    var gdrStr = "";
+    if (inf.number === RussianNumber.NumberPlural) gdrStr = "pl";
+    else if (inf.gender === RussianGender.GenderMale) gdrStr = "m";
+    else if (inf.gender === RussianGender.GenderFemale) gdrStr = "f";
+    else if (inf.gender === RussianGender.GenderNeuter) gdrStr = "n";
+    var cStr = ["nom", "acc", "dat", "prep", "gen", "inst"][inf.case];
+    var col = `decl_${gdrStr}_${cStr}`;
+    var decls = ruRecord[col].split(',');
+    var ruInfl = "";
+    // Male accusative column contains a special animate declension
+    if (col === "decl_m_acc") {
+        if (inf.animacy === RussianAnimacy.AnimacyAnimate)
+            ruInfl = decls.filter((s: string) => s.endsWith("го"));
+        else
+            ruInfl = decls.filter((s: string) => !s.endsWith("го"))
+    } else {
+        ruInfl = decls[0];
+    }
+    // This may not be correct in all cases, may need to be fixed later
+    ruInfl = ruInfl.replace("'", "");
+    return [a.enForm, ruInfl];
+}
+
+export function makeSingularNoun(enForm: string, ruForm: string, gdr: string, animacy: boolean, tags: string[] = []): EnRuNoun {
     // var gender = getRussianGender(ruForm);
     var gender = RussianGender.GenderNeuter;
     if (gdr === "m") gender = RussianGender.GenderMale;
@@ -289,6 +345,7 @@ export function makeSingularNoun(enForm: string, ruForm: string, gdr: string, ta
         gender: gender,
         number: RussianNumber.NumberSingular,
         person: RussianPerson.Person3rd,
+        animacy: animacy ? RussianAnimacy.AnimacyAnimate : RussianAnimacy.AnimacyInanimate,
         tags: tags,
         guid: getUuid(ruForm)
     }
@@ -318,7 +375,19 @@ export function makeTransVerb(enForm: string, ruForm: string, subjTag: string, o
         subjTag: subjTag,
         objTag: objTag,
         hint: hint,
-        guid: guidGenerator()
+        guid: getUuid(ruForm)
+    }
+}
+
+export function makeAdj(enForm: string, ruForm: string, nounTag: string, tags: string[] = [], hint: string = "")
+    : EnRuAdjective {
+    return {
+        enForm: enForm,
+        ruForm: ruForm,
+        tags: tags,
+        nounTag: nounTag,
+        hint: hint,
+        guid: getUuid(ruForm)
     }
 }
 
@@ -326,12 +395,16 @@ export class WordRepo {
     lib: EnRuWordLibrary;
     nouns: [EnRuNoun, EnRuNounInflector][];
     verbs: [EnRuVerb, EnRuVerbInflector][];
+    adjs: [EnRuAdjective, EnRuAdjectiveInflector][];
+    substitutions: [RegExp, string][];
     enFormat: string;
     ruFormat: string;
 
     constructor(lib: EnRuWordLibrary) {
         this.nouns = [];
         this.verbs = [];
+        this.adjs = [];
+        this.substitutions = [];
         this.lib = lib;
         this.enFormat = "";
         this.ruFormat = "";
@@ -386,9 +459,28 @@ export class WordRepo {
         return this;
     }
 
+    addA(a: EnRuAdjective, nId: number) {
+        var n = this.nouns[nId][0];
+        var nInf = this.nouns[nId][1];
+        var aInf: EnRuAdjectiveInflector = {
+            gender: n.gender,
+            number: n.number,
+            animacy: n.animacy,
+            case: nInf.case
+        };
+        this.adjs.push([a, aInf]);
+        return this;
+    }
+
+    pickA(nId: number) {
+        var n = this.nouns[nId][0];
+        this.addA(this.lib.pickAdj(n.tags), nId);
+        return this;
+    }
+
     addPron(nId: number, cs: RussianCase = caseNOM) {
         var n = this.nouns[nId][0];
-        var pron = getPronoun(n.number, n.person, n.gender);
+        var pron = getPronoun(n.number, n.person, n.gender, n.animacy);
         this.addN(pron, cs);
         return this;
     }
@@ -453,6 +545,16 @@ export class WordRepo {
             enTpl = enTpl.replace(`{v${i}}`, infl[0]);
             ruTpl = ruTpl.replace(`{v${i}}`, infl[1]);
         }
+        for (var i in this.adjs) {
+            var infl = inflectAdj(this.adjs[i][0], this.adjs[i][1]);
+            enTpl = enTpl.replace(`{a${i}}`, infl[0]);
+            ruTpl = ruTpl.replace(`{a${i}}`, infl[1]);
+        }
+        for (var i in this.substitutions) {
+            var s = this.substitutions[i];
+            enTpl = enTpl.replace(s[0], s[1]);
+            ruTpl = ruTpl.replace(s[0], s[1]);
+        }
         return [enTpl, ruTpl];
     }
 
@@ -462,5 +564,7 @@ export class WordRepo {
         return this;
     }
 
-    
+    sub(source: RegExp, target: string) {
+        this.substitutions.push([source, target]);
+    }
 }

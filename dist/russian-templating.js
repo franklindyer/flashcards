@@ -1,7 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.makeTransVerb = exports.makeIntransVerb = exports.makeSingularNoun = exports.getRussianGender = exports.EnRuWordLibrary = exports.caseINS = exports.caseGEN = exports.casePRP = exports.caseDAT = exports.caseACC = exports.caseNOM = exports.ruDataPromise = void 0;
+exports.WordRepo = exports.makeAdj = exports.makeTransVerb = exports.makeIntransVerb = exports.makeSingularNoun = exports.getRussianGender = exports.EnRuWordLibrary = exports.caseINS = exports.caseGEN = exports.casePRP = exports.caseDAT = exports.caseACC = exports.caseNOM = exports.ruDataPromise = void 0;
 const weighted_rand_1 = require("./weighted-rand");
+const getUuid = require('uuid-by-string');
 const papa = require("papaparse");
 const EnglishPlural = require("pluralize-me");
 const EnglishVerbs = require('english-verbs');
@@ -10,8 +11,6 @@ var ruDataPromise = (filename, objname) => fetch(`/data/${filename}.csv`).then((
     var csvData = papa.parse(s, { header: true, dynamicTyping: true }).data;
     window[objname] = (bareVerb) => {
         var v = csvData.find((k) => k.bare === bareVerb);
-        if (v === undefined)
-            console.log(bareVerb);
         //     v = csvData.find((k: any) => k["pl_nom"].replace("'", "") === bareVerb);
         return v;
     };
@@ -52,6 +51,11 @@ var RussianNumber;
     RussianNumber[RussianNumber["NumberSingular"] = 0] = "NumberSingular";
     RussianNumber[RussianNumber["NumberPlural"] = 1] = "NumberPlural";
 })(RussianNumber || (RussianNumber = {}));
+var RussianAnimacy;
+(function (RussianAnimacy) {
+    RussianAnimacy[RussianAnimacy["AnimacyAnimate"] = 0] = "AnimacyAnimate";
+    RussianAnimacy[RussianAnimacy["AnimacyInanimate"] = 1] = "AnimacyInanimate";
+})(RussianAnimacy || (RussianAnimacy = {}));
 var RussianTense;
 (function (RussianTense) {
     RussianTense[RussianTense["TenseInfinitive"] = 0] = "TenseInfinitive";
@@ -60,9 +64,10 @@ var RussianTense;
 })(RussianTense || (RussianTense = {}));
 const enTenseStrings = ["PRESENT", "PRESENT", "PAST"];
 class EnRuWordLibrary {
-    constructor(nouns, verbs) {
+    constructor(nouns, verbs, adjs) {
         this.nouns = nouns;
         this.verbs = verbs;
+        this.adjs = adjs;
         this.tagWeights = {};
         this.genderWeights = { 0: 1, 1: 1, 2: 1 };
         this.numberWeights = { 0: 1, 1: 1 };
@@ -75,6 +80,10 @@ class EnRuWordLibrary {
     }
     pickVerb(tag = "") {
         var options = (tag === "") ? this.verbs : this.verbs.filter((w) => w.tags.includes(tag));
+        return options[Math.floor(Math.random() * options.length)];
+    }
+    pickAdj(tags = []) {
+        var options = this.adjs.filter((a) => tags.includes(a.nounTag));
         return options[Math.floor(Math.random() * options.length)];
     }
     pickVerbWithAnySubjTag(tags, tag = "") {
@@ -109,7 +118,7 @@ function getRussianGender(ruNoun) {
         return RussianGender.GenderMale;
 }
 exports.getRussianGender = getRussianGender;
-function getPronoun(num, psn, gdr) {
+function getPronoun(num, psn, gdr, anm) {
     var tr = ["", ""];
     if (num === RussianNumber.NumberSingular) {
         if (psn === RussianPerson.Person1st)
@@ -131,13 +140,21 @@ function getPronoun(num, psn, gdr) {
         else if (psn === RussianPerson.Person3rd)
             tr = ["they", "они"];
     }
+    if (anm === null) {
+        if (psn === RussianPerson.Person3rd && gdr === RussianGender.GenderNeuter)
+            anm = RussianAnimacy.AnimacyInanimate;
+        else
+            anm = RussianAnimacy.AnimacyAnimate;
+    }
     return {
         enForm: tr[0],
         ruForm: tr[1],
         number: num,
         person: psn,
         gender: gdr,
-        tags: ["pronoun"]
+        animacy: anm,
+        tags: ["pronoun"],
+        guid: getUuid(tr[1])
     };
 }
 const enProns = {
@@ -164,6 +181,9 @@ function inflectNoun(n, inf) {
     if (n.tags.includes("pronoun"))
         return [enProns[n.enForm][inf.case], ruProns[n.ruForm][inf.case]];
     var ruRecord = window.ruNouns(n.ruForm);
+    if (ruRecord["indeclinable"] === "1" || ruRecord["indeclinable"] == 1) {
+        return [n.enForm, n.ruForm];
+    }
     var numStr = (n.number === RussianNumber.NumberPlural) ? "pl" : "sg";
     var cStr = ["nom", "acc", "dat", "prep", "gen", "inst"][inf.case];
     var ruInfl = ruRecord[`${numStr}_${cStr}`].split(', ')[0]; // We may not always want the 1st one...
@@ -221,16 +241,48 @@ function inflectVerb(v, inf) {
     // return [`${v.enForm}(${csStr})`, `${v.ruForm}(${csStr})`];
     return [enInfl, ruInfl];
 }
-function makeSingularNoun(enForm, ruForm, tags = []) {
-    var ruNoun = window.ruNouns(ruForm);
-    var gender = getRussianGender(ruForm);
+function inflectAdj(a, inf) {
+    var ruRecord = window.ruAdjectives(a.ruForm);
+    var gdrStr = "";
+    if (inf.number === RussianNumber.NumberPlural)
+        gdrStr = "pl";
+    else if (inf.gender === RussianGender.GenderMale)
+        gdrStr = "m";
+    else if (inf.gender === RussianGender.GenderFemale)
+        gdrStr = "f";
+    else if (inf.gender === RussianGender.GenderNeuter)
+        gdrStr = "n";
+    var cStr = ["nom", "acc", "dat", "prep", "gen", "inst"][inf.case];
+    var col = `decl_${gdrStr}_${cStr}`;
+    console.log(a);
+    console.log(col);
+    var decls = ruRecord[col].split(',');
+    // Male accusative column contains a special animate declension
+    if (col === "decl_m_acc") {
+        if (inf.animacy === RussianAnimacy.AnimacyAnimate)
+            return [a.enForm, decls.filter((s) => s.endsWith("го"))];
+        else
+            return [a.enForm, decls.filter((s) => !s.endsWith("го"))];
+    }
+    // This may not be correct in all cases, may need to be fixed later
+    return [a.enForm, decls[0]];
+}
+function makeSingularNoun(enForm, ruForm, gdr, animacy, tags = []) {
+    // var gender = getRussianGender(ruForm);
+    var gender = RussianGender.GenderNeuter;
+    if (gdr === "m")
+        gender = RussianGender.GenderMale;
+    else if (gdr === "f")
+        gender = RussianGender.GenderFemale;
     return {
         enForm: enForm,
         ruForm: ruForm,
         gender: gender,
         number: RussianNumber.NumberSingular,
         person: RussianPerson.Person3rd,
-        tags: tags
+        animacy: animacy ? RussianAnimacy.AnimacyAnimate : RussianAnimacy.AnimacyInanimate,
+        tags: tags,
+        guid: getUuid(ruForm)
     };
 }
 exports.makeSingularNoun = makeSingularNoun;
@@ -242,7 +294,8 @@ function makeIntransVerb(enForm, ruForm, subjTag, tags = [], hint = "") {
         tags: tags,
         subjTag: subjTag,
         objTag: "",
-        hint: hint
+        hint: hint,
+        guid: getUuid(ruForm)
     };
 }
 exports.makeIntransVerb = makeIntransVerb;
@@ -254,15 +307,31 @@ function makeTransVerb(enForm, ruForm, subjTag, objTag, tags = [], hint = "") {
         tags: tags,
         subjTag: subjTag,
         objTag: objTag,
-        hint: hint
+        hint: hint,
+        guid: getUuid(ruForm)
     };
 }
 exports.makeTransVerb = makeTransVerb;
+function makeAdj(enForm, ruForm, nounTag, tags = [], hint = "") {
+    return {
+        enForm: enForm,
+        ruForm: ruForm,
+        tags: tags,
+        nounTag: nounTag,
+        hint: hint,
+        guid: getUuid(ruForm)
+    };
+}
+exports.makeAdj = makeAdj;
 class WordRepo {
     constructor(lib) {
         this.nouns = [];
         this.verbs = [];
+        this.adjs = [];
+        this.substitutions = [];
         this.lib = lib;
+        this.enFormat = "";
+        this.ruFormat = "";
     }
     addV(v, tense = 0) {
         var vInf = {
@@ -307,9 +376,26 @@ class WordRepo {
         this.addN(n, cs);
         return this;
     }
+    addA(a, nId) {
+        var n = this.nouns[nId][0];
+        var nInf = this.nouns[nId][1];
+        var aInf = {
+            gender: n.gender,
+            number: n.number,
+            animacy: n.animacy,
+            case: nInf.case
+        };
+        this.adjs.push([a, aInf]);
+        return this;
+    }
+    pickA(nId) {
+        var n = this.nouns[nId][0];
+        this.addA(this.lib.pickAdj(n.tags), nId);
+        return this;
+    }
     addPron(nId, cs = exports.caseNOM) {
         var n = this.nouns[nId][0];
-        var pron = getPronoun(n.number, n.person, n.gender);
+        var pron = getPronoun(n.number, n.person, n.gender, n.animacy);
         this.addN(pron, cs);
         return this;
     }
@@ -327,15 +413,27 @@ class WordRepo {
         this.addN(n, RussianCase.CaseNominative);
         return this;
     }
-    pickSubj(vId) {
+    pickSubj(vId, pronProb = 0.5) {
         var tag = this.verbs[vId][0].subjTag;
-        var n = this.lib.pickNoun(tag);
+        var n;
+        if ((tag === "agent" || tag === "person") && Math.random() < pronProb) {
+            n = getPronoun(this.lib.pickNumber(), this.lib.pickPerson(), this.lib.pickGender());
+        }
+        else {
+            n = this.lib.pickNoun(tag);
+        }
         this.addSubj(n, vId);
         return this;
     }
-    pickObj(vId) {
+    pickObj(vId, pronProb = 0.5) {
         var tag = this.verbs[vId][0].objTag;
-        var n = this.lib.pickNoun(tag);
+        var n;
+        if ((tag === "person") && Math.random() < pronProb) {
+            n = getPronoun(this.lib.pickNumber(), this.lib.pickPerson(), this.lib.pickGender());
+        }
+        else {
+            n = this.lib.pickNoun(tag);
+        }
         this.addN(n, RussianCase.CaseAccusative);
         return this;
     }
@@ -345,7 +443,9 @@ class WordRepo {
         this.addV(v, tense);
         return this;
     }
-    format(enTpl, ruTpl) {
+    resolve() {
+        var enTpl = this.enFormat;
+        var ruTpl = this.ruFormat;
         for (var i in this.nouns) {
             var infl = inflectNoun(this.nouns[i][0], this.nouns[i][1]);
             enTpl = enTpl.replace(`{n${i}}`, infl[0]);
@@ -356,60 +456,25 @@ class WordRepo {
             enTpl = enTpl.replace(`{v${i}}`, infl[0]);
             ruTpl = ruTpl.replace(`{v${i}}`, infl[1]);
         }
+        for (var i in this.adjs) {
+            var infl = inflectAdj(this.adjs[i][0], this.adjs[i][1]);
+            enTpl = enTpl.replace(`{a${i}}`, infl[0]);
+            ruTpl = ruTpl.replace(`{a${i}}`, infl[1]);
+        }
+        for (var i in this.substitutions) {
+            var s = this.substitutions[i];
+            enTpl = enTpl.replace(s[0], s[1]);
+            ruTpl = ruTpl.replace(s[0], s[1]);
+        }
         return [enTpl, ruTpl];
     }
-}
-function makeLib() {
-    var nounLibrary = [
-        makeSingularNoun("girl", "девушка", ["agent", "inhab", "hasloc"]),
-        makeSingularNoun("dog", "собака", ["agent", "animal", "inhab", "hasloc"]),
-        makeSingularNoun("car", "машина", ["object", "inhab", "openable", "hasloc"]),
-        makeSingularNoun("door", "дверь", ["object", "openable", "hasloc"]),
-        makeSingularNoun("window", "окно", ["object", "openable", "hasloc"]),
-        makeSingularNoun("house", "дом", ["buildable", "in-place", "object", "hasloc"]),
-        makeSingularNoun("street", "улица", ["on-place", "hasloc"]),
-        makeSingularNoun("apartment", "квартира", ["in-place", "hasloc"]),
-        makeSingularNoun("bathroom", "туалет", ["hasloc", "in-place"]),
-        makeSingularNoun("kitchen", "кухня", ["hasloc", "at-place"]),
-        makeSingularNoun("bridge", "мост", ["buildable", "at-place", "hasloc"]),
-        makeSingularNoun("Russia", "Россия", ["in-place", "country"]),
-        makeSingularNoun("Ukraine", "Украина", ["at-place", "country"]),
-        makeSingularNoun("concert", "концерт", ["at-place", "event"]),
-        makeSingularNoun("lesson", "урок", ["event"])
-    ];
-    var verbLibrary = [
-        makeIntransVerb("speak", "говорить", "agent", []),
-        makeIntransVerb("go", "ехать", "agent", [], "by transport"),
-        makeIntransVerb("go", "идти", "agent", [], "by foot"),
-        makeIntransVerb("open", "открываться", "openable", []),
-        makeIntransVerb("close", "закрываться", "openable", []),
-        makeTransVerb("open", "открывать", "agent", "openable", []),
-        makeTransVerb("build", "строить", "agent", "buildable", []),
-        makeTransVerb("love", "любить", "agent", "", ["of-verb"]),
-        makeTransVerb("start", "начинать", "agent", "event", ["of-verb"]),
-    ];
-    var lib = new EnRuWordLibrary(nounLibrary, verbLibrary);
-    return lib;
-}
-var tpls = [
-    (wr) => wr.pickN("inhab").format("where's (the) {n0}?", "где {n0}?"),
-    (wr) => wr.pickPron().pickAxn(0, "intrans").conjV(0, 0).format("{n0} {v0}", "{n0} {v0}"),
-    (wr) => wr.pickV(1, "intrans").pickSubj(0).format("{n0} {v0}", "{n0} {v0}"),
-    (wr) => wr.pickV(1, "intrans").dupV(0).pickSubj(0).format("{n0} do/does not {v1}", "{n0} не {v0}"),
-    (wr) => wr.pickN("inhab").pickN("in-place", exports.casePRP).format("{n0} is in {n1}", "{n0} в {n1}"),
-    (wr) => wr.pickN("inhab").pickN("on-place", exports.casePRP).format("{n0} is in {n1}", "{n0} на {n1}"),
-    (wr) => wr.pickV(1, "trans").pickSubj(0).pickObj(0).format("{n0} {v0} {n1}", "{n0} {v0} {n1}"),
-    (wr) => wr.pickV(1, "of-verb").pickSubj(0).pickAxn(0, "intrans").format("{n0} {v0} to {v1}", "{n0} {v0} {v1}")
-    // THIS ONE IS PROBLEMATIC, FOR NOW
-    //    (wr: any) => wr.pickV(1, "of-verb").pickV(0, "intrans").pickSubj(1).format("{n0} {v0} to {v1}", "{n0} {v0} {v1}")
-];
-/* ruDataPromise("ru-nouns", "ruNouns").then((_) => { ruDataPromise("ru-verbs", "ruVerbs").then((_) => {
-    var lib = makeLib();
-
-    for (var i in [...Array(40).keys()]) {
-        var tpl = tpls[Math.floor(Math.random() * tpls.length)];
-        var repo = new WordRepo(lib);
-        var res = tpl(repo);
-        console.log(res);
+    format(enTpl, ruTpl) {
+        this.enFormat = enTpl;
+        this.ruFormat = ruTpl;
+        return this;
     }
-})}) */
+    sub(source, target) {
+        this.substitutions.push([source, target]);
+    }
+}
+exports.WordRepo = WordRepo;
