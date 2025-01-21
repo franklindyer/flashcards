@@ -93,9 +93,9 @@ var ch3Nouns = [
 ];
 
 var ch3Tpl = [
-    makeTpl((wr: any) => wr.pickN("item").format("this is {n0}", "это {n0}")),
-    makeTpl((wr: any) => wr.pickN("hasloc").format("where's (the) {n0}?", "где {n0}?")),
-    makeTpl((wr: any) => wr.pickN("hasloc").format("there's (the) {n0}", "вот {n0}"))
+    makeTpl((wr: any) => wr.pickN(["item"]).format("this is {n0}", "это {n0}")),
+    makeTpl((wr: any) => wr.pickN(["hasloc"]).format("where's (the) {n0}?", "где {n0}?")),
+    makeTpl((wr: any) => wr.pickN(["hasloc"]).format("there's (the) {n0}", "вот {n0}"))
 ];
 
 // CHAPTER 4
@@ -114,25 +114,25 @@ var ch4Nouns = [
 ];
 
 var ch4Verbs = [
-    makeIntransVerb("speak", "говорить", "agent", ["about-topic"]),
-    makeIntransVerb("go", "ехать", "agent", [], "by transport"),
-    makeIntransVerb("live", "жить", "agent", ["within-place"]),
-    makeIntransVerb("work", "работать", "person", ["within-place"]),
-    makeTransVerb("smoke", "курить", "person", "smokeable", ["intrans", "within-place"]),
-    makeTransVerb("understand", "понимать", "agent", "nonphysical", ["intrans"]),
-    makeTransVerb("study", "изучать", "person", "subject", ["intrans"])
+    makeIntransVerb("speak", "говорить", ["agent"], ["about-topic"]),
+    makeIntransVerb("go", "ехать", ["agent"], [], "by transport"),
+    makeIntransVerb("live", "жить", ["agent"], ["within-place"]),
+    makeIntransVerb("work", "работать", ["person"], ["within-place"]),
+    makeTransVerb("smoke", "курить", ["person"], ["smokeable"], ["intrans", "within-place"]),
+    makeTransVerb("understand", "понимать", ["agent"], ["nonphysical"], ["intrans"]),
+    makeTransVerb("study", "изучать", ["person"], ["subject"], ["intrans"])
 ];
 
 var ch4Tpl = [
-    makeTpl((wr: any) => wr.pickPron(["person"]).pickAxn(0, "intrans").conjV(0, 0)
+    makeTpl((wr: any) => wr.pickPron(["person"]).pickAxn(1, ["intrans"]).conjV(0, 0)
                     .format("{n0} {v0}", "{n0} {v0}")),
-    makeTpl((wr: any) => wr.pickV(1, "intrans").pickSubj(0)
+    makeTpl((wr: any) => wr.pickV(1, ["intrans"]).pickSubj(0)
                     .format("{n0} {v0}", "{n0} {v0}")),
-    makeTpl((wr: any) => wr.pickV(0, "intrans").pickSubj(0)
+    makeTpl((wr: any) => wr.pickV(0, ["intrans"]).pickSubj(0)
                     .format("{n0} do/does not {v0}", "{n0} не {v0}")),
-    makeTpl((wr: any) => wr.pickPron(["person"]).pickAxn(0, "intrans").conjV(0, 0)
+    makeTpl((wr: any) => wr.pickPron(["person"]).pickAxn(1, ["intrans"]).conjV(0, 0)
                     .format("{n0} do/does not {v0}", "{n0} не {v0}")),
-    makeTpl((wr: any) => wr.pickN("in-place", casePRP)
+    makeTpl((wr: any) => wr.pickN(["in-place"], casePRP)
                     .format("in/at {n0}", "в {n0}"))
 ];
 
@@ -159,24 +159,24 @@ var ch5Nouns = [
 ];
 
 var ch5Verbs = [
-    makeIntransVerb("speak", "говорить", "agent", ["about-topic"]),
-    makeIntransVerb("live", "жить", "agent", ["within-place"]),
-    makeIntransVerb("work", "работать", "person", ["within-place"]),
-    makeTransVerb("smoke", "курить", "person", "smokeable", ["intrans", "within-place"])
+    makeIntransVerb("speak", "говорить", ["agent"], ["about-topic"]),
+    makeIntransVerb("live", "жить", ["agent"], ["within-place"]),
+    makeIntransVerb("work", "работать", ["person"], ["within-place"]),
+    makeTransVerb("smoke", "курить", ["person"], ["smokeable"], ["intrans", "within-place"])
 ]
 
 var ch5Tpl = [
-    makeTpl((wr: any) => wr.pickN("in-place", casePRP)
+    makeTpl((wr: any) => wr.pickN(["in-place"], casePRP)
                     .format("in/at {n0}", "в {n0}")),
-    makeTpl((wr: any) => wr.pickN("at-place", casePRP)
+    makeTpl((wr: any) => wr.pickN(["at-place"], casePRP)
                     .format("in/at {n0}", "на {n0}")),
-    makeTpl((wr: any) => wr.pickN("hasloc").pickN("in-place", casePRP)
+    makeTpl((wr: any) => wr.pickN(["hasloc"]).pickN(["in-place"], casePRP)
                     .format("{n0} is in/at {n1}", "{n0} в {n1}")),
-    makeTpl((wr: any) => wr.pickN("hasloc").pickN("at-place", casePRP)
+    makeTpl((wr: any) => wr.pickN(["hasloc"]).pickN(["at-place"], casePRP)
                     .format("{n0} is in/at {n1}", "{n0} на {n1}")),
-    makeTpl((wr: any) => wr.pickV(1, "within-place").pickSubj(0).pickN("in-place", casePRP)
+    makeTpl((wr: any) => wr.pickV(1, ["within-place"]).pickSubj(0).pickN(["in-place"], casePRP)
                     .format("{n0} {v0} in/at {n1}", "{n0} {v0} в {n1}")),
-    makeTpl((wr: any) => wr.pickV(1, "within-place").pickSubj(0).pickN("at-place", casePRP)
+    makeTpl((wr: any) => wr.pickV(1, ["within-place"]).pickSubj(0).pickN(["at-place"], casePRP)
                     .format("{n0} {v0} in/at {n1}", "{n0} {v0} на {n1}")),
 ]
 
@@ -202,8 +202,8 @@ var ch6Nouns = [
 ];
 
 var ch6Verbs = [
-    makeTransVerb("love", "любить", "agent", "", []),
-    makeIntransVerb("fare", "поживать", "person", [], "get along"),
+    makeTransVerb("love", "любить", ["agent"], [], []),
+    makeIntransVerb("fare", "поживать", ["person"], [], "get along"),
 ];
 
 var ch6Adjs = [
@@ -224,13 +224,11 @@ var ch6Adjs = [
 ];
 
 var ch6Tpl = [
-    makeTpl((wr: any) => wr.pickN("item").pickA(0)
+    makeTpl((wr: any) => wr.pickN(["item", "relative"]).pickA(0, "possessive")
                     .format("{a0} {n0}", "{a0} {n0}")),
-    makeTpl((wr: any) => wr.pickN("relative").pickA(0)
-                    .format("{a0} {n0}", "{a0} {n0}")),
-    makeTpl((wr: any) => wr.pickN("item", caseACC)
+    makeTpl((wr: any) => wr.pickN(["item"], caseACC)
                     .format("thanks for (the) {n0}", "спасибо за {n0}")),
-    makeTpl((wr: any) => wr.pickN("timerange", caseACC)
+    makeTpl((wr: any) => wr.pickN(["timerange"], caseACC)
                     .format("in/within a {n0}", "через {n0}")),
 ];
 
