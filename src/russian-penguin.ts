@@ -124,13 +124,13 @@ var ch4Verbs = [
 ];
 
 var ch4Tpl = [
-    makeTpl((wr: any) => wr.pickPron(["person"]).pickAxn(1, ["intrans"]).conjV(0, 0)
+    makeTpl((wr: any) => wr.pickPron(["person"]).pickAxn(0, ["intrans"]).conjV(0, 0, 1)
                     .format("{n0} {v0}", "{n0} {v0}")),
-    makeTpl((wr: any) => wr.pickV(1, ["intrans"]).pickSubj(0)
+    makeTpl((wr: any) => wr.pickV(1, ["intrans"]).pickSubj(0).conjV(0, 0, 1)
                     .format("{n0} {v0}", "{n0} {v0}")),
-    makeTpl((wr: any) => wr.pickV(0, ["intrans"]).pickSubj(0)
+    makeTpl((wr: any) => wr.pickV(0, ["intrans"]).pickSubj(0).conjV(0, 0, 1)
                     .format("{n0} do/does not {v0}", "{n0} не {v0}")),
-    makeTpl((wr: any) => wr.pickPron(["person"]).pickAxn(1, ["intrans"]).conjV(0, 0)
+    makeTpl((wr: any) => wr.pickPron(["person"]).pickAxn(0, ["intrans"]).conjV(0, 0, 1)
                     .format("{n0} do/does not {v0}", "{n0} не {v0}")),
     makeTpl((wr: any) => wr.pickN(["in-place"], casePRP)
                     .format("in/at {n0}", "в {n0}"))
@@ -152,7 +152,7 @@ var ch5Nouns = [
     makeSingularNoun("post office", "почта", "f", false, ["at-place", "hasloc", "building"]),
     makeSingularNoun("restaurant", "ресторан", "m", false, ["in-place", "building", "hasloc"]),
     makeSingularNoun("garden", "сад", "m", false, ["in-place", "hasloc"]),
-    makeSingularNoun("bathroom", "туалет", "m", false, ["in-place", "hasloc"]),
+    makeSingularNoun("toilet", "туалет", "m", false, ["hasloc"]),
     makeSingularNoun("Ukraine", "Украина", "f", false, ["at-place", "country", "region", "geo-place"]),
     makeSingularNoun("university", "университет", "m", false, ["in-place", "hasloc"]),
     makeSingularNoun("tsar", "царь", "m", true, ["agent", "person", "hasloc"])
@@ -207,20 +207,13 @@ var ch6Verbs = [
 ];
 
 var ch6Adjs = [
-    makeAdj("my", "мой", "item", ["possessive"]),
-    makeAdj("my", "мой", "relative", ["possessive"]),
-    makeAdj("your", "твой", "item", ["possessive"]),
-    makeAdj("your", "твой", "relative", ["possessive"]),
-    makeAdj("our", "наш", "item", ["possessive"]),
-    makeAdj("our", "наш", "relative", ["possessive"]),
-    makeAdj("y'all's", "ваш", "item", ["possessive"]),
-    makeAdj("y'all's", "ваш", "relative", ["possessive"]),
-    makeAdj("his", "его", "item", ["possessive"]),
-    makeAdj("his", "его", "relative", ["possessive"]),
-    makeAdj("her", "её", "item", ["possessive"]),
-    makeAdj("her", "её", "relative", ["possessive"]),
-    makeAdj("their", "их", "item", ["possessive"]),
-    makeAdj("their", "их", "relative", ["possessive"])
+    makeAdj("my", "мой", ["item", "relative"], ["possessive"]),
+    makeAdj("your", "твой", ["item", "relative"], ["possessive"]),
+    makeAdj("our", "наш", ["item", "relative"], ["possessive"]),
+    makeAdj("y'all's", "ваш", ["item", "relative"], ["possessive"]),
+    makeAdj("his", "его", ["item", "relative"], ["possessive"]),
+    makeAdj("her", "её", ["item", "relative"], ["possessive"]),
+    makeAdj("their", "их", ["item", "relative"], ["possessive"]),
 ];
 
 var ch6Tpl = [
@@ -230,6 +223,35 @@ var ch6Tpl = [
                     .format("thanks for (the) {n0}", "спасибо за {n0}")),
     makeTpl((wr: any) => wr.pickN(["timerange"], caseACC)
                     .format("in/within a {n0}", "через {n0}")),
+];
+
+// CHAPTER 7
+
+var ch7Nouns = [
+    makeSingularNoun("bathroom", "ванная", "f", false, ["in-place", "hasloc", "room"]),
+    makeSingularNoun("city", "город", "m", false, ["in-place", "hasloc"]),
+    makeSingularNoun("apartment", "квартира", "f", false, ["in-place", "hasloc"]),
+    makeSingularNoun("book", "книга", "f", false, ["item", "hasloc", "topical", "in-sequence"]),
+    makeSingularNoun("Kremlin", "Кремль", "m", false, ["in-place", "building"]),
+    makeSingularNoun("kitchen", "кухня", "f", false, ["at-place", "hasloc", "room"]),
+    makeSingularNoun("bridge", "мост", "m", false, ["at-place", "hasloc"]),
+    makeSingularNoun("overcoat", "пальто", "n", false, ["item", "hasloc", "clothing"]),
+    makeSingularNoun("street map", "план", "m", false, ["item", "hasloc"]),
+    makeSingularNoun("weather", "погода", "f", false, ["nonphysical"]),
+    makeSingularNoun("embassy", "посольство", "n", false, ["in-place", "building", "hasloc"]),
+    makeSingularNoun("river", "река", "f", false, ["in-place", "body-water"]),
+    makeSingularNoun("bedroom", "спальня", "f", false, ["in-place", "hasloc", "room"]),
+    makeSingularNoun("theater", "театр", "m", false, ["in-place", "hasloc", "building"]),
+    makeSingularNoun("school", "школа", "f", false, ["in-place", "hasloc", "building"]),
+    makeSingularNoun("floor/story", "этаж", "m", false, ["in-sequence"])
+];
+
+var ch7Verbs = [
+    makeTransVerb("show", "показывать", ["person"], ["item"], [])
+];
+
+var ch7Adjs = [
+
 ];
 
 // Text substitutions in Russian answers needed for things like contraction / special forms

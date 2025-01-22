@@ -12,4 +12,7 @@ import './evil'
 import './russian-templating'
 import './russian-penguin'
 
+import './abstract-agreement'
+import './wordsat'
+
 runFlashcardController("addition-quiz-deck")

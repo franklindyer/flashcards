@@ -114,7 +114,7 @@ export type EnRuAdjective = {
     enForm: string,
     ruForm: string,
     tags: string[],
-    nounTag: string,
+    nounTags: string[],
     hint: string,
     guid: string
 }
@@ -180,7 +180,7 @@ export class EnRuWordLibrary {
     }
 
     pickAdj(tags: string[] = []) {
-        var options = this.adjs.filter((a) => tags.includes(a.nounTag));
+        var options = this.adjs.filter((a) => a.nounTags.some((t) => tags.includes(t)));
         return weightedRandom(options, (a) => (a.guid in this.adjWeights) ? this.adjWeights[a.guid] : this.startingWeight, Math.random());
     }
 
@@ -403,13 +403,13 @@ export function makeTransVerb(enForm: string, ruForm: string, subjTags: string[]
     }
 }
 
-export function makeAdj(enForm: string, ruForm: string, nounTag: string, tags: string[] = [], hint: string = "")
+export function makeAdj(enForm: string, ruForm: string, nounTags: string[], tags: string[] = [], hint: string = "")
     : EnRuAdjective {
     return {
         enForm: enForm,
         ruForm: ruForm,
         tags: tags,
-        nounTag: nounTag,
+        nounTags: nounTags,
         hint: hint,
         guid: getUuid(ruForm)
     }
