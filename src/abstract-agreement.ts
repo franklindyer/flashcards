@@ -2,8 +2,10 @@ import {
     IDictionary
 } from './lib'
 
+// We should have a rule for inflection, and a default value of the inflector
 interface Inflector<a, b> {
     (wd: a, infl: b): [string, string];
+    (): b;
 }
 
 interface Agreer<a1, b1, b2> {

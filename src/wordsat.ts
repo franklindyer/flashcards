@@ -24,9 +24,8 @@ type WordHole = {
     rels: WordRelation[]
 }
 
-class WordSatChecker {
+class WordRelChecker {
     allWords: IDictionary<WithTags[]>;
-    // cache: IDictionary<WithTags[]>;
 
     constructor(words: IDictionary<WithTags[]>) {
         this.allWords = words;
@@ -60,6 +59,40 @@ class WordSatChecker {
             i++;
         }
         return ctx;
+    }
+
+    tryFillHoles(hs: WordHole[], ctx: IDictionary<WithTags[]>, weight: (w: WithTags) => number): IDictionary<WithTags[]> {
+        var d: IDictionary<WithTags[]> | undefined = undefined;
+        while (d === undefined) d = this.fillHoles(hs, ctx, weight);
+        return <IDictionary<WithTags[]>>d;
+    }
+}
+
+class WordStacks {
+    checker: WordRelChecker;
+    holes: WordHole[];
+    weights: (w: WithTags) => number;
+
+    constructor(checker: WordRelChecker, weights: (w: WithTags) => number) {
+        this.checker = checker;
+        this.weights = weights;
+        this.holes = [];
+    }
+
+    add(t: string, tags: string[]) {
+        this.holes.push({ wordType: t, wordTags: tags, rels: [] });
+    }
+
+    addR(t: string, tags: string[], selStrings: string[]) {
+        // each selString should look something like "x3:subj" or "y0:obj" etc.      
+    }
+
+    resolve(): IDictionary<WithTags[]> {
+        var d: IDictionary<WithTags[]> = {};
+        for (var k in Object.keys(checker.allWords)) {
+            d[k] = [];
+        }
+        return checker.tryFillHoles(this.holes, d, this.weights);
     }
 }
 
@@ -98,7 +131,7 @@ var demoLib: IDictionary<WithTags[]> = {
     "v": demoVerbs
 }
 
-var checker = new WordSatChecker(demoLib);
+var checker = new WordRelChecker(demoLib);
 
 var locPhraseHoles = [
     { wordType: "n", wordTags: ["item"], rels: [] },
