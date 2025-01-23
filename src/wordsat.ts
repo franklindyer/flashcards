@@ -31,6 +31,15 @@ class WordRelChecker {
         this.allWords = words;
     }
 
+    addSubtag(wordType: string, childTag: string, parentTag: string) {
+        for (var i in Object.keys(this.allWords[wordType])) {
+            var w: WithTags = this.allWords[wordType][i];
+            if (w.tags.includes(childTag) && !w.tags.includes(parentTag)) {
+                w.tags.push(parentTag);
+            }
+        }        
+    }
+
     satisfiesRelation(w: WithTags, r: WordRelation, ctx: IDictionary<WithTags[]>): boolean {
         var relatedTo = ctx[r.relWordType][r.relWordId];
         var tagOpts = relatedTo.rels[r.rel];
@@ -81,15 +90,32 @@ class WordStacks {
 
     add(t: string, tags: string[]) {
         this.holes.push({ wordType: t, wordTags: tags, rels: [] });
+        return this;
+    }
+
+    processSelString(selString: string): [string, number, string] {
+        var selStringParts = selString.split(":");
+        var selString1 = selStringParts[0].split('');
+        var wdType = selString1.filter((c) => !"0123456789".includes(c)).join('');
+        var wdInd = parseInt(selString1.filter((c) => "0123456789".includes(c)).join(''));
+        return [wdType, wdInd, selStringParts[1]]
     }
 
     addR(t: string, tags: string[], selStrings: string[]) {
-        // each selString should look something like "x3:subj" or "y0:obj" etc.      
+        // each selString should look something like "x3:subj" or "y0:obj" etc.
+        var selStrParts = selStrings.map(this.processSelString);
+        var rels: WordRelation[] = selStrParts.map((p) => { return {
+            rel: p[2],
+            relWordType: p[0],
+            relWordId: p[1]  
+        }});
+        return this; 
     }
 
     resolve(): IDictionary<WithTags[]> {
         var d: IDictionary<WithTags[]> = {};
-        for (var k in Object.keys(checker.allWords)) {
+        for (var i in Object.keys(checker.allWords)) {
+            var k = Object.keys(checker.allWords)[i];
             d[k] = [];
         }
         return checker.tryFillHoles(this.holes, d, this.weights);
@@ -132,6 +158,10 @@ var demoLib: IDictionary<WithTags[]> = {
 }
 
 var checker = new WordRelChecker(demoLib);
+checker.addSubtag("n", "item", "hasloc");
+checker.addSubtag("n", "person", "hasloc");
+
+var stacks = () => new WordStacks(checker, (n) => 1.0);
 
 var locPhraseHoles = [
     { wordType: "n", wordTags: ["item"], rels: [] },
@@ -145,8 +175,10 @@ var intransHoles = [
 
 for (var i = 0; i < 20; i++) {
     console.log("HIHIHI");
-    var ctx = <IDictionary<any>>checker.fillHoles(locPhraseHoles, { "n": [], "v": [] }, (w) => 1.0);
-    console.log(`${ctx['n'][0].text} is in ${ctx['n'][1].text}`);
-    var ctx = <IDictionary<any>>checker.fillHoles(intransHoles, { "n": [], "v": [] }, (w) => 1.0);
-    console.log(`${ctx['n'][0].text} ${ctx['v'][0].text}`);
+    var s = <IDictionary<DemoWord[]>>stacks().add("n", ["hasloc"]).add("n", ["place"]).resolve();
+    console.log(`${s['n'][0].text} is in ${s['n'][1].text}`);
+    // var ctx = <IDictionary<any>>checker.fillHoles(locPhraseHoles, { "n": [], "v": [] }, (w) => 1.0);
+    // console.log(`${ctx['n'][0].text} is in ${ctx['n'][1].text}`);
+    // var ctx = <IDictionary<any>>checker.fillHoles(intransHoles, { "n": [], "v": [] }, (w) => 1.0);
+    // console.log(`${ctx['n'][0].text} ${ctx['v'][0].text}`);
 }
