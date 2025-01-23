@@ -4,10 +4,12 @@ const lib_1 = require("./lib");
 require("./demos");
 require("./spaced-repetition");
 require("./german-drill");
-// import './russian-drill'
+require("./russian-drill");
 require("./progression");
 require("./weighted-rand");
 require("./evil");
 require("./russian-templating");
 require("./russian-penguin");
+require("./abstract-agreement");
+require("./wordsat");
 (0, lib_1.runFlashcardController)("addition-quiz-deck");

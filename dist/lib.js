@@ -10,7 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.indexedResources = exports.providedGenerators = exports.defaultDecks = exports.defaultDeckView = exports.runFlashcardController = exports.loadDeckGenFromRegistry = exports.saveDeckToLocal = exports.loadRegistryFromLocal = exports.multipleEditors = exports.fixedNumEditors = exports.makeTranslationEditor = exports.tableEditor = exports.combineEditors = exports.doubleTextFieldEditor = exports.validatedTextFieldEditor = exports.singleTextFieldEditor = exports.scrollNumberEditor = exports.floatEditor = exports.boolEditor = exports.evilFGen = exports.uniformRandomFGen = exports.guidGenerator = exports.fconst = void 0;
+exports.indexedResources = exports.providedGenerators = exports.defaultDecks = exports.defaultDeckView = exports.runFlashcardController = exports.loadDeckGenFromRegistry = exports.saveDeckToLocal = exports.loadRegistryFromLocal = exports.multipleEditors = exports.fixedNumEditors = exports.makeTranslationEditor = exports.tableEditor = exports.combineEditors = exports.doubleTextFieldEditor = exports.validatedTextFieldEditor = exports.singleTextFieldEditor = exports.scrollNumberEditor = exports.floatEditor = exports.boolEditor = exports.evilFGen = exports.uniformRandomFGen = exports.ensureKeys = exports.guidGenerator = exports.fconst = void 0;
 // Utilities
 function fconst(y) {
     return (_) => y;
@@ -31,6 +31,15 @@ function zeroDict(keys) {
     }
     return d;
 }
+function ensureKeys(keys, defaultVal, d) {
+    for (var i in keys) {
+        var k = keys[i];
+        if (!(k in d))
+            d[k] = defaultVal;
+    }
+    return d;
+}
+exports.ensureKeys = ensureKeys;
 function weightedRandomIndex(weights) {
     var weightSums = weights.map((sum => value => sum += value)(0));
     var totalSum = weights.reduce((a, b) => a + b, 0);

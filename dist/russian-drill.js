@@ -287,7 +287,7 @@ var ruAdjCaseQuizzer = {
         };
     }
 };
-lib_1.defaultDecks["russian-verb-deck"] = {
+/* defaultDecks["russian-verb-deck"] = {
     name: "Russian present-tense verb conjugations",
     slug: "russian-verb-deck",
     decktype: "russian-verb-driller",
@@ -296,8 +296,8 @@ lib_1.defaultDecks["russian-verb-deck"] = {
         color: "#eee0ff"
     },
     state: ruVerbQuizzer.state
-};
-lib_1.defaultDecks["russian-adj-case-deck"] = {
+}; */
+/* defaultDecks["russian-adj-case-deck"] = {
     name: "Russian adjective declinaitions in various cases",
     slug: "russian-adj-case-deck",
     decktype: "russian-adj-case-driller",
@@ -306,7 +306,7 @@ lib_1.defaultDecks["russian-adj-case-deck"] = {
         color: "#eee0ff"
     },
     state: ruAdjCaseQuizzer.state
-};
+} */
 lib_1.defaultDecks["russian-freq-deck"] = {
     name: "Russian 1000 most common words",
     slug: "russian-freq-deck",
@@ -317,8 +317,8 @@ lib_1.defaultDecks["russian-freq-deck"] = {
     },
     state: ruFreqQuizzer.state
 };
-lib_1.providedGenerators["russian-verb-driller"] = ruVerbQuizzer;
-lib_1.providedGenerators["russian-adj-case-driller"] = ruAdjCaseQuizzer;
+// providedGenerators["russian-verb-driller"] = ruVerbQuizzer;
+// providedGenerators["russian-adj-case-driller"] = ruAdjCaseQuizzer;
 lib_1.providedGenerators["russian-freq-driller"] = ruFreqQuizzer;
 lib_1.indexedResources["russian-verbs"] = () => ruDataPromise("ru-verbs", "ruVerbs");
 lib_1.indexedResources["russian-nouns"] = () => ruDataPromise("ru-nouns", "ruNouns");

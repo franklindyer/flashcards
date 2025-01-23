@@ -51,11 +51,10 @@ var ch3Nouns = [
     (0, russian_templating_1.makeSingularNoun)("tea", "чай", "m", false, ["drink", "item", "hasloc"]),
     (0, russian_templating_1.makeSingularNoun)("chocolate", "шоколад", "m", false, ["food", "item", "hasloc"])
 ];
-var ch3Verbs = [];
 var ch3Tpl = [
-    (wr) => wr.pickN("item").format("this is {n0}", "это {n0}"),
-    (wr) => wr.pickN("hasloc").format("where's (the) {n0}?", "где {n0}?"),
-    (wr) => wr.pickN("hasloc").format("there's (the) {n0}", "вот {n0}")
+    (0, russian_templating_1.makeTpl)((wr) => wr.pickN(["item"]).format("this is {n0}", "это {n0}")),
+    (0, russian_templating_1.makeTpl)((wr) => wr.pickN(["hasloc"]).format("where's (the) {n0}?", "где {n0}?")),
+    (0, russian_templating_1.makeTpl)((wr) => wr.pickN(["hasloc"]).format("there's (the) {n0}", "вот {n0}"))
 ];
 // CHAPTER 4
 var ch4Nouns = [
@@ -71,25 +70,25 @@ var ch4Nouns = [
     (0, russian_templating_1.makeSingularNoun)("street", "улица", "f", false, ["at-place", "hasloc"])
 ];
 var ch4Verbs = [
-    (0, russian_templating_1.makeIntransVerb)("speak", "говорить", "agent", ["about-topic"]),
-    (0, russian_templating_1.makeIntransVerb)("go", "ехать", "agent", [], "by transport"),
-    (0, russian_templating_1.makeIntransVerb)("live", "жить", "agent", ["within-place"]),
-    (0, russian_templating_1.makeIntransVerb)("work", "работать", "person", ["within-place"]),
-    (0, russian_templating_1.makeTransVerb)("smoke", "курить", "person", "smokeable", ["intrans", "within-place"]),
-    (0, russian_templating_1.makeTransVerb)("understand", "понимать", "agent", "nonphysical", ["intrans"]),
-    (0, russian_templating_1.makeTransVerb)("study", "изучать", "person", "subject", ["intrans"])
+    (0, russian_templating_1.makeIntransVerb)("speak", "говорить", ["agent"], ["about-topic"]),
+    (0, russian_templating_1.makeIntransVerb)("go", "ехать", ["agent"], [], "by transport"),
+    (0, russian_templating_1.makeIntransVerb)("live", "жить", ["agent"], ["within-place"]),
+    (0, russian_templating_1.makeIntransVerb)("work", "работать", ["person"], ["within-place"]),
+    (0, russian_templating_1.makeTransVerb)("smoke", "курить", ["person"], ["smokeable"], ["intrans", "within-place"]),
+    (0, russian_templating_1.makeTransVerb)("understand", "понимать", ["agent"], ["nonphysical"], ["intrans"]),
+    (0, russian_templating_1.makeTransVerb)("study", "изучать", ["person"], ["subject"], ["intrans"])
 ];
 var ch4Tpl = [
-    (wr) => wr.pickPron(["person"]).pickAxn(0, "intrans").conjV(0, 0)
-        .format("{n0} {v0}", "{n0} {v0}"),
-    (wr) => wr.pickV(1, "intrans").pickSubj(0)
-        .format("{n0} {v0}", "{n0} {v0}"),
-    (wr) => wr.pickV(1, "intrans").pickSubj(0)
-        .format("{n0} do/does not {v0}", "{n0} не {v0}"),
-    (wr) => wr.pickPron(["person"]).pickAxn(0, "intrans").conjV(0, 0)
-        .format("{n0} do/does not {v0}", "{n0} не {v0}"),
-    (wr) => wr.pickN("in-place", russian_templating_1.casePRP)
-        .format("in/at {n0}", "в {n0}")
+    (0, russian_templating_1.makeTpl)((wr) => wr.pickPron(["person"]).pickAxn(0, ["intrans"]).conjV(0, 0, 1)
+        .format("{n0} {v0}", "{n0} {v0}")),
+    (0, russian_templating_1.makeTpl)((wr) => wr.pickV(1, ["intrans"]).pickSubj(0).conjV(0, 0, 1)
+        .format("{n0} {v0}", "{n0} {v0}")),
+    (0, russian_templating_1.makeTpl)((wr) => wr.pickV(0, ["intrans"]).pickSubj(0).conjV(0, 0, 1)
+        .format("{n0} do/does not {v0}", "{n0} не {v0}")),
+    (0, russian_templating_1.makeTpl)((wr) => wr.pickPron(["person"]).pickAxn(0, ["intrans"]).conjV(0, 0, 1)
+        .format("{n0} do/does not {v0}", "{n0} не {v0}")),
+    (0, russian_templating_1.makeTpl)((wr) => wr.pickN(["in-place"], russian_templating_1.casePRP)
+        .format("in/at {n0}", "в {n0}"))
 ];
 // CHAPTER 5
 var ch5Nouns = [
@@ -106,30 +105,30 @@ var ch5Nouns = [
     (0, russian_templating_1.makeSingularNoun)("post office", "почта", "f", false, ["at-place", "hasloc", "building"]),
     (0, russian_templating_1.makeSingularNoun)("restaurant", "ресторан", "m", false, ["in-place", "building", "hasloc"]),
     (0, russian_templating_1.makeSingularNoun)("garden", "сад", "m", false, ["in-place", "hasloc"]),
-    (0, russian_templating_1.makeSingularNoun)("bathroom", "туалет", "m", false, ["in-place", "hasloc"]),
+    (0, russian_templating_1.makeSingularNoun)("toilet", "туалет", "m", false, ["hasloc"]),
     (0, russian_templating_1.makeSingularNoun)("Ukraine", "Украина", "f", false, ["at-place", "country", "region", "geo-place"]),
     (0, russian_templating_1.makeSingularNoun)("university", "университет", "m", false, ["in-place", "hasloc"]),
     (0, russian_templating_1.makeSingularNoun)("tsar", "царь", "m", true, ["agent", "person", "hasloc"])
 ];
 var ch5Verbs = [
-    (0, russian_templating_1.makeIntransVerb)("speak", "говорить", "agent", ["about-topic"]),
-    (0, russian_templating_1.makeIntransVerb)("live", "жить", "agent", ["within-place"]),
-    (0, russian_templating_1.makeIntransVerb)("work", "работать", "person", ["within-place"]),
-    (0, russian_templating_1.makeTransVerb)("smoke", "курить", "person", "smokeable", ["intrans", "within-place"])
+    (0, russian_templating_1.makeIntransVerb)("speak", "говорить", ["agent"], ["about-topic"]),
+    (0, russian_templating_1.makeIntransVerb)("live", "жить", ["agent"], ["within-place"]),
+    (0, russian_templating_1.makeIntransVerb)("work", "работать", ["person"], ["within-place"]),
+    (0, russian_templating_1.makeTransVerb)("smoke", "курить", ["person"], ["smokeable"], ["intrans", "within-place"])
 ];
 var ch5Tpl = [
-    (wr) => wr.pickN("in-place", russian_templating_1.casePRP)
-        .format("in/at {n0}", "в {n0}"),
-    (wr) => wr.pickN("at-place", russian_templating_1.casePRP)
-        .format("in/at {n0}", "на {n0}"),
-    (wr) => wr.pickN("hasloc").pickN("in-place", russian_templating_1.casePRP)
-        .format("{n0} is in/at {n1}", "{n0} в {n1}"),
-    (wr) => wr.pickN("hasloc").pickN("at-place", russian_templating_1.casePRP)
-        .format("{n0} is in/at {n1}", "{n0} на {n1}"),
-    (wr) => wr.pickV(1, "within-place").pickSubj(0).pickN("in-place", russian_templating_1.casePRP)
-        .format("{n0} {v0} in/at {n1}", "{n0} {v0} в {n1}"),
-    (wr) => wr.pickV(1, "within-place").pickSubj(0).pickN("at-place", russian_templating_1.casePRP)
-        .format("{n0} {v0} in/at {n1}", "{n0} {v0} на {n1}"),
+    (0, russian_templating_1.makeTpl)((wr) => wr.pickN(["in-place"], russian_templating_1.casePRP)
+        .format("in/at {n0}", "в {n0}")),
+    (0, russian_templating_1.makeTpl)((wr) => wr.pickN(["at-place"], russian_templating_1.casePRP)
+        .format("in/at {n0}", "на {n0}")),
+    (0, russian_templating_1.makeTpl)((wr) => wr.pickN(["hasloc"]).pickN(["in-place"], russian_templating_1.casePRP)
+        .format("{n0} is in/at {n1}", "{n0} в {n1}")),
+    (0, russian_templating_1.makeTpl)((wr) => wr.pickN(["hasloc"]).pickN(["at-place"], russian_templating_1.casePRP)
+        .format("{n0} is in/at {n1}", "{n0} на {n1}")),
+    (0, russian_templating_1.makeTpl)((wr) => wr.pickV(1, ["within-place"]).pickSubj(0).pickN(["in-place"], russian_templating_1.casePRP)
+        .format("{n0} {v0} in/at {n1}", "{n0} {v0} в {n1}")),
+    (0, russian_templating_1.makeTpl)((wr) => wr.pickV(1, ["within-place"]).pickSubj(0).pickN(["at-place"], russian_templating_1.casePRP)
+        .format("{n0} {v0} in/at {n1}", "{n0} {v0} на {n1}")),
 ];
 // CHAPTER 6
 var ch6Nouns = [
@@ -137,37 +136,66 @@ var ch6Nouns = [
     (0, russian_templating_1.makeSingularNoun)("year", "год", "m", false, ["timerange"]),
     (0, russian_templating_1.makeSingularNoun)("grandfather", "дедушка", "m", true, ["person", "agent", "hasloc", "relative"]),
     (0, russian_templating_1.makeSingularNoun)("wife", "жена", "f", true, ["person", "agent", "hasloc", "relative"]),
-    (0, russian_templating_1.makeSingularNoun)("husband", "муж", "m", true, ["person", "agent", "hasloc", "relative"])
+    (0, russian_templating_1.makeSingularNoun)("husband", "муж", "m", true, ["person", "agent", "hasloc", "relative"]),
+    (0, russian_templating_1.makeSingularNoun)("(first) name", "имя", "n", false, ["nonphysical"]),
+    (0, russian_templating_1.makeSingularNoun)("shop", "магазин", "m", false, ["in-place", "hasloc", "building"]),
+    (0, russian_templating_1.makeSingularNoun)("minute", "минута", "f", false, ["timerange"]),
+    (0, russian_templating_1.makeSingularNoun)("music", "музыка", "f", false, ["nonphysical", "audible"]),
+    (0, russian_templating_1.makeSingularNoun)("week", "неделя", "f", false, ["timerange"]),
+    (0, russian_templating_1.makeSingularNoun)("father", "отец", "m", true, ["person", "agent", "hasloc", "relative"]),
+    (0, russian_templating_1.makeSingularNoun)("patronymic", "отчество", "n", false, ["nonphysical"]),
+    (0, russian_templating_1.makeSingularNoun)("work", "работа", "f", false, ["event", "at-place"]),
+    (0, russian_templating_1.makeSingularNoun)("son", "сын", "m", true, ["person", "agent", "hasloc", "relative"]),
+    (0, russian_templating_1.makeSingularNoun)("hour", "час", "m", false, ["timerange"]),
+    (0, russian_templating_1.makeSingularNoun)("surname", "фамилия", "f", false, ["nonphysical"])
 ];
 var ch6Verbs = [
-    (0, russian_templating_1.makeTransVerb)("love", "любить", "agent", "", [])
+    (0, russian_templating_1.makeTransVerb)("love", "любить", ["agent"], [], []),
+    (0, russian_templating_1.makeIntransVerb)("fare", "поживать", ["person"], [], "get along"),
 ];
 var ch6Adjs = [
-    (0, russian_templating_1.makeAdj)("my", "мой", "item", ["possessive"]),
-    (0, russian_templating_1.makeAdj)("my", "мой", "relative", ["possessive"]),
-    (0, russian_templating_1.makeAdj)("your", "твой", "item", ["possessive"]),
-    (0, russian_templating_1.makeAdj)("your", "твой", "relative", ["possessive"]),
-    (0, russian_templating_1.makeAdj)("our", "наш", "item", ["possessive"]),
-    (0, russian_templating_1.makeAdj)("our", "наш", "relative", ["possessive"]),
-    (0, russian_templating_1.makeAdj)("y'all's", "ваш", "item", ["possessive"]),
-    (0, russian_templating_1.makeAdj)("y'all's", "ваш", "relative", ["possessive"]),
-    (0, russian_templating_1.makeAdj)("his", "его", "item", ["possessive"]),
-    (0, russian_templating_1.makeAdj)("his", "его", "relative", ["possessive"]),
-    (0, russian_templating_1.makeAdj)("her", "её", "item", ["possessive"]),
-    (0, russian_templating_1.makeAdj)("her", "её", "relative", ["possessive"]),
-    (0, russian_templating_1.makeAdj)("their", "их", "item", ["possessive"]),
-    (0, russian_templating_1.makeAdj)("their", "их", "relative", ["possessive"])
+    (0, russian_templating_1.makeAdj)("my", "мой", ["item", "relative"], ["possessive"]),
+    (0, russian_templating_1.makeAdj)("your", "твой", ["item", "relative"], ["possessive"]),
+    (0, russian_templating_1.makeAdj)("our", "наш", ["item", "relative"], ["possessive"]),
+    (0, russian_templating_1.makeAdj)("y'all's", "ваш", ["item", "relative"], ["possessive"]),
+    (0, russian_templating_1.makeAdj)("his", "его", ["item", "relative"], ["possessive"]),
+    (0, russian_templating_1.makeAdj)("her", "её", ["item", "relative"], ["possessive"]),
+    (0, russian_templating_1.makeAdj)("their", "их", ["item", "relative"], ["possessive"]),
 ];
 var ch6Tpl = [
-    (wr) => wr.pickN("item").pickA(0)
-        .format("{a0} {n0}", "{a0} {n0}"),
-    (wr) => wr.pickN("relative").pickA(0)
-        .format("{a0} {n0}", "{a0} {n0}"),
-    (wr) => wr.pickN("item", russian_templating_1.caseACC)
-        .format("thanks for (the) {n0}", "спасибо за {n0}")
+    (0, russian_templating_1.makeTpl)((wr) => wr.pickN(["item", "relative"]).pickA(0, "possessive")
+        .format("{a0} {n0}", "{a0} {n0}")),
+    (0, russian_templating_1.makeTpl)((wr) => wr.pickN(["item"], russian_templating_1.caseACC)
+        .format("thanks for (the) {n0}", "спасибо за {n0}")),
+    (0, russian_templating_1.makeTpl)((wr) => wr.pickN(["timerange"], russian_templating_1.caseACC)
+        .format("in/within a {n0}", "через {n0}")),
 ];
+// CHAPTER 7
+var ch7Nouns = [
+    (0, russian_templating_1.makeSingularNoun)("bathroom", "ванная", "f", false, ["in-place", "hasloc", "room"]),
+    (0, russian_templating_1.makeSingularNoun)("city", "город", "m", false, ["in-place", "hasloc"]),
+    (0, russian_templating_1.makeSingularNoun)("apartment", "квартира", "f", false, ["in-place", "hasloc"]),
+    (0, russian_templating_1.makeSingularNoun)("book", "книга", "f", false, ["item", "hasloc", "topical", "in-sequence"]),
+    (0, russian_templating_1.makeSingularNoun)("Kremlin", "Кремль", "m", false, ["in-place", "building"]),
+    (0, russian_templating_1.makeSingularNoun)("kitchen", "кухня", "f", false, ["at-place", "hasloc", "room"]),
+    (0, russian_templating_1.makeSingularNoun)("bridge", "мост", "m", false, ["at-place", "hasloc"]),
+    (0, russian_templating_1.makeSingularNoun)("overcoat", "пальто", "n", false, ["item", "hasloc", "clothing"]),
+    (0, russian_templating_1.makeSingularNoun)("street map", "план", "m", false, ["item", "hasloc"]),
+    (0, russian_templating_1.makeSingularNoun)("weather", "погода", "f", false, ["nonphysical"]),
+    (0, russian_templating_1.makeSingularNoun)("embassy", "посольство", "n", false, ["in-place", "building", "hasloc"]),
+    (0, russian_templating_1.makeSingularNoun)("river", "река", "f", false, ["in-place", "body-water"]),
+    (0, russian_templating_1.makeSingularNoun)("bedroom", "спальня", "f", false, ["in-place", "hasloc", "room"]),
+    (0, russian_templating_1.makeSingularNoun)("theater", "театр", "m", false, ["in-place", "hasloc", "building"]),
+    (0, russian_templating_1.makeSingularNoun)("school", "школа", "f", false, ["in-place", "hasloc", "building"]),
+    (0, russian_templating_1.makeSingularNoun)("floor/story", "этаж", "m", false, ["in-sequence"])
+];
+var ch7Verbs = [
+    (0, russian_templating_1.makeTransVerb)("show", "показывать", ["person"], ["item"], [])
+];
+var ch7Adjs = [];
 // Text substitutions in Russian answers needed for things like contraction / special forms
 var penguinGlobalSubs = [
+    [/(\s|^)a ([aeiou])/, "$1an $2"],
     [/(\s|^)в лесе/, "$1в лесу"],
     [/(\s|^)в саде/, "$1в саду"],
     [/(\s|^)в Крыме/, "$1в Крыму"],
@@ -175,11 +203,14 @@ var penguinGlobalSubs = [
     [/(\s|^) мне/, "обо мне"]
 ];
 var penguinChapters = {
-    "3": [ch3Nouns, ch3Verbs, [], ch3Tpl],
+    "3": [ch3Nouns, [], [], ch3Tpl],
     "4": [ch4Nouns, ch4Verbs, [], ch4Tpl],
     "5": [ch5Nouns, ch5Verbs, [], ch5Tpl],
     "6": [ch6Nouns, ch6Verbs, ch6Adjs, ch6Tpl]
 };
+var allNouns = Object.keys(penguinChapters).map((k) => penguinChapters[k][0]).flat();
+var allVerbs = Object.keys(penguinChapters).map((k) => penguinChapters[k][1]).flat();
+var allAdjs = Object.keys(penguinChapters).map((k) => penguinChapters[k][2]).flat();
 var ruPenguinQuizzer = {
     ftemp: {
         generator: function (seed) {
@@ -199,11 +230,10 @@ var ruPenguinQuizzer = {
     state: {
         activeChapters: ["3"],
         stats: {
-            nounStats: {},
-            verbStats: {},
-            genderStats: [],
-            numberStats: [],
-            personStats: []
+            nounStats: {}, // ensureKeys(allNouns.map((n) => n.guid), [0,0], {}),
+            verbStats: {}, // ensureKeys(allVerbs.map((v) => v.guid), [0,0], {}),
+            adjStats: {}, // ensureKeys(allAdjs.map((a) => a.guid), [0,0], {}),
+            tplStats: {}
         }
     },
     seeder: function (st) {
@@ -211,14 +241,46 @@ var ruPenguinQuizzer = {
         var selVerbs = st.activeChapters.map((k) => penguinChapters[k][1]).flat();
         var selAdjs = st.activeChapters.map((k) => penguinChapters[k][2]).flat();
         var selTpls = st.activeChapters.map((k) => penguinChapters[k][3]).flat();
-        var selLib = new russian_templating_1.EnRuWordLibrary(selNouns, selVerbs, selAdjs);
-        var tpl = selTpls[Math.floor(Math.random() * selTpls.length)];
+        var selLib = new russian_templating_1.EnRuWordLibrary(selNouns, selVerbs, selAdjs, selTpls);
+        selLib.nounWeights = selLib.makeWeights(st.stats.nounStats);
+        selLib.verbWeights = selLib.makeWeights(st.stats.verbStats);
+        selLib.adjWeights = selLib.makeWeights(st.stats.adjStats);
+        selLib.tplWeights = selLib.makeWeights(st.stats.tplStats);
+        var tpl = selLib.pickTpl();
         var repo = new russian_templating_1.WordRepo(selLib);
         repo.substitutions = penguinGlobalSubs;
-        var res = tpl(repo);
+        var res = (0, russian_templating_1.applyTpl)(tpl, repo);
         return res;
     },
-    updater: (correct, answer, card, st) => st,
+    updater: (correct, answer, card, st) => {
+        var incVec = correct ? [1, 0] : [0, 1];
+        for (var k in card.params.nouns) {
+            var n = card.params.nouns[k][0];
+            if (!(n.guid in st.stats.nounStats))
+                st.stats.nounStats[n.guid] = [0, 0];
+            st.stats.nounStats[n.guid][0] += incVec[0];
+            st.stats.nounStats[n.guid][1] += incVec[1];
+        }
+        for (var k in card.params.verbs) {
+            var v = card.params.verbs[k][0];
+            if (!(v.guid in st.stats.verbStats))
+                st.stats.verbStats[v.guid] = [0, 0];
+            st.stats.verbStats[v.guid][0] += incVec[0];
+            st.stats.verbStats[v.guid][1] += incVec[1];
+        }
+        for (var k in card.params.adjs) {
+            var a = card.params.adjs[k][0];
+            if (!(a.guid in st.stats.adjStats))
+                st.stats.adjStats[a.guid] = [0, 0];
+            st.stats.adjStats[a.guid][0] += incVec[0];
+            st.stats.adjStats[a.guid][1] += incVec[1];
+        }
+        if (!(card.params.tplGuid in st.stats.tplStats))
+            st.stats.tplStats[card.params.tplGuid] = [0, 0];
+        st.stats.tplStats[card.params.tplGuid][0] += incVec[0];
+        st.stats.tplStats[card.params.tplGuid][1] += incVec[1];
+        return st;
+    },
     history: [],
     editor: makePengMenu
 };

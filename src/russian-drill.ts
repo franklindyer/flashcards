@@ -374,7 +374,7 @@ var ruAdjCaseQuizzer: FlashcardGenerator<[string, string], RuAdjQuizState> = {
     }
 }
 
-defaultDecks["russian-verb-deck"] = {
+/* defaultDecks["russian-verb-deck"] = {
     name: "Russian present-tense verb conjugations",
     slug: "russian-verb-deck",
     decktype: "russian-verb-driller",
@@ -383,9 +383,9 @@ defaultDecks["russian-verb-deck"] = {
         color: "#eee0ff"
     },
     state: ruVerbQuizzer.state
-};
+}; */
 
-defaultDecks["russian-adj-case-deck"] = {
+/* defaultDecks["russian-adj-case-deck"] = {
     name: "Russian adjective declinaitions in various cases",
     slug: "russian-adj-case-deck",
     decktype: "russian-adj-case-driller",
@@ -394,7 +394,7 @@ defaultDecks["russian-adj-case-deck"] = {
         color: "#eee0ff"
     },
     state: ruAdjCaseQuizzer.state
-}
+} */
 
 defaultDecks["russian-freq-deck"] = {
     name: "Russian 1000 most common words",
@@ -407,8 +407,8 @@ defaultDecks["russian-freq-deck"] = {
     state: ruFreqQuizzer.state
 }
 
-providedGenerators["russian-verb-driller"] = ruVerbQuizzer;
-providedGenerators["russian-adj-case-driller"] = ruAdjCaseQuizzer;
+// providedGenerators["russian-verb-driller"] = ruVerbQuizzer;
+// providedGenerators["russian-adj-case-driller"] = ruAdjCaseQuizzer;
 providedGenerators["russian-freq-driller"] = ruFreqQuizzer; 
 
 indexedResources["russian-verbs"] = () => ruDataPromise("ru-verbs", "ruVerbs");

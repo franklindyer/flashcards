@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.WordRepo = exports.makeAdj = exports.makeTransVerb = exports.makeIntransVerb = exports.makeSingularNoun = exports.getRussianGender = exports.EnRuWordLibrary = exports.caseINS = exports.caseGEN = exports.casePRP = exports.caseDAT = exports.caseACC = exports.caseNOM = exports.ruDataPromise = void 0;
+exports.WordRepo = exports.applyTpl = exports.makeTpl = exports.makeAdj = exports.makeTransVerb = exports.makeIntransVerb = exports.makeSingularNoun = exports.getRussianGender = exports.EnRuWordLibrary = exports.caseINS = exports.caseGEN = exports.casePRP = exports.caseDAT = exports.caseACC = exports.caseNOM = exports.ruDataPromise = void 0;
+const lib_1 = require("./lib");
 const weighted_rand_1 = require("./weighted-rand");
 const getUuid = require('uuid-by-string');
 const papa = require("papaparse");
@@ -64,41 +65,53 @@ var RussianTense;
 })(RussianTense || (RussianTense = {}));
 const enTenseStrings = ["PRESENT", "PRESENT", "PAST"];
 class EnRuWordLibrary {
-    constructor(nouns, verbs, adjs) {
+    constructor(nouns, verbs, adjs, tpls) {
+        this.startingWeight = 10;
+        this.punishmentParam = 1.5;
         this.nouns = nouns;
         this.verbs = verbs;
         this.adjs = adjs;
-        this.tagWeights = {};
-        this.genderWeights = { 0: 1, 1: 1, 2: 1 };
-        this.numberWeights = { 0: 1, 1: 1 };
-        this.personWeights = { 0: 1, 1: 1, 2: 1 };
-        this.caseWeights = { 0: 1, 1: 1, 2: 1, 3: 1, 4: 1, 5: 1 };
+        this.tpls = tpls;
+        this.nounWeights = {};
+        this.verbWeights = {};
+        this.adjWeights = {};
+        this.tplWeights = {};
     }
-    pickNoun(tag = "") {
-        var options = (tag === "") ? this.nouns : this.nouns.filter((w) => w.tags.includes(tag));
-        return options[Math.floor(Math.random() * options.length)];
+    makeWeights(stats) {
+        var weights = {};
+        for (var k in stats) {
+            weights[k] = (Math.pow(stats[k][1], this.punishmentParam) + this.startingWeight) / (stats[k][0] + 1);
+        }
+        return weights;
     }
-    pickVerb(tag = "") {
-        var options = (tag === "") ? this.verbs : this.verbs.filter((w) => w.tags.includes(tag));
-        return options[Math.floor(Math.random() * options.length)];
+    pickNoun(tags = []) {
+        var options = (tags.length === 0) ? this.nouns : this.nouns.filter((w) => tags.some((t) => w.tags.includes(t)));
+        return (0, weighted_rand_1.weightedRandom)(options, (n) => (n.guid in this.nounWeights) ? this.nounWeights[n.guid] : this.startingWeight, Math.random());
+    }
+    pickVerb(tags = []) {
+        var options = (tags.length === 0) ? this.verbs : this.verbs.filter((w) => tags.some((t) => w.tags.includes(t)));
+        return (0, weighted_rand_1.weightedRandom)(options, (v) => (v.guid in this.verbWeights) ? this.verbWeights[v.guid] : this.startingWeight, Math.random());
     }
     pickAdj(tags = []) {
-        var options = this.adjs.filter((a) => tags.includes(a.nounTag));
-        return options[Math.floor(Math.random() * options.length)];
+        var options = this.adjs.filter((a) => a.nounTags.some((t) => tags.includes(t)));
+        return (0, weighted_rand_1.weightedRandom)(options, (a) => (a.guid in this.adjWeights) ? this.adjWeights[a.guid] : this.startingWeight, Math.random());
     }
-    pickVerbWithAnySubjTag(tags, tag = "") {
-        var options = this.verbs.filter((v) => tags.includes(v.subjTag));
-        options = (tag === "") ? options : options.filter((w) => w.tags.includes(tag));
-        return options[Math.floor(Math.random() * options.length)];
+    pickVerbWithAnySubjTag(subjTags, tags = []) {
+        var options = this.verbs.filter((v) => v.subjTags.some((t) => subjTags.includes(t)));
+        options = (tags.length === 0) ? options : options.filter((w) => tags.some((t) => w.tags.includes(t)));
+        return (0, weighted_rand_1.weightedRandom)(options, (v) => (v.guid in this.verbWeights) ? this.verbWeights[v.guid] : this.startingWeight, Math.random());
+    }
+    pickTpl() {
+        return (0, weighted_rand_1.weightedRandom)(this.tpls, (t) => (t.guid in this.tplWeights) ? this.tplWeights[t.guid] : this.startingWeight, Math.random());
     }
     pickGender() {
-        return (0, weighted_rand_1.weightedRandom)([0, 1, 2], (k) => this.genderWeights[k], Math.random());
+        return (0, weighted_rand_1.weightedRandom)([0, 1, 2], (k) => 1.0, Math.random());
     }
     pickNumber() {
-        return (0, weighted_rand_1.weightedRandom)([0, 1], (k) => this.numberWeights[k], Math.random());
+        return (0, weighted_rand_1.weightedRandom)([0, 1], (k) => 1.0, Math.random());
     }
     pickPerson() {
-        return (0, weighted_rand_1.weightedRandom)([0, 1, 2], (k) => this.personWeights[k], Math.random());
+        return (0, weighted_rand_1.weightedRandom)([0, 1, 2], (k) => 1.0, Math.random());
     }
 }
 exports.EnRuWordLibrary = EnRuWordLibrary;
@@ -254,18 +267,21 @@ function inflectAdj(a, inf) {
         gdrStr = "n";
     var cStr = ["nom", "acc", "dat", "prep", "gen", "inst"][inf.case];
     var col = `decl_${gdrStr}_${cStr}`;
-    console.log(a);
-    console.log(col);
     var decls = ruRecord[col].split(',');
+    var ruInfl = "";
     // Male accusative column contains a special animate declension
     if (col === "decl_m_acc") {
         if (inf.animacy === RussianAnimacy.AnimacyAnimate)
-            return [a.enForm, decls.filter((s) => s.endsWith("го"))];
+            ruInfl = decls.filter((s) => s.endsWith("го"));
         else
-            return [a.enForm, decls.filter((s) => !s.endsWith("го"))];
+            ruInfl = decls.filter((s) => !s.endsWith("го"));
+    }
+    else {
+        ruInfl = decls[0];
     }
     // This may not be correct in all cases, may need to be fixed later
-    return [a.enForm, decls[0]];
+    ruInfl = ruInfl.replace("'", "");
+    return [a.enForm, ruInfl];
 }
 function makeSingularNoun(enForm, ruForm, gdr, animacy, tags = []) {
     // var gender = getRussianGender(ruForm);
@@ -286,43 +302,55 @@ function makeSingularNoun(enForm, ruForm, gdr, animacy, tags = []) {
     };
 }
 exports.makeSingularNoun = makeSingularNoun;
-function makeIntransVerb(enForm, ruForm, subjTag, tags = [], hint = "") {
+function makeIntransVerb(enForm, ruForm, subjTags, tags = [], hint = "") {
     tags.push("intrans");
     return {
         enForm: enForm,
         ruForm: ruForm,
         tags: tags,
-        subjTag: subjTag,
-        objTag: "",
+        subjTags: subjTags,
+        objTags: [],
         hint: hint,
         guid: getUuid(ruForm)
     };
 }
 exports.makeIntransVerb = makeIntransVerb;
-function makeTransVerb(enForm, ruForm, subjTag, objTag, tags = [], hint = "") {
+function makeTransVerb(enForm, ruForm, subjTags, objTags, tags = [], hint = "") {
     tags.push("trans");
     return {
         enForm: enForm,
         ruForm: ruForm,
         tags: tags,
-        subjTag: subjTag,
-        objTag: objTag,
+        subjTags: subjTags,
+        objTags: objTags,
         hint: hint,
         guid: getUuid(ruForm)
     };
 }
 exports.makeTransVerb = makeTransVerb;
-function makeAdj(enForm, ruForm, nounTag, tags = [], hint = "") {
+function makeAdj(enForm, ruForm, nounTags, tags = [], hint = "") {
     return {
         enForm: enForm,
         ruForm: ruForm,
         tags: tags,
-        nounTag: nounTag,
+        nounTags: nounTags,
         hint: hint,
         guid: getUuid(ruForm)
     };
 }
 exports.makeAdj = makeAdj;
+function makeTpl(tpl) {
+    return {
+        tpl: tpl,
+        guid: (0, lib_1.guidGenerator)()
+    };
+}
+exports.makeTpl = makeTpl;
+function applyTpl(tpl, wr) {
+    wr.tplGuid = tpl.guid;
+    return tpl.tpl(wr);
+}
+exports.applyTpl = applyTpl;
 class WordRepo {
     constructor(lib) {
         this.nouns = [];
@@ -332,6 +360,7 @@ class WordRepo {
         this.lib = lib;
         this.enFormat = "";
         this.ruFormat = "";
+        this.tplGuid = "";
     }
     addV(v, tense = 0) {
         var vInf = {
@@ -343,8 +372,8 @@ class WordRepo {
         this.verbs.push([v, vInf]);
         return this;
     }
-    pickV(tense = 0, tag = "") {
-        var v = this.lib.pickVerb(tag);
+    pickV(tense = 0, tags = []) {
+        var v = this.lib.pickVerb(tags);
         this.addV(v, tense);
         return this;
     }
@@ -371,8 +400,8 @@ class WordRepo {
         this.nouns.push([n, nInf]);
         return this;
     }
-    pickN(tag = "", cs = exports.caseNOM) {
-        var n = this.lib.pickNoun(tag);
+    pickN(tags = [], cs = exports.caseNOM) {
+        var n = this.lib.pickNoun(tags);
         this.addN(n, cs);
         return this;
     }
@@ -414,32 +443,32 @@ class WordRepo {
         return this;
     }
     pickSubj(vId, pronProb = 0.5) {
-        var tag = this.verbs[vId][0].subjTag;
+        var tags = this.verbs[vId][0].subjTags;
         var n;
-        if ((tag === "agent" || tag === "person") && Math.random() < pronProb) {
+        if ((tags.includes("agent") || tags.includes("person")) && Math.random() < pronProb) {
             n = getPronoun(this.lib.pickNumber(), this.lib.pickPerson(), this.lib.pickGender());
         }
         else {
-            n = this.lib.pickNoun(tag);
+            n = this.lib.pickNoun(tags);
         }
         this.addSubj(n, vId);
         return this;
     }
     pickObj(vId, pronProb = 0.5) {
-        var tag = this.verbs[vId][0].objTag;
+        var tags = this.verbs[vId][0].objTags;
         var n;
-        if ((tag === "person") && Math.random() < pronProb) {
+        if ((tags.includes("person")) && Math.random() < pronProb) {
             n = getPronoun(this.lib.pickNumber(), this.lib.pickPerson(), this.lib.pickGender());
         }
         else {
-            n = this.lib.pickNoun(tag);
+            n = this.lib.pickNoun(tags);
         }
         this.addN(n, RussianCase.CaseAccusative);
         return this;
     }
-    pickAxn(nId, tag = "", tense = 0) {
-        var n = this.lib.nouns[nId];
-        var v = this.lib.pickVerbWithAnySubjTag(n.tags, tag);
+    pickAxn(nId, tags = [], tense = 0) {
+        var n = this.nouns[nId][0];
+        var v = this.lib.pickVerbWithAnySubjTag(n.tags, tags);
         this.addV(v, tense);
         return this;
     }

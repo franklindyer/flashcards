@@ -175,13 +175,8 @@ var intransHoles = [
 ];
 
 for (var i = 0; i < 20; i++) {
-    console.log("HIHIHI");
     var s = <IDictionary<DemoWord[]>>stacks().add("n", ["hasloc"]).add("n", ["place"]).resolve();
     console.log(`${s['n'][0].text} is in ${s['n'][1].text}`);
     var s = <IDictionary<DemoWord[]>>stacks().add("v", ["intrans"]).addR("n", [], ["v0:subj"]).resolve();
     console.log(`${s['n'][0].text} ${s['v'][0].text}`);
-    // var ctx = <IDictionary<any>>checker.fillHoles(locPhraseHoles, { "n": [], "v": [] }, (w) => 1.0);
-    // console.log(`${ctx['n'][0].text} is in ${ctx['n'][1].text}`);
-    // var ctx = <IDictionary<any>>checker.fillHoles(intransHoles, { "n": [], "v": [] }, (w) => 1.0);
-    // console.log(`${ctx['n'][0].text} ${ctx['v'][0].text}`);
 }

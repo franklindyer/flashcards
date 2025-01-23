@@ -4,7 +4,7 @@ import {
 import './demos'
 import './spaced-repetition'
 import './german-drill'
-// import './russian-drill'
+import './russian-drill'
 import './progression'
 import './weighted-rand'
 import './evil'
