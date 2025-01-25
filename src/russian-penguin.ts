@@ -1,4 +1,3 @@
-/*
 import {
     IDictionary,
     guidGenerator,
@@ -12,19 +11,21 @@ import {
     indexedResources
 } from "./lib";
 import {
+    WithTags,
+    WordRelChecker,
+    WordPicker
+} from "./word-rel";
+import {
     ruDataPromise,
     EnRuNoun,
     EnRuVerb,
     EnRuAdjective,
     EnRuPhraseTpl,
-    EnRuWordLibrary,
-    WordRepo,
+    EnRuWordStacks,
     makeSingularNoun,
     makeTransVerb,
     makeIntransVerb,
     makeAdj,
-    makeTpl,
-    applyTpl,
     caseNOM,
     caseACC,
     casePRP
@@ -93,6 +94,25 @@ var ch3Nouns = [
     makeSingularNoun("chocolate", "шоколад", "m", false, ["food", "item", "hasloc"])
 ];
 
+var lib: IDictionary<WithTags[]> = {
+    "n": ch3Nouns,
+    "v": [],
+    "a": []
+}
+var wc = new WordRelChecker(lib);
+var wp = new WordPicker(wc, (w) => 1.0);
+var tpl = () => new EnRuPhraseTpl(wp);
+
+var ch3Tpls = [
+    tpl().add("n", "hasloc").format("where is (the) {n0}?", "где {n0}?"),
+    tpl().add("n", "hasloc").format("there's (the) {n0}", "вот {n0}?"),
+]
+
+/* for (var i = 0; i < 50; i++) {
+    console.log(ch3Tpls[0].next());
+} */
+
+/*
 var ch3Tpl = [
     makeTpl((wr: any) => wr.pickN(["item"]).format("this is {n0}", "это {n0}")),
     makeTpl((wr: any) => wr.pickN(["hasloc"]).format("where's (the) {n0}?", "где {n0}?")),
@@ -256,6 +276,7 @@ var ch7Adjs = [
 ];
 
 // Text substitutions in Russian answers needed for things like contraction / special forms
+*/
 
 var penguinGlobalSubs: [RegExp, string][] = [
     [/(\s|^)a ([aeiou])/, "$1an $2"],
@@ -267,23 +288,21 @@ var penguinGlobalSubs: [RegExp, string][] = [
 ];
 
 var penguinChapters: IDictionary<[EnRuNoun[], EnRuVerb[], EnRuAdjective[], EnRuPhraseTpl[]]> = {
-    "3": [ch3Nouns, [], [], ch3Tpl],
-    "4": [ch4Nouns, ch4Verbs, [], ch4Tpl],
-    "5": [ch5Nouns, ch5Verbs, [], ch5Tpl],
-    "6": [ch6Nouns, ch6Verbs, ch6Adjs, ch6Tpl]
+    "3": [ch3Nouns, [], [], ch3Tpls],
+//    "4": [ch4Nouns, ch4Verbs, [], ch4Tpl],
+//    "5": [ch5Nouns, ch5Verbs, [], ch5Tpl],
+//    "6": [ch6Nouns, ch6Verbs, ch6Adjs, ch6Tpl]
 };
 
 var allNouns = Object.keys(penguinChapters).map((k) => penguinChapters[k][0]).flat();
 var allVerbs = Object.keys(penguinChapters).map((k) => penguinChapters[k][1]).flat();
 var allAdjs = Object.keys(penguinChapters).map((k) => penguinChapters[k][2]).flat();
 
-var ruPenguinQuizzer: FlashcardGenerator<WordRepo, PengQuizzerState> = {
+var ruPenguinQuizzer: FlashcardGenerator<EnRuWordStacks, PengQuizzerState> = {
     ftemp: {
-        generator: function(seed: WordRepo): Flashcard<WordRepo> {
-        for (var i in [...Array(100).keys()]) {
-            console.log(ruPenguinQuizzer.seeder(ruPenguinQuizzer.state).resolve());
-        }
-            var res = seed.resolve();
+        generator: function(seed: EnRuWordStacks): Flashcard<EnRuWordStacks> {
+            for (var i = 0; i < 50; i++) console.log(ch3Tpls[0].gen(ch3Tpls[0].next()));
+            var res = ch3Tpls[0].gen(seed)
             return {
                 params: seed,
                 prompt: res[0],
@@ -307,35 +326,36 @@ var ruPenguinQuizzer: FlashcardGenerator<WordRepo, PengQuizzerState> = {
         var selVerbs = st.activeChapters.map((k) => penguinChapters[k][1]).flat();
         var selAdjs = st.activeChapters.map((k) => penguinChapters[k][2]).flat();
         var selTpls = st.activeChapters.map((k) => penguinChapters[k][3]).flat();
-        var selLib = new EnRuWordLibrary(selNouns, selVerbs, selAdjs, selTpls);
+        // var selLib = new EnRuWordLibrary(selNouns, selVerbs, selAdjs, selTpls);
         
-        selLib.nounWeights = selLib.makeWeights(st.stats.nounStats);
-        selLib.verbWeights = selLib.makeWeights(st.stats.verbStats);
-        selLib.adjWeights = selLib.makeWeights(st.stats.adjStats);
-        selLib.tplWeights = selLib.makeWeights(st.stats.tplStats);
+        // selLib.nounWeights = selLib.makeWeights(st.stats.nounStats);
+        // selLib.verbWeights = selLib.makeWeights(st.stats.verbStats);
+        // selLib.adjWeights = selLib.makeWeights(st.stats.adjStats);
+        // selLib.tplWeights = selLib.makeWeights(st.stats.tplStats);
 
-        var tpl = selLib.pickTpl(); 
-        var repo = new WordRepo(selLib);
-        repo.substitutions = penguinGlobalSubs;
-        var res = applyTpl(tpl, repo);
-        return res;
+        // var tpl = selLib.pickTpl(); 
+        // var repo = new WordRepo(selLib);
+        // repo.substitutions = penguinGlobalSubs;
+        // var res = applyTpl(tpl, repo);
+        // return res;
+        return ch3Tpls[0].next()
     },
     updater: (correct, answer, card, st) => {
         var incVec = correct ? [1, 0] : [0, 1];
-        for (var k in card.params.nouns) {
-            var n = card.params.nouns[k][0];
+        for (var k in card.params.words["n"]) {
+            var n = card.params.words["n"][k];
             if (!(n.guid in st.stats.nounStats)) st.stats.nounStats[n.guid] = [0, 0];
             st.stats.nounStats[n.guid][0] += incVec[0];
             st.stats.nounStats[n.guid][1] += incVec[1];
         }
-        for (var k in card.params.verbs) {
-            var v = card.params.verbs[k][0];
+        for (var k in card.params.words["v"]) {
+            var v = card.params.words["v"][k];
             if (!(v.guid in st.stats.verbStats)) st.stats.verbStats[v.guid] = [0, 0];
             st.stats.verbStats[v.guid][0] += incVec[0];
             st.stats.verbStats[v.guid][1] += incVec[1];
         }
-        for (var k in card.params.adjs) {
-            var a = card.params.adjs[k][0];
+        for (var k in card.params.words["a"]) {
+            var a = card.params.words["a"][k];
             if (!(a.guid in st.stats.adjStats)) st.stats.adjStats[a.guid] = [0, 0];
             st.stats.adjStats[a.guid][0] += incVec[0];
             st.stats.adjStats[a.guid][1] += incVec[1];
@@ -364,4 +384,3 @@ providedGenerators["russian-penguin-driller"] = ruPenguinQuizzer;
 indexedResources["russian-verbs"] = () => ruDataPromise("ru-verbs", "ruVerbs");
 indexedResources["russian-nouns"] = () => ruDataPromise("ru-nouns", "ruNouns");
 indexedResources["russian-adjs"] = () => ruDataPromise("ru-adjectives", "ruAdjectives");
-*/

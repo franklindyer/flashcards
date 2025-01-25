@@ -178,6 +178,10 @@ function getPronoun(num: RussianNumber, psn: RussianPerson, gdr: RussianGender, 
     };
 }
 
+function getPronounFor(n: EnRuNoun): EnRuNoun {
+    return getPronoun(n.number, n.person, n.gender, n.animacy);
+}
+
 const enProns: IDictionary<string[]> = {
     "I": ["I", "me", "me", "me", "me", "me"],
     "you": ["you", "you", "you", "you", "you", "you"],
@@ -354,6 +358,30 @@ export function makeAdj(enForm: string, ruForm: string, nounTags: string[], tags
     }
 }
 
+function defaultNounInflector() {
+    return {
+        case: caseNOM
+    };
+}
+
+function defaultVerbInflector() {
+    return {
+        tense: RussianTense.TenseInfinitive,
+        gender: RussianGender.GenderNeuter,
+        number: RussianNumber.NumberSingular,
+        person: RussianPerson.Person3rd
+    };
+}
+
+function defaultAdjInflector() {
+    return {
+        gender: RussianGender.GenderMale,
+        number: RussianNumber.NumberSingular,
+        animacy: RussianAnimacy.AnimacyInanimate,
+        case: caseNOM
+    }
+}
+
 export enum EnRuPhraseAxnType {
     DupNoun,
     DupVerb,
@@ -373,22 +401,31 @@ export type EnRuPhraseAxn = {
     wd2?: number
 }
 
-class EnRuPhraseTpl {
+export type EnRuWordStacks = {
+    words: IDictionary<WithTags[]>,
+    inflectors: IDictionary<any[]>,
+    tplGuid: string
+}
+
+export class EnRuPhraseTpl {
+    guid: string;
     picker: WordPicker;
     actions: EnRuPhraseAxn[];    
 
-    format: [string, string];
+    fmt: [string, string];
 
     constructor(wp: WordPicker) {
+        this.guid = guidGenerator();
         this.picker = wp;
         this.actions = [];
-        this.format = ["", ""];
+        this.fmt = ["", ""];
     }
 
     add(wdType: string, tags: string = "", selStrings: string = "") {
         var tagsList = (tags.length === 0) ? [] : tags.split(',');
         var selList = (selStrings.length === 0) ? [] : selStrings.split(',');
         this.picker.addR(wdType, tagsList, selList);
+        return this;
     }
 
     dupV(id: number) {
@@ -396,6 +433,7 @@ class EnRuPhraseTpl {
             type: EnRuPhraseAxnType.DupVerb,
             wd1: id 
         });
+        return this;
     }
 
     dupN(id: number) {
@@ -403,6 +441,7 @@ class EnRuPhraseTpl {
             type: EnRuPhraseAxnType.DupNoun,
             wd1: id
         });
+        return this;
     }
 
     dupA(id: number) {
@@ -410,6 +449,7 @@ class EnRuPhraseTpl {
             type: EnRuPhraseAxnType.DupAdj,
             wd1: id
         });
+        return this;
     }
 
     pron(id: number) {
@@ -417,6 +457,7 @@ class EnRuPhraseTpl {
             type: EnRuPhraseAxnType.MakePronoun,
             wd1: id
         });
+        return this;
     }
 
     decl(id: number, c: RussianCase) {
@@ -425,6 +466,7 @@ class EnRuPhraseTpl {
             wd1: id,
             num1: c
         });
+        return this;
     }
 
     conj(id: number, c: RussianTense) {
@@ -433,6 +475,7 @@ class EnRuPhraseTpl {
             wd1: id,
             num1: c
         });
+        return this;
     }
 
     agreeVN(idV: number, idN: number) {
@@ -441,6 +484,7 @@ class EnRuPhraseTpl {
             wd1: idV,
             wd2: idN
         });
+        return this;
     }
 
     agreeAN(idA: number, idN: number) {
@@ -449,9 +493,89 @@ class EnRuPhraseTpl {
             wd1: idA,
             wd2: idN
         });
+        return this;
     }
 
-    next(): [string, string] {
-        return ["", ""];
+    format(fmt0: string, fmt1: string) {
+        this.fmt = [fmt0, fmt1];
+        return this;
+    }
+
+    runAction(stacks: EnRuWordStacks, axn: EnRuPhraseAxn): EnRuWordStacks {
+        if (axn.type === EnRuPhraseAxnType.DupNoun) {
+            stacks.words["n"].push(stacks.words["n"][axn.wd1!]);  
+            stacks.inflectors["n"].push(stacks.inflectors["n"][axn.wd1!]);
+            return stacks;
+        } else if (axn.type === EnRuPhraseAxnType.DupVerb) {
+            stacks.words["v"].push(stacks.words["n"][axn.wd1!]);  
+            stacks.inflectors["v"].push(stacks.inflectors["n"][axn.wd1!]);
+            return stacks;
+        } else if (axn.type === EnRuPhraseAxnType.DupAdj) {
+            stacks.words["a"].push(stacks.words["n"][axn.wd1!]);  
+            stacks.inflectors["a"].push(stacks.inflectors["n"][axn.wd1!]);
+            return stacks;
+        } else if (axn.type === EnRuPhraseAxnType.MakePronoun) {
+            stacks.words["n"].push(getPronounFor(<EnRuNoun>stacks.words["n"][axn.wd1!]));
+            stacks.inflectors["n"].push(defaultNounInflector());
+            return stacks;
+        } else if (axn.type === EnRuPhraseAxnType.DeclineNoun) {
+            stacks.inflectors["n"][axn.wd1!].case = axn.num1;
+            return stacks;
+        } else if (axn.type === EnRuPhraseAxnType.ConjugateVerb) {
+            stacks.inflectors["v"][axn.wd1!].tense = axn.num1;
+            return stacks;
+        } else if (axn.type === EnRuPhraseAxnType.AgreeVerbWithSubj) {
+            var n = <EnRuNoun>stacks.words["n"][axn.wd2!];
+            var vInf = <EnRuVerbInflector>stacks.inflectors["v"][axn.wd1!];
+            vInf.number = n.number;
+            vInf.person = n.person;
+            vInf.gender = n.gender;
+            return stacks;
+        } else if (axn.type === EnRuPhraseAxnType.AgreeAdjWithNoun) {
+            var n = <EnRuNoun>stacks.words["n"][axn.wd2!];
+            var nInf = <EnRuNounInflector>stacks.inflectors["n"][axn.wd2!];
+            var aInf = <EnRuAdjectiveInflector>stacks.inflectors["a"][axn.wd1!];
+            aInf.number = n.number;
+            aInf.gender = n.gender;
+            aInf.animacy = n.animacy;
+            aInf.case = nInf.case;
+            return stacks;
+        }
+        return null!
+    }
+
+    next(): EnRuWordStacks {
+        var words = this.picker.resolve();
+        var stacks: EnRuWordStacks = {
+            tplGuid: this.guid,
+            words: words,
+            inflectors: {
+                "n": words["n"].map((_) => defaultNounInflector()),
+                "v": words["v"].map((_) => defaultVerbInflector()),
+                "a": words["a"].map((_) => defaultAdjInflector())
+            }
+        };
+
+        for (var i = 0; i < this.actions.length; i++) {
+            var axn = this.actions[i];
+            stacks = this.runAction(stacks, axn);
+        }
+
+        return stacks;
+    }
+
+    gen(stacks: EnRuWordStacks): [string, string] {
+        var res = [this.fmt[0].slice(), this.fmt[1].slice()];
+        for (var i = 0; i < stacks.words["n"].length; i++) {
+            var n = <EnRuNoun>stacks.words["n"][i];
+            var nInf = <EnRuNounInflector>stacks.inflectors["n"][i];
+            var nRes = inflectNoun(n, nInf); 
+            res[0] = res[0].replace(`{n${i}}`, nRes[0]);
+            res[1] = res[1].replace(`{n${i}}`, nRes[1]);
+        }
+        // VERBS NOT IMPLEMENTED YET
+        // ADJECTIVES NOT IMPLEMENTED YET 
+ 
+        return <[string, string]>res;
     }
 }

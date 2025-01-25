@@ -56,9 +56,6 @@ export class WordRelChecker {
     }
 
     getGuessesForHole(h: WordHole, ctx: IDictionary<WithTags[]>): WithTags[] {
-        if (h.rels[0].rel === "=") { // This is a special "duplicator" relation
-            return [this.allWords[h.rels[0].relWordType][h.rels[0].relWordId]];
-        }
         var choices = this.allWords[h.wordType];
         choices = choices.filter((w) => h.wordTags.every((t) => w.tags.includes(t)));
         choices = choices.filter((w) => this.canFillHole(w, h, ctx));
@@ -123,11 +120,11 @@ export class WordPicker {
 
     resolve(): IDictionary<WithTags[]> {
         var d: IDictionary<WithTags[]> = {};
-        for (var i in Object.keys(checker.allWords)) {
-            var k = Object.keys(checker.allWords)[i];
+        for (var i in Object.keys(this.checker.allWords)) {
+            var k = Object.keys(this.checker.allWords)[i];
             d[k] = [];
         }
-        return checker.tryFillHoles(this.holes, d, this.weights);
+        return this.checker.tryFillHoles(this.holes, d, this.weights);
     }
 }
 
@@ -135,6 +132,7 @@ export class WordPicker {
 
 // Demo example
 
+/*
 type DemoWord = {
     text: string,
     tags: string[],
@@ -190,3 +188,4 @@ for (var i = 0; i < 20; i++) {
     var s = <IDictionary<DemoWord[]>>stacks().add("v", ["intrans"]).addR("n", [], ["v0:subj"]).resolve();
     console.log(`${s['n'][0].text} ${s['v'][0].text}`);
 }
+*/
