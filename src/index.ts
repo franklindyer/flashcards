@@ -10,9 +10,9 @@ import './weighted-rand'
 import './evil'
 
 import './russian-templating'
-import './russian-penguin'
+// import './russian-penguin'
 
 import './abstract-agreement'
-import './wordsat'
+import './word-rel'
 
 runFlashcardController("addition-quiz-deck")

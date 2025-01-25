@@ -6,25 +6,25 @@ import {
     weightedRandom
 } from "./weighted-rand"
 
-interface WithTags {
+export interface WithTags {
     tags: string[];
     rels: IDictionary<string[]>; // Disjunctive restrictions on what tags the words it relates to have
     guid: string;
 }
 
-type WordRelation = {
+export type WordRelation = {
     rel: string,
     relWordType: string,
     relWordId: number
 }
 
-type WordHole = {
+export type WordHole = {
     wordType: string,
     wordTags: string[], // Conjunctive restrictions on what tags of words may fill this hole
     rels: WordRelation[]
 }
 
-class WordRelChecker {
+export class WordRelChecker {
     allWords: IDictionary<WithTags[]>;
 
     constructor(words: IDictionary<WithTags[]>) {
@@ -85,7 +85,7 @@ class WordRelChecker {
     }
 }
 
-class WordPicker {
+export class WordPicker {
     checker: WordRelChecker;
     holes: WordHole[];
     weights: (w: WithTags) => number;

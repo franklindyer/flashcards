@@ -1,3 +1,4 @@
+/*
 import {
     IDictionary,
     guidGenerator,
@@ -363,4 +364,4 @@ providedGenerators["russian-penguin-driller"] = ruPenguinQuizzer;
 indexedResources["russian-verbs"] = () => ruDataPromise("ru-verbs", "ruVerbs");
 indexedResources["russian-nouns"] = () => ruDataPromise("ru-nouns", "ruNouns");
 indexedResources["russian-adjs"] = () => ruDataPromise("ru-adjectives", "ruAdjectives");
-
+*/
