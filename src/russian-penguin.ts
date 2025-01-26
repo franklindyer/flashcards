@@ -82,10 +82,18 @@ var penguinGlobalSubtags = [
     ["n", "person", "agent"],
     ["n", "person", "hasloc"],
     ["n", "country", "region"],
+    ["n", "building", "structure"],
+    ["n", "structure", "site"],
+    ["n", "geo-feature", "site"],
     ["n", "in-place", "place"],
     ["n", "at-place", "place"],
+    ["n", "item", "orderable"],
+    ["n", "site", "orderable"],
     ["n", "item", "object"],
-    ["n", "person", "object"]
+    ["n", "building", "object"],
+    ["n", "person", "object"],
+    ["n", "site", "where"],
+    ["n", "hasloc", "where"]
 ]
 
 var wc = new WordRelChecker(lib);
@@ -103,20 +111,20 @@ var ch3Nouns = [
     makeSingularNoun("vodka", "водка", "f", false, ["drink", "hasloc", "item"]),
 //        makeSingularNoun("Volodya", "Володя", "f", true, ["agent", "person", "name", "hasloc"]),
     makeSingularNoun("newspaper", "газета", "f", false, ["hasloc", "item"]),
-    makeSingularNoun("door", "дверь", "m", false, ["hasloc", "openable"]),
+    makeSingularNoun("door", "дверь", "m", false, ["where", "openable", "orderable"]),
     makeSingularNoun("day", "день", "m", false, ["timeunit"]),
-    makeSingularNoun("house", "дом", "m", false, ["in-place", "hasloc"]),
+    makeSingularNoun("house", "дом", "m", false, ["in-place", "hasloc", "building"]),
     makeSingularNoun("uncle", "дядя", "f", true, ["agent", "person", "hasloc", "relative"]),
     makeSingularNoun("mother", "мать", "f", true, ["agent", "person", "hasloc", "relative"]),
     makeSingularNoun("menu", "меню", "n", false, ["item", "hasloc"]),
     makeSingularNoun("Moscow", "Москва", "f", false, ["in-place", "city", "geo-place"]),
-    makeSingularNoun("window", "окно", "n", false, ["hasloc", "openable"]),
+    makeSingularNoun("window", "окно", "n", false, ["hasloc", "openable", "orderable"]),
     makeSingularNoun("dad", "папа", "m", true, ["agent", "person", "hasloc", "relative"]),
     makeSingularNoun("rouble", "рубль", "f", false, ["item"]),
     makeSingularNoun("Siberia", "Сибирь", "f", false, ["in-place", "region", "geo-place"]),
     makeSingularNoun("sour cream", "сметана", "f", false, ["food", "item", "hasloc"]),
     makeSingularNoun("taxi", "такси", "n", false, ["hasloc", "vehicle"]),
-    makeSingularNoun("exercise", "упражнение", "n", false, ["nonphysical"]),
+    makeSingularNoun("exercise", "упражнение", "n", false, ["nonphysical", "orderable"]),
     makeSingularNoun("morning", "утро", "n", false, ["timerange"]),
     makeSingularNoun("tea", "чай", "m", false, ["drink", "item", "hasloc"]),
     makeSingularNoun("chocolate", "шоколад", "m", false, ["food", "item", "hasloc"])
@@ -124,8 +132,8 @@ var ch3Nouns = [
 
 var ch3Tpls = [
     mktpl().add("n", "item").format("this is {n0}", "это {n0}"),
-    mktpl().add("n", "hasloc").format("where is (the) {n0}?", "где {n0}?"),
-    mktpl().add("n", "hasloc").format("there's (the) {n0}", "вот {n0}"),
+    mktpl().add("n", "where").format("where is (the) {n0}?", "где {n0}?"),
+    mktpl().add("n", "where").format("there's (the) {n0}", "вот {n0}"),
 ]
 
 
@@ -135,13 +143,13 @@ var ch4Nouns = [
     makeSingularNoun("bus", "автобус", "m", false, ["hasloc", "vehicle", "at-place"]),
     makeSingularNoun("hotel", "гостиница", "f", false, ["hasloc", "building", "in-place"]),
     makeSingularNoun("London", "Лондон", "m", false, ["in-place", "city", "geo-place"]),
-    makeSingularNoun("metro", "метро", "n", false, ["in-place", "hasloc"]),
+    makeSingularNoun("metro", "метро", "n", false, ["in-place", "hasloc", "structure"]),
     makeSingularNoun("female friend", "подруга", "f", true, ["agent", "person", "hasloc"]),
-    makeSingularNoun("avenue", "проспект", "m", false, ["hasloc", "at-place"]),
+    makeSingularNoun("avenue", "проспект", "m", false, ["hasloc", "at-place", "site"]),
     makeSingularNoun("Russia", "Россия", "f", false, ["in-place", "country", "geo-place"]),
-    makeSingularNoun("language", "язык", "m", false, ["nonphysical"]),
+    makeSingularNoun("language", "язык", "m", false, ["nonphysical", "regional"]),
     makeSingularNoun("trolleybus", "троллейбус", "m", false, ["hasloc", "vehicle"]),
-    makeSingularNoun("street", "улица", "f", false, ["at-place", "hasloc"]),
+    makeSingularNoun("street", "улица", "f", false, ["at-place", "hasloc", "site"]),
 ];
 
 var ch4Verbs = [
@@ -171,21 +179,21 @@ var ch4Tpls = [
 
 var ch5Nouns = [
     makeSingularNoun("englishman", "англичанин", "m", true, ["agent", "person", "hasloc"]),
-    makeSingularNoun("station", "вокзал", "m", false, ["at-place", "hasloc"]),
-    makeSingularNoun("institute", "институт", "m", false, ["in-place", "hasloc"]),
+    makeSingularNoun("station", "вокзал", "m", false, ["at-place", "site"]),
+    makeSingularNoun("institute", "институт", "m", false, ["in-place", "site"]),
     makeSingularNoun("Crimea", "Крым", "m", false, ["in-place", "region", "geo-place"]),
-    makeSingularNoun("forest", "лес", "m", false, ["in-place", "hasloc"]),
-    makeSingularNoun("sea", "море", "n", false, ["in-place", "hasloc", "body-water"]),
-    makeSingularNoun("museum", "музей", "m", false, ["in-place", "hasloc", "building"]),
+    makeSingularNoun("forest", "лес", "m", false, ["in-place", "site", "geo-feature"]),
+    makeSingularNoun("sea", "море", "n", false, ["in-place", "body-water", "geo-feature"]),
+    makeSingularNoun("museum", "музей", "m", false, ["in-place", "building"]),
     makeSingularNoun("number", "номер", "m", false, ["nonphysical"]),
     makeSingularNoun("letter", "письмо", "n", false, ["item", "hasloc", "topical"]),
-    makeSingularNoun("town square", "площадь", "f", false, ["at-place", "hasloc"]),
-    makeSingularNoun("post office", "почта", "f", false, ["at-place", "hasloc", "building"]),
-    makeSingularNoun("restaurant", "ресторан", "m", false, ["in-place", "building", "hasloc"]),
-    makeSingularNoun("garden", "сад", "m", false, ["in-place", "hasloc"]),
-    makeSingularNoun("toilet", "туалет", "m", false, ["hasloc"]),
+    makeSingularNoun("town square", "площадь", "f", false, ["at-place", "site"]),
+    makeSingularNoun("post office", "почта", "f", false, ["at-place", "building"]),
+    makeSingularNoun("restaurant", "ресторан", "m", false, ["in-place", "building"]),
+    makeSingularNoun("garden", "сад", "m", false, ["in-place", "site"]),
+    makeSingularNoun("toilet", "туалет", "m", false, ["hasloc", "structure"]),
     makeSingularNoun("Ukraine", "Украина", "f", false, ["at-place", "country", "region", "geo-place"]),
-    makeSingularNoun("university", "университет", "m", false, ["in-place", "hasloc"]),
+    makeSingularNoun("university", "университет", "m", false, ["in-place", "site"]),
     makeSingularNoun("tsar", "царь", "m", true, ["agent", "person", "hasloc"])
 ];
 
@@ -215,16 +223,16 @@ var ch6Nouns = [
     makeSingularNoun("wife", "жена", "f", true, ["person", "agent", "hasloc", "relative"]),
     makeSingularNoun("husband", "муж", "m", true, ["person", "agent", "hasloc", "relative"]),
     makeSingularNoun("(first) name", "имя", "n", false, ["nonphysical"]),
-    makeSingularNoun("shop", "магазин", "m", false, ["in-place", "hasloc", "building"]),
+    makeSingularNoun("shop", "магазин", "m", false, ["in-place", "building"]),
     makeSingularNoun("minute", "минута", "f", false, ["timerange"]),
-    makeSingularNoun("music", "музыка", "f", false, ["nonphysical", "audible"]),
+    makeSingularNoun("music", "музыка", "f", false, ["nonphysical", "audible", "regional"]),
     makeSingularNoun("week", "неделя", "f", false, ["timerange"]),
     makeSingularNoun("father", "отец", "m", true, ["person", "agent", "hasloc", "relative"]),
     makeSingularNoun("patronymic", "отчество", "n", false, ["nonphysical"]),
     makeSingularNoun("work", "работа", "f", false, ["event", "at-place"]),
     makeSingularNoun("son", "сын", "m", true, ["person", "agent", "hasloc", "relative"]),
     makeSingularNoun("hour", "час", "m", false, ["timerange"]),
-    makeSingularNoun("surname", "фамилия", "f", false, ["nonphysical"])
+    makeSingularNoun("surname", "фамилия", "f", false, ["nonphysical", "regional"])
 ];
 
 var ch6Verbs = [
@@ -251,35 +259,25 @@ var ch6Tpls = [
         .format("in/within a {n0}", "через {n0}")
 ]
 
-/*
-var ch6Tpl = [
-    makeTpl((wr: any) => wr.pickN(["item", "relative"]).pickA(0, "possessive")
-                    .format("{a0} {n0}", "{a0} {n0}")),
-    makeTpl((wr: any) => wr.pickN(["item"], caseACC)
-                    .format("thanks for (the) {n0}", "спасибо за {n0}")),
-    makeTpl((wr: any) => wr.pickN(["timerange"], caseACC)
-                    .format("in/within a {n0}", "через {n0}")),
-];
-
 // CHAPTER 7
 
 var ch7Nouns = [
-    makeSingularNoun("bathroom", "ванная", "f", false, ["in-place", "hasloc", "room"]),
-    makeSingularNoun("city", "город", "m", false, ["in-place", "hasloc"]),
-    makeSingularNoun("apartment", "квартира", "f", false, ["in-place", "hasloc"]),
-    makeSingularNoun("book", "книга", "f", false, ["item", "hasloc", "topical", "in-sequence"]),
-    makeSingularNoun("Kremlin", "Кремль", "m", false, ["in-place", "building"]),
-    makeSingularNoun("kitchen", "кухня", "f", false, ["at-place", "hasloc", "room"]),
-    makeSingularNoun("bridge", "мост", "m", false, ["at-place", "hasloc"]),
+    makeSingularNoun("bathroom", "ванная", "f", false, ["in-place", "room"]),
+    makeSingularNoun("city", "город", "m", false, ["in-place", "regional"]),
+    makeSingularNoun("apartment", "квартира", "f", false, ["in-place"]),
+    makeSingularNoun("book", "книга", "f", false, ["item", "hasloc", "topical", "orderable"]),
+//    makeSingularNoun("Kremlin", "Кремль", "m", false, ["in-place", "building"]),
+    makeSingularNoun("kitchen", "кухня", "f", false, ["at-place", "room"]),
+    makeSingularNoun("bridge", "мост", "m", false, ["at-place", "structure"]),
     makeSingularNoun("overcoat", "пальто", "n", false, ["item", "hasloc", "clothing"]),
     makeSingularNoun("street map", "план", "m", false, ["item", "hasloc"]),
-    makeSingularNoun("weather", "погода", "f", false, ["nonphysical"]),
-    makeSingularNoun("embassy", "посольство", "n", false, ["in-place", "building", "hasloc"]),
-    makeSingularNoun("river", "река", "f", false, ["in-place", "body-water"]),
-    makeSingularNoun("bedroom", "спальня", "f", false, ["in-place", "hasloc", "room"]),
-    makeSingularNoun("theater", "театр", "m", false, ["in-place", "hasloc", "building"]),
-    makeSingularNoun("school", "школа", "f", false, ["in-place", "hasloc", "building"]),
-    makeSingularNoun("floor/story", "этаж", "m", false, ["in-sequence"])
+    makeSingularNoun("weather", "погода", "f", false, ["nonphysical", "regional"]),
+    makeSingularNoun("embassy", "посольство", "n", false, ["in-place", "building"]),
+    makeSingularNoun("river", "река", "f", false, ["in-place", "geo-feature"]),
+    makeSingularNoun("bedroom", "спальня", "f", false, ["in-place", "room"]),
+    makeSingularNoun("theater", "театр", "m", false, ["in-place", "building"]),
+    makeSingularNoun("school", "школа", "f", false, ["in-place", "building"]),
+    makeSingularNoun("floor/story", "этаж", "m", false, ["orderable"])
 ];
 
 var ch7Verbs = [
@@ -287,17 +285,48 @@ var ch7Verbs = [
 ];
 
 var ch7Adjs = [
+    makeAdj("american", "американский", ["person", "item", "regional"], ["national"]),
+    makeAdj("british", "британский", ["person", "item", "regional"], ["national"]),
+    makeAdj("canadian", "канадский", ["person", "item", "regional"], ["national"]),
+    makeAdj("russian", "русский", ["person", "item", "regional"], ["national"]),
+    makeAdj("western", "западный", ["person", "item", "regional"], ["regional"]),
+    makeAdj("large", "большой", ["object", "structure"], []),
+    makeAdj("small", "маленький", ["object", "structure"], []),
+    makeAdj("morning", "утренний", ["event", "clothing"], []),
+    makeAdj("evening", "вечерний", ["event", "clothing"], []),
+    makeAdj("spring", "весенний", ["event", "clothing"], []),
+    makeAdj("summer", "летний", ["event", "clothing"], []),
+    makeAdj("autumn", "осенний", ["event", "clothing"], []),
+    makeAdj("winter", "зимний", ["event", "clothing"], []),
+    makeAdj("first", "первый", ["orderable"], ["ordinal"]),
+    makeAdj("second", "второй", ["orderable"], ["ordinal"]),
+    makeAdj("third", "третий", ["orderable"], ["ordinal"]),
+    makeAdj("main", "главный", ["site", "career"], []),
+    makeAdj("red", "красный", ["object"], ["color"]),
+    makeAdj("beautiful", "красивый", ["object", "person"], ["visual"]),
+    makeAdj("interesting", "интересный", ["topical", "person"], []),
+    makeAdj("famous", "знаменитый", ["site", "person"], []),
+    makeAdj("new", "новый", ["person", "structure", "object"], []),
+    makeAdj("old", "старый", ["person", "site", "object"], []),
+    makeAdj("last", "последний", ["orderable"], []),
+    makeAdj("warm", "тёплый", ["room"], ["tactile"]),
+    makeAdj("cold", "холодный", ["room"], ["tactile"]),
+    makeAdj("stone", "каменный", ["object", "structure"], ["makeup"]),
+];
 
+var ch7Tpls = [
+    mktpl().add("a", "").add("n", "", "a0:noun").agreeAN(0, 0)
+        .format("{a0} {n0}", "{a0} {n0}"),
 ];
 
 // Text substitutions in Russian answers needed for things like contraction / special forms
-*/
 
 var penguinChapters: IDictionary<[EnRuNoun[], EnRuVerb[], EnRuAdjective[], EnRuPhraseTpl[]]> = {
     "3": [ch3Nouns, [], [], ch3Tpls],
     "4": [ch4Nouns, ch4Verbs, [], ch4Tpls],
     "5": [ch5Nouns, ch5Verbs, [], ch5Tpls],
-    "6": [ch6Nouns, ch6Verbs, ch6Adjs, ch6Tpls]
+    "6": [ch6Nouns, ch6Verbs, ch6Adjs, ch6Tpls],
+    "7": [ch7Nouns, ch7Verbs, ch7Adjs, ch7Tpls]
 };
 
 var penguinTpls: IDictionary<EnRuPhraseTpl> = {};
@@ -342,6 +371,7 @@ var ruPenguinQuizzer: FlashcardGenerator<EnRuWordStacks, PengQuizzerState> = {
         lib["v"] = selVerbs;
         lib["a"] = selAdjs;
         wc = new WordRelChecker(lib);
+        penguinGlobalSubtags.map((st) => wc.addSubtag(st[0], st[1], st[2]));
        
         for (var i = 0; i < 20; i++) {
             var tpl = selTpls[Math.floor(Math.random() * selTpls.length)];

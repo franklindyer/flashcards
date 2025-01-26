@@ -77,7 +77,14 @@ export class WordRelChecker {
 
     tryFillHoles(hs: WordHole[], ctx: IDictionary<WithTags[]>, weight: (w: WithTags) => number): IDictionary<WithTags[]> {
         var d: IDictionary<WithTags[]> | undefined = undefined;
-        while (d === undefined) d = this.fillHoles(hs, ctx, weight);
+        var numAttempts = 0;
+        while (d === undefined) {
+            if (numAttempts > 20) {
+                throw new Error("Too many attempts.");
+            }
+            numAttempts++;
+            d = this.fillHoles(hs, ctx, weight);
+        }
         return <IDictionary<WithTags[]>>d;
     }
 }

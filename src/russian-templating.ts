@@ -28,10 +28,13 @@ declare global {
 export var ruDataPromise = (filename: string, objname: string) =>
     fetch(`/data/${filename}.csv`).then((r) => r.text()).then((s) => { 
     var csvData = papa.parse(s, { header: true, dynamicTyping: true }).data;
-    (<any>window)[objname] = (bareVerb: string) => { 
-        var v = csvData.find((k: any) => k.bare === bareVerb);
-        //     v = csvData.find((k: any) => k["pl_nom"].replace("'", "") === bareVerb);
-        return v;
+    (<any>window)[objname] = (bare: string) => { 
+        var w = csvData.find((k: any) => k.bare === bare);
+        if (w === undefined && objname === "ruNouns")
+            w = csvData.find((k: any) => k.pl_nom.replace("'", "") === bare);
+        if (w === undefined)
+            console.warn(`Did not find russian word ${bare}`);
+        return w;
     }
 });
 
