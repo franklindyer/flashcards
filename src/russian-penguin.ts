@@ -233,6 +233,15 @@ var ch6Adjs = [
     makeAdj("their", "их", ["item", "relative"], ["possessive"]),
 ];
 
+var ch6Tpls = [
+    mktpl().add("a", "possessive").add("n", "", "a0:subj").agreeAN(0, 0)
+        .format("{a0} {n0}", "{a0} {n0}"),
+    mktpl().add("n", "item").decl(0, caseACC)
+        .format("thanks for (the) {n0}", "спасибо за {n0}"),
+    mktpl().add("n", "timerange").decl(0, caseACC)
+        .format("in/within a {n0}", "через {n0}")
+]
+
 /*
 var ch6Tpl = [
     makeTpl((wr: any) => wr.pickN(["item", "relative"]).pickA(0, "possessive")
@@ -288,7 +297,7 @@ var penguinChapters: IDictionary<[EnRuNoun[], EnRuVerb[], EnRuAdjective[], EnRuP
     "3": [ch3Nouns, [], [], ch3Tpls],
     "4": [ch4Nouns, ch4Verbs, [], ch4Tpls],
     "5": [ch5Nouns, ch5Verbs, [], ch5Tpls],
-//    "6": [ch6Nouns, ch6Verbs, ch6Adjs, ch6Tpl]
+    "6": [ch6Nouns, ch6Verbs, ch6Adjs, ch6Tpls]
 };
 
 var penguinTpls: IDictionary<EnRuPhraseTpl> = {};
