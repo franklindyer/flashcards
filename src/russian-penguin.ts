@@ -243,7 +243,7 @@ var ch6Adjs = [
 ];
 
 var ch6Tpls = [
-    mktpl().add("a", "possessive").add("n", "", "a0:subj").agreeAN(0, 0)
+    mktpl().add("a", "possessive").add("n", "", "a0:noun").agreeAN(0, 0)
         .format("{a0} {n0}", "{a0} {n0}"),
     mktpl().add("n", "item").decl(0, caseACC)
         .format("thanks for (the) {n0}", "спасибо за {n0}"),
