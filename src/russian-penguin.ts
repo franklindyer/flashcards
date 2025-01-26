@@ -67,9 +67,14 @@ var lib: IDictionary<WithTags[]> = {
     "a": []
 }
 
-var wc = new WordRelChecker(lib);
-// var wp = new WordPicker(wc, (w) => 1.0);
-var mktpl = () => new EnRuPhraseTpl(new WordPicker(wc, (w) => 1.0));
+var penguinGlobalSubs: [RegExp, string][] = [
+    [/(\s|^)a ([aeiou])/g, "$1an $2"],
+    [/(\s|^)в лесе/g, "$1в лесу"],
+    [/(\s|^)в саде/g, "$1в саду"],
+    [/(\s|^)в Крыме/g, "$1в Крыму"],
+    [/(\s|^)о ([аоэуиАОЭУИ])/g, "$1об $2"],
+    [/(\s|^) мне/g, "обо мне"]
+];
 
 var penguinGlobalSubtags = [
     ["n", "item", "hasloc"],
@@ -82,6 +87,10 @@ var penguinGlobalSubtags = [
     ["n", "item", "object"],
     ["n", "person", "object"]
 ]
+
+var wc = new WordRelChecker(lib);
+// var wp = new WordPicker(wc, (w) => 1.0);
+var mktpl = () => new EnRuPhraseTpl(new WordPicker(wc, (w) => 1.0), penguinGlobalSubs);
 
 // CHAPTER 3
 
@@ -284,15 +293,6 @@ var ch7Adjs = [
 // Text substitutions in Russian answers needed for things like contraction / special forms
 */
 
-var penguinGlobalSubs: [RegExp, string][] = [
-    [/(\s|^)a ([aeiou])/, "$1an $2"],
-    [/(\s|^)в лесе/, "$1в лесу"],
-    [/(\s|^)в саде/, "$1в саду"],
-    [/(\s|^)в Крыме/, "$1в Крыму"],
-    [/(\s|^)о ([аоэуиАОЭУИ])/, "$1об $2"],
-    [/(\s|^) мне/, "обо мне"]
-];
-
 var penguinChapters: IDictionary<[EnRuNoun[], EnRuVerb[], EnRuAdjective[], EnRuPhraseTpl[]]> = {
     "3": [ch3Nouns, [], [], ch3Tpls],
     "4": [ch4Nouns, ch4Verbs, [], ch4Tpls],
@@ -349,7 +349,6 @@ var ruPenguinQuizzer: FlashcardGenerator<EnRuWordStacks, PengQuizzerState> = {
         }
  
         var tpl = selTpls[Math.floor(Math.random() * selTpls.length)];
-        tpl.subs = penguinGlobalSubs;
         return tpl.next(wc);
     },
     updater: (correct, answer, card, st) => {

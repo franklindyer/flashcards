@@ -416,11 +416,11 @@ export class EnRuPhraseTpl {
 
     fmt: [string, string];
 
-    constructor(wp: WordPicker) {
+    constructor(wp: WordPicker, subs: [RegExp, string][] = []) {
         this.guid = guidGenerator();
         this.picker = wp;
         this.actions = [];
-        this.subs = [];
+        this.subs = subs;
         this.fmt = ["", ""];
     }
 
@@ -606,7 +606,8 @@ export class EnRuPhraseTpl {
             res[0] = res[0].replace(`{a${i}}`, aRes[0]);
             res[1] = res[1].replace(`{a${i}}`, aRes[1]);
         }
-        for (var i = 0; i < this.subs.length; i++) {
+        for (var i = 0; i < this.subs.length; i++) { // Postprocessing with provided regexes
+            // console.log(this.subs[i]);
             res[0] = res[0].replace(this.subs[i][0], this.subs[i][1]);
             res[1] = res[1].replace(this.subs[i][0], this.subs[i][1]);
         } 
