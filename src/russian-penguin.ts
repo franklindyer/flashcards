@@ -158,20 +158,6 @@ var ch4Tpls = [
         .format("{n0} {v0}", "{n0} {v0}")
 ]
 
-/*
-var ch4Tpl = [
-    makeTpl((wr: any) => wr.pickPron(["person"]).pickAxn(0, ["intrans"]).conjV(0, 0, 1)
-                    .format("{n0} {v0}", "{n0} {v0}")),
-    makeTpl((wr: any) => wr.pickV(1, ["intrans"]).pickSubj(0).conjV(0, 0, 1)
-                    .format("{n0} {v0}", "{n0} {v0}")),
-    makeTpl((wr: any) => wr.pickV(0, ["intrans"]).pickSubj(0).conjV(0, 0, 1)
-                    .format("{n0} do/does not {v0}", "{n0} не {v0}")),
-    makeTpl((wr: any) => wr.pickPron(["person"]).pickAxn(0, ["intrans"]).conjV(0, 0, 1)
-                    .format("{n0} do/does not {v0}", "{n0} не {v0}")),
-    makeTpl((wr: any) => wr.pickN(["in-place"], casePRP)
-                    .format("in/at {n0}", "в {n0}"))
-];
-
 // CHAPTER 5
 
 var ch5Nouns = [
@@ -201,19 +187,14 @@ var ch5Verbs = [
     makeTransVerb("smoke", "курить", ["person"], ["smokeable"], ["intrans", "within-place"])
 ]
 
-var ch5Tpl = [
-    makeTpl((wr: any) => wr.pickN(["in-place"], casePRP)
-                    .format("in/at {n0}", "в {n0}")),
-    makeTpl((wr: any) => wr.pickN(["at-place"], casePRP)
-                    .format("in/at {n0}", "на {n0}")),
-    makeTpl((wr: any) => wr.pickN(["hasloc"]).pickN(["in-place"], casePRP)
-                    .format("{n0} is in/at {n1}", "{n0} в {n1}")),
-    makeTpl((wr: any) => wr.pickN(["hasloc"]).pickN(["at-place"], casePRP)
-                    .format("{n0} is in/at {n1}", "{n0} на {n1}")),
-    makeTpl((wr: any) => wr.pickV(1, ["within-place"]).pickSubj(0).pickN(["in-place"], casePRP)
-                    .format("{n0} {v0} in/at {n1}", "{n0} {v0} в {n1}")),
-    makeTpl((wr: any) => wr.pickV(1, ["within-place"]).pickSubj(0).pickN(["at-place"], casePRP)
-                    .format("{n0} {v0} in/at {n1}", "{n0} {v0} на {n1}")),
+var ch5Tpls = [
+    ch4Tpls[0], ch4Tpls[1], ch4Tpls[2], ch4Tpls[3],
+    mktpl().add("v", "within-place,intrans").add("n", "", "v0:subj").add("n", "in-place")
+        .conj(0, 1).agreeVN(0, 0).decl(1, casePRP)
+        .format("{n0} {v0} in/at {n1}", "{n0} {v0} в {n1}"),
+    mktpl().add("v", "within-place,intrans").add("n", "", "v0:subj").add("n", "at-place")
+        .conj(0, 1).agreeVN(0, 0).decl(1, casePRP)
+        .format("{n0} {v0} in/at {n1}", "{n0} {v0} на {n1}")
 ]
 
 // CHAPTER 6
@@ -252,6 +233,7 @@ var ch6Adjs = [
     makeAdj("their", "их", ["item", "relative"], ["possessive"]),
 ];
 
+/*
 var ch6Tpl = [
     makeTpl((wr: any) => wr.pickN(["item", "relative"]).pickA(0, "possessive")
                     .format("{a0} {n0}", "{a0} {n0}")),
@@ -305,7 +287,7 @@ var penguinGlobalSubs: [RegExp, string][] = [
 var penguinChapters: IDictionary<[EnRuNoun[], EnRuVerb[], EnRuAdjective[], EnRuPhraseTpl[]]> = {
     "3": [ch3Nouns, [], [], ch3Tpls],
     "4": [ch4Nouns, ch4Verbs, [], ch4Tpls],
-//    "5": [ch5Nouns, ch5Verbs, [], ch5Tpl],
+    "5": [ch5Nouns, ch5Verbs, [], ch5Tpls],
 //    "6": [ch6Nouns, ch6Verbs, ch6Adjs, ch6Tpl]
 };
 
