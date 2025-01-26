@@ -61,8 +61,27 @@ function makePengMenu(st: PengQuizzerState): FlashcardGenEditor<PengQuizzerState
     }
 }
 
-// The templates need to NOT be serialized into the state object!
-// Instead, they should be globally stored and referenced by some kind of ID based on their group.
+var lib: IDictionary<WithTags[]> = {
+    "n": [],
+    "v": [],
+    "a": []
+}
+
+var wc = new WordRelChecker(lib);
+// var wp = new WordPicker(wc, (w) => 1.0);
+var mktpl = () => new EnRuPhraseTpl(new WordPicker(wc, (w) => 1.0));
+
+var penguinGlobalSubtags = [
+    ["n", "item", "hasloc"],
+    ["n", "relative", "person"],
+    ["n", "person", "agent"],
+    ["n", "person", "hasloc"],
+    ["n", "country", "region"],
+    ["n", "in-place", "place"],
+    ["n", "at-place", "place"],
+    ["n", "item", "object"],
+    ["n", "person", "object"]
+]
 
 // CHAPTER 3
 
@@ -94,30 +113,12 @@ var ch3Nouns = [
     makeSingularNoun("chocolate", "шоколад", "m", false, ["food", "item", "hasloc"])
 ];
 
-var lib: IDictionary<WithTags[]> = {
-    "n": ch3Nouns,
-    "v": [],
-    "a": []
-}
-var wc = new WordRelChecker(lib);
-var wp = new WordPicker(wc, (w) => 1.0);
-var tpl = () => new EnRuPhraseTpl(wp);
-
 var ch3Tpls = [
-    tpl().add("n", "hasloc").format("where is (the) {n0}?", "где {n0}?"),
-    tpl().add("n", "hasloc").format("there's (the) {n0}", "вот {n0}?"),
+    mktpl().add("n", "item").format("this is {n0}", "это {n0}"),
+    mktpl().add("n", "hasloc").format("where is (the) {n0}?", "где {n0}?"),
+    mktpl().add("n", "hasloc").format("there's (the) {n0}", "вот {n0}"),
 ]
 
-/* for (var i = 0; i < 50; i++) {
-    console.log(ch3Tpls[0].next());
-} */
-
-/*
-var ch3Tpl = [
-    makeTpl((wr: any) => wr.pickN(["item"]).format("this is {n0}", "это {n0}")),
-    makeTpl((wr: any) => wr.pickN(["hasloc"]).format("where's (the) {n0}?", "где {n0}?")),
-    makeTpl((wr: any) => wr.pickN(["hasloc"]).format("there's (the) {n0}", "вот {n0}"))
-];
 
 // CHAPTER 4
 
@@ -131,7 +132,7 @@ var ch4Nouns = [
     makeSingularNoun("Russia", "Россия", "f", false, ["in-place", "country", "geo-place"]),
     makeSingularNoun("language", "язык", "m", false, ["nonphysical"]),
     makeSingularNoun("trolleybus", "троллейбус", "m", false, ["hasloc", "vehicle"]),
-    makeSingularNoun("street", "улица", "f", false, ["at-place", "hasloc"])
+    makeSingularNoun("street", "улица", "f", false, ["at-place", "hasloc"]),
 ];
 
 var ch4Verbs = [
@@ -144,6 +145,20 @@ var ch4Verbs = [
     makeTransVerb("study", "изучать", ["person"], ["subject"], ["intrans"])
 ];
 
+var ch4Tpls = [
+    mktpl().add("n", "in-place").decl(0, casePRP).format("in/at {n0}", "в {n0}"),
+    mktpl().add("n", "at-place").decl(0, casePRP).format("in/at {n0}", "на {n0}"),
+    mktpl().add("n", "hasloc").add("n", "in-place").decl(1, casePRP)
+        .format("{n0} is in/at {n1}", "{n0} в {n1}"),
+    mktpl().add("n", "hasloc").add("n", "at-place").decl(1, casePRP)
+        .format("{n0} is in/at {n1}", "{n0} на {n1}"),
+    mktpl().add("v", "intrans").add("n", "", "v0:subj").conj(0, 1).agreeVN(0, 0)
+        .format("{n0} {v0}", "{n0} {v0}"),
+    mktpl().add("v", "intrans").rpron().conj(0, 1).agreeVN(0, 0)
+        .format("{n0} {v0}", "{n0} {v0}")
+]
+
+/*
 var ch4Tpl = [
     makeTpl((wr: any) => wr.pickPron(["person"]).pickAxn(0, ["intrans"]).conjV(0, 0, 1)
                     .format("{n0} {v0}", "{n0} {v0}")),
@@ -289,10 +304,16 @@ var penguinGlobalSubs: [RegExp, string][] = [
 
 var penguinChapters: IDictionary<[EnRuNoun[], EnRuVerb[], EnRuAdjective[], EnRuPhraseTpl[]]> = {
     "3": [ch3Nouns, [], [], ch3Tpls],
-//    "4": [ch4Nouns, ch4Verbs, [], ch4Tpl],
+    "4": [ch4Nouns, ch4Verbs, [], ch4Tpls],
 //    "5": [ch5Nouns, ch5Verbs, [], ch5Tpl],
 //    "6": [ch6Nouns, ch6Verbs, ch6Adjs, ch6Tpl]
 };
+
+var penguinTpls: IDictionary<EnRuPhraseTpl> = {};
+for (var k in penguinChapters) {
+    var tpls = penguinChapters[k][3];
+    tpls.map((tpl) => penguinTpls[tpl.guid] = tpl);
+}
 
 var allNouns = Object.keys(penguinChapters).map((k) => penguinChapters[k][0]).flat();
 var allVerbs = Object.keys(penguinChapters).map((k) => penguinChapters[k][1]).flat();
@@ -301,8 +322,7 @@ var allAdjs = Object.keys(penguinChapters).map((k) => penguinChapters[k][2]).fla
 var ruPenguinQuizzer: FlashcardGenerator<EnRuWordStacks, PengQuizzerState> = {
     ftemp: {
         generator: function(seed: EnRuWordStacks): Flashcard<EnRuWordStacks> {
-            for (var i = 0; i < 50; i++) console.log(ch3Tpls[0].gen(ch3Tpls[0].next()));
-            var res = ch3Tpls[0].gen(seed)
+            var res = penguinTpls[seed.tplGuid].gen(seed);
             return {
                 params: seed,
                 prompt: res[0],
@@ -326,19 +346,20 @@ var ruPenguinQuizzer: FlashcardGenerator<EnRuWordStacks, PengQuizzerState> = {
         var selVerbs = st.activeChapters.map((k) => penguinChapters[k][1]).flat();
         var selAdjs = st.activeChapters.map((k) => penguinChapters[k][2]).flat();
         var selTpls = st.activeChapters.map((k) => penguinChapters[k][3]).flat();
-        // var selLib = new EnRuWordLibrary(selNouns, selVerbs, selAdjs, selTpls);
-        
-        // selLib.nounWeights = selLib.makeWeights(st.stats.nounStats);
-        // selLib.verbWeights = selLib.makeWeights(st.stats.verbStats);
-        // selLib.adjWeights = selLib.makeWeights(st.stats.adjStats);
-        // selLib.tplWeights = selLib.makeWeights(st.stats.tplStats);
 
-        // var tpl = selLib.pickTpl(); 
-        // var repo = new WordRepo(selLib);
-        // repo.substitutions = penguinGlobalSubs;
-        // var res = applyTpl(tpl, repo);
-        // return res;
-        return ch3Tpls[0].next()
+        lib["n"] = selNouns;
+        lib["v"] = selVerbs;
+        lib["a"] = selAdjs;
+        wc = new WordRelChecker(lib);
+       
+        for (var i = 0; i < 20; i++) {
+            var tpl = selTpls[Math.floor(Math.random() * selTpls.length)];
+            console.log(tpl.gen(tpl.next(wc)));
+        }
+ 
+        var tpl = selTpls[Math.floor(Math.random() * selTpls.length)];
+        tpl.subs = penguinGlobalSubs;
+        return tpl.next(wc);
     },
     updater: (correct, answer, card, st) => {
         var incVec = correct ? [1, 0] : [0, 1];

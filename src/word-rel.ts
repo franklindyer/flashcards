@@ -124,7 +124,8 @@ export class WordPicker {
             var k = Object.keys(this.checker.allWords)[i];
             d[k] = [];
         }
-        return this.checker.tryFillHoles(this.holes, d, this.weights);
+        var res = this.checker.tryFillHoles(this.holes, d, this.weights);
+        return res;
     }
 }
 

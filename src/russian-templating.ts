@@ -387,6 +387,7 @@ export enum EnRuPhraseAxnType {
     DupVerb,
     DupAdj,
     MakePronoun,
+    RandomPronoun,
     DeclineNoun,
     ConjugateVerb,
     AgreeVerbWithSubj,
@@ -411,6 +412,7 @@ export class EnRuPhraseTpl {
     guid: string;
     picker: WordPicker;
     actions: EnRuPhraseAxn[];    
+    subs: [RegExp, string][];
 
     fmt: [string, string];
 
@@ -418,6 +420,7 @@ export class EnRuPhraseTpl {
         this.guid = guidGenerator();
         this.picker = wp;
         this.actions = [];
+        this.subs = [];
         this.fmt = ["", ""];
     }
 
@@ -456,6 +459,13 @@ export class EnRuPhraseTpl {
         this.actions.push({
             type: EnRuPhraseAxnType.MakePronoun,
             wd1: id
+        });
+        return this;
+    }
+
+    rpron() {
+        this.actions.push({
+            type: EnRuPhraseAxnType.RandomPronoun
         });
         return this;
     }
@@ -518,6 +528,14 @@ export class EnRuPhraseTpl {
             stacks.words["n"].push(getPronounFor(<EnRuNoun>stacks.words["n"][axn.wd1!]));
             stacks.inflectors["n"].push(defaultNounInflector());
             return stacks;
+        } else if (axn.type === EnRuPhraseAxnType.RandomPronoun) {
+            var number = Math.floor(2*Math.random());
+            var person = Math.floor(3*Math.random());
+            var gender = (number === 0 && person == 2) ? Math.floor(3*Math.random()) : 0;
+            var pron = getPronoun(number, person, gender, RussianAnimacy.AnimacyAnimate);
+            stacks.words["n"].push(pron);
+            stacks.inflectors["n"].push(defaultNounInflector());
+            return stacks;
         } else if (axn.type === EnRuPhraseAxnType.DeclineNoun) {
             stacks.inflectors["n"][axn.wd1!].case = axn.num1;
             return stacks;
@@ -544,7 +562,8 @@ export class EnRuPhraseTpl {
         return null!
     }
 
-    next(): EnRuWordStacks {
+    next(wc: WordRelChecker): EnRuWordStacks {
+        this.picker.checker = wc;
         var words = this.picker.resolve();
         var stacks: EnRuWordStacks = {
             tplGuid: this.guid,
@@ -573,9 +592,24 @@ export class EnRuPhraseTpl {
             res[0] = res[0].replace(`{n${i}}`, nRes[0]);
             res[1] = res[1].replace(`{n${i}}`, nRes[1]);
         }
-        // VERBS NOT IMPLEMENTED YET
-        // ADJECTIVES NOT IMPLEMENTED YET 
- 
+        for (var i = 0; i < stacks.words["v"].length; i++) {
+            var v = <EnRuVerb>stacks.words["v"][i];
+            var vInf = <EnRuVerbInflector>stacks.inflectors["v"][i];
+            var vRes = inflectVerb(v, vInf); 
+            res[0] = res[0].replace(`{v${i}}`, vRes[0]);
+            res[1] = res[1].replace(`{v${i}}`, vRes[1]);
+        }
+        for (var i = 0; i < stacks.words["a"].length; i++) {
+            var a = <EnRuAdjective>stacks.words["a"][i];
+            var aInf = <EnRuAdjectiveInflector>stacks.inflectors["a"][i];
+            var aRes = inflectAdj(a, aInf); 
+            res[0] = res[0].replace(`{a${i}}`, aRes[0]);
+            res[1] = res[1].replace(`{a${i}}`, aRes[1]);
+        }
+        for (var i = 0; i < this.subs.length; i++) {
+            res[0] = res[0].replace(this.subs[i][0], this.subs[i][1]);
+            res[1] = res[1].replace(this.subs[i][0], this.subs[i][1]);
+        } 
         return <[string, string]>res;
     }
 }
