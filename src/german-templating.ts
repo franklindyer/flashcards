@@ -3,12 +3,17 @@ import {
     guidGenerator
 } from "./lib";
 import {
+    WithTags,
+    WordPicker
+} from "./word-rel";
+import {
     Genders,
     Numbers
 } from "german-determiners";
 import {
     Persons
 } from "german-verbs";
+
 
 const GermanVerbsLib = require('german-verbs');
 const GermanVerbsDict = require('german-verbs-dict/dist/verbs.json');
@@ -196,4 +201,66 @@ function inflectDet(d: EnDeDeterminer, infl: EnDeDeterminerInflector): [string, 
 
 function inflectAdj(a: EnDeAdjective, infl: EnDeAdjectiveInflector): [string, string] {
     return null!;
+}
+
+// NEED FUNCTIONS FOR MAKING NOUNS, VERBS, DETS and ADJS
+
+export enum EnDePhraseAxnType {
+    DupNoun,
+    DupVerb,
+    DupAdj,
+    DupDet,
+    MakePronoun,
+    MakeDet,
+    RandomPronoun,
+    DeclineNoun,
+    DeclineDet,
+    AgreeVerbWithSubj,
+    AgreeAdjWithNounDet
+}
+
+export type EnDePhraseAxn = {
+    type: EnDePhraseAxnType,
+    num1?: number,
+    num2?: number,
+    wd1?: number,
+    wd2?: number
+}
+
+export type EnDeWordStacks = {
+    words: IDictionary<WithTags[]>,
+    inflectors: IDictionary<any[]>,
+    tplGuid: string
+}
+
+export class EnDePhraseTpl {
+    guid: string;
+    picker: WordPicker;
+    actions: EnDePhraseAxn[];
+    subs: [RegExp, string][];
+
+    fmt: [string, string];
+
+    constructor(wp: WordPicker, subs: [RegExp, string][] = []) {
+        this.guid = guidGenerator();
+        this.picker = wp;
+        this.actions = [];
+        this.subs = subs;
+        this.fmt = ["", ""];
+    }
+
+    add(wdType: string, tags: string = "", selStrings: string = "") {
+        var tagsList = (tags.length === 0) ? [] : tags.split(',');
+        var selList = (selStrings.length === 0) ? [] : selStrings.split(',');
+        this.picker.addR(wdType, tagsList, selList);
+        return this;
+    }
+
+    dupV(id: number) {
+        this.actions.push({
+            type: EnDePhraseAxnType.DupVerb,
+            wd1: id
+        });
+        return this;
+    }
 }
