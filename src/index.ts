@@ -12,6 +12,8 @@ import './evil'
 import './russian-templating'
 import './russian-penguin'
 
+import './german-bacon'
+
 import './abstract-agreement'
 import './word-rel'
 

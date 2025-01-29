@@ -15,6 +15,7 @@ import {
     Persons
 } from "german-verbs";
 
+const getUuid = require('uuid-by-string');
 
 const GermanVerbsLib = require('german-verbs');
 const GermanVerbsDict = require('german-verbs-dict/dist/verbs.json');
@@ -170,6 +171,35 @@ export type EnDeAdjectiveInflector = {
     gender: GermanGender,
     number: GermanNumber,
     det: GermanDeterminer   // For distinction between strong, weak etc. endings
+}
+
+export function makeSingNoun(en: string, de: string, g: GermanGender, tags: string[], hint: string = ""): EnDeNoun {
+    tags.push("singular");
+    return {
+        enForm: en,
+        deForm: de,
+        tags: tags,
+        hint: hint,
+        rels: {},
+        guid: getUuid(de),
+        gender: g,
+        number: GermanNumber.S,
+        person: GermanPerson.P3
+    }
+}
+
+export function makeIntransVerb(en: string, de: string, tags: string[], subjTags: string[], hint: string = ""): EnDeVerb {
+    tags.push("intrans");
+    return {
+        enForm: en,
+        deForm: de,
+        tags: tags,
+        hint: hint,
+        rels: {
+            "subj": subjTags
+        },
+        guid: getUuid(de)
+    }
 }
 
 function getRosaeNLGCaseString(c: GermanCase): string {
@@ -398,9 +428,10 @@ export class EnDePhraseTpl {
         return this;
     }
     
-    rpron() {
+    rpron(n?: GermanNumber) {
         this.actions.push({
             type: EnDePhraseAxnType.RandomPronoun,
+            num1: n
         });
         return this;
     }
@@ -504,7 +535,7 @@ export class EnDePhraseTpl {
             stacks.inflectors["d"].push(dInfl);
             return stacks;
         } else if (axn.type === EnDePhraseAxnType.RandomPronoun) {
-            var number = Math.floor(2*Math.random());
+            var number = (axn.num1 === undefined) ? Math.floor(2*Math.random()) : axn.num1!;
             var person = Math.floor(3*Math.random());
             var gender = (number === 0 && person === 2) ? Math.floor(3*Math.random()) : 0;
             var pron = getPronoun(person, number, gender);
