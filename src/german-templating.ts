@@ -79,6 +79,36 @@ enum GermanDeterminer {
     SUCH
 }
 
+const enPronouns = [
+    [
+        ["I"], ["you"], ["he", "she", "it"], ["we"], ["y'all"], ["they"]
+    ],
+    [
+        ["me"], ["you"], ["him", "her", "it"], ["us"], ["y'all"], ["them"]
+    ],
+    [
+        ["me"], ["you"], ["him", "her", "it"], ["us"], ["y'all"], ["them"]
+    ],
+    [
+        ["of mine"], ["of yours"], ["of his", "of hers", "of its"], ["of ours"], ["of y'all's"], ["of theirs"]
+    ]
+];
+
+const dePronouns = [
+    [
+        ["ich"], ["du"], ["er", "sie", "es"], ["wir"], ["ihr"], ["sie"]
+    ],
+    [
+        ["mich"], ["dich"], ["ihn", "sie", "es"], ["uns"], ["euch"], ["sie"]
+    ],
+    [
+        ["mir"], ["dir"], ["ihm", "ihr", "ihm"], ["uns"], ["euch"], ["ihr"]
+    ],
+    [
+        ["meiner"], ["deiner"], ["seiner", "ihrer", "seiner"], ["eurer"], ["ihrer"]
+    ]
+];
+
 export type EnDeVerb = {
     enForm: string,
     deForm: string,
@@ -193,7 +223,27 @@ function inflectVerb(v: EnDeVerb, infl: EnDeVerbInflector): [string, string[]] {
     return [v.enForm, GermanVerbsLib.getConjugation(GermanVerbsDict, v.deForm, tenStr, psn, numStr)];
 }
 
+function getPronoun(p: GermanPerson, n: GermanNumber, g: GermanGender): EnDeNoun {
+    return {
+        enForm: "PRONOUN",
+        deForm: "PRONOUN",
+        tags: ["pronoun", "agent"],
+        hint: "",
+        rels: {},
+        guid: guidGenerator(),
+        person: p,
+        number: n,
+        gender: g
+    }
+}
+
 function inflectNoun(n: EnDeNoun, infl: EnDeNounInflector): [string, string] {
+    if (n.enForm === "PRONOUN") { // Special logic for pronoun inflection
+        var ind0 = infl.case;
+        var ind1 = 3*n.number + n.person;
+        var ind2 = n.gender;
+        return [enPronouns[ind0][ind1][ind2], dePronouns[ind0][ind1][ind2]];
+    }
     var caseStr = getRosaeNLGCaseString(infl.case);
     var numStr = getRosaeNLGNumberString(n.number);
     return [n.enForm, GermanWords.getCaseGermanWord(null, GermanWordsList, n.deForm, caseStr, numStr)];
@@ -255,6 +305,7 @@ export enum EnDePhraseAxnType {
     RandomPronoun,
     DeclineNoun,
     DeclineDet,
+    ConjugateVerb,
     AgreeVerbWithSubj,
     AgreeAdjWithNounDet
 }
@@ -337,10 +388,12 @@ export class EnDePhraseTpl {
         return this;
     }
 
-    det(id: number) {
+    det(id: number, dType: number, ownerId?: number) {
         this.actions.push({
             type: EnDePhraseAxnType.MakeDet,
-            wd1: id
+            wd1: id,
+            wd2: ownerId,
+            num1: dType
         });
         return this;
     }
@@ -370,6 +423,15 @@ export class EnDePhraseTpl {
         return this;
     }
 
+    conj(id: number, t: GermanTense) {
+        this.actions.push({
+            type: EnDePhraseAxnType.ConjugateVerb,
+            wd1: id,
+            num1: t
+        });
+        return this;
+    }
+
     agreeVN(idV: number, idN: number) {
         this.actions.push({
             type: EnDePhraseAxnType.AgreeVerbWithSubj,
@@ -395,6 +457,79 @@ export class EnDePhraseTpl {
     }
 
     runAction(stacks: EnDeWordStacks, axn: EnDePhraseAxn): EnDeWordStacks {
+        if (axn.type === EnDePhraseAxnType.DupNoun) {
+            stacks.words["n"].push(stacks.words["n"][axn.wd1!]);
+            stacks.inflectors["n"].push(stacks.inflectors["n"][axn.wd1!]);
+            return stacks;
+        } else if (axn.type === EnDePhraseAxnType.DupVerb) {
+            stacks.words["v"].push(stacks.words["v"][axn.wd1!]);
+            stacks.inflectors["v"].push(stacks.inflectors["v"][axn.wd1!]);
+            return stacks;
+        } else if (axn.type === EnDePhraseAxnType.DupDet) {
+            stacks.words["d"].push(stacks.words["d"][axn.wd1!]);
+            stacks.inflectors["d"].push(stacks.inflectors["d"][axn.wd1!]);
+            return stacks;
+        } else if (axn.type === EnDePhraseAxnType.DupAdj) {
+            stacks.words["a"].push(stacks.words["a"][axn.wd1!]);
+            stacks.inflectors["a"].push(stacks.inflectors["a"][axn.wd1!]);
+            return stacks;
+        } else if (axn.type === EnDePhraseAxnType.MakePronoun) {
+            var n = <EnDeNoun>stacks.words["n"][axn.wd1!];
+            var pron = getPronoun(n.person, n.number, n.gender);
+            stacks.words["n"].push(pron);
+            stacks.inflectors["n"].push(defaultNounInflector());
+            return stacks;
+        } else if (axn.type === EnDePhraseAxnType.MakeDet) {
+            var n = <EnDeNoun>stacks.words["n"][axn.wd1!];
+            var nInfl = <EnDeNounInflector>stacks.inflectors["n"][axn.wd1!];
+            var owner = (axn.wd2 === undefined) ? undefined : <EnDeNoun>stacks.words["n"][axn.wd2!];
+            var gOwner = (owner === undefined) ? undefined : owner.gender;
+            var pOwner = (owner === undefined) ? undefined : owner.person;
+            var nOwner = (owner === undefined) ? undefined : owner.number;
+            var d: EnDeDeterminer = {
+                det: axn.num1!,
+                tags: [],
+                rels: {},
+                guid: guidGenerator() 
+            };
+            var dInfl: EnDeDeterminerInflector = {
+                case: nInfl.case,
+                gender: n.gender,
+                number: n.number,
+                ownerGender: gOwner,
+                ownerPerson: pOwner,
+                ownerNumber: nOwner
+            };
+            stacks.words["d"].push(d);
+            stacks.inflectors["d"].push(dInfl);
+            return stacks;
+        } else if (axn.type === EnDePhraseAxnType.RandomPronoun) {
+            var number = Math.floor(2*Math.random());
+            var person = Math.floor(3*Math.random());
+            var gender = (number === 0 && person === 2) ? Math.floor(3*Math.random()) : 0;
+            var pron = getPronoun(person, number, gender);
+            stacks.words["n"].push(pron);
+            stacks.inflectors["n"].push(defaultNounInflector());
+            return stacks;
+        } else if (axn.type === EnDePhraseAxnType.DeclineNoun) {
+            stacks.inflectors["n"][axn.wd1!].case = axn.num1;
+            return stacks;
+        } else if (axn.type === EnDePhraseAxnType.DeclineDet) {
+            stacks.inflectors["d"][axn.wd1!].case = axn.num1;
+            return stacks;
+        } else if (axn.type === EnDePhraseAxnType.ConjugateVerb) {
+            stacks.inflectors["v"][axn.wd1!].tense = axn.num1;
+            return stacks;
+        } else if (axn.type === EnDePhraseAxnType.AgreeVerbWithSubj) {
+            var n = <EnDeNoun>stacks.words["n"][axn.wd2!];
+            var vInf = <EnDeVerbInflector>stacks.inflectors["v"][axn.wd1!];
+            vInf.number = n.number;
+            vInf.person = n.person;
+            return stacks;
+        } else if (axn.type === EnDePhraseAxnType.AgreeAdjWithNounDet) {
+            // Will implement later!
+            return null!;
+        }
         return stacks;
     }
 
