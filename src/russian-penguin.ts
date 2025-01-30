@@ -23,6 +23,7 @@ import {
     EnRuPhraseTpl,
     EnRuWordStacks,
     makeSingularNoun,
+    makePluralNoun,
     makeTransVerb,
     makeIntransVerb,
     makeAdj,
@@ -225,18 +226,18 @@ var ch6Nouns = [
     makeSingularNoun("(first) name", "имя", "n", false, ["nonphysical"]),
     makeSingularNoun("shop", "магазин", "m", false, ["in-place", "building"]),
     makeSingularNoun("minute", "минута", "f", false, ["timerange"]),
-    makeSingularNoun("music", "музыка", "f", false, ["nonphysical", "audible", "regional"]),
+    makeSingularNoun("music", "музыка", "f", false, ["nonphysical", "audible", "regional", "passion", "subject"]),
     makeSingularNoun("week", "неделя", "f", false, ["timerange"]),
     makeSingularNoun("father", "отец", "m", true, ["person", "agent", "hasloc", "relative"]),
     makeSingularNoun("patronymic", "отчество", "n", false, ["nonphysical"]),
-    makeSingularNoun("work", "работа", "f", false, ["event", "at-place"]),
+    makeSingularNoun("work", "работа", "f", false, ["event", "at-place", "passion"]),
     makeSingularNoun("son", "сын", "m", true, ["person", "agent", "hasloc", "relative"]),
     makeSingularNoun("hour", "час", "m", false, ["timerange"]),
     makeSingularNoun("surname", "фамилия", "f", false, ["nonphysical", "regional"])
 ];
 
 var ch6Verbs = [
-    makeTransVerb("love", "любить", ["agent"], [], []),
+    makeTransVerb("love", "любить", ["agent"], ["item", "person", "passion", "place"], []),
     makeIntransVerb("fare", "поживать", ["person"], [], "get along"),
 ];
 
@@ -256,7 +257,19 @@ var ch6Tpls = [
     mktpl().add("n", "item").decl(0, caseACC)
         .format("thanks for (the) {n0}", "спасибо за {n0}"),
     mktpl().add("n", "timerange").decl(0, caseACC)
-        .format("in/within a {n0}", "через {n0}")
+        .format("in/within a {n0}", "через {n0}"),
+    mktpl().add("v", "trans").add("n", "", "v0:subj").add("n", "", "v0:obj")
+        .conj(0, 1).agreeVN(0, 0).decl(1, caseACC)
+        .format("{n0} {v0} {n1}", "{n0} {v0} {n1}"),
+    mktpl().add("v", "trans").add("n", "agent", "v0:subj").add("n", "", "v0:obj").rpron()
+        .conj(0, 1).agreeVN(0, 2).decl(1, caseACC)
+        .format("{n2} {v0} {n1}", "{n2} {v0} {n1}"),
+    mktpl().add("n", "agent").add("v", "", "n0:<obj").add("n", "", "v0:subj").rpron()
+        .conj(0, 1).agreeVN(0, 0).decl(2, caseACC)
+        .format("{n0} {v0} {n2}", "{n0} {v0} {n2}")
+//    mktpl().add("n", "agent").add("v", "trans", "n0:<subj").add("n", "", "v0:obj").rpron()
+//        .conj(0, 1).agreeVN(0, 2).decl(1, caseACC)
+//        .format("{n2} {v0} {n1}", "{n2} {v0} {n1}")
 ]
 
 // CHAPTER 7

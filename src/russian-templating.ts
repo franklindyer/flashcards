@@ -302,11 +302,30 @@ export function makeSingularNoun(enForm: string, ruForm: string, gdr: string, an
     var gender = RussianGender.GenderNeuter;
     if (gdr === "m") gender = RussianGender.GenderMale;
     else if (gdr === "f") gender = RussianGender.GenderFemale;
+    tags.push("singular");
     return {
         enForm: enForm,
         ruForm: ruForm,
         gender: gender,
         number: RussianNumber.NumberSingular,
+        person: RussianPerson.Person3rd,
+        animacy: animacy ? RussianAnimacy.AnimacyAnimate : RussianAnimacy.AnimacyInanimate,
+        rels: {},
+        tags: tags,
+        guid: getUuid(ruForm)
+    }
+}
+
+export function makePluralNoun(enForm: string, ruForm: string, gdr: string, animacy: boolean, tags: string[] = []): EnRuNoun {
+    var gender = RussianGender.GenderNeuter;
+    if (gdr === "m") gender = RussianGender.GenderMale;
+    else if (gdr === "f") gender = RussianGender.GenderFemale; 
+    tags.push("plural");
+    return {
+        enForm: enForm,
+        ruForm: ruForm,
+        gender: gender,
+        number: RussianNumber.NumberPlural,
         person: RussianPerson.Person3rd,
         animacy: animacy ? RussianAnimacy.AnimacyAnimate : RussianAnimacy.AnimacyInanimate,
         rels: {},
