@@ -10,6 +10,7 @@ require("./weighted-rand");
 require("./evil");
 require("./russian-templating");
 require("./russian-penguin");
+require("./german-bacon");
 require("./abstract-agreement");
-require("./wordsat");
+require("./word-rel");
 (0, lib_1.runFlashcardController)("addition-quiz-deck");

@@ -1,8 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.WordRepo = exports.applyTpl = exports.makeTpl = exports.makeAdj = exports.makeTransVerb = exports.makeIntransVerb = exports.makeSingularNoun = exports.getRussianGender = exports.EnRuWordLibrary = exports.caseINS = exports.caseGEN = exports.casePRP = exports.caseDAT = exports.caseACC = exports.caseNOM = exports.ruDataPromise = void 0;
+exports.EnRuPhraseTpl = exports.EnRuPhraseAxnType = exports.makeAdj = exports.makeTransVerb = exports.makeIntransVerb = exports.makePluralNoun = exports.makeSingularNoun = exports.getRussianGender = exports.caseINS = exports.caseGEN = exports.casePRP = exports.caseDAT = exports.caseACC = exports.caseNOM = exports.ruDataPromise = void 0;
 const lib_1 = require("./lib");
-const weighted_rand_1 = require("./weighted-rand");
 const getUuid = require('uuid-by-string');
 const papa = require("papaparse");
 const EnglishPlural = require("pluralize-me");
@@ -10,10 +9,13 @@ const EnglishVerbs = require('english-verbs');
 const EnglishVerbHelper = require('english-verbs-helper');
 var ruDataPromise = (filename, objname) => fetch(`/data/${filename}.csv`).then((r) => r.text()).then((s) => {
     var csvData = papa.parse(s, { header: true, dynamicTyping: true }).data;
-    window[objname] = (bareVerb) => {
-        var v = csvData.find((k) => k.bare === bareVerb);
-        //     v = csvData.find((k: any) => k["pl_nom"].replace("'", "") === bareVerb);
-        return v;
+    window[objname] = (bare) => {
+        var w = csvData.find((k) => k.bare === bare);
+        if (w === undefined && objname === "ruNouns")
+            w = csvData.find((k) => k.pl_nom.replace("'", "") === bare);
+        if (w === undefined)
+            console.warn(`Did not find russian word ${bare}`);
+        return w;
     };
 });
 exports.ruDataPromise = ruDataPromise;
@@ -64,57 +66,6 @@ var RussianTense;
     RussianTense[RussianTense["TensePast"] = 2] = "TensePast";
 })(RussianTense || (RussianTense = {}));
 const enTenseStrings = ["PRESENT", "PRESENT", "PAST"];
-class EnRuWordLibrary {
-    constructor(nouns, verbs, adjs, tpls) {
-        this.startingWeight = 10;
-        this.punishmentParam = 1.5;
-        this.nouns = nouns;
-        this.verbs = verbs;
-        this.adjs = adjs;
-        this.tpls = tpls;
-        this.nounWeights = {};
-        this.verbWeights = {};
-        this.adjWeights = {};
-        this.tplWeights = {};
-    }
-    makeWeights(stats) {
-        var weights = {};
-        for (var k in stats) {
-            weights[k] = (Math.pow(stats[k][1], this.punishmentParam) + this.startingWeight) / (stats[k][0] + 1);
-        }
-        return weights;
-    }
-    pickNoun(tags = []) {
-        var options = (tags.length === 0) ? this.nouns : this.nouns.filter((w) => tags.some((t) => w.tags.includes(t)));
-        return (0, weighted_rand_1.weightedRandom)(options, (n) => (n.guid in this.nounWeights) ? this.nounWeights[n.guid] : this.startingWeight, Math.random());
-    }
-    pickVerb(tags = []) {
-        var options = (tags.length === 0) ? this.verbs : this.verbs.filter((w) => tags.some((t) => w.tags.includes(t)));
-        return (0, weighted_rand_1.weightedRandom)(options, (v) => (v.guid in this.verbWeights) ? this.verbWeights[v.guid] : this.startingWeight, Math.random());
-    }
-    pickAdj(tags = []) {
-        var options = this.adjs.filter((a) => a.nounTags.some((t) => tags.includes(t)));
-        return (0, weighted_rand_1.weightedRandom)(options, (a) => (a.guid in this.adjWeights) ? this.adjWeights[a.guid] : this.startingWeight, Math.random());
-    }
-    pickVerbWithAnySubjTag(subjTags, tags = []) {
-        var options = this.verbs.filter((v) => v.subjTags.some((t) => subjTags.includes(t)));
-        options = (tags.length === 0) ? options : options.filter((w) => tags.some((t) => w.tags.includes(t)));
-        return (0, weighted_rand_1.weightedRandom)(options, (v) => (v.guid in this.verbWeights) ? this.verbWeights[v.guid] : this.startingWeight, Math.random());
-    }
-    pickTpl() {
-        return (0, weighted_rand_1.weightedRandom)(this.tpls, (t) => (t.guid in this.tplWeights) ? this.tplWeights[t.guid] : this.startingWeight, Math.random());
-    }
-    pickGender() {
-        return (0, weighted_rand_1.weightedRandom)([0, 1, 2], (k) => 1.0, Math.random());
-    }
-    pickNumber() {
-        return (0, weighted_rand_1.weightedRandom)([0, 1], (k) => 1.0, Math.random());
-    }
-    pickPerson() {
-        return (0, weighted_rand_1.weightedRandom)([0, 1, 2], (k) => 1.0, Math.random());
-    }
-}
-exports.EnRuWordLibrary = EnRuWordLibrary;
 function getRussianGender(ruNoun) {
     var ruNounRow = window.ruNouns(ruNoun);
     if (ruNounRow["gender"] === "m")
@@ -167,8 +118,12 @@ function getPronoun(num, psn, gdr, anm) {
         gender: gdr,
         animacy: anm,
         tags: ["pronoun"],
+        rels: {},
         guid: getUuid(tr[1])
     };
+}
+function getPronounFor(n) {
+    return getPronoun(n.number, n.person, n.gender, n.animacy);
 }
 const enProns = {
     "I": ["I", "me", "me", "me", "me", "me"],
@@ -290,6 +245,7 @@ function makeSingularNoun(enForm, ruForm, gdr, animacy, tags = []) {
         gender = RussianGender.GenderMale;
     else if (gdr === "f")
         gender = RussianGender.GenderFemale;
+    tags.push("singular");
     return {
         enForm: enForm,
         ruForm: ruForm,
@@ -297,19 +253,42 @@ function makeSingularNoun(enForm, ruForm, gdr, animacy, tags = []) {
         number: RussianNumber.NumberSingular,
         person: RussianPerson.Person3rd,
         animacy: animacy ? RussianAnimacy.AnimacyAnimate : RussianAnimacy.AnimacyInanimate,
+        rels: {},
         tags: tags,
         guid: getUuid(ruForm)
     };
 }
 exports.makeSingularNoun = makeSingularNoun;
+function makePluralNoun(enForm, ruForm, gdr, animacy, tags = []) {
+    var gender = RussianGender.GenderNeuter;
+    if (gdr === "m")
+        gender = RussianGender.GenderMale;
+    else if (gdr === "f")
+        gender = RussianGender.GenderFemale;
+    tags.push("plural");
+    return {
+        enForm: enForm,
+        ruForm: ruForm,
+        gender: gender,
+        number: RussianNumber.NumberPlural,
+        person: RussianPerson.Person3rd,
+        animacy: animacy ? RussianAnimacy.AnimacyAnimate : RussianAnimacy.AnimacyInanimate,
+        rels: {},
+        tags: tags,
+        guid: getUuid(ruForm)
+    };
+}
+exports.makePluralNoun = makePluralNoun;
 function makeIntransVerb(enForm, ruForm, subjTags, tags = [], hint = "") {
     tags.push("intrans");
     return {
         enForm: enForm,
         ruForm: ruForm,
         tags: tags,
-        subjTags: subjTags,
-        objTags: [],
+        rels: {
+            "subj": subjTags,
+            "obj": []
+        },
         hint: hint,
         guid: getUuid(ruForm)
     };
@@ -321,8 +300,10 @@ function makeTransVerb(enForm, ruForm, subjTags, objTags, tags = [], hint = "") 
         enForm: enForm,
         ruForm: ruForm,
         tags: tags,
-        subjTags: subjTags,
-        objTags: objTags,
+        rels: {
+            "subj": subjTags,
+            "obj": objTags
+        },
         hint: hint,
         guid: getUuid(ruForm)
     };
@@ -333,177 +314,236 @@ function makeAdj(enForm, ruForm, nounTags, tags = [], hint = "") {
         enForm: enForm,
         ruForm: ruForm,
         tags: tags,
-        nounTags: nounTags,
+        rels: {
+            "noun": nounTags
+        },
         hint: hint,
         guid: getUuid(ruForm)
     };
 }
 exports.makeAdj = makeAdj;
-function makeTpl(tpl) {
+function defaultNounInflector() {
     return {
-        tpl: tpl,
-        guid: (0, lib_1.guidGenerator)()
+        case: exports.caseNOM
     };
 }
-exports.makeTpl = makeTpl;
-function applyTpl(tpl, wr) {
-    wr.tplGuid = tpl.guid;
-    return tpl.tpl(wr);
+function defaultVerbInflector() {
+    return {
+        tense: RussianTense.TenseInfinitive,
+        gender: RussianGender.GenderNeuter,
+        number: RussianNumber.NumberSingular,
+        person: RussianPerson.Person3rd
+    };
 }
-exports.applyTpl = applyTpl;
-class WordRepo {
-    constructor(lib) {
-        this.nouns = [];
-        this.verbs = [];
-        this.adjs = [];
-        this.substitutions = [];
-        this.lib = lib;
-        this.enFormat = "";
-        this.ruFormat = "";
-        this.tplGuid = "";
+function defaultAdjInflector() {
+    return {
+        gender: RussianGender.GenderMale,
+        number: RussianNumber.NumberSingular,
+        animacy: RussianAnimacy.AnimacyInanimate,
+        case: exports.caseNOM
+    };
+}
+var EnRuPhraseAxnType;
+(function (EnRuPhraseAxnType) {
+    EnRuPhraseAxnType[EnRuPhraseAxnType["DupNoun"] = 0] = "DupNoun";
+    EnRuPhraseAxnType[EnRuPhraseAxnType["DupVerb"] = 1] = "DupVerb";
+    EnRuPhraseAxnType[EnRuPhraseAxnType["DupAdj"] = 2] = "DupAdj";
+    EnRuPhraseAxnType[EnRuPhraseAxnType["MakePronoun"] = 3] = "MakePronoun";
+    EnRuPhraseAxnType[EnRuPhraseAxnType["RandomPronoun"] = 4] = "RandomPronoun";
+    EnRuPhraseAxnType[EnRuPhraseAxnType["DeclineNoun"] = 5] = "DeclineNoun";
+    EnRuPhraseAxnType[EnRuPhraseAxnType["ConjugateVerb"] = 6] = "ConjugateVerb";
+    EnRuPhraseAxnType[EnRuPhraseAxnType["AgreeVerbWithSubj"] = 7] = "AgreeVerbWithSubj";
+    EnRuPhraseAxnType[EnRuPhraseAxnType["AgreeAdjWithNoun"] = 8] = "AgreeAdjWithNoun";
+})(EnRuPhraseAxnType || (exports.EnRuPhraseAxnType = EnRuPhraseAxnType = {}));
+class EnRuPhraseTpl {
+    constructor(wp, subs = []) {
+        this.guid = (0, lib_1.guidGenerator)();
+        this.picker = wp;
+        this.actions = [];
+        this.subs = subs;
+        this.fmt = ["", ""];
     }
-    addV(v, tense = 0) {
-        var vInf = {
-            tense: tense,
-            gender: RussianGender.GenderNeuter,
-            number: RussianNumber.NumberSingular,
-            person: RussianPerson.Person1st
+    add(wdType, tags = "", selStrings = "") {
+        var tagsList = (tags.length === 0) ? [] : tags.split(',');
+        var selList = (selStrings.length === 0) ? [] : selStrings.split(',');
+        this.picker.addR(wdType, tagsList, selList);
+        return this;
+    }
+    dupV(id) {
+        this.actions.push({
+            type: EnRuPhraseAxnType.DupVerb,
+            wd1: id
+        });
+        return this;
+    }
+    dupN(id) {
+        this.actions.push({
+            type: EnRuPhraseAxnType.DupNoun,
+            wd1: id
+        });
+        return this;
+    }
+    dupA(id) {
+        this.actions.push({
+            type: EnRuPhraseAxnType.DupAdj,
+            wd1: id
+        });
+        return this;
+    }
+    pron(id) {
+        this.actions.push({
+            type: EnRuPhraseAxnType.MakePronoun,
+            wd1: id
+        });
+        return this;
+    }
+    rpron() {
+        this.actions.push({
+            type: EnRuPhraseAxnType.RandomPronoun
+        });
+        return this;
+    }
+    decl(id, c) {
+        this.actions.push({
+            type: EnRuPhraseAxnType.DeclineNoun,
+            wd1: id,
+            num1: c
+        });
+        return this;
+    }
+    conj(id, c) {
+        this.actions.push({
+            type: EnRuPhraseAxnType.ConjugateVerb,
+            wd1: id,
+            num1: c
+        });
+        return this;
+    }
+    agreeVN(idV, idN) {
+        this.actions.push({
+            type: EnRuPhraseAxnType.AgreeVerbWithSubj,
+            wd1: idV,
+            wd2: idN
+        });
+        return this;
+    }
+    agreeAN(idA, idN) {
+        this.actions.push({
+            type: EnRuPhraseAxnType.AgreeAdjWithNoun,
+            wd1: idA,
+            wd2: idN
+        });
+        return this;
+    }
+    format(fmt0, fmt1) {
+        this.fmt = [fmt0, fmt1];
+        return this;
+    }
+    runAction(stacks, axn) {
+        if (axn.type === EnRuPhraseAxnType.DupNoun) {
+            stacks.words["n"].push(stacks.words["n"][axn.wd1]);
+            stacks.inflectors["n"].push(stacks.inflectors["n"][axn.wd1]);
+            return stacks;
+        }
+        else if (axn.type === EnRuPhraseAxnType.DupVerb) {
+            stacks.words["v"].push(stacks.words["n"][axn.wd1]);
+            stacks.inflectors["v"].push(stacks.inflectors["n"][axn.wd1]);
+            return stacks;
+        }
+        else if (axn.type === EnRuPhraseAxnType.DupAdj) {
+            stacks.words["a"].push(stacks.words["n"][axn.wd1]);
+            stacks.inflectors["a"].push(stacks.inflectors["n"][axn.wd1]);
+            return stacks;
+        }
+        else if (axn.type === EnRuPhraseAxnType.MakePronoun) {
+            stacks.words["n"].push(getPronounFor(stacks.words["n"][axn.wd1]));
+            stacks.inflectors["n"].push(defaultNounInflector());
+            return stacks;
+        }
+        else if (axn.type === EnRuPhraseAxnType.RandomPronoun) {
+            var number = Math.floor(2 * Math.random());
+            var person = Math.floor(3 * Math.random());
+            var gender = (number === 0 && person == 2) ? Math.floor(3 * Math.random()) : 0;
+            var pron = getPronoun(number, person, gender, RussianAnimacy.AnimacyAnimate);
+            stacks.words["n"].push(pron);
+            stacks.inflectors["n"].push(defaultNounInflector());
+            return stacks;
+        }
+        else if (axn.type === EnRuPhraseAxnType.DeclineNoun) {
+            stacks.inflectors["n"][axn.wd1].case = axn.num1;
+            return stacks;
+        }
+        else if (axn.type === EnRuPhraseAxnType.ConjugateVerb) {
+            stacks.inflectors["v"][axn.wd1].tense = axn.num1;
+            return stacks;
+        }
+        else if (axn.type === EnRuPhraseAxnType.AgreeVerbWithSubj) {
+            var n = stacks.words["n"][axn.wd2];
+            var vInf = stacks.inflectors["v"][axn.wd1];
+            vInf.number = n.number;
+            vInf.person = n.person;
+            vInf.gender = n.gender;
+            return stacks;
+        }
+        else if (axn.type === EnRuPhraseAxnType.AgreeAdjWithNoun) {
+            var n = stacks.words["n"][axn.wd2];
+            var nInf = stacks.inflectors["n"][axn.wd2];
+            var aInf = stacks.inflectors["a"][axn.wd1];
+            aInf.number = n.number;
+            aInf.gender = n.gender;
+            aInf.animacy = n.animacy;
+            aInf.case = nInf.case;
+            return stacks;
+        }
+        return null;
+    }
+    next(wc) {
+        this.picker.checker = wc;
+        var words = this.picker.resolve();
+        var stacks = {
+            tplGuid: this.guid,
+            words: words,
+            inflectors: {
+                "n": words["n"].map((_) => defaultNounInflector()),
+                "v": words["v"].map((_) => defaultVerbInflector()),
+                "a": words["a"].map((_) => defaultAdjInflector())
+            }
         };
-        this.verbs.push([v, vInf]);
-        return this;
-    }
-    pickV(tense = 0, tags = []) {
-        var v = this.lib.pickVerb(tags);
-        this.addV(v, tense);
-        return this;
-    }
-    dupV(vId, tense = 0) {
-        // this.addV(objCloner(this.verbs[vId][0]), tense);
-        this.addV(this.verbs[vId][0], tense);
-        return this;
-    }
-    conjV(vId, nId, tense = 1) {
-        var n = this.nouns[nId][0];
-        var vInf = {
-            tense: tense,
-            gender: n.gender,
-            number: n.number,
-            person: n.person
-        };
-        this.verbs[vId][1] = vInf;
-        return this;
-    }
-    addN(n, cs = exports.caseNOM) {
-        var nInf = {
-            case: cs
-        };
-        this.nouns.push([n, nInf]);
-        return this;
-    }
-    pickN(tags = [], cs = exports.caseNOM) {
-        var n = this.lib.pickNoun(tags);
-        this.addN(n, cs);
-        return this;
-    }
-    addA(a, nId) {
-        var n = this.nouns[nId][0];
-        var nInf = this.nouns[nId][1];
-        var aInf = {
-            gender: n.gender,
-            number: n.number,
-            animacy: n.animacy,
-            case: nInf.case
-        };
-        this.adjs.push([a, aInf]);
-        return this;
-    }
-    pickA(nId) {
-        var n = this.nouns[nId][0];
-        this.addA(this.lib.pickAdj(n.tags), nId);
-        return this;
-    }
-    addPron(nId, cs = exports.caseNOM) {
-        var n = this.nouns[nId][0];
-        var pron = getPronoun(n.number, n.person, n.gender, n.animacy);
-        this.addN(pron, cs);
-        return this;
-    }
-    pickPron(tags = [], cs = exports.caseNOM) {
-        var pron = getPronoun(this.lib.pickNumber(), this.lib.pickPerson(), this.lib.pickGender());
-        pron.tags.push("agent");
-        tags.map((t) => pron.tags.push(t));
-        this.addN(pron, cs);
-        return this;
-    }
-    addSubj(n, vId) {
-        this.verbs[vId][1].gender = n.gender;
-        this.verbs[vId][1].number = n.number;
-        this.verbs[vId][1].person = n.person;
-        this.addN(n, RussianCase.CaseNominative);
-        return this;
-    }
-    pickSubj(vId, pronProb = 0.5) {
-        var tags = this.verbs[vId][0].subjTags;
-        var n;
-        if ((tags.includes("agent") || tags.includes("person")) && Math.random() < pronProb) {
-            n = getPronoun(this.lib.pickNumber(), this.lib.pickPerson(), this.lib.pickGender());
+        for (var i = 0; i < this.actions.length; i++) {
+            var axn = this.actions[i];
+            stacks = this.runAction(stacks, axn);
         }
-        else {
-            n = this.lib.pickNoun(tags);
-        }
-        this.addSubj(n, vId);
-        return this;
+        return stacks;
     }
-    pickObj(vId, pronProb = 0.5) {
-        var tags = this.verbs[vId][0].objTags;
-        var n;
-        if ((tags.includes("person")) && Math.random() < pronProb) {
-            n = getPronoun(this.lib.pickNumber(), this.lib.pickPerson(), this.lib.pickGender());
+    gen(stacks) {
+        var res = [this.fmt[0].slice(), this.fmt[1].slice()];
+        for (var i = 0; i < stacks.words["n"].length; i++) {
+            var n = stacks.words["n"][i];
+            var nInf = stacks.inflectors["n"][i];
+            var nRes = inflectNoun(n, nInf);
+            res[0] = res[0].replace(`{n${i}}`, nRes[0]);
+            res[1] = res[1].replace(`{n${i}}`, nRes[1]);
         }
-        else {
-            n = this.lib.pickNoun(tags);
+        for (var i = 0; i < stacks.words["v"].length; i++) {
+            var v = stacks.words["v"][i];
+            var vInf = stacks.inflectors["v"][i];
+            var vRes = inflectVerb(v, vInf);
+            res[0] = res[0].replace(`{v${i}}`, vRes[0]);
+            res[1] = res[1].replace(`{v${i}}`, vRes[1]);
         }
-        this.addN(n, RussianCase.CaseAccusative);
-        return this;
-    }
-    pickAxn(nId, tags = [], tense = 0) {
-        var n = this.nouns[nId][0];
-        var v = this.lib.pickVerbWithAnySubjTag(n.tags, tags);
-        this.addV(v, tense);
-        return this;
-    }
-    resolve() {
-        var enTpl = this.enFormat;
-        var ruTpl = this.ruFormat;
-        for (var i in this.nouns) {
-            var infl = inflectNoun(this.nouns[i][0], this.nouns[i][1]);
-            enTpl = enTpl.replace(`{n${i}}`, infl[0]);
-            ruTpl = ruTpl.replace(`{n${i}}`, infl[1]);
+        for (var i = 0; i < stacks.words["a"].length; i++) {
+            var a = stacks.words["a"][i];
+            var aInf = stacks.inflectors["a"][i];
+            var aRes = inflectAdj(a, aInf);
+            res[0] = res[0].replace(`{a${i}}`, aRes[0]);
+            res[1] = res[1].replace(`{a${i}}`, aRes[1]);
         }
-        for (var i in this.verbs) {
-            var infl = inflectVerb(this.verbs[i][0], this.verbs[i][1]);
-            enTpl = enTpl.replace(`{v${i}}`, infl[0]);
-            ruTpl = ruTpl.replace(`{v${i}}`, infl[1]);
+        for (var i = 0; i < this.subs.length; i++) { // Postprocessing with provided regexes
+            // console.log(this.subs[i]);
+            res[0] = res[0].replace(this.subs[i][0], this.subs[i][1]);
+            res[1] = res[1].replace(this.subs[i][0], this.subs[i][1]);
         }
-        for (var i in this.adjs) {
-            var infl = inflectAdj(this.adjs[i][0], this.adjs[i][1]);
-            enTpl = enTpl.replace(`{a${i}}`, infl[0]);
-            ruTpl = ruTpl.replace(`{a${i}}`, infl[1]);
-        }
-        for (var i in this.substitutions) {
-            var s = this.substitutions[i];
-            enTpl = enTpl.replace(s[0], s[1]);
-            ruTpl = ruTpl.replace(s[0], s[1]);
-        }
-        return [enTpl, ruTpl];
-    }
-    format(enTpl, ruTpl) {
-        this.enFormat = enTpl;
-        this.ruFormat = ruTpl;
-        return this;
-    }
-    sub(source, target) {
-        this.substitutions.push([source, target]);
+        return res;
     }
 }
-exports.WordRepo = WordRepo;
+exports.EnRuPhraseTpl = EnRuPhraseTpl;

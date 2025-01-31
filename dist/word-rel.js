@@ -1,13 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.WordPicker = exports.WordRelChecker = exports.WordHoleConnective = void 0;
+exports.WordPicker = exports.WordRelChecker = void 0;
 const weighted_rand_1 = require("./weighted-rand");
-// Logical connectives used for combining wordTags, for flexibility
-var WordHoleConnective;
-(function (WordHoleConnective) {
-    WordHoleConnective[WordHoleConnective["AND"] = 0] = "AND";
-    WordHoleConnective[WordHoleConnective["OR"] = 1] = "OR";
-})(WordHoleConnective || (exports.WordHoleConnective = WordHoleConnective = {}));
 class WordRelChecker {
     constructor(words) {
         this.allWords = words;
@@ -32,10 +26,7 @@ class WordRelChecker {
         }
     }
     canFillHole(w, h, ctx) {
-        if (h.wordTagsConnective === WordHoleConnective.AND)
-            return h.rels.every((r) => this.satisfiesRelation(w, r, ctx));
-        else
-            return h.rels.some((r) => this.satisfiesRelation(w, r, ctx));
+        return h.rels.every((r) => this.satisfiesRelation(w, r, ctx));
     }
     getGuessesForHole(h, ctx) {
         var choices = this.allWords[h.wordType];
@@ -58,8 +49,14 @@ class WordRelChecker {
     }
     tryFillHoles(hs, ctx, weight) {
         var d = undefined;
-        while (d === undefined)
+        var numAttempts = 0;
+        while (d === undefined) {
+            if (numAttempts > 20) {
+                throw new Error("Too many attempts.");
+            }
+            numAttempts++;
             d = this.fillHoles(hs, ctx, weight);
+        }
         return d;
     }
 }
@@ -70,8 +67,8 @@ class WordPicker {
         this.weights = weights;
         this.holes = [];
     }
-    add(t, tags, op = WordHoleConnective.AND) {
-        this.holes.push({ wordType: t, wordTagsConnective: op, wordTags: tags, rels: [] });
+    add(t, tags) {
+        this.holes.push({ wordType: t, wordTags: tags, rels: [] });
         return this;
     }
     processSelString(selString) {
@@ -81,7 +78,7 @@ class WordPicker {
         var wdInd = parseInt(selString1.filter((c) => "0123456789".includes(c)).join(''));
         return [wdType, wdInd, selStringParts[1]];
     }
-    addR(t, tags, selStrings, op = WordHoleConnective.AND) {
+    addR(t, tags, selStrings) {
         // each selString should look something like "x3:subj" or "y0:obj" etc.
         var selStrParts = selStrings.map(this.processSelString);
         var rels = selStrParts.map((p) => {
@@ -91,7 +88,7 @@ class WordPicker {
                 relWordId: p[1]
             };
         });
-        this.holes.push({ wordType: t, wordTags: tags, wordTagsConnective: op, rels: rels });
+        this.holes.push({ wordType: t, wordTags: tags, rels: rels });
         return this;
     }
     resolve() {
