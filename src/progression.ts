@@ -35,7 +35,7 @@ export function geometricProgressFGen(getter: (n: number) => [string, string, st
             }
         },
         state: {
-            geomParam: 0.5,
+            geomParam: 0.99,
             alpha: 0.95,
             maxnum: maxnum,
             scoreHist: []
