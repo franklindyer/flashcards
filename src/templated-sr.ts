@@ -12,6 +12,20 @@ type SRSettings = {
     punishmentCloneProb: number
 }
 
+enum CardType {
+    Template,
+    PoolValue
+}
+
+type NewCard = {
+    uuid: string,
+    type: CardType,
+    tplUuid?: string,
+    copies?: number,
+    poolType?: string,
+    poolValue?: any
+}
+
 type QueuedCard = {
     tplUuid: string,
     due: Date | null,

@@ -48,11 +48,19 @@ type SpacedRepSettings = {
     activeTags: string[]
 }
 
+type SpacedRepHistRecord = {
+    cardGuid: string,
+    due: Date | null,
+    answered: Date,
+    correct: boolean
+}
+
 type SpacedRepState = {
     settings: SpacedRepSettings,
     cards: SpacedRepCard[],
     studying: SpacedRepStudying,
-    leftInBatch: number
+    leftInBatch: number,
+    history: SpacedRepHistRecord[] 
 }
 
 type SpacedRepCardSeed = {
@@ -169,6 +177,7 @@ function spacedRepUpdater(
     switch(card.params.tag) {
         case "card":
             var cardState = st.cards[card.params.index];
+            var dueDate = cardState.due;
             if (correct) {
                 cardState.lastInterval = cardState.lastInterval * st.settings.correctFactor;
                 cardState.streak += 1;
@@ -191,6 +200,13 @@ function spacedRepUpdater(
             if (st.leftInBatch === 0) {
                 st.studying = SpacedRepStudying.NotStudying;
             }
+            var histItem: SpacedRepHistRecord = {
+                cardGuid: cardState.guid,
+                due: dueDate,
+                answered: new Date(),
+                correct: correct
+            };
+            st.history.push(histItem);
             break;
         case "menu":
             if (answer === "new") {
@@ -286,7 +302,8 @@ function spacedRepMenu(st: SpacedRepState): FlashcardGenEditor<SpacedRepState> {
             },
             studying: SpacedRepStudying.NotStudying,
             cards: cardsEditor.menuToState(),
-            leftInBatch: 0
+            leftInBatch: 0,
+            history: st.history
         }}
     }
 }
@@ -342,7 +359,8 @@ const sampleSpacedRepState: SpacedRepState = {
         makeSpacedRepCard("orange", ["naranja"], []),
         makeSpacedRepCard("fascism", ["fascismo"], [])
     ],
-    leftInBatch: 0
+    leftInBatch: 0,
+    history: []
 }
 
 defaultDecks["spaced-repetition-deck"] = {
