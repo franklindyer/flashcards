@@ -725,7 +725,7 @@ export async function runFlashcardController(slug: string) {
         var firstCorrect = true;
         var addedToHistory = false;
         guessBox!.onkeydown = (e) => {
-            if (e.key == "Enter") {
+            if (e.key == "Enter") {     // Check answer correctness
                 if (guessController(card)) {
                     var finalAnswer = guessBox.value;
                     guessBox.value = "";
@@ -742,6 +742,14 @@ export async function runFlashcardController(slug: string) {
                     guessBox.oninput = (e) => { guessBox.value = guessBox.value.slice(-1); guessBox.oninput = () => {}; }
                     firstCorrect = false;
                 }
+            } else if (e.key == "ArrowUp") { // Card correct override
+                slideCardOutOfDiv(card.uuid);
+                setTimeout(() => flashcardLoop(), 1000);
+                fgen.history.push([card, true]);
+                fgen.state = fgen.updater(true, "", card, fgen.state);
+                updateProgressBar(fgen);
+                saveDeckToLocal(reg!, reg!.decks[slug], fgen);
+                guessBox.value = "";
             }
         }
     }
