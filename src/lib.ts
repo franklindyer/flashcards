@@ -401,6 +401,7 @@ export function multipleEditors<a>(
     var addBtn = document.createElement("button");
     addBtn.classList.add("add-new-field-button");
     addBtn.textContent = "Add another";
+    var listDiv = document.createElement("div");
     var statePartDivs: HTMLElement[] = [];
     var statePartEditorFactory = (statePart: a) => {
         var newEditor = ed(statePart);
@@ -417,7 +418,7 @@ export function multipleEditors<a>(
             editor.element.removeChild(statePartDiv);
         }
         statePartDiv.appendChild(delBtn);
-        editor.element.appendChild(statePartDiv);
+        listDiv.prepend(statePartDiv);
         statePartDivs.push(statePartDiv);
     }
     addBtn.onclick = (e) => { statePartEditorFactory(empty); };
@@ -439,6 +440,7 @@ export function multipleEditors<a>(
         editor.element.appendChild(searchBar);
     }
 
+    editor.element.appendChild(listDiv);
     for (var i in ls) {
         statePartEditorFactory(ls[i])
     }
