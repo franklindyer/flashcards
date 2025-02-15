@@ -56,7 +56,9 @@ type SpacedRepHistRecord = {
     cardGuid: string,
     due: Date | null,
     answered: Date,
-    correct: boolean
+    interval: number,
+    correct: boolean,
+    answerSeconds: number,
 }
 
 type SpacedRepState = {
@@ -156,7 +158,9 @@ function spacedRepUpdater(
         cardGuid: cardState.guid,
         due: dueDate,
         answered: new Date(),
-        correct: correct
+        interval: cardState.lastInterval,
+        correct: correct,
+        answerSeconds: card.seconds!
     };
     st.history.push(histItem);
     return st;

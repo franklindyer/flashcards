@@ -3,6 +3,8 @@ import json
 import os
 import uuid
 
+import matplotlib.pyplot as plt
+
 # Format of 1 row of statistics of exported FD deck:
 # - ???
 # - ???
@@ -53,3 +55,13 @@ def deluxe_supplant_cards(deluxe_deck, sr_web_deck):
     f = open(sr_web_deck, 'w')
     f.write(json.dumps(sr_web))
     f.close()
+
+# DECK VISUALIZATION TOOLS
+
+def plot_due_times(cards):
+    xs = [c["due"] for c in cards]
+    plt.hist(xs, bins=100)
+
+def plot_intervals(cards):
+    xs = [c["interval"] for c in cards]
+    plt.hist(xs, bins=100)

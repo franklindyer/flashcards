@@ -10,7 +10,8 @@ export type Flashcard<a> = {
     answers: string[],
     hint: string,
     info?: string,
-    uuid: string
+    uuid: string,
+    seconds?: number
 }
 
 export type FlashcardTemplate<a, s> = {
@@ -725,33 +726,32 @@ export async function runFlashcardController(slug: string) {
         slideCardIntoDiv("flashcard-container", card);
         setHintText("");
         var firstCorrect = true;
-        var addedToHistory = false;
+        var timeStart = new Date().getTime();
         guessBox!.onkeydown = (e) => {
+            var cardIsDone = false;
             if (e.key == "Enter") {     // Check answer correctness
+                if (card.seconds === undefined)
+                    card.seconds = (new Date().getTime() - timeStart)/1000;
                 if (guessController(card)) {
-                    var finalAnswer = guessBox.value;
-                    guessBox.value = "";
-                    slideCardOutOfDiv(card.uuid);
-                    setTimeout(() => flashcardLoop(), 1000);
-                    if (!addedToHistory) {
-                        fgen.history.push([card, firstCorrect]);
-                        fgen.state = fgen.updater(firstCorrect, finalAnswer, card, fgen.state);
-                        addedToHistory = true;
-                        updateProgressBar(fgen);
-                        saveDeckToLocal(reg!, reg!.decks[slug], fgen);
-                    }
+                    cardIsDone = true;
                 } else {
                     guessBox.oninput = (e) => { guessBox.value = guessBox.value.slice(-1); guessBox.oninput = () => {}; }
                     firstCorrect = false;
                 }
             } else if (e.key == "ArrowUp") { // Card correct override
+                firstCorrect = true;
+                cardIsDone = true;
+            }
+            if (cardIsDone) {
+                var finalAnswer = guessBox.value;
+                guessBox.value = "";
                 slideCardOutOfDiv(card.uuid);
                 setTimeout(() => flashcardLoop(), 1000);
-                fgen.history.push([card, true]);
-                fgen.state = fgen.updater(true, "", card, fgen.state);
+
+                fgen.history.push([card, firstCorrect]);
+                fgen.state = fgen.updater(firstCorrect, finalAnswer, card, fgen.state);
                 updateProgressBar(fgen);
                 saveDeckToLocal(reg!, reg!.decks[slug], fgen);
-                guessBox.value = "";
             }
         }
     }
