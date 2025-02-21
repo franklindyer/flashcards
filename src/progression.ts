@@ -15,7 +15,9 @@ export type GeometricProgressState = {
     geomParam: number,
     alpha: number,
     maxnum: number,
-    scoreHist: number[]
+    scoreHist: number[],
+    dupeLimit: number,      // Minimum number of cards before the same card reappears
+    recentIds: number[]     // List of #dupeLimit most recent card IDs
 }
 
 export function geometricProgressFGen(getter: (n: number) => [string, string, string], maxnum: number):
@@ -38,14 +40,21 @@ export function geometricProgressFGen(getter: (n: number) => [string, string, st
             geomParam: 0.99,
             alpha: 0.95,
             maxnum: maxnum,
-            scoreHist: []
+            scoreHist: [],
+            dupeLimit: 10,
+            recentIds: []
         },
         seeder: function(st: GeometricProgressState) {
             var u = Math.random();
             // var geom = Math.floor(Math.log(u)/Math.log(st.geomParam));
             var p = st.geomParam;
             var logp = Math.log(p);
-            var geom = Math.floor((logp/(1-p) + lambertW0(u * (1-1/p) * Math.exp(logp/(1-p)) / logp))/logp);
+            var geom: number = 0;
+            var genGeom = true;
+            while (genGeom) {
+                var geom = Math.floor((logp/(1-p) + lambertW0(u * (1-1/p) * Math.exp(logp/(1-p)) / logp))/logp);
+                genGeom = st.recentIds.includes(geom);
+            }
             if (geom > maxnum) {
                 geom = Math.floor(Math.random() * maxnum);
             }
@@ -60,6 +69,8 @@ export function geometricProgressFGen(getter: (n: number) => [string, string, st
                     st.geomParam = 0.5;
             }
             st.scoreHist.push(Math.floor(-1/Math.log(st.geomParam)));
+            st.recentIds.unshift(card.params);
+            st.recentIds = st.recentIds.slice(st.dupeLimit);
             return st;
         },
         history: [],
@@ -91,7 +102,9 @@ export function geometricProgressFGen(getter: (n: number) => [string, string, st
                     geomParam: st.geomParam,
                     alpha: Math.pow(alphaEditor.menuToState(), 0.1),
                     maxnum: st.maxnum,
-                    scoreHist: st.scoreHist
+                    scoreHist: st.scoreHist,
+                    dupeLimit: st.dupeLimit,
+                    recentIds: st.recentIds
                 }}
             }
         }
