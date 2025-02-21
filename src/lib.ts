@@ -416,7 +416,7 @@ export function multipleEditors<a>(
         delBtn.onclick = (e) => {
             delete children[ind];
             delete statePartDivs[ind];
-            editor.element.removeChild(statePartDiv);
+            listDiv.removeChild(statePartDiv);
         }
         statePartDiv.appendChild(delBtn);
         listDiv.prepend(statePartDiv);
