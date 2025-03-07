@@ -43,7 +43,7 @@ var ruDataPromise = (filename: string, objname: string) =>
 
 var ruFreqlistPromise = () => 
     fetch("/data/ru-freqlist.csv").then((r) => r.text()).then((s) => {
-        var csvData = papa.parse(s, { header: false }).data;
+        var csvData = papa.parse(s, { header: false, delimiter: '\t' }).data;
         (<any>window)["ruFreqlist"] = (n: number) => {
             return csvData[n];
         }
@@ -254,7 +254,7 @@ var ruVerbQuizzer: FlashcardGenerator<[number, string, string], [string, string]
 var ruFreqQuizzer = geometricProgressFGen((n: number) => {
     var record = window.ruFreqlist(n);
     return [record[1], record[0].split(" ")[0].split("/")[0], `"${record[2].split('|')[1]}"`];
-}, 1000);
+}, 5000);
 
 function stpl(templ: string): (x: string) => string {
     return (y) => templ.replace("{}", y);

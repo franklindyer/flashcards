@@ -2168,80 +2168,6 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/*
 
 /***/ }),
 
-/***/ 180:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.W0_LIMIT_POINT = exports.lambertW0_SimpleIteration_GT_E = exports.lambertW0_SimpleIteration_LT_E = exports.lambertW0Log_xmodar = exports.lambertW0Log = exports.lambertW0_IaconoBoyd = exports.lambertW0 = void 0;
-var E = Math.E, PI = Math.PI, log = Math.log, exp = Math.exp;
-var W0_LIMIT_POINT = -(1 / E);
-exports.W0_LIMIT_POINT = W0_LIMIT_POINT;
-function lambertW0_IaconoBoyd(x, is_x_log) {
-    if (is_x_log === void 0) { is_x_log = false; }
-    if (is_x_log)
-        return lambertW0Log_xmodar(x);
-    if (x >= 0)
-        return lambertW0Log_xmodar(log(x));
-    var xE = x * E;
-    if (isNaN(x) || xE < -1)
-        return NaN;
-    var y = Math.pow((1 + xE), 0.5);
-    var z = log(y + 1);
-    var n = 1 + 1.1495613113577325 * y;
-    var d = 1 + 0.4549574005654461 * z;
-    var w = -1 + 2.036 * log(n / d);
-    w *= log(xE / w) / (1 + w);
-    w *= log(xE / w) / (1 + w);
-    w *= log(xE / w) / (1 + w);
-    return isNaN(w) ? (xE < -0.5 ? -1 : x) : w;
-}
-exports.lambertW0 = lambertW0_IaconoBoyd;
-exports.lambertW0_IaconoBoyd = lambertW0_IaconoBoyd;
-function lambertW0Log_xmodar(logX) {
-    if (isNaN(logX))
-        return NaN;
-    var logXE = +logX + 1;
-    var logY = 0.5 * log1Exp(logXE);
-    var logZ = log(log1Exp(logY));
-    var logN = log1Exp(0.13938040121300527 + logY);
-    var logD = log1Exp(-0.7875514895451805 + logZ);
-    var w = -1 + 2.036 * (logN - logD);
-    w *= (logXE - log(w)) / (1 + w);
-    w *= (logXE - log(w)) / (1 + w);
-    w *= (logXE - log(w)) / (1 + w);
-    return isNaN(w) ? (logXE < 0 ? 0 : Infinity) : w;
-}
-exports.lambertW0Log = lambertW0Log_xmodar;
-exports.lambertW0Log_xmodar = lambertW0Log_xmodar;
-function log1Exp(x) {
-    return x <= 0 ? Math.log1p(Math.exp(x)) : x + log1Exp(-x);
-}
-function lambertW0_SimpleIteration_LT_E(x, iterations) {
-    if (iterations === void 0) { iterations = 10; }
-    var y = 1;
-    do {
-        y = x / exp(y);
-        iterations--;
-    } while (iterations > 0);
-    return y;
-}
-exports.lambertW0_SimpleIteration_LT_E = lambertW0_SimpleIteration_LT_E;
-function lambertW0_SimpleIteration_GT_E(x, iterations) {
-    if (iterations === void 0) { iterations = 10; }
-    var y = 1;
-    do {
-        y = log(x) - log(y);
-        iterations--;
-    } while (iterations > 0);
-    return y;
-}
-exports.lambertW0_SimpleIteration_GT_E = lambertW0_SimpleIteration_GT_E;
-
-
-/***/ }),
-
 /***/ 809:
 /***/ (function(module, exports) {
 
@@ -4019,6 +3945,7 @@ function multipleEditors(ls, empty, ed, includeSearch = false, searchFxn = (s, x
     var addBtn = document.createElement("button");
     addBtn.classList.add("add-new-field-button");
     addBtn.textContent = "Add another";
+    var listDiv = document.createElement("div");
     var statePartDivs = [];
     var statePartEditorFactory = (statePart) => {
         var newEditor = ed(statePart);
@@ -4032,10 +3959,10 @@ function multipleEditors(ls, empty, ed, includeSearch = false, searchFxn = (s, x
         delBtn.onclick = (e) => {
             delete children[ind];
             delete statePartDivs[ind];
-            editor.element.removeChild(statePartDiv);
+            listDiv.removeChild(statePartDiv);
         };
         statePartDiv.appendChild(delBtn);
-        editor.element.appendChild(statePartDiv);
+        listDiv.prepend(statePartDiv);
         statePartDivs.push(statePartDiv);
     };
     addBtn.onclick = (e) => { statePartEditorFactory(empty); };
@@ -4056,6 +3983,7 @@ function multipleEditors(ls, empty, ed, includeSearch = false, searchFxn = (s, x
         };
         editor.element.appendChild(searchBar);
     }
+    editor.element.appendChild(listDiv);
     for (var i in ls) {
         statePartEditorFactory(ls[i]);
     }
@@ -4325,26 +4253,33 @@ function runFlashcardController(slug) {
             slideCardIntoDiv("flashcard-container", card);
             setHintText("");
             var firstCorrect = true;
-            var addedToHistory = false;
+            var timeStart = new Date().getTime();
             guessBox.onkeydown = (e) => {
-                if (e.key == "Enter") {
+                var cardIsDone = false;
+                if (e.key == "Enter") { // Check answer correctness
+                    if (card.seconds === undefined)
+                        card.seconds = (new Date().getTime() - timeStart) / 1000;
                     if (guessController(card)) {
-                        var finalAnswer = guessBox.value;
-                        guessBox.value = "";
-                        slideCardOutOfDiv(card.uuid);
-                        setTimeout(() => flashcardLoop(), 1000);
-                        if (!addedToHistory) {
-                            fgen.history.push([card, firstCorrect]);
-                            fgen.state = fgen.updater(firstCorrect, finalAnswer, card, fgen.state);
-                            addedToHistory = true;
-                            updateProgressBar(fgen);
-                            saveDeckToLocal(reg, reg.decks[slug], fgen);
-                        }
+                        cardIsDone = true;
                     }
                     else {
                         guessBox.oninput = (e) => { guessBox.value = guessBox.value.slice(-1); guessBox.oninput = () => { }; };
                         firstCorrect = false;
                     }
+                }
+                else if (e.key == "ArrowUp") { // Card correct override
+                    firstCorrect = true;
+                    cardIsDone = true;
+                }
+                if (cardIsDone) {
+                    var finalAnswer = guessBox.value;
+                    guessBox.value = "";
+                    slideCardOutOfDiv(card.uuid);
+                    setTimeout(() => flashcardLoop(), 1000);
+                    fgen.history.push([card, firstCorrect]);
+                    fgen.state = fgen.updater(firstCorrect, finalAnswer, card, fgen.state);
+                    updateProgressBar(fgen);
+                    saveDeckToLocal(reg, reg.decks[slug], fgen);
                 }
             };
         };
@@ -4370,7 +4305,58 @@ exports.indexedResources = {};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.geometricProgressFGen = geometricProgressFGen;
 const lib_1 = __webpack_require__(23);
-const lambert_w_function_1 = __webpack_require__(180);
+// Argument must be between -1/e and 0
+function lambertW1(y) {
+    var tol = 0.0001;
+    var f = (x) => Math.log(y / x);
+    var x = Math.log(-y);
+    while (Math.abs(x - f(x)) > tol) {
+        console.log("ITERATING");
+        x = f(x);
+    }
+    return x;
+}
+function findNaturalMaxUnimodal(f) {
+    var lower_bound = 0;
+    var upper_bound = 0;
+    while (f(upper_bound) < f(upper_bound + 1)) {
+        upper_bound = 2 * upper_bound + 1;
+    }
+    while ((upper_bound - lower_bound) > 1) {
+        var probe = Math.floor((upper_bound + lower_bound) / 2);
+        if (f(probe) < f(probe + 1)) {
+            lower_bound = probe + 1;
+        }
+        else {
+            upper_bound = probe;
+        }
+    }
+    return lower_bound;
+}
+function zipfLogLikelihood(knownWords, unknownWords, N, alpha) {
+    return (khat) => {
+        var cumLL = 0;
+        for (var i in knownWords) {
+            var n = knownWords[i];
+            cumLL = cumLL + Math.log(1 - (1 - alpha * (Math.log(n + 1) - Math.log(n)) / Math.log(N)) ^ khat);
+        }
+        for (var i in unknownWords) {
+            var n = unknownWords[i];
+            cumLL = cumLL + khat * Math.log(1 - alpha * (Math.log(n + 1) - Math.log(n)) / Math.log(N));
+        }
+        return cumLL;
+    };
+}
+function expectedWordsSeen(N, K, alpha) {
+    var cumsum = 0;
+    var n = 1;
+    while (n <= N) {
+        var d = 1 - Math.pow((1 - alpha * (Math.log(n + 1) - Math.log(n)) / Math.log(N + 1)), K);
+        cumsum += d;
+        n++;
+    }
+    return Math.floor(cumsum);
+}
 function geometricProgressFGen(getter, maxnum) {
     return {
         ftemp: {
@@ -4387,46 +4373,71 @@ function geometricProgressFGen(getter, maxnum) {
             }
         },
         state: {
-            geomParam: 0.5,
-            alpha: 0.95,
+            alpha: 0.1,
             maxnum: maxnum,
-            scoreHist: []
+            score: 2,
+            memory: 30,
+            recentCorrect: [],
+            recentIncorrect: []
         },
         seeder: function (st) {
             var u = Math.random();
-            // var geom = Math.floor(Math.log(u)/Math.log(st.geomParam));
-            var p = st.geomParam;
+            var p = 1 - 2 / (st.score + 1);
             var logp = Math.log(p);
-            var geom = Math.floor((logp / (1 - p) + (0, lambert_w_function_1.lambertW0)(u * (1 - 1 / p) * Math.exp(logp / (1 - p)) / logp)) / logp);
+            var geom = 0;
+            var genGeom = true;
+            while (genGeom) {
+                //                var geom = Math.floor((logp/(1-p) + lambertW0(u * (1-1/p) * Math.exp(logp/(1-p)) / logp))/logp);
+                var logpq = logp / (1 - p);
+                var geom = Math.floor((lambertW1((1 - u) * logpq * Math.exp(logpq)) - logpq) / logp);
+                genGeom = false;
+                // genGeom = st.recentCorrect.includes(geom) || st.recentIncorrect.includes(geom);
+            }
             if (geom > maxnum) {
                 geom = Math.floor(Math.random() * maxnum);
             }
+            console.log(geom);
             return geom;
         },
         updater: (correct, answer, card, st) => {
             if (correct) {
-                st.geomParam = (1 - st.alpha) + st.alpha * st.geomParam;
+                st.recentCorrect.unshift(card.params);
+                if (st.recentCorrect.length > st.memory)
+                    st.recentCorrect = st.recentCorrect.slice(0, st.memory);
+                st.recentCorrect = [...new Set(st.recentCorrect)];
+                st.recentIncorrect = st.recentIncorrect.filter((i) => i != card.params);
             }
             else {
-                st.geomParam = (st.geomParam - (1 - st.alpha)) / st.alpha;
-                if (st.geomParam < 0)
-                    st.geomParam = 0.5;
+                st.recentIncorrect.unshift(card.params);
+                if (st.recentIncorrect.length > st.memory)
+                    st.recentIncorrect = st.recentIncorrect.slice(0, st.memory);
+                st.recentIncorrect = [...new Set(st.recentIncorrect)];
+                st.recentCorrect = st.recentCorrect.filter((i) => i != card.params);
             }
-            st.scoreHist.push(Math.floor(-1 / Math.log(st.geomParam)));
+            if (st.recentCorrect.length == 0)
+                st.score = 2;
+            else if (st.recentIncorrect.length == 0)
+                st.score = 2 * Math.max(...st.recentCorrect) + 1;
+            else {
+                var llFxn = zipfLogLikelihood(st.recentCorrect, st.recentIncorrect, st.maxnum, st.alpha);
+                var mle = findNaturalMaxUnimodal(llFxn);
+                st.score = expectedWordsSeen(st.maxnum, mle, st.alpha);
+                // st.score = findNaturalMaxUnimodal(llFxn);
+                console.log(`MLE: ${mle}`);
+                console.log(`score: ${st.score}`);
+            }
+            st.score = Math.min(st.score, st.maxnum - 1);
             return st;
         },
         history: [],
         editor: (st) => {
             var contDiv = document.createElement("div");
-            var score = Math.floor(-1 / Math.log(st.geomParam));
-            contDiv.innerHTML = `<a>Current score: ${score}</a>`;
-            var alphaEditor = (0, lib_1.floatEditor)("Tuning parameter", Math.pow(st.alpha, 10), 0, 1);
-            contDiv.appendChild(alphaEditor.element);
+            contDiv.innerHTML = `<a>Current score: ${st.score}</a>`;
             var nearbyWordsHdr = document.createElement("h3");
             nearbyWordsHdr.textContent = "Words that are near your score level";
-            var wordsMin = Math.max(0, score - 5);
-            var wordsMax = Math.min(st.maxnum, score + 5);
-            var nearbyWords = [...Array(wordsMax - wordsMin).keys()].map((x) => getter(x + wordsMin));
+            var wordsMin = Math.max(5, Math.floor(st.score)) - 5;
+            var wordsMax = Math.min(st.maxnum - 1, Math.floor(st.score + 5));
+            var nearbyWords = [...Array(wordsMax - wordsMin - 1).keys()].map((x) => getter(x + wordsMin));
             contDiv.appendChild(nearbyWordsHdr);
             for (var i in nearbyWords) {
                 var wd = nearbyWords[i];
@@ -4440,10 +4451,12 @@ function geometricProgressFGen(getter, maxnum) {
                 element: contDiv,
                 menuToState: () => {
                     return {
-                        geomParam: st.geomParam,
-                        alpha: Math.pow(alphaEditor.menuToState(), 0.1),
+                        alpha: st.alpha,
+                        score: st.score,
                         maxnum: st.maxnum,
-                        scoreHist: st.scoreHist
+                        memory: st.memory,
+                        recentCorrect: st.recentCorrect,
+                        recentIncorrect: st.recentIncorrect
                     };
                 }
             };
@@ -4472,7 +4485,7 @@ var ruDataPromise = (filename, objname) => fetch(`/data/${filename}.csv`).then((
     };
 });
 var ruFreqlistPromise = () => fetch("/data/ru-freqlist.csv").then((r) => r.text()).then((s) => {
-    var csvData = papa.parse(s, { header: false }).data;
+    var csvData = papa.parse(s, { header: false, delimiter: '\t' }).data;
     window["ruFreqlist"] = (n) => {
         return csvData[n];
     };
@@ -4645,7 +4658,7 @@ var ruVerbQuizzer = {
 var ruFreqQuizzer = (0, progression_1.geometricProgressFGen)((n) => {
     var record = window.ruFreqlist(n);
     return [record[1], record[0].split(" ")[0].split("/")[0], `"${record[2].split('|')[1]}"`];
-}, 1000);
+}, 5000);
 function stpl(templ) {
     return (y) => templ.replace("{}", y);
 }
@@ -5738,14 +5751,7 @@ var SpacedRepStudying;
 (function (SpacedRepStudying) {
     SpacedRepStudying[SpacedRepStudying["NewCards"] = 1] = "NewCards";
     SpacedRepStudying[SpacedRepStudying["DueCards"] = 2] = "DueCards";
-    SpacedRepStudying[SpacedRepStudying["NotStudying"] = 3] = "NotStudying";
 })(SpacedRepStudying || (SpacedRepStudying = {}));
-function getSpacedRepCardSeed(ind) {
-    return {
-        tag: "card",
-        index: ind
-    };
-}
 function makeSpacedRepCard(prompt, answers, tags) {
     return {
         guid: (0, lib_1.guidGenerator)(),
@@ -5757,40 +5763,22 @@ function makeSpacedRepCard(prompt, answers, tags) {
         streak: 0
     };
 }
-function getSpacedRepMenuCard(menuSeed) {
-    if (menuSeed.numDue > 0 && menuSeed.numNew > 0) {
+function getFinishedCard(studying) {
+    if (studying === SpacedRepStudying.NewCards) {
         return {
-            params: menuSeed,
-            prompt: `${menuSeed.numDue} due cards and ${menuSeed.numNew} new cards. Enter 'due' to study due cards or 'new' to study new cards.`,
-            answers: ["due", "new"],
-            hint: "Please enter either 'due' or 'new'.",
-            uuid: (0, lib_1.guidGenerator)()
-        };
-    }
-    else if (menuSeed.numDue > 0) {
-        return {
-            params: menuSeed,
-            prompt: `No new cards. Studying ${menuSeed.numDue} due cards now.`,
-            answers: ["due"],
-            hint: "Type 'due' to continue.",
-            uuid: (0, lib_1.guidGenerator)()
-        };
-    }
-    else if (menuSeed.numNew > 0) {
-        return {
-            params: menuSeed,
-            prompt: `No due cards. Studying ${menuSeed.numNew} new cards now.`,
-            answers: ["new"],
-            hint: "Type 'new' to continue.",
+            params: { index: null, cardsLeft: -1 },
+            prompt: "No new cards!",
+            answers: [],
+            hint: "Can't you read? There are NO NEW CARDS to study.",
             uuid: (0, lib_1.guidGenerator)()
         };
     }
     else {
         return {
-            params: menuSeed,
-            prompt: "No due or new cards. Come back later!",
+            params: { index: null, cardsLeft: -1 },
+            prompt: "No due cards!",
             answers: [],
-            hint: "Seriously. Come back LATER.",
+            hint: "Can't you read? There are NO DUE CARDS to study.",
             uuid: (0, lib_1.guidGenerator)()
         };
     }
@@ -5801,78 +5789,63 @@ function pickNextSpacedRepSeed(st) {
     inds = inds.filter((i) => st.cards[i].tags.map(isActiveTag).includes(true));
     var newInds = inds.filter((i) => st.cards[i].due == null);
     var dueInds = inds.filter((i) => (st.cards[i].due != null && new Date(st.cards[i].due) < new Date()));
-    var menuCard = {
-        tag: "menu",
-        numDue: dueInds.length,
-        numNew: newInds.length
-    };
     var cardSeed;
     switch (st.studying) {
         case SpacedRepStudying.NewCards:
             if (newInds.length === 0) {
-                return menuCard;
+                return { index: null, cardsLeft: -1 };
             }
             var ind = Math.floor(Math.random() * newInds.length);
-            cardSeed = getSpacedRepCardSeed(newInds[ind]);
+            cardSeed = { index: newInds[ind], cardsLeft: newInds.length };
             break;
         case SpacedRepStudying.DueCards:
             if (dueInds.length === 0) {
-                return menuCard;
+                return { index: null, cardsLeft: -1 };
             }
             var ind = Math.floor(Math.random() * dueInds.length);
-            cardSeed = getSpacedRepCardSeed(dueInds[ind]);
+            cardSeed = { index: dueInds[ind], cardsLeft: dueInds.length };
             break;
-        case SpacedRepStudying.NotStudying:
-            return menuCard;
     }
-    cardSeed.info = `${st.leftInBatch} cards remain`;
     return cardSeed;
 }
 function spacedRepUpdater(correct, answer, card, st) {
-    switch (card.params.tag) {
-        case "card":
-            var cardState = st.cards[card.params.index];
-            if (correct) {
-                cardState.lastInterval = cardState.lastInterval * st.settings.correctFactor;
-                cardState.streak += 1;
-            }
-            else {
-                cardState.lastInterval = cardState.lastInterval * st.settings.incorrectFactor;
-                cardState.streak = 0;
-            }
-            if (cardState.due === null) {
-                if (cardState.streak >= 3) {
-                    cardState.lastInterval = st.settings.initialHours;
-                    cardState.due = new Date();
-                    cardState.due.setHours(cardState.due.getHours() + cardState.lastInterval);
-                }
-            }
-            else if (correct) {
-                cardState.due = new Date();
-                cardState.due.setHours(cardState.due.getHours() + cardState.lastInterval);
-            }
-            cardState.due = JSON.parse(JSON.stringify(cardState.due));
-            st.leftInBatch += -1;
-            if (st.leftInBatch === 0) {
-                st.studying = SpacedRepStudying.NotStudying;
-            }
-            break;
-        case "menu":
-            if (answer === "new") {
-                st.leftInBatch = st.settings.newBatchSize;
-                st.studying = SpacedRepStudying.NewCards;
-            }
-            else if (answer === "due") {
-                st.leftInBatch = st.settings.dueBatchSize;
-                st.studying = SpacedRepStudying.DueCards;
-            }
-            break;
+    var cardState = st.cards[card.params.index];
+    var dueDate = cardState.due;
+    if (correct) {
+        cardState.lastInterval = cardState.lastInterval * st.settings.correctFactor;
+        cardState.streak += 1;
     }
+    else {
+        cardState.lastInterval = cardState.lastInterval * st.settings.incorrectFactor;
+        cardState.streak = 0;
+    }
+    if (cardState.due === null) {
+        if (cardState.streak >= 3) {
+            cardState.lastInterval = st.settings.initialHours;
+            cardState.due = new Date();
+            cardState.due.setHours(cardState.due.getHours() + cardState.lastInterval);
+        }
+    }
+    else if (correct) {
+        cardState.due = new Date();
+        cardState.due.setHours(cardState.due.getHours() + cardState.lastInterval);
+    }
+    cardState.due = JSON.parse(JSON.stringify(cardState.due));
+    var histItem = {
+        cardGuid: cardState.guid,
+        due: dueDate,
+        answered: new Date(),
+        interval: cardState.lastInterval,
+        correct: correct,
+        answerSeconds: card.seconds
+    };
+    st.history.push(histItem);
     return st;
 }
 function spacedRepMenu(st) {
     var contDiv = document.createElement("div");
     var conf = st.settings;
+    var studyingNewEditor = (0, lib_1.boolEditor)("Studying new cards?", st.studying === SpacedRepStudying.NewCards);
     var initHoursEditor = (0, lib_1.scrollNumberEditor)("Initial interval (hours): ", conf.initialHours, 1, 240, 1);
     var correctFactor = (0, lib_1.scrollNumberEditor)("Correct factor: ", conf.correctFactor, 1, 10, 0.1);
     var incorrectFactor = (0, lib_1.scrollNumberEditor)("Incorrect factor: ", conf.incorrectFactor, 0, 1, 0.01);
@@ -5925,6 +5898,7 @@ function spacedRepMenu(st) {
     cardsEditorTitle.textContent = "Cards";
     cardsEditor.element.prepend(cardsEditorTitle);
     var components = [
+        studyingNewEditor.element,
         initHoursEditor.element,
         correctFactor.element,
         incorrectFactor.element,
@@ -5944,9 +5918,10 @@ function spacedRepMenu(st) {
                     dueBatchSize: 20,
                     activeTags: activeTagsEditor.menuToState().flat()
                 },
-                studying: SpacedRepStudying.NotStudying,
+                studying: studyingNewEditor.menuToState() ? SpacedRepStudying.NewCards : SpacedRepStudying.DueCards,
                 cards: cardsEditor.menuToState(),
-                leftInBatch: 0
+                leftInBatch: 0,
+                history: st.history
             };
         }
     };
@@ -5955,21 +5930,17 @@ function spacedRepGen(st) {
     var gen = {
         ftemp: {
             generator: function (seed, st) {
-                switch (seed.tag) {
-                    case "card":
-                        var card = st.cards[seed.index];
-                        return {
-                            params: seed,
-                            prompt: card.prompt,
-                            answers: card.answers,
-                            hint: card.answers[0],
-                            info: seed.info,
-                            uuid: (0, lib_1.guidGenerator)()
-                        };
-                    case "menu":
-                        return getSpacedRepMenuCard(seed);
-                }
-                return null;
+                if (seed.index === null)
+                    return getFinishedCard(st.studying);
+                var card = st.cards[seed.index];
+                return {
+                    params: seed,
+                    prompt: card.prompt,
+                    answers: card.answers,
+                    hint: card.answers[0],
+                    info: (seed.cardsLeft >= 0) ? `${seed.cardsLeft} cards remain` : "",
+                    uuid: (0, lib_1.guidGenerator)()
+                };
             }
         },
         state: st,
@@ -5989,7 +5960,7 @@ const sampleSpacedRepState = {
         dueBatchSize: 20,
         activeTags: ["all"]
     },
-    studying: SpacedRepStudying.NotStudying,
+    studying: SpacedRepStudying.NewCards,
     cards: [
         makeSpacedRepCard("boy", ["niño", "chico"], []),
         makeSpacedRepCard("dog", ["perro"], ["animal"]),
@@ -6000,7 +5971,7 @@ const sampleSpacedRepState = {
         makeSpacedRepCard("orange", ["naranja"], []),
         makeSpacedRepCard("fascism", ["fascismo"], [])
     ],
-    leftInBatch: 0
+    history: []
 };
 lib_1.defaultDecks["spaced-repetition-deck"] = {
     name: "Spaced repetition quizzer",

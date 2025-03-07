@@ -322,6 +322,7 @@ function multipleEditors(ls, empty, ed, includeSearch = false, searchFxn = (s, x
     var addBtn = document.createElement("button");
     addBtn.classList.add("add-new-field-button");
     addBtn.textContent = "Add another";
+    var listDiv = document.createElement("div");
     var statePartDivs = [];
     var statePartEditorFactory = (statePart) => {
         var newEditor = ed(statePart);
@@ -335,10 +336,10 @@ function multipleEditors(ls, empty, ed, includeSearch = false, searchFxn = (s, x
         delBtn.onclick = (e) => {
             delete children[ind];
             delete statePartDivs[ind];
-            editor.element.removeChild(statePartDiv);
+            listDiv.removeChild(statePartDiv);
         };
         statePartDiv.appendChild(delBtn);
-        editor.element.appendChild(statePartDiv);
+        listDiv.prepend(statePartDiv);
         statePartDivs.push(statePartDiv);
     };
     addBtn.onclick = (e) => { statePartEditorFactory(empty); };
@@ -359,6 +360,7 @@ function multipleEditors(ls, empty, ed, includeSearch = false, searchFxn = (s, x
         };
         editor.element.appendChild(searchBar);
     }
+    editor.element.appendChild(listDiv);
     for (var i in ls) {
         statePartEditorFactory(ls[i]);
     }
@@ -632,26 +634,33 @@ function runFlashcardController(slug) {
             slideCardIntoDiv("flashcard-container", card);
             setHintText("");
             var firstCorrect = true;
-            var addedToHistory = false;
+            var timeStart = new Date().getTime();
             guessBox.onkeydown = (e) => {
-                if (e.key == "Enter") {
+                var cardIsDone = false;
+                if (e.key == "Enter") { // Check answer correctness
+                    if (card.seconds === undefined)
+                        card.seconds = (new Date().getTime() - timeStart) / 1000;
                     if (guessController(card)) {
-                        var finalAnswer = guessBox.value;
-                        guessBox.value = "";
-                        slideCardOutOfDiv(card.uuid);
-                        setTimeout(() => flashcardLoop(), 1000);
-                        if (!addedToHistory) {
-                            fgen.history.push([card, firstCorrect]);
-                            fgen.state = fgen.updater(firstCorrect, finalAnswer, card, fgen.state);
-                            addedToHistory = true;
-                            updateProgressBar(fgen);
-                            saveDeckToLocal(reg, reg.decks[slug], fgen);
-                        }
+                        cardIsDone = true;
                     }
                     else {
                         guessBox.oninput = (e) => { guessBox.value = guessBox.value.slice(-1); guessBox.oninput = () => { }; };
                         firstCorrect = false;
                     }
+                }
+                else if (e.key == "ArrowUp") { // Card correct override
+                    firstCorrect = true;
+                    cardIsDone = true;
+                }
+                if (cardIsDone) {
+                    var finalAnswer = guessBox.value;
+                    guessBox.value = "";
+                    slideCardOutOfDiv(card.uuid);
+                    setTimeout(() => flashcardLoop(), 1000);
+                    fgen.history.push([card, firstCorrect]);
+                    fgen.state = fgen.updater(firstCorrect, finalAnswer, card, fgen.state);
+                    updateProgressBar(fgen);
+                    saveDeckToLocal(reg, reg.decks[slug], fgen);
                 }
             };
         };

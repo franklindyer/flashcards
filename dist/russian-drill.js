@@ -12,7 +12,7 @@ var ruDataPromise = (filename, objname) => fetch(`/data/${filename}.csv`).then((
     };
 });
 var ruFreqlistPromise = () => fetch("/data/ru-freqlist.csv").then((r) => r.text()).then((s) => {
-    var csvData = papa.parse(s, { header: false }).data;
+    var csvData = papa.parse(s, { header: false, delimiter: '\t' }).data;
     window["ruFreqlist"] = (n) => {
         return csvData[n];
     };
@@ -185,7 +185,7 @@ var ruVerbQuizzer = {
 var ruFreqQuizzer = (0, progression_1.geometricProgressFGen)((n) => {
     var record = window.ruFreqlist(n);
     return [record[1], record[0].split(" ")[0].split("/")[0], `"${record[2].split('|')[1]}"`];
-}, 1000);
+}, 5000);
 function stpl(templ) {
     return (y) => templ.replace("{}", y);
 }

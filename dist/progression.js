@@ -2,7 +2,58 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.geometricProgressFGen = void 0;
 const lib_1 = require("./lib");
-const lambert_w_function_1 = require("lambert-w-function");
+// Argument must be between -1/e and 0
+function lambertW1(y) {
+    var tol = 0.0001;
+    var f = (x) => Math.log(y / x);
+    var x = Math.log(-y);
+    while (Math.abs(x - f(x)) > tol) {
+        console.log("ITERATING");
+        x = f(x);
+    }
+    return x;
+}
+function findNaturalMaxUnimodal(f) {
+    var lower_bound = 0;
+    var upper_bound = 0;
+    while (f(upper_bound) < f(upper_bound + 1)) {
+        upper_bound = 2 * upper_bound + 1;
+    }
+    while ((upper_bound - lower_bound) > 1) {
+        var probe = Math.floor((upper_bound + lower_bound) / 2);
+        if (f(probe) < f(probe + 1)) {
+            lower_bound = probe + 1;
+        }
+        else {
+            upper_bound = probe;
+        }
+    }
+    return lower_bound;
+}
+function zipfLogLikelihood(knownWords, unknownWords, N, alpha) {
+    return (khat) => {
+        var cumLL = 0;
+        for (var i in knownWords) {
+            var n = knownWords[i];
+            cumLL = cumLL + Math.log(1 - (1 - alpha * (Math.log(n + 1) - Math.log(n)) / Math.log(N)) ^ khat);
+        }
+        for (var i in unknownWords) {
+            var n = unknownWords[i];
+            cumLL = cumLL + khat * Math.log(1 - alpha * (Math.log(n + 1) - Math.log(n)) / Math.log(N));
+        }
+        return cumLL;
+    };
+}
+function expectedWordsSeen(N, K, alpha) {
+    var cumsum = 0;
+    var n = 1;
+    while (n <= N) {
+        var d = 1 - Math.pow((1 - alpha * (Math.log(n + 1) - Math.log(n)) / Math.log(N + 1)), K);
+        cumsum += d;
+        n++;
+    }
+    return Math.floor(cumsum);
+}
 function geometricProgressFGen(getter, maxnum) {
     return {
         ftemp: {
@@ -19,46 +70,71 @@ function geometricProgressFGen(getter, maxnum) {
             }
         },
         state: {
-            geomParam: 0.5,
-            alpha: 0.95,
+            alpha: 0.1,
             maxnum: maxnum,
-            scoreHist: []
+            score: 2,
+            memory: 30,
+            recentCorrect: [],
+            recentIncorrect: []
         },
         seeder: function (st) {
             var u = Math.random();
-            // var geom = Math.floor(Math.log(u)/Math.log(st.geomParam));
-            var p = st.geomParam;
+            var p = 1 - 2 / (st.score + 1);
             var logp = Math.log(p);
-            var geom = Math.floor((logp / (1 - p) + (0, lambert_w_function_1.lambertW0)(u * (1 - 1 / p) * Math.exp(logp / (1 - p)) / logp)) / logp);
+            var geom = 0;
+            var genGeom = true;
+            while (genGeom) {
+                //                var geom = Math.floor((logp/(1-p) + lambertW0(u * (1-1/p) * Math.exp(logp/(1-p)) / logp))/logp);
+                var logpq = logp / (1 - p);
+                var geom = Math.floor((lambertW1((1 - u) * logpq * Math.exp(logpq)) - logpq) / logp);
+                genGeom = false;
+                // genGeom = st.recentCorrect.includes(geom) || st.recentIncorrect.includes(geom);
+            }
             if (geom > maxnum) {
                 geom = Math.floor(Math.random() * maxnum);
             }
+            console.log(geom);
             return geom;
         },
         updater: (correct, answer, card, st) => {
             if (correct) {
-                st.geomParam = (1 - st.alpha) + st.alpha * st.geomParam;
+                st.recentCorrect.unshift(card.params);
+                if (st.recentCorrect.length > st.memory)
+                    st.recentCorrect = st.recentCorrect.slice(0, st.memory);
+                st.recentCorrect = [...new Set(st.recentCorrect)];
+                st.recentIncorrect = st.recentIncorrect.filter((i) => i != card.params);
             }
             else {
-                st.geomParam = (st.geomParam - (1 - st.alpha)) / st.alpha;
-                if (st.geomParam < 0)
-                    st.geomParam = 0.5;
+                st.recentIncorrect.unshift(card.params);
+                if (st.recentIncorrect.length > st.memory)
+                    st.recentIncorrect = st.recentIncorrect.slice(0, st.memory);
+                st.recentIncorrect = [...new Set(st.recentIncorrect)];
+                st.recentCorrect = st.recentCorrect.filter((i) => i != card.params);
             }
-            st.scoreHist.push(Math.floor(-1 / Math.log(st.geomParam)));
+            if (st.recentCorrect.length == 0)
+                st.score = 2;
+            else if (st.recentIncorrect.length == 0)
+                st.score = 2 * Math.max(...st.recentCorrect) + 1;
+            else {
+                var llFxn = zipfLogLikelihood(st.recentCorrect, st.recentIncorrect, st.maxnum, st.alpha);
+                var mle = findNaturalMaxUnimodal(llFxn);
+                st.score = expectedWordsSeen(st.maxnum, mle, st.alpha);
+                // st.score = findNaturalMaxUnimodal(llFxn);
+                console.log(`MLE: ${mle}`);
+                console.log(`score: ${st.score}`);
+            }
+            st.score = Math.min(st.score, st.maxnum - 1);
             return st;
         },
         history: [],
         editor: (st) => {
             var contDiv = document.createElement("div");
-            var score = Math.floor(-1 / Math.log(st.geomParam));
-            contDiv.innerHTML = `<a>Current score: ${score}</a>`;
-            var alphaEditor = (0, lib_1.floatEditor)("Tuning parameter", Math.pow(st.alpha, 10), 0, 1);
-            contDiv.appendChild(alphaEditor.element);
+            contDiv.innerHTML = `<a>Current score: ${st.score}</a>`;
             var nearbyWordsHdr = document.createElement("h3");
             nearbyWordsHdr.textContent = "Words that are near your score level";
-            var wordsMin = Math.max(0, score - 5);
-            var wordsMax = Math.min(st.maxnum, score + 5);
-            var nearbyWords = [...Array(wordsMax - wordsMin).keys()].map((x) => getter(x + wordsMin));
+            var wordsMin = Math.max(5, Math.floor(st.score)) - 5;
+            var wordsMax = Math.min(st.maxnum - 1, Math.floor(st.score + 5));
+            var nearbyWords = [...Array(wordsMax - wordsMin - 1).keys()].map((x) => getter(x + wordsMin));
             contDiv.appendChild(nearbyWordsHdr);
             for (var i in nearbyWords) {
                 var wd = nearbyWords[i];
@@ -72,10 +148,12 @@ function geometricProgressFGen(getter, maxnum) {
                 element: contDiv,
                 menuToState: () => {
                     return {
-                        geomParam: st.geomParam,
-                        alpha: Math.pow(alphaEditor.menuToState(), 0.1),
+                        alpha: st.alpha,
+                        score: st.score,
                         maxnum: st.maxnum,
-                        scoreHist: st.scoreHist
+                        memory: st.memory,
+                        recentCorrect: st.recentCorrect,
+                        recentIncorrect: st.recentIncorrect
                     };
                 }
             };

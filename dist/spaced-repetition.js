@@ -10,14 +10,7 @@ var SpacedRepStudying;
 (function (SpacedRepStudying) {
     SpacedRepStudying[SpacedRepStudying["NewCards"] = 1] = "NewCards";
     SpacedRepStudying[SpacedRepStudying["DueCards"] = 2] = "DueCards";
-    SpacedRepStudying[SpacedRepStudying["NotStudying"] = 3] = "NotStudying";
 })(SpacedRepStudying || (SpacedRepStudying = {}));
-function getSpacedRepCardSeed(ind) {
-    return {
-        tag: "card",
-        index: ind
-    };
-}
 function makeSpacedRepCard(prompt, answers, tags) {
     return {
         guid: (0, lib_1.guidGenerator)(),
@@ -29,40 +22,22 @@ function makeSpacedRepCard(prompt, answers, tags) {
         streak: 0
     };
 }
-function getSpacedRepMenuCard(menuSeed) {
-    if (menuSeed.numDue > 0 && menuSeed.numNew > 0) {
+function getFinishedCard(studying) {
+    if (studying === SpacedRepStudying.NewCards) {
         return {
-            params: menuSeed,
-            prompt: `${menuSeed.numDue} due cards and ${menuSeed.numNew} new cards. Enter 'due' to study due cards or 'new' to study new cards.`,
-            answers: ["due", "new"],
-            hint: "Please enter either 'due' or 'new'.",
-            uuid: (0, lib_1.guidGenerator)()
-        };
-    }
-    else if (menuSeed.numDue > 0) {
-        return {
-            params: menuSeed,
-            prompt: `No new cards. Studying ${menuSeed.numDue} due cards now.`,
-            answers: ["due"],
-            hint: "Type 'due' to continue.",
-            uuid: (0, lib_1.guidGenerator)()
-        };
-    }
-    else if (menuSeed.numNew > 0) {
-        return {
-            params: menuSeed,
-            prompt: `No due cards. Studying ${menuSeed.numNew} new cards now.`,
-            answers: ["new"],
-            hint: "Type 'new' to continue.",
+            params: { index: null, cardsLeft: -1 },
+            prompt: "No new cards!",
+            answers: [],
+            hint: "Can't you read? There are NO NEW CARDS to study.",
             uuid: (0, lib_1.guidGenerator)()
         };
     }
     else {
         return {
-            params: menuSeed,
-            prompt: "No due or new cards. Come back later!",
+            params: { index: null, cardsLeft: -1 },
+            prompt: "No due cards!",
             answers: [],
-            hint: "Seriously. Come back LATER.",
+            hint: "Can't you read? There are NO DUE CARDS to study.",
             uuid: (0, lib_1.guidGenerator)()
         };
     }
@@ -73,78 +48,63 @@ function pickNextSpacedRepSeed(st) {
     inds = inds.filter((i) => st.cards[i].tags.map(isActiveTag).includes(true));
     var newInds = inds.filter((i) => st.cards[i].due == null);
     var dueInds = inds.filter((i) => (st.cards[i].due != null && new Date(st.cards[i].due) < new Date()));
-    var menuCard = {
-        tag: "menu",
-        numDue: dueInds.length,
-        numNew: newInds.length
-    };
     var cardSeed;
     switch (st.studying) {
         case SpacedRepStudying.NewCards:
             if (newInds.length === 0) {
-                return menuCard;
+                return { index: null, cardsLeft: -1 };
             }
             var ind = Math.floor(Math.random() * newInds.length);
-            cardSeed = getSpacedRepCardSeed(newInds[ind]);
+            cardSeed = { index: newInds[ind], cardsLeft: newInds.length };
             break;
         case SpacedRepStudying.DueCards:
             if (dueInds.length === 0) {
-                return menuCard;
+                return { index: null, cardsLeft: -1 };
             }
             var ind = Math.floor(Math.random() * dueInds.length);
-            cardSeed = getSpacedRepCardSeed(dueInds[ind]);
+            cardSeed = { index: dueInds[ind], cardsLeft: dueInds.length };
             break;
-        case SpacedRepStudying.NotStudying:
-            return menuCard;
     }
-    cardSeed.info = `${st.leftInBatch} cards remain`;
     return cardSeed;
 }
 function spacedRepUpdater(correct, answer, card, st) {
-    switch (card.params.tag) {
-        case "card":
-            var cardState = st.cards[card.params.index];
-            if (correct) {
-                cardState.lastInterval = cardState.lastInterval * st.settings.correctFactor;
-                cardState.streak += 1;
-            }
-            else {
-                cardState.lastInterval = cardState.lastInterval * st.settings.incorrectFactor;
-                cardState.streak = 0;
-            }
-            if (cardState.due === null) {
-                if (cardState.streak >= 3) {
-                    cardState.lastInterval = st.settings.initialHours;
-                    cardState.due = new Date();
-                    cardState.due.setHours(cardState.due.getHours() + cardState.lastInterval);
-                }
-            }
-            else if (correct) {
-                cardState.due = new Date();
-                cardState.due.setHours(cardState.due.getHours() + cardState.lastInterval);
-            }
-            cardState.due = JSON.parse(JSON.stringify(cardState.due));
-            st.leftInBatch += -1;
-            if (st.leftInBatch === 0) {
-                st.studying = SpacedRepStudying.NotStudying;
-            }
-            break;
-        case "menu":
-            if (answer === "new") {
-                st.leftInBatch = st.settings.newBatchSize;
-                st.studying = SpacedRepStudying.NewCards;
-            }
-            else if (answer === "due") {
-                st.leftInBatch = st.settings.dueBatchSize;
-                st.studying = SpacedRepStudying.DueCards;
-            }
-            break;
+    var cardState = st.cards[card.params.index];
+    var dueDate = cardState.due;
+    if (correct) {
+        cardState.lastInterval = cardState.lastInterval * st.settings.correctFactor;
+        cardState.streak += 1;
     }
+    else {
+        cardState.lastInterval = cardState.lastInterval * st.settings.incorrectFactor;
+        cardState.streak = 0;
+    }
+    if (cardState.due === null) {
+        if (cardState.streak >= 3) {
+            cardState.lastInterval = st.settings.initialHours;
+            cardState.due = new Date();
+            cardState.due.setHours(cardState.due.getHours() + cardState.lastInterval);
+        }
+    }
+    else if (correct) {
+        cardState.due = new Date();
+        cardState.due.setHours(cardState.due.getHours() + cardState.lastInterval);
+    }
+    cardState.due = JSON.parse(JSON.stringify(cardState.due));
+    var histItem = {
+        cardGuid: cardState.guid,
+        due: dueDate,
+        answered: new Date(),
+        interval: cardState.lastInterval,
+        correct: correct,
+        answerSeconds: card.seconds
+    };
+    st.history.push(histItem);
     return st;
 }
 function spacedRepMenu(st) {
     var contDiv = document.createElement("div");
     var conf = st.settings;
+    var studyingNewEditor = (0, lib_1.boolEditor)("Studying new cards?", st.studying === SpacedRepStudying.NewCards);
     var initHoursEditor = (0, lib_1.scrollNumberEditor)("Initial interval (hours): ", conf.initialHours, 1, 240, 1);
     var correctFactor = (0, lib_1.scrollNumberEditor)("Correct factor: ", conf.correctFactor, 1, 10, 0.1);
     var incorrectFactor = (0, lib_1.scrollNumberEditor)("Incorrect factor: ", conf.incorrectFactor, 0, 1, 0.01);
@@ -197,6 +157,7 @@ function spacedRepMenu(st) {
     cardsEditorTitle.textContent = "Cards";
     cardsEditor.element.prepend(cardsEditorTitle);
     var components = [
+        studyingNewEditor.element,
         initHoursEditor.element,
         correctFactor.element,
         incorrectFactor.element,
@@ -216,9 +177,10 @@ function spacedRepMenu(st) {
                     dueBatchSize: 20,
                     activeTags: activeTagsEditor.menuToState().flat()
                 },
-                studying: SpacedRepStudying.NotStudying,
+                studying: studyingNewEditor.menuToState() ? SpacedRepStudying.NewCards : SpacedRepStudying.DueCards,
                 cards: cardsEditor.menuToState(),
-                leftInBatch: 0
+                leftInBatch: 0,
+                history: st.history
             };
         }
     };
@@ -227,21 +189,17 @@ function spacedRepGen(st) {
     var gen = {
         ftemp: {
             generator: function (seed, st) {
-                switch (seed.tag) {
-                    case "card":
-                        var card = st.cards[seed.index];
-                        return {
-                            params: seed,
-                            prompt: card.prompt,
-                            answers: card.answers,
-                            hint: card.answers[0],
-                            info: seed.info,
-                            uuid: (0, lib_1.guidGenerator)()
-                        };
-                    case "menu":
-                        return getSpacedRepMenuCard(seed);
-                }
-                return null;
+                if (seed.index === null)
+                    return getFinishedCard(st.studying);
+                var card = st.cards[seed.index];
+                return {
+                    params: seed,
+                    prompt: card.prompt,
+                    answers: card.answers,
+                    hint: card.answers[0],
+                    info: (seed.cardsLeft >= 0) ? `${seed.cardsLeft} cards remain` : "",
+                    uuid: (0, lib_1.guidGenerator)()
+                };
             }
         },
         state: st,
@@ -261,7 +219,7 @@ const sampleSpacedRepState = {
         dueBatchSize: 20,
         activeTags: ["all"]
     },
-    studying: SpacedRepStudying.NotStudying,
+    studying: SpacedRepStudying.NewCards,
     cards: [
         makeSpacedRepCard("boy", ["niño", "chico"], []),
         makeSpacedRepCard("dog", ["perro"], ["animal"]),
@@ -272,7 +230,7 @@ const sampleSpacedRepState = {
         makeSpacedRepCard("orange", ["naranja"], []),
         makeSpacedRepCard("fascism", ["fascismo"], [])
     ],
-    leftInBatch: 0
+    history: []
 };
 lib_1.defaultDecks["spaced-repetition-deck"] = {
     name: "Spaced repetition quizzer",
