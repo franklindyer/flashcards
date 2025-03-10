@@ -4377,12 +4377,13 @@ function geometricProgressFGen(getter, maxnum) {
             maxnum: maxnum,
             score: 2,
             memory: 30,
+            levelModifier: 0.5,
             recentCorrect: [],
             recentIncorrect: []
         },
         seeder: function (st) {
             var u = Math.random();
-            var p = 1 - 2 / (st.score + 1);
+            var p = 1 - 2 / (st.levelModifier * st.score + 1);
             var logp = Math.log(p);
             var geom = 0;
             var genGeom = true;
@@ -4433,6 +4434,19 @@ function geometricProgressFGen(getter, maxnum) {
         editor: (st) => {
             var contDiv = document.createElement("div");
             contDiv.innerHTML = `<a>Current score: ${st.score}</a>`;
+            var modifierEditor = (0, lib_1.floatEditor)("Difficulty modifier: ", st.levelModifier, 0.1, 1.5);
+            contDiv.appendChild(modifierEditor.element);
+            var wrongWordsHdr = document.createElement("h3");
+            wrongWordsHdr.textContent = "Words you've recently gotten wrong";
+            var wrongWords = st.recentIncorrect.slice(0, 10).map((x) => [x, getter(x)]);
+            contDiv.appendChild(wrongWordsHdr);
+            for (var i in wrongWords) {
+                var wdp = wrongWords[i];
+                var wdDiv = document.createElement("div");
+                wdDiv.classList.add("wrong-word-preview-box");
+                wdDiv.textContent = `${wdp[0]}) ${wdp[1]}`;
+                contDiv.appendChild(wdDiv);
+            }
             var nearbyWordsHdr = document.createElement("h3");
             nearbyWordsHdr.textContent = "Words that are near your score level";
             var wordsMin = Math.max(5, Math.floor(st.score)) - 5;
@@ -4455,6 +4469,7 @@ function geometricProgressFGen(getter, maxnum) {
                         score: st.score,
                         maxnum: st.maxnum,
                         memory: st.memory,
+                        levelModifier: modifierEditor.menuToState(),
                         recentCorrect: st.recentCorrect,
                         recentIncorrect: st.recentIncorrect
                     };

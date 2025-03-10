@@ -169,6 +169,15 @@
     border-radius: 5px;
 }
 
+.wrong-word-preview-box {
+    margin: 10px;
+    padding: 5px;
+    background-color: #ffeeee;
+    box-shadow: 3px 3px #cc99aa;
+    border-radius: 5px;
+}
+
+
 // Animations
 
 @keyframes slide-in {
