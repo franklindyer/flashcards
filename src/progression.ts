@@ -95,7 +95,7 @@ export function geometricProgressFGen(getter: (n: number) => [string, string, st
         state: {
             alpha: 0.1,
             maxnum: maxnum,
-            score: 2,
+            score: 20,
             memory: 30,
             levelModifier: 0.5,
             recentCorrect: [],

@@ -72,7 +72,7 @@ function geometricProgressFGen(getter, maxnum) {
         state: {
             alpha: 0.1,
             maxnum: maxnum,
-            score: 2,
+            score: 20,
             memory: 30,
             levelModifier: 0.5,
             recentCorrect: [],
@@ -141,7 +141,7 @@ function geometricProgressFGen(getter, maxnum) {
                 var wdp = wrongWords[i];
                 var wdDiv = document.createElement("div");
                 wdDiv.classList.add("wrong-word-preview-box");
-                wdDiv.textContent = `${wdp[0]}) ${wdp[1]}`;
+                wdDiv.textContent = `${wdp[0]}) ${wdp[1][1]} ~ "${wdp[1][0]}"`;
                 contDiv.appendChild(wdDiv);
             }
             var nearbyWordsHdr = document.createElement("h3");

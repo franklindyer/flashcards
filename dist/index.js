@@ -13,4 +13,5 @@ require("./russian-penguin");
 require("./german-bacon");
 require("./abstract-agreement");
 require("./word-rel");
+require("./frequency-drillers");
 (0, lib_1.runFlashcardController)("addition-quiz-deck");

@@ -17,4 +17,6 @@ import './german-bacon'
 import './abstract-agreement'
 import './word-rel'
 
+import './frequency-drillers'
+
 runFlashcardController("addition-quiz-deck")

@@ -2622,6 +2622,59 @@ lib_1.providedGenerators["evil-driller"] = makeEvilQuizzer(sampleEvilQuizState);
 
 /***/ }),
 
+/***/ 436:
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const lib_1 = __webpack_require__(23);
+const progression_1 = __webpack_require__(191);
+const papa = __webpack_require__(809);
+var langFreqPromise = (langCode) => fetch(`/data/${langCode}-freqlist.csv`).then((r) => r.text()).then((s) => {
+    var csvData = papa.parse(s, { header: false, delimiter: '\t' }).data;
+    window[`${langCode}Freqlist`] = (n) => {
+        return csvData[n];
+    };
+});
+/* SPANISH */
+var esFreqQuizzer = (0, progression_1.geometricProgressFGen)((n) => {
+    var record = window.esFreqlist(n);
+    return [record[1], record[0].split(" ")[0].split("/")[0], `"${record[2].split('|')[1]}"`];
+}, 5000);
+lib_1.defaultDecks["spanish-freq-deck"] = {
+    name: "Spanish: Routledge most common words",
+    slug: "spanish-freq-deck",
+    decktype: "spanish-freq-driller",
+    resources: ["spanish-freqlist"],
+    view: {
+        color: "#ffeeee"
+    },
+    state: esFreqQuizzer.state
+};
+lib_1.providedGenerators["spanish-freq-driller"] = esFreqQuizzer;
+lib_1.indexedResources["spanish-freqlist"] = () => langFreqPromise("es");
+/* RUSSIAN */
+var ruFreqQuizzer = (0, progression_1.geometricProgressFGen)((n) => {
+    var record = window.ruFreqlist(n);
+    return [record[1], record[0].split(" ")[0].split("/")[0], `"${record[2].split('|')[1]}"`];
+}, 5000);
+lib_1.defaultDecks["russian-freq-deck"] = {
+    name: "Russian: Routledge most common words",
+    slug: "russian-freq-deck",
+    decktype: "russian-freq-driller",
+    resources: ["russian-freqlist"],
+    view: {
+        color: "#eee0ff"
+    },
+    state: ruFreqQuizzer.state
+};
+lib_1.providedGenerators["russian-freq-driller"] = ruFreqQuizzer;
+lib_1.indexedResources["russian-freqlist"] = () => langFreqPromise("ru");
+
+
+/***/ }),
+
 /***/ 782:
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
@@ -4375,7 +4428,7 @@ function geometricProgressFGen(getter, maxnum) {
         state: {
             alpha: 0.1,
             maxnum: maxnum,
-            score: 2,
+            score: 20,
             memory: 30,
             levelModifier: 0.5,
             recentCorrect: [],
@@ -4444,7 +4497,7 @@ function geometricProgressFGen(getter, maxnum) {
                 var wdp = wrongWords[i];
                 var wdDiv = document.createElement("div");
                 wdDiv.classList.add("wrong-word-preview-box");
-                wdDiv.textContent = `${wdp[0]}) ${wdp[1]}`;
+                wdDiv.textContent = `${wdp[0]}) ${wdp[1][1]} ~ "${wdp[1][0]}"`;
                 contDiv.appendChild(wdDiv);
             }
             var nearbyWordsHdr = document.createElement("h3");
@@ -4489,7 +4542,6 @@ function geometricProgressFGen(getter, maxnum) {
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const lib_1 = __webpack_require__(23);
-const progression_1 = __webpack_require__(191);
 const papa = __webpack_require__(809);
 const EnglishPlural = __webpack_require__(736);
 var ruDataPromise = (filename, objname) => fetch(`/data/${filename}.csv`).then((r) => r.text()).then((s) => {
@@ -4499,12 +4551,13 @@ var ruDataPromise = (filename, objname) => fetch(`/data/${filename}.csv`).then((
         return v;
     };
 });
-var ruFreqlistPromise = () => fetch("/data/ru-freqlist.csv").then((r) => r.text()).then((s) => {
-    var csvData = papa.parse(s, { header: false, delimiter: '\t' }).data;
-    window["ruFreqlist"] = (n) => {
-        return csvData[n];
-    };
-});
+/* var ruFreqlistPromise = () =>
+    fetch("/data/ru-freqlist.csv").then((r) => r.text()).then((s) => {
+        var csvData = papa.parse(s, { header: false, delimiter: '\t' }).data;
+        (<any>window)["ruFreqlist"] = (n: number) => {
+            return csvData[n];
+        }
+}); */
 // GRAMMATICAL UTILS
 var RussianCase;
 (function (RussianCase) {
@@ -4670,10 +4723,10 @@ var ruVerbQuizzer = {
         };
     }
 };
-var ruFreqQuizzer = (0, progression_1.geometricProgressFGen)((n) => {
+/* var ruFreqQuizzer = geometricProgressFGen((n: number) => {
     var record = window.ruFreqlist(n);
     return [record[1], record[0].split(" ")[0].split("/")[0], `"${record[2].split('|')[1]}"`];
-}, 5000);
+}, 5000); */
 function stpl(templ) {
     return (y) => templ.replace("{}", y);
 }
@@ -4795,7 +4848,7 @@ var ruAdjCaseQuizzer = {
     },
     state: ruAdjCaseQuizzer.state
 } */
-lib_1.defaultDecks["russian-freq-deck"] = {
+/* defaultDecks["russian-freq-deck"] = {
     name: "Russian 1000 most common words",
     slug: "russian-freq-deck",
     decktype: "russian-freq-driller",
@@ -4804,14 +4857,14 @@ lib_1.defaultDecks["russian-freq-deck"] = {
         color: "#eee0ff"
     },
     state: ruFreqQuizzer.state
-};
+} */
 // providedGenerators["russian-verb-driller"] = ruVerbQuizzer;
 // providedGenerators["russian-adj-case-driller"] = ruAdjCaseQuizzer;
-lib_1.providedGenerators["russian-freq-driller"] = ruFreqQuizzer;
+// providedGenerators["russian-freq-driller"] = ruFreqQuizzer; 
 lib_1.indexedResources["russian-verbs"] = () => ruDataPromise("ru-verbs", "ruVerbs");
 lib_1.indexedResources["russian-nouns"] = () => ruDataPromise("ru-nouns", "ruNouns");
 lib_1.indexedResources["russian-adjectives"] = () => ruDataPromise("ru-adjectives", "ruAdjectives");
-lib_1.indexedResources["russian-freqlist"] = () => ruFreqlistPromise();
+// indexedResources["russian-freqlist"] = () => ruFreqlistPromise();
 
 
 /***/ }),
@@ -6546,6 +6599,7 @@ __webpack_require__(364);
 __webpack_require__(782);
 __webpack_require__(189);
 __webpack_require__(528);
+__webpack_require__(436);
 (0, lib_1.runFlashcardController)("addition-quiz-deck");
 
 })();

@@ -1,7 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const lib_1 = require("./lib");
-const progression_1 = require("./progression");
 const papa = require("papaparse");
 const EnglishPlural = require("pluralize-me");
 var ruDataPromise = (filename, objname) => fetch(`/data/${filename}.csv`).then((r) => r.text()).then((s) => {
@@ -11,12 +10,13 @@ var ruDataPromise = (filename, objname) => fetch(`/data/${filename}.csv`).then((
         return v;
     };
 });
-var ruFreqlistPromise = () => fetch("/data/ru-freqlist.csv").then((r) => r.text()).then((s) => {
-    var csvData = papa.parse(s, { header: false, delimiter: '\t' }).data;
-    window["ruFreqlist"] = (n) => {
-        return csvData[n];
-    };
-});
+/* var ruFreqlistPromise = () =>
+    fetch("/data/ru-freqlist.csv").then((r) => r.text()).then((s) => {
+        var csvData = papa.parse(s, { header: false, delimiter: '\t' }).data;
+        (<any>window)["ruFreqlist"] = (n: number) => {
+            return csvData[n];
+        }
+}); */
 // GRAMMATICAL UTILS
 var RussianCase;
 (function (RussianCase) {
@@ -182,10 +182,10 @@ var ruVerbQuizzer = {
         };
     }
 };
-var ruFreqQuizzer = (0, progression_1.geometricProgressFGen)((n) => {
+/* var ruFreqQuizzer = geometricProgressFGen((n: number) => {
     var record = window.ruFreqlist(n);
     return [record[1], record[0].split(" ")[0].split("/")[0], `"${record[2].split('|')[1]}"`];
-}, 5000);
+}, 5000); */
 function stpl(templ) {
     return (y) => templ.replace("{}", y);
 }
@@ -307,7 +307,7 @@ var ruAdjCaseQuizzer = {
     },
     state: ruAdjCaseQuizzer.state
 } */
-lib_1.defaultDecks["russian-freq-deck"] = {
+/* defaultDecks["russian-freq-deck"] = {
     name: "Russian 1000 most common words",
     slug: "russian-freq-deck",
     decktype: "russian-freq-driller",
@@ -316,11 +316,11 @@ lib_1.defaultDecks["russian-freq-deck"] = {
         color: "#eee0ff"
     },
     state: ruFreqQuizzer.state
-};
+} */
 // providedGenerators["russian-verb-driller"] = ruVerbQuizzer;
 // providedGenerators["russian-adj-case-driller"] = ruAdjCaseQuizzer;
-lib_1.providedGenerators["russian-freq-driller"] = ruFreqQuizzer;
+// providedGenerators["russian-freq-driller"] = ruFreqQuizzer; 
 lib_1.indexedResources["russian-verbs"] = () => ruDataPromise("ru-verbs", "ruVerbs");
 lib_1.indexedResources["russian-nouns"] = () => ruDataPromise("ru-nouns", "ruNouns");
 lib_1.indexedResources["russian-adjectives"] = () => ruDataPromise("ru-adjectives", "ruAdjectives");
-lib_1.indexedResources["russian-freqlist"] = () => ruFreqlistPromise();
+// indexedResources["russian-freqlist"] = () => ruFreqlistPromise();
