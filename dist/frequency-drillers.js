@@ -12,7 +12,7 @@ var langFreqPromise = (langCode) => fetch(`/data/${langCode}-freqlist.csv`).then
 /* SPANISH */
 var esFreqQuizzer = (0, progression_1.geometricProgressFGen)((n) => {
     var record = window.esFreqlist(n);
-    return [record[1], record[0].split(" ")[0].split("/")[0], `"${record[2].split('|')[1]}"`];
+    return [record[1], record[0].split("/")[0], `"${record[2].split('|')[1]}"`];
 }, 5000);
 lib_1.defaultDecks["spanish-freq-deck"] = {
     name: "Spanish: Routledge most common words",

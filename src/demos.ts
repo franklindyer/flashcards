@@ -18,6 +18,23 @@ var keyValueQuizzer = uniformRandomFGen([
     ["organic compound with an R-C-OH functional group", "aldehyde"]
 ]);
 
+// Demo language quizzer that does not use any language other than the target language
+var monolingualSpanishQuizzer = uniformRandomFGen([
+    ["🐕", "perro"],
+    ["🐈", "gato"],
+    ["🕷️", "araña"],
+    ["🦆", "pato"],
+    ["🦉", "búho"],
+    ["🐝", "abeja"],
+    ["🦟", "mosca"],
+    ["🦐", "camarón"],
+    ["🐌", "caracol"],
+    ["🦀", "cangrejo"],
+    ["🐒", "mono"],
+    ["🦇", "murciélago"],
+    ["🐢", "tortuga"]
+]);
+
 // Demo addition arithmetic quizzer
 var additionQuizzer: FlashcardGenerator<[number, number], number> = {
     ftemp: {
@@ -71,6 +88,14 @@ defaultDecks["key-value-quiz-deck"] = {
         resources: [],
         view: defaultDeckView,
         state: keyValueQuizzer.state
+};
+defaultDecks["monolingual-picture-deck"] = {
+    name: "Spanish animals quiz deck (no English - pictures only)",
+    slug: "monolingual-picture-deck",
+    decktype: "key-value-quizzer",
+    resources: [],
+    view: defaultDeckView,
+    state: monolingualSpanishQuizzer.state
 };
 
 providedGenerators["addition-quizzer"] = additionQuizzer;

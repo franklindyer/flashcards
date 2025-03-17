@@ -25,7 +25,7 @@ var langFreqPromise = (langCode: string) =>
 
 var esFreqQuizzer = geometricProgressFGen((n: number) => {
     var record = window.esFreqlist(n);
-    return [record[1], record[0].split(" ")[0].split("/")[0], `"${record[2].split('|')[1]}"`];
+    return [record[1], record[0].split("/")[0], `"${record[2].split('|')[1]}"`];
 }, 5000);
 
 defaultDecks["spanish-freq-deck"] = {

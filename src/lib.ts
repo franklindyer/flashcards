@@ -1,3 +1,7 @@
+import {
+    replaceEmojis
+} from "./emojis"
+
 // Types
 
 export interface IDictionary<a> {
@@ -201,6 +205,9 @@ function isGuessCorrect<a>(card: Flashcard<a>, guess: string): boolean {
 
 // View
 
+var EmojiConverter = require('emoji-js'); // For finding and replacing emoji shortcodes 
+var emoji = new EmojiConverter();
+
 export function boolEditor(label: string, val: boolean): FlashcardGenEditor<boolean> {
     var checkbox = document.createElement("input");
     var editor: FlashcardGenEditor<boolean> = {
@@ -266,11 +273,17 @@ export function scrollNumberEditor(label: string, val: number, min: number, max:
     }
 }
 
-export function singleTextFieldEditor(txt: string): FlashcardGenEditor<string> {
+export function singleTextFieldEditor(txt: string, doEmojis: boolean = true): FlashcardGenEditor<string> {
     var editor: FlashcardGenEditor<string> = {
         element: document.createElement("input"),
         menuToState: () => (<HTMLInputElement>editor.element).value
     };
+    if (doEmojis) {
+        var ed = <HTMLInputElement>editor.element;
+        ed.oninput = () => {
+            ed.value = emoji.replace_colons(ed.value);
+        };
+    }
     (<HTMLInputElement>editor.element).value = txt;
     return editor;
 }
@@ -468,6 +481,7 @@ function buildCardDiv<a>(card: Flashcard<a>) {
 function slideCardIntoDiv<a>(divId: string, card: Flashcard<a>) {
     var container = document.getElementById(divId);
     var cardDiv = buildCardDiv(card);
+    replaceEmojis(cardDiv);
     cardDiv.classList.add("flashcard-slide-in");
     cardDiv!.onanimationend = () => { cardDiv!.classList.remove("flashcard-slide-in"); };
     container?.appendChild(cardDiv); 

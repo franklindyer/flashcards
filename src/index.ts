@@ -19,4 +19,6 @@ import './word-rel'
 
 import './frequency-drillers'
 
+import './emojis'
+
 runFlashcardController("addition-quiz-deck")
