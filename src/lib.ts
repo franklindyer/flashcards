@@ -634,6 +634,14 @@ export function loadRegistryFromLocal() {
     };
 }
 
+export function loadLastDecknameFromLocal(decks: IDictionary<FlashcardDeck<any>>) {
+    var lastDeckStr = localStorage.getItem("lastdeck");
+    if (!lastDeckStr || !(lastDeckStr! in decks)) {
+        return undefined;
+    }
+    return lastDeckStr;
+}
+
 export function saveDeckToLocal(
     reg: FlashcardGenRegistry,
     deck: FlashcardDeck<any>,
@@ -641,6 +649,10 @@ export function saveDeckToLocal(
     reg.decks[deck.slug].state = gen.state;
     var registryStr = JSON.stringify(reg.decks);
     localStorage.setItem("decks", registryStr);
+}
+
+export function saveLastDecknameToLocal(deckname: string) {
+    localStorage.setItem("lastdeck", deckname);
 }
 
 export async function loadDeckGenFromRegistry(reg: FlashcardGenRegistry, slug: string) {
@@ -659,6 +671,7 @@ export async function loadDeckGenFromRegistry(reg: FlashcardGenRegistry, slug: s
 
 // export function runFlashcardController<a, s>(fgen: FlashcardGenerator<a, s>) {
 export async function runFlashcardController(slug: string) {
+    saveLastDecknameToLocal(slug);  // Set this as the "last opened deck"
     var reg: FlashcardGenRegistry | null = loadRegistryFromLocal();
     if (reg === null) {
         console.log("Could not load flashcard registry.");

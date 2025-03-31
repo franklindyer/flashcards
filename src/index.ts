@@ -1,5 +1,7 @@
 import {
-    runFlashcardController
+    runFlashcardController,
+    loadLastDecknameFromLocal,
+    loadRegistryFromLocal
     } from './lib'
 import './demos'
 import './spaced-repetition'
@@ -21,4 +23,9 @@ import './frequency-drillers'
 
 import './emojis'
 
-runFlashcardController("addition-quiz-deck")
+var reg = loadRegistryFromLocal();
+var lastDeckname = loadLastDecknameFromLocal(reg["decks"]);
+if (!lastDeckname) {
+    lastDeckname = "addition-quiz-deck";
+}
+runFlashcardController(lastDeckname);
