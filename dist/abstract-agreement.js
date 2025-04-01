@@ -1,6 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 class WordRegisters {
+    static wordTypes = [];
+    static inflectors = {};
+    static agreers = {};
+    words;
     constructor() {
         this.words = {};
         for (var wt in WordRegisters.wordTypes) {
@@ -22,9 +26,6 @@ class WordRegisters {
         return this.words[t][id];
     }
 }
-WordRegisters.wordTypes = [];
-WordRegisters.inflectors = {};
-WordRegisters.agreers = {};
 // DEMO LANGUAGE
 // NOUNS
 // "baga" (f) = "apple"

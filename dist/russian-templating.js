@@ -356,6 +356,11 @@ var EnRuPhraseAxnType;
     EnRuPhraseAxnType[EnRuPhraseAxnType["AgreeAdjWithNoun"] = 8] = "AgreeAdjWithNoun";
 })(EnRuPhraseAxnType || (exports.EnRuPhraseAxnType = EnRuPhraseAxnType = {}));
 class EnRuPhraseTpl {
+    guid;
+    picker;
+    actions;
+    subs;
+    fmt;
     constructor(wp, subs = []) {
         this.guid = (0, lib_1.guidGenerator)();
         this.picker = wp;

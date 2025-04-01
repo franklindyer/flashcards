@@ -1,16 +1,7 @@
 "use strict";
-// Types
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.indexedResources = exports.providedGenerators = exports.defaultDecks = exports.defaultDeckView = exports.runFlashcardController = exports.loadDeckGenFromRegistry = exports.saveDeckToLocal = exports.loadRegistryFromLocal = exports.multipleEditors = exports.fixedNumEditors = exports.makeTranslationEditor = exports.tableEditor = exports.combineEditors = exports.doubleTextFieldEditor = exports.validatedTextFieldEditor = exports.singleTextFieldEditor = exports.scrollNumberEditor = exports.floatEditor = exports.boolEditor = exports.evilFGen = exports.uniformRandomFGen = exports.ensureKeys = exports.guidGenerator = exports.fconst = void 0;
+exports.indexedResources = exports.providedGenerators = exports.defaultDecks = exports.defaultDeckView = exports.runFlashcardController = exports.loadDeckGenFromRegistry = exports.saveLastDecknameToLocal = exports.saveDeckToLocal = exports.loadLastDecknameFromLocal = exports.loadRegistryFromLocal = exports.multipleEditors = exports.fixedNumEditors = exports.makeTranslationEditor = exports.tableEditor = exports.combineEditors = exports.doubleTextFieldEditor = exports.validatedTextFieldEditor = exports.singleTextFieldEditor = exports.scrollNumberEditor = exports.floatEditor = exports.boolEditor = exports.evilFGen = exports.uniformRandomFGen = exports.ensureKeys = exports.guidGenerator = exports.fconst = void 0;
+const emojis_1 = require("./emojis");
 // Utilities
 function fconst(y) {
     return (_) => y;
@@ -152,6 +143,8 @@ function isGuessCorrect(card, guess) {
     return card.answers.indexOf(guess) > -1;
 }
 // View
+var EmojiConverter = require('emoji-js'); // For finding and replacing emoji shortcodes 
+var emoji = new EmojiConverter();
 function boolEditor(label, val) {
     var checkbox = document.createElement("input");
     var editor = {
@@ -215,11 +208,17 @@ function scrollNumberEditor(label, val, min, max, step) {
     };
 }
 exports.scrollNumberEditor = scrollNumberEditor;
-function singleTextFieldEditor(txt) {
+function singleTextFieldEditor(txt, doEmojis = true) {
     var editor = {
         element: document.createElement("input"),
         menuToState: () => editor.element.value
     };
+    if (doEmojis) {
+        var ed = editor.element;
+        ed.oninput = () => {
+            ed.value = emoji.replace_colons(ed.value);
+        };
+    }
     editor.element.value = txt;
     return editor;
 }
@@ -385,23 +384,23 @@ function buildCardDiv(card) {
 function slideCardIntoDiv(divId, card) {
     var container = document.getElementById(divId);
     var cardDiv = buildCardDiv(card);
+    (0, emojis_1.replaceEmojis)(cardDiv);
     cardDiv.classList.add("flashcard-slide-in");
     cardDiv.onanimationend = () => { cardDiv.classList.remove("flashcard-slide-in"); };
-    container === null || container === void 0 ? void 0 : container.appendChild(cardDiv);
+    container?.appendChild(cardDiv);
 }
 function slideCardOutOfDiv(cardId) {
     var cardDiv = document.getElementById(cardId);
-    cardDiv === null || cardDiv === void 0 ? void 0 : cardDiv.classList.add("flashcard-slide-out");
+    cardDiv?.classList.add("flashcard-slide-out");
     cardDiv.onanimationend = () => { cardDiv.style.display = "none"; };
 }
 function clearCardDiv() {
     var cardDiv = document.getElementsByClassName("flashcard")[0];
-    cardDiv === null || cardDiv === void 0 ? void 0 : cardDiv.remove();
+    cardDiv?.remove();
 }
 function markCardIncorrect(cardId) {
-    var _a;
     var cardDiv = document.getElementById(cardId);
-    (_a = cardDiv === null || cardDiv === void 0 ? void 0 : cardDiv.classList) === null || _a === void 0 ? void 0 : _a.add("flashcard-incorrect");
+    cardDiv?.classList?.add("flashcard-incorrect");
     cardDiv.onanimationend = () => { cardDiv.classList.remove("flashcard-incorrect"); };
     cardDiv.offsetHeight;
 }
@@ -529,143 +528,151 @@ function loadRegistryFromLocal() {
     };
 }
 exports.loadRegistryFromLocal = loadRegistryFromLocal;
+function loadLastDecknameFromLocal(decks) {
+    var lastDeckStr = localStorage.getItem("lastdeck");
+    if (!lastDeckStr || !(lastDeckStr in decks)) {
+        return undefined;
+    }
+    return lastDeckStr;
+}
+exports.loadLastDecknameFromLocal = loadLastDecknameFromLocal;
 function saveDeckToLocal(reg, deck, gen) {
     reg.decks[deck.slug].state = gen.state;
     var registryStr = JSON.stringify(reg.decks);
     localStorage.setItem("decks", registryStr);
 }
 exports.saveDeckToLocal = saveDeckToLocal;
-function loadDeckGenFromRegistry(reg, slug) {
-    return __awaiter(this, void 0, void 0, function* () {
-        var deck = reg.decks[slug];
-        if (deck === undefined) {
-            return null;
-        }
-        var gen = reg.generators[deck.decktype];
-        if (deck === undefined) {
-            return null;
-        }
-        gen.state = deck.state;
-        yield Promise.all(deck.resources.map((rname) => reg.resources[rname]()));
-        return gen;
-    });
+function saveLastDecknameToLocal(deckname) {
+    localStorage.setItem("lastdeck", deckname);
+}
+exports.saveLastDecknameToLocal = saveLastDecknameToLocal;
+async function loadDeckGenFromRegistry(reg, slug) {
+    var deck = reg.decks[slug];
+    if (deck === undefined) {
+        return null;
+    }
+    var gen = reg.generators[deck.decktype];
+    if (deck === undefined) {
+        return null;
+    }
+    gen.state = deck.state;
+    await Promise.all(deck.resources.map((rname) => reg.resources[rname]()));
+    return gen;
 }
 exports.loadDeckGenFromRegistry = loadDeckGenFromRegistry;
 // export function runFlashcardController<a, s>(fgen: FlashcardGenerator<a, s>) {
-function runFlashcardController(slug) {
-    return __awaiter(this, void 0, void 0, function* () {
-        var reg = loadRegistryFromLocal();
-        if (reg === null) {
-            console.log("Could not load flashcard registry.");
-            return;
+async function runFlashcardController(slug) {
+    saveLastDecknameToLocal(slug); // Set this as the "last opened deck"
+    var reg = loadRegistryFromLocal();
+    if (reg === null) {
+        console.log("Could not load flashcard registry.");
+        return;
+    }
+    var fgenMaybe = await loadDeckGenFromRegistry(reg, slug);
+    if (fgenMaybe === null) {
+        console.log("Could not load flashcard deck.");
+        return;
+    }
+    var fgen = fgenMaybe;
+    var isCorrect = false;
+    var guessBox = document.getElementById("flashcard-answer-input");
+    var guessController = function (card) {
+        var correct = isGuessCorrect(card, guessBox.value);
+        isCorrect = correct;
+        if (!correct) {
+            setHintText(card.hint);
+            markCardIncorrect(card.uuid);
         }
-        var fgenMaybe = yield loadDeckGenFromRegistry(reg, slug);
-        if (fgenMaybe === null) {
-            console.log("Could not load flashcard deck.");
-            return;
-        }
-        var fgen = fgenMaybe;
-        var isCorrect = false;
-        var guessBox = document.getElementById("flashcard-answer-input");
-        var guessController = function (card) {
-            var correct = isGuessCorrect(card, guessBox.value);
-            isCorrect = correct;
-            if (!correct) {
-                setHintText(card.hint);
-                markCardIncorrect(card.uuid);
-            }
-            return isCorrect;
+        return isCorrect;
+    };
+    var editDeck = document.getElementById("deck-edit-button");
+    editDeck.onclick = (e) => {
+        var editor = fgen.editor(fgen.state);
+        var deckEditor = document.getElementById("flashcard-deck-editor");
+        var deckEditorOverlay = document.getElementById("flashcard-deck-editor-overlay");
+        deckEditor.replaceChildren(editor.element);
+        deckEditorOverlay.style.display = "block";
+        var closeEditor = document.getElementById("flashcard-deck-editor-close");
+        var deckOverlay = document.getElementById("flashcard-deck-editor-overlay");
+        closeEditor.onclick = (e) => {
+            fgen.state = editor.menuToState();
+            deckOverlay.style.display = "none";
+            saveDeckToLocal(reg, reg.decks[slug], fgen);
+            flashcardLoop();
         };
-        var editDeck = document.getElementById("deck-edit-button");
-        editDeck.onclick = (e) => {
-            var editor = fgen.editor(fgen.state);
-            var deckEditor = document.getElementById("flashcard-deck-editor");
-            var deckEditorOverlay = document.getElementById("flashcard-deck-editor-overlay");
-            deckEditor.replaceChildren(editor.element);
-            deckEditorOverlay.style.display = "block";
-            var closeEditor = document.getElementById("flashcard-deck-editor-close");
-            var deckOverlay = document.getElementById("flashcard-deck-editor-overlay");
-            closeEditor.onclick = (e) => {
-                fgen.state = editor.menuToState();
-                deckOverlay.style.display = "none";
+    };
+    var decklistBtn = document.getElementById("deck-list-button");
+    decklistBtn.onclick = (e) => {
+        clearCardDiv();
+        var decklistOverlay = document.getElementById("flashcard-decklist-overlay");
+        generateDecklistMenu(reg.decks, (ds) => {
+            localStorage.setItem("decks", JSON.stringify(ds));
+        });
+        decklistOverlay.style.display = "block";
+    };
+    var exportBtn = document.getElementById("export-deck-button");
+    exportBtn.onclick = (e) => {
+        downloadText(`${slug}.txt`, JSON.stringify(reg.decks[slug]));
+    };
+    var importBtn = document.getElementById("import-deck-button");
+    var fileUploadInput = document.getElementById("deck-upload-file");
+    importBtn.onclick = (e) => {
+        fileUploadInput.click();
+        fileUploadInput.onchange = (e) => {
+            var files = fileUploadInput.files;
+            if (files === null)
+                return;
+            var file = files[0];
+            if (file === null)
+                return;
+            var reader = new FileReader();
+            reader.onload = (e) => {
+                fgen.state = JSON.parse(e.target.result).state;
                 saveDeckToLocal(reg, reg.decks[slug], fgen);
-                flashcardLoop();
             };
+            reader.readAsText(file, "UTF-8");
         };
-        var decklistBtn = document.getElementById("deck-list-button");
-        decklistBtn.onclick = (e) => {
-            clearCardDiv();
-            var decklistOverlay = document.getElementById("flashcard-decklist-overlay");
-            generateDecklistMenu(reg.decks, (ds) => {
-                localStorage.setItem("decks", JSON.stringify(ds));
-            });
-            decklistOverlay.style.display = "block";
-        };
-        var exportBtn = document.getElementById("export-deck-button");
-        exportBtn.onclick = (e) => {
-            downloadText(`${slug}.txt`, JSON.stringify(reg.decks[slug]));
-        };
-        var importBtn = document.getElementById("import-deck-button");
-        var fileUploadInput = document.getElementById("deck-upload-file");
-        importBtn.onclick = (e) => {
-            fileUploadInput.click();
-            fileUploadInput.onchange = (e) => {
-                var files = fileUploadInput.files;
-                if (files === null)
-                    return;
-                var file = files[0];
-                if (file === null)
-                    return;
-                var reader = new FileReader();
-                reader.onload = (e) => {
-                    fgen.state = JSON.parse(e.target.result).state;
-                    saveDeckToLocal(reg, reg.decks[slug], fgen);
-                };
-                reader.readAsText(file, "UTF-8");
-            };
-        };
-        var lastCardId = null;
-        var flashcardLoop = () => {
-            var _a;
-            isCorrect = false;
-            (_a = document.getElementById(lastCardId)) === null || _a === void 0 ? void 0 : _a.remove();
-            var card = nextCard(fgen);
-            lastCardId = card.uuid;
-            slideCardIntoDiv("flashcard-container", card);
-            setHintText("");
-            var firstCorrect = true;
-            var timeStart = new Date().getTime();
-            guessBox.onkeydown = (e) => {
-                var cardIsDone = false;
-                if (e.key == "Enter") { // Check answer correctness
-                    if (card.seconds === undefined)
-                        card.seconds = (new Date().getTime() - timeStart) / 1000;
-                    if (guessController(card)) {
-                        cardIsDone = true;
-                    }
-                    else {
-                        guessBox.oninput = (e) => { guessBox.value = guessBox.value.slice(-1); guessBox.oninput = () => { }; };
-                        firstCorrect = false;
-                    }
-                }
-                else if (e.key == "ArrowUp") { // Card correct override
-                    firstCorrect = true;
+    };
+    var lastCardId = null;
+    var flashcardLoop = () => {
+        isCorrect = false;
+        document.getElementById(lastCardId)?.remove();
+        var card = nextCard(fgen);
+        lastCardId = card.uuid;
+        slideCardIntoDiv("flashcard-container", card);
+        setHintText("");
+        var firstCorrect = true;
+        var timeStart = new Date().getTime();
+        guessBox.onkeydown = (e) => {
+            var cardIsDone = false;
+            if (e.key == "Enter") { // Check answer correctness
+                if (card.seconds === undefined)
+                    card.seconds = (new Date().getTime() - timeStart) / 1000;
+                if (guessController(card)) {
                     cardIsDone = true;
                 }
-                if (cardIsDone) {
-                    var finalAnswer = guessBox.value;
-                    guessBox.value = "";
-                    slideCardOutOfDiv(card.uuid);
-                    setTimeout(() => flashcardLoop(), 1000);
-                    fgen.history.push([card, firstCorrect]);
-                    fgen.state = fgen.updater(firstCorrect, finalAnswer, card, fgen.state);
-                    updateProgressBar(fgen);
-                    saveDeckToLocal(reg, reg.decks[slug], fgen);
+                else {
+                    guessBox.oninput = (e) => { guessBox.value = guessBox.value.slice(-1); guessBox.oninput = () => { }; };
+                    firstCorrect = false;
                 }
-            };
+            }
+            else if (e.key == "ArrowUp") { // Card correct override
+                firstCorrect = true;
+                cardIsDone = true;
+            }
+            if (cardIsDone) {
+                var finalAnswer = guessBox.value;
+                guessBox.value = "";
+                slideCardOutOfDiv(card.uuid);
+                setTimeout(() => flashcardLoop(), 1000);
+                fgen.history.push([card, firstCorrect]);
+                fgen.state = fgen.updater(firstCorrect, finalAnswer, card, fgen.state);
+                updateProgressBar(fgen);
+                saveDeckToLocal(reg, reg.decks[slug], fgen);
+            }
         };
-        flashcardLoop();
-    });
+    };
+    flashcardLoop();
 }
 exports.runFlashcardController = runFlashcardController;
 // Demos

@@ -14,4 +14,10 @@ require("./german-bacon");
 require("./abstract-agreement");
 require("./word-rel");
 require("./frequency-drillers");
-(0, lib_1.runFlashcardController)("addition-quiz-deck");
+require("./emojis");
+var reg = (0, lib_1.loadRegistryFromLocal)();
+var lastDeckname = (0, lib_1.loadLastDecknameFromLocal)(reg["decks"]);
+if (!lastDeckname) {
+    lastDeckname = "addition-quiz-deck";
+}
+(0, lib_1.runFlashcardController)(lastDeckname);

@@ -10,6 +10,22 @@ var keyValueQuizzer = (0, lib_1.uniformRandomFGen)([
     ["organic compound with an oxygen bound to two separate carbons", "ether"],
     ["organic compound with an R-C-OH functional group", "aldehyde"]
 ]);
+// Demo language quizzer that does not use any language other than the target language
+var monolingualSpanishQuizzer = (0, lib_1.uniformRandomFGen)([
+    ["🐕", "perro"],
+    ["🐈", "gato"],
+    ["🕷️", "araña"],
+    ["🦆", "pato"],
+    ["🦉", "búho"],
+    ["🐝", "abeja"],
+    ["🦟", "mosca"],
+    ["🦐", "camarón"],
+    ["🐌", "caracol"],
+    ["🦀", "cangrejo"],
+    ["🐒", "mono"],
+    ["🦇", "murciélago"],
+    ["🐢", "tortuga"]
+]);
 // Demo addition arithmetic quizzer
 var additionQuizzer = {
     ftemp: {
@@ -62,6 +78,14 @@ lib_1.defaultDecks["key-value-quiz-deck"] = {
     resources: [],
     view: lib_1.defaultDeckView,
     state: keyValueQuizzer.state
+};
+lib_1.defaultDecks["monolingual-picture-deck"] = {
+    name: "Spanish animals quiz deck (no English - pictures only)",
+    slug: "monolingual-picture-deck",
+    decktype: "key-value-quizzer",
+    resources: [],
+    view: lib_1.defaultDeckView,
+    state: monolingualSpanishQuizzer.state
 };
 lib_1.providedGenerators["addition-quizzer"] = additionQuizzer;
 lib_1.providedGenerators["key-value-quizzer"] = keyValueQuizzer;

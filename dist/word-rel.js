@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.WordPicker = exports.WordRelChecker = void 0;
 const weighted_rand_1 = require("./weighted-rand");
 class WordRelChecker {
+    allWords;
     constructor(words) {
         this.allWords = words;
     }
@@ -62,6 +63,9 @@ class WordRelChecker {
 }
 exports.WordRelChecker = WordRelChecker;
 class WordPicker {
+    checker;
+    holes;
+    weights;
     constructor(checker, weights) {
         this.checker = checker;
         this.weights = weights;

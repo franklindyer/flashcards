@@ -268,6 +268,11 @@ var EnDePhraseAxnType;
     EnDePhraseAxnType[EnDePhraseAxnType["AgreeAdjWithNounDet"] = 11] = "AgreeAdjWithNounDet";
 })(EnDePhraseAxnType || (exports.EnDePhraseAxnType = EnDePhraseAxnType = {}));
 class EnDePhraseTpl {
+    guid;
+    picker;
+    actions;
+    subs;
+    fmt;
     constructor(wp, subs = []) {
         this.guid = (0, lib_1.guidGenerator)();
         this.picker = wp;

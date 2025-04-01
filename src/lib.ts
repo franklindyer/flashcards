@@ -1,5 +1,6 @@
 import {
-    replaceEmojis
+    replaceEmojis,
+    openmojiDataPromise
 } from "./emojis"
 
 // Types
@@ -665,6 +666,7 @@ export async function loadDeckGenFromRegistry(reg: FlashcardGenRegistry, slug: s
         return null;
     }
     gen.state = deck.state;
+    await openmojiDataPromise;
     await Promise.all(deck.resources.map((rname) => reg.resources[rname]()));
     return gen;
 }
