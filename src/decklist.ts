@@ -14,6 +14,9 @@ import {
     singleTextFieldEditor,
     StateEditor
 } from "./editor"
+import {
+    deleteDeck
+} from "./fs"
 
 function generateDeckNameEditor(deck: FlashcardDeck<any>): StateEditor<FlashcardDeck<any>> {
     var nicknameEditor = singleTextFieldEditor(deck.name);
@@ -82,6 +85,7 @@ export function generateDecklistMenu(
             var confirmation = confirm(`Are you sure you want to delete "${dk.name}"?`);
             if (confirmation) {
                 delete decklist[dk.slug];
+                deleteDeck(dk.slug);
             }
             e.cancelBubble = true;
             if (e.stopPropagation) e.stopPropagation();
