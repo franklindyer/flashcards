@@ -5,7 +5,8 @@ import {
 import {
     FlashcardDeck,
     runDeck,
-    gDeckRegistry
+    gDeckRegistry,
+    saveDeck
 } from "./flashcard-deck"
 import {
     FlashcardGen
@@ -74,6 +75,7 @@ export function generateDecklistMenu(
             closeBtn.onclick = (e: Event) => {
                 var newDeck = ed.menuToState();
                 decklist[dk.slug] = newDeck;
+                saveDeck(dk.slug, () => {});
                 generateDecklistMenu(decklist, onfinish);
             };
             deckDiv.replaceChildren(ed.element);

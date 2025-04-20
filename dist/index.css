@@ -114,6 +114,7 @@ button {
 
 #flashcard-decklist-overlay {
     display: none;
+    overflow-y: scroll;
 }
 
 .menu-overlay {
@@ -129,14 +130,14 @@ button {
 
 .deck-editor-entry {
     margin: 10px;
-    padding: 5px;
+    padding: 2px;
     border-radius: 10px;
     background-color: #eeeeff;
     width: 90%;
     box-shadow: 0 6px #9999aa;
     opacity: 0.8;
     display: block;
-    height: 30px;
+    overflow: auto;
 }
 
 .deck-editor-entry:hover {
@@ -144,8 +145,10 @@ button {
 }
 
 .deck-editor-entry a {
-    line-height: 30px;
+    line-height: 28px;
     text-align: center;
+    margin-left: 10px;
+    font-weight: bold;
 }
 
 .deck-editor-entry input {

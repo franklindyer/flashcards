@@ -38,7 +38,7 @@ export type FlashcardDeck<S> = {
 export const gDeckTypeRegistry: IDictionary<FlashcardDeckType<any, any>> = {};
 export const gDeckRegistry: IDictionary<FlashcardDeck<any>> = {};
 
-function saveDeck(deckSlug: string, callback: () => void) {
+export function saveDeck(deckSlug: string, callback: () => void) {
     setDeckJSON(deckSlug, JSON.stringify(gDeckRegistry[deckSlug])).then((_) => callback());
 }
 
