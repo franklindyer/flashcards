@@ -1,3 +1,13 @@
+import {
+    guidGenerator
+} from "./utils"
+import {
+    Flashcard
+} from "./flashcard"
+import {
+    FlashcardTemplate
+} from "./flashcard-template"
+
 enum SpacedRepCardStatus {
     CardNew = 1,
     CardStudying,
@@ -7,10 +17,10 @@ enum SpacedRepCardStatus {
 enum SpacedRepOrder {
     RandomOrder = 1,
     ReviewFirst,
-    NewFist
+    NewFirst
 }
 
-type SpacedRepCardData = {
+type SpacedRepCardContent = {
     guid: string,
     prompt: string,
     answers: string[]
@@ -22,8 +32,13 @@ type SpacedRepCardTiming = {
     status: SpacedRepCardStatus
 }
 
+type SpacedRepCardData = {
+    content: SpacedRepCardContent,
+    cardsLeft: number
+}
+
 type SpacedRepCard = {
-    data: SpacedRepCardData,
+    content: SpacedRepCardContent,
     timing: SpacedRepCardTiming
 }
 
@@ -40,6 +55,35 @@ type SpacedRepHistRecord = {
     answered: Date,
     timing: SpacedRepCardTiming,
     correct: boolean,
-    answerSeconds: number
-    
+    answerSeconds: number    
+}
+
+function makeSpacedRepCard(prompt: string, answers: string[]): SpacedRepCard {
+    return {
+        content: {
+            guid: guidGenerator(),
+            prompt: prompt,
+            answers: answers
+        },
+        timing: {
+            due: null,
+            intervalSeconds: 0,
+            status: SpacedRepCardStatus.CardNew 
+        }
+    }
+}
+
+class SpacedRepTemplate extends FlashcardTemplate<SpacedRepCardData> {
+    generateCard(data: SpacedRepCardData): Flashcard {
+        var a = document.createElement("a");
+        a.textContent = data.content.prompt;
+        var fl = new Flashcard(
+            a, 
+            (answer: string) => data.content.answers.includes(answer),
+            data.content.answers[0]
+        );
+        var fontSize = 100.0/(10.0*Math.log(10+data.content.prompt.length));
+        fl.el.style.fontSize = `${fontSize}vw`;
+        return fl;
+    }
 }
