@@ -3,6 +3,111 @@ var flashcards;
 /******/ 	"use strict";
 /******/ 	var __webpack_modules__ = ({
 
+/***/ 79:
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.generateDecklistMenu = generateDecklistMenu;
+const utils_1 = __webpack_require__(185);
+const flashcard_deck_1 = __webpack_require__(836);
+const editor_1 = __webpack_require__(43);
+function generateDeckNameEditor(deck) {
+    var nicknameEditor = (0, editor_1.singleTextFieldEditor)(deck.name);
+    var colorEditor = (0, editor_1.singleTextFieldEditor)(deck.view.color);
+    var closeBtn = document.createElement("button");
+    closeBtn.textContent = "Save";
+    var contDiv = document.createElement("div");
+    [nicknameEditor.element, colorEditor.element, closeBtn].map((el) => contDiv.appendChild(el));
+    contDiv.onclick = (e) => {
+        e.cancelBubble = true;
+        if (e.stopPropagation)
+            e.stopPropagation();
+    };
+    var ed = {
+        element: contDiv,
+        menuToState: () => {
+            deck.name = nicknameEditor.menuToState();
+            deck.view.color = colorEditor.menuToState();
+            contDiv.remove();
+            return deck;
+        }
+    };
+    return ed;
+}
+function generateDecklistMenu(decklist, onfinish) {
+    var decklistEditor = document.getElementById("flashcard-decklist-editor");
+    decklistEditor.innerHTML = "";
+    var decklistOverlay = document.getElementById("flashcard-decklist-overlay");
+    Object.keys(decklist).sort();
+    for (var k in decklist) {
+        var deckDiv = document.createElement("div");
+        var slug = decklist[k].slug;
+        deckDiv.textContent = decklist[k].name;
+        deckDiv.classList.add("deck-editor-entry");
+        if (decklist[k].view !== undefined) {
+            deckDiv.style.backgroundColor = decklist[k].view.color;
+        }
+        deckDiv.onclick = ((s) => (e) => {
+            decklistOverlay.style.display = "none";
+            onfinish(decklist);
+            (0, flashcard_deck_1.runDeck)(s);
+        })(slug);
+        var deckEditBtn = document.createElement("button");
+        //        deckEditBtn.textContent = "Rename";
+        deckEditBtn.innerHTML = "<img src='/edit.png'/>";
+        deckEditBtn.classList.add("deck-editor-button");
+        deckEditBtn.onclick = ((dk, deckDiv) => (e) => {
+            var ed = generateDeckNameEditor(dk);
+            var closeBtn = ed.element.getElementsByTagName("button")[0];
+            closeBtn.onclick = (e) => {
+                var newDeck = ed.menuToState();
+                decklist[dk.slug] = newDeck;
+                generateDecklistMenu(decklist, onfinish);
+            };
+            deckDiv.replaceChildren(ed.element);
+            e.cancelBubble = true;
+            if (e.stopPropagation)
+                e.stopPropagation();
+        })(decklist[k], deckDiv);
+        var deckDeleteBtn = document.createElement("button");
+        deckDeleteBtn.classList.add("deck-editor-button");
+        //        deckDeleteBtn.textContent = "Delete";
+        deckDeleteBtn.innerHTML = "<img src='/trash.png'/>";
+        deckDeleteBtn.onclick = ((dk) => (e) => {
+            var confirmation = confirm(`Are you sure you want to delete "${dk.name}"?`);
+            if (confirmation) {
+                delete decklist[dk.slug];
+            }
+            e.cancelBubble = true;
+            if (e.stopPropagation)
+                e.stopPropagation();
+            generateDecklistMenu(decklist, onfinish);
+        })(decklist[k]);
+        var deckCloneBtn = document.createElement("button");
+        deckCloneBtn.classList.add("deck-editor-button");
+        //        deckCloneBtn.textContent = "Clone";
+        deckCloneBtn.innerHTML = "<img src='/copy.png'/>";
+        deckCloneBtn.onclick = ((dk) => (e) => {
+            var guid = (0, utils_1.guidGenerator)();
+            var deckClone = JSON.parse(JSON.stringify(dk));
+            deckClone.slug = guid;
+            decklist[guid] = deckClone;
+            e.cancelBubble = true;
+            if (e.stopPropagation)
+                e.stopPropagation();
+            generateDecklistMenu(decklist, onfinish);
+        })(decklist[k]);
+        deckDiv.appendChild(deckEditBtn);
+        deckDiv.appendChild(deckDeleteBtn);
+        deckDiv.appendChild(deckCloneBtn);
+        decklistEditor.appendChild(deckDiv);
+    }
+}
+
+
+/***/ }),
+
 /***/ 43:
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
@@ -117,14 +222,34 @@ function multipleEditors(ls, empty, ed, includeSearch = false, searchFxn = (s, x
 /***/ }),
 
 /***/ 836:
-/***/ ((__unused_webpack_module, exports) => {
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.gDeckRegistry = exports.gDeckTypeRegistry = void 0;
+exports.loadAllDecks = loadAllDecks;
 exports.runDeck = runDeck;
+exports.registerDeckType = registerDeckType;
+const fs_1 = __webpack_require__(633);
 exports.gDeckTypeRegistry = {};
 exports.gDeckRegistry = {};
+function saveDeck(deckSlug, callback) {
+    (0, fs_1.setDeckJSON)(deckSlug, JSON.stringify(exports.gDeckRegistry[deckSlug])).then((_) => callback());
+}
+function loadDeckIfExists(deckSlug) {
+    return (0, fs_1.getDeckJSON)(deckSlug).then((j) => {
+        console.log("GETTING DECK JSON!");
+        console.log(j);
+        if (j.length > 0) {
+            var d = JSON.parse(j);
+            exports.gDeckRegistry[d.slug] = d;
+        }
+    });
+}
+function loadAllDecks() {
+    var deckSlugs = Object.keys(exports.gDeckRegistry);
+    return Promise.all(deckSlugs.map((slug) => loadDeckIfExists(slug)));
+}
 /* Setup general-purpose menus */
 function menuSetup(decktype, deck) {
     var editBtn = document.getElementById("deck-edit-button");
@@ -139,6 +264,7 @@ function menuSetup(decktype, deck) {
             editorOverlay.style.display = "none";
             deck.state = editor.menuToState();
             exports.gDeckRegistry[deck.slug].state = deck.state;
+            saveDeck(deck.slug, () => { });
             runDeck(deck.slug);
         };
     };
@@ -154,6 +280,24 @@ function runDeck(deckSlug) {
     var deckTypeSlug = deck.type;
     var deckType = exports.gDeckTypeRegistry[deckTypeSlug];
     runWithGenerator(deckType, deck);
+}
+/* Register a new type of deck */
+function registerDeckType(gen, tpl, mkEd, defaultSlug, defaultName, defaultState) {
+    gen.template = tpl;
+    exports.gDeckTypeRegistry[gen.getGenName()] = {
+        slug: gen.getGenName(),
+        gen: gen,
+        editor: mkEd
+    };
+    exports.gDeckRegistry[defaultSlug] = {
+        name: defaultName,
+        slug: defaultSlug,
+        type: gen.getGenName(),
+        state: defaultState,
+        view: {
+            color: "#ffffee"
+        }
+    };
 }
 
 
@@ -272,14 +416,44 @@ var fl = basicFlashcard("1+2", "3");
 
 /***/ }),
 
+/***/ 633:
+/***/ ((__unused_webpack_module, exports) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getDeckJSON = getDeckJSON;
+exports.setDeckJSON = setDeckJSON;
+const opfsRootP = navigator.storage.getDirectory();
+const deckFolderP = opfsRootP.then((r) => r.getDirectoryHandle("decks", { create: true }));
+function getDeckJSON(deckSlug) {
+    var deckHandleP = deckFolderP.then((f) => f.getFileHandle(deckSlug));
+    return deckHandleP
+        .then((h) => h.getFile()).then((f) => f.text())
+        .catch((e) => { console.log(e); return ""; });
+}
+function setDeckJSON(deckSlug, deckBlob) {
+    console.log("SET DECK JSON");
+    var deckHandleP = deckFolderP.then((f) => f.getFileHandle(deckSlug, { create: true }));
+    var deckWriteableP = deckHandleP.then((h) => h.createWritable());
+    return deckWriteableP.then((w) => {
+        w.write(deckBlob).then(() => w.close());
+    }).catch((e) => console.log(`ERROR WRITING DECK: ${e}`));
+}
+
+
+/***/ }),
+
 /***/ 337:
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const flashcard_deck_1 = __webpack_require__(836);
+const decklist_1 = __webpack_require__(79);
+__webpack_require__(633);
 __webpack_require__(365);
-(0, flashcard_deck_1.runDeck)("simple-key-value-deck");
+(0, decklist_1.generateDecklistMenu)(flashcard_deck_1.gDeckRegistry, (_) => { });
+(0, flashcard_deck_1.loadAllDecks)().then((_) => (0, flashcard_deck_1.runDeck)("key-value-quizzer"));
 
 
 /***/ }),
@@ -310,6 +484,8 @@ class KVBasicTemplate extends flashcard_template_1.FlashcardTemplate {
         var a = document.createElement("a");
         a.textContent = data[0];
         var fl = new flashcard_1.Flashcard(a, (answer) => data[1] == answer);
+        var fontSize = 100.0 / (10.0 * Math.log(10 + data[0].length));
+        fl.el.style.fontSize = `${fontSize}vw`;
         return fl;
     }
 }
@@ -325,7 +501,7 @@ function makeKVEditor(state) {
         }
     };
 }
-var kvState = {
+var kvDefaultState = {
     deck: [
         ["cat", "gato"],
         ["dog", "perro"]
@@ -336,19 +512,7 @@ var kvState = {
 // kvGen.state = kvState;
 // kvGen.template = new KVBasicTemplate();
 // kvGen.runLoop()
-var gen = new KVFlashcardGen();
-gen.template = new KVBasicTemplate();
-flashcard_deck_1.gDeckTypeRegistry[gen.getGenName()] = {
-    slug: gen.getGenName(),
-    gen: gen,
-    editor: makeKVEditor
-};
-flashcard_deck_1.gDeckRegistry["simple-key-value-deck"] = {
-    name: "Simple key-value deck",
-    slug: "simple-key-value-deck",
-    type: gen.getGenName(),
-    state: kvState
-};
+const KV_DECK_SLUG = (0, flashcard_deck_1.registerDeckType)(new KVFlashcardGen(), new KVBasicTemplate(), makeKVEditor, "key-value-quizzer", "Simple key-value quizzer", kvDefaultState);
 
 
 /***/ }),

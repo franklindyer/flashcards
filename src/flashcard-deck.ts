@@ -12,8 +12,9 @@ import {
     StateEditor
 } from "./editor"
 import {
+    getDeckSlugs,
     getDeckJSON,
-    setDeckJSON
+    setDeckJSON,
 } from "./fs"
 
 export type FlashcardDeckType<S, D> = {
@@ -22,10 +23,15 @@ export type FlashcardDeckType<S, D> = {
     editor: (s: S) => StateEditor<S> 
 }
 
+export type FlashcardDeckView = {
+    color: string
+}
+
 export type FlashcardDeck<S> = {
     name: string,
     slug: string,
     type: string,
+    view: FlashcardDeckView,
     state: S
 }
 
@@ -38,8 +44,6 @@ function saveDeck(deckSlug: string, callback: () => void) {
 
 function loadDeckIfExists(deckSlug: string) {
     return getDeckJSON(deckSlug).then((j) => {
-        console.log("GETTING DECK JSON!");
-        console.log(j);
         if (j.length > 0) {
             var d = <FlashcardDeck<any>>JSON.parse(j);
             gDeckRegistry[d.slug] = d;
@@ -48,8 +52,9 @@ function loadDeckIfExists(deckSlug: string) {
 }
 
 export function loadAllDecks() {
+    var deckSlugsP = getDeckSlugs(); 
     var deckSlugs = Object.keys(gDeckRegistry);
-    return Promise.all(deckSlugs.map((slug) => loadDeckIfExists(slug)))
+    return deckSlugsP.then((slugs) => Promise.all(slugs.map(loadDeckIfExists)));
 }
 
 /* Setup general-purpose menus */
@@ -107,6 +112,9 @@ export function registerDeckType<S, D>(
         name: defaultName,
         slug: defaultSlug,
         type: gen.getGenName(),
-        state: defaultState
+        state: defaultState,
+        view: {
+            color: "#ffffee"
+        }
     }
 }

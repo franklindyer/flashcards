@@ -21,6 +21,8 @@ class KVBasicTemplate extends flashcard_template_1.FlashcardTemplate {
         var a = document.createElement("a");
         a.textContent = data[0];
         var fl = new flashcard_1.Flashcard(a, (answer) => data[1] == answer);
+        var fontSize = 100.0 / (10.0 * Math.log(10 + data[0].length));
+        fl.el.style.fontSize = `${fontSize}vw`;
         return fl;
     }
 }
@@ -36,7 +38,7 @@ function makeKVEditor(state) {
         }
     };
 }
-var kvState = {
+var kvDefaultState = {
     deck: [
         ["cat", "gato"],
         ["dog", "perro"]
@@ -47,16 +49,4 @@ var kvState = {
 // kvGen.state = kvState;
 // kvGen.template = new KVBasicTemplate();
 // kvGen.runLoop()
-var gen = new KVFlashcardGen();
-gen.template = new KVBasicTemplate();
-flashcard_deck_1.gDeckTypeRegistry[gen.getGenName()] = {
-    slug: gen.getGenName(),
-    gen: gen,
-    editor: makeKVEditor
-};
-flashcard_deck_1.gDeckRegistry["simple-key-value-deck"] = {
-    name: "Simple key-value deck",
-    slug: "simple-key-value-deck",
-    type: gen.getGenName(),
-    state: kvState
-};
+const KV_DECK_SLUG = (0, flashcard_deck_1.registerDeckType)(new KVFlashcardGen(), new KVBasicTemplate(), makeKVEditor, "key-value-quizzer", "Simple key-value quizzer", kvDefaultState);

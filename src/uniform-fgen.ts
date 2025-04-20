@@ -80,26 +80,8 @@ var kvDefaultState: KVFlashcardState = {
 // kvGen.template = new KVBasicTemplate();
 // kvGen.runLoop()
 
-var gen = new KVFlashcardGen(); 
-/* 
-gen.template = new KVBasicTemplate();
-
-gDeckTypeRegistry[gen.getGenName()] = {
-    slug: gen.getGenName(),
-    gen: gen,
-    editor: makeKVEditor
-};
-
-gDeckRegistry["simple-key-value-deck"] = {
-    name: "Simple key-value deck",
-    slug: "simple-key-value-deck",
-    type: gen.getGenName(),
-    state: kvState
-}
-*/
-
 const KV_DECK_SLUG = registerDeckType(
-    gen,
+    new KVFlashcardGen(),
     new KVBasicTemplate(),
     makeKVEditor,
     "key-value-quizzer",
