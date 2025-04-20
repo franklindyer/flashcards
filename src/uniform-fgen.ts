@@ -13,7 +13,8 @@ import {
 } from "./flashcard-template"
 import {
     gDeckTypeRegistry,
-    gDeckRegistry
+    gDeckRegistry,
+    registerDeckType
 } from "./flashcard-deck"
 import {
     StateEditor,
@@ -66,7 +67,7 @@ function makeKVEditor(state: KVFlashcardState): StateEditor<KVFlashcardState> {
     }
 }
 
-var kvState: KVFlashcardState = {
+var kvDefaultState: KVFlashcardState = {
     deck: [
         ["cat", "gato"],
         ["dog", "perro"]
@@ -80,6 +81,7 @@ var kvState: KVFlashcardState = {
 // kvGen.runLoop()
 
 var gen = new KVFlashcardGen(); 
+/* 
 gen.template = new KVBasicTemplate();
 
 gDeckTypeRegistry[gen.getGenName()] = {
@@ -94,3 +96,13 @@ gDeckRegistry["simple-key-value-deck"] = {
     type: gen.getGenName(),
     state: kvState
 }
+*/
+
+const KV_DECK_SLUG = registerDeckType(
+    gen,
+    new KVBasicTemplate(),
+    makeKVEditor,
+    "key-value-quizzer",
+    "Simple key-value quizzer",
+    kvDefaultState
+);

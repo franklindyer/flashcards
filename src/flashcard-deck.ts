@@ -1,9 +1,13 @@
 import {
-    IDictionary
+    IDictionary,
+    guidGenerator
 } from "./utils"
 import {
     FlashcardGen
 } from "./flashcard-generator"
+import {
+    FlashcardTemplate
+} from "./flashcard-template"
 import {
     StateEditor
 } from "./editor"
@@ -81,4 +85,28 @@ export function runDeck(deckSlug: string) {
     var deckTypeSlug = deck.type;
     var deckType = gDeckTypeRegistry[deckTypeSlug];
     runWithGenerator(deckType, deck)
+}
+
+/* Register a new type of deck */
+
+export function registerDeckType<S, D>(
+    gen: FlashcardGen<S, D>,
+    tpl: FlashcardTemplate<D>,
+    mkEd: (s: S) => StateEditor<S>,
+    defaultSlug: string,
+    defaultName: string,
+    defaultState: S,
+    ) {
+    gen.template = tpl;
+    gDeckTypeRegistry[gen.getGenName()] = {
+        slug: gen.getGenName(),
+        gen: gen,
+        editor: mkEd
+    };
+    gDeckRegistry[defaultSlug] = {
+        name: defaultName,
+        slug: defaultSlug,
+        type: gen.getGenName(),
+        state: defaultState
+    }
 }
