@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.boolEditor = boolEditor;
 exports.singleTextFieldEditor = singleTextFieldEditor;
 exports.validatedTextFieldEditor = validatedTextFieldEditor;
 exports.doubleTextFieldEditor = doubleTextFieldEditor;
@@ -8,6 +9,25 @@ exports.makeTranslationEditor = makeTranslationEditor;
 exports.multipleEditors = multipleEditors;
 const utils_1 = require("./utils");
 /* Some useful state editors */
+function boolEditor(label, val) {
+    var checkbox = document.createElement("input");
+    var editor = {
+        element: null,
+        menuToState: () => checkbox.checked
+    };
+    checkbox.type = "checkbox";
+    checkbox.checked = val;
+    var guid = (0, utils_1.guidGenerator)();
+    checkbox.id = guid;
+    var elementLabel = document.createElement("label");
+    elementLabel.htmlFor = guid;
+    elementLabel.textContent = label;
+    var boxWithLabel = document.createElement("div");
+    boxWithLabel.appendChild(checkbox);
+    boxWithLabel.appendChild(elementLabel);
+    editor.element = boxWithLabel;
+    return editor;
+}
 function singleTextFieldEditor(txt) {
     var editor = {
         element: document.createElement("input"),

@@ -1,5 +1,6 @@
 import {
-    arrayReindex
+    arrayReindex,
+    guidGenerator
 } from "./utils"
 
 export type StateEditor<s> = {
@@ -8,6 +9,26 @@ export type StateEditor<s> = {
 }
 
 /* Some useful state editors */
+
+export function boolEditor(label: string, val: boolean): StateEditor<boolean> {
+    var checkbox = document.createElement("input");
+    var editor: StateEditor<boolean> = {
+        element: null!,
+        menuToState: () => (<HTMLInputElement>checkbox).checked
+    };
+    (<HTMLInputElement>checkbox).type = "checkbox";
+    (<HTMLInputElement>checkbox).checked = val;
+    var guid = guidGenerator();
+    checkbox.id = guid;
+    var elementLabel = document.createElement("label");
+    elementLabel.htmlFor = guid;
+    elementLabel.textContent = label;
+    var boxWithLabel = document.createElement("div");
+    boxWithLabel.appendChild(checkbox);
+    boxWithLabel.appendChild(elementLabel);
+    editor.element = boxWithLabel;
+    return editor;
+}
 
 export function singleTextFieldEditor(txt: string): StateEditor<string> {
     var editor: StateEditor<string> = {

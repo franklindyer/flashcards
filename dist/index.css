@@ -73,15 +73,18 @@ button {
 }
 
 .flashcard-slide-in {
-    animation: card-slide-in 1.2s;
+    animation: card-slide-in 0.8s;
+    animation-timing-function: ease-in-out;
 }
 
 .flashcard-slide-out {
-    animation: card-slide-out 1.2s;
+    animation: card-slide-out 0.8s;
+    animation-timing-function: ease-in-out;
 }
 
 .flashcard-incorrect {
-    animation: card-wrong 0.5s;
+    animation: card-wrong 0.7s;
+    animation-timing-function: ease-in-out;
 }
 
 .answer-text-box {

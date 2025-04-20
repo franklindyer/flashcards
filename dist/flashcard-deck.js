@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.gDeckRegistry = exports.gDeckTypeRegistry = void 0;
+exports.saveDeck = saveDeck;
 exports.loadAllDecks = loadAllDecks;
 exports.runDeck = runDeck;
 exports.registerDeckType = registerDeckType;

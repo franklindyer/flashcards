@@ -1,10 +1,12 @@
 export class Flashcard {
     el: HTMLElement;
     check: (answer: string) => boolean;
+    hint: string;
 
-    constructor(el: HTMLElement, check: (answer: string) => boolean) {
+    constructor(el: HTMLElement, check: (answer: string) => boolean, hint: string) {
         this.el = el;
         this.check = check;
+        this.hint = hint;
     }
 
     slideIn() {
@@ -22,11 +24,13 @@ export class Flashcard {
             this.el.remove();
             callback();
         };
+        (<HTMLInputElement>document.getElementById("answer-hint")).value = "";
     }
 
     markWrong() {
         this.el.classList.add("flashcard-incorrect");
         this.el.onanimationend = () => { this.el.classList.remove("flashcard-incorrect"); };
+        (<HTMLInputElement>document.getElementById("answer-hint")).value = this.hint;
     }
     
 }
@@ -34,11 +38,7 @@ export class Flashcard {
 function basicFlashcard(prompt: string, answer: string) {
     var el = document.createElement("p");
     el.textContent = prompt;
-    const flashcard = new Flashcard(el, (attempt: string) => answer == attempt);
+    const flashcard = new Flashcard(el, (attempt: string) => answer == attempt, answer);
     return flashcard;
 }
 
-var fl = basicFlashcard("1+2", "3");
-// setTimeout(() => fl.slideIn(), 2000);
-// setTimeout(() => fl.markWrong(), 4000);
-// setTimeout(() => fl.slideOut(), 6000);

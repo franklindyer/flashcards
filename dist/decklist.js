@@ -58,6 +58,7 @@ function generateDecklistMenu(decklist, onfinish) {
             closeBtn.onclick = (e) => {
                 var newDeck = ed.menuToState();
                 decklist[dk.slug] = newDeck;
+                (0, flashcard_deck_1.saveDeck)(dk.slug, () => { });
                 generateDecklistMenu(decklist, onfinish);
             };
             deckDiv.replaceChildren(ed.element);

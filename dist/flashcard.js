@@ -4,9 +4,11 @@ exports.Flashcard = void 0;
 class Flashcard {
     el;
     check;
-    constructor(el, check) {
+    hint;
+    constructor(el, check, hint) {
         this.el = el;
         this.check = check;
+        this.hint = hint;
     }
     slideIn() {
         var flCont = document.getElementById("flashcard-container");
@@ -22,20 +24,18 @@ class Flashcard {
             this.el.remove();
             callback();
         };
+        document.getElementById("answer-hint").value = "";
     }
     markWrong() {
         this.el.classList.add("flashcard-incorrect");
         this.el.onanimationend = () => { this.el.classList.remove("flashcard-incorrect"); };
+        document.getElementById("answer-hint").value = this.hint;
     }
 }
 exports.Flashcard = Flashcard;
 function basicFlashcard(prompt, answer) {
     var el = document.createElement("p");
     el.textContent = prompt;
-    const flashcard = new Flashcard(el, (attempt) => answer == attempt);
+    const flashcard = new Flashcard(el, (attempt) => answer == attempt, answer);
     return flashcard;
 }
-var fl = basicFlashcard("1+2", "3");
-// setTimeout(() => fl.slideIn(), 2000);
-// setTimeout(() => fl.markWrong(), 4000);
-// setTimeout(() => fl.slideOut(), 6000);

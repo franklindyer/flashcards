@@ -66,6 +66,7 @@ function generateDecklistMenu(decklist, onfinish) {
             closeBtn.onclick = (e) => {
                 var newDeck = ed.menuToState();
                 decklist[dk.slug] = newDeck;
+                (0, flashcard_deck_1.saveDeck)(dk.slug, () => { });
                 generateDecklistMenu(decklist, onfinish);
             };
             deckDiv.replaceChildren(ed.element);
@@ -123,6 +124,7 @@ function setupDecklistMenu() {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.boolEditor = boolEditor;
 exports.singleTextFieldEditor = singleTextFieldEditor;
 exports.validatedTextFieldEditor = validatedTextFieldEditor;
 exports.doubleTextFieldEditor = doubleTextFieldEditor;
@@ -131,6 +133,25 @@ exports.makeTranslationEditor = makeTranslationEditor;
 exports.multipleEditors = multipleEditors;
 const utils_1 = __webpack_require__(185);
 /* Some useful state editors */
+function boolEditor(label, val) {
+    var checkbox = document.createElement("input");
+    var editor = {
+        element: null,
+        menuToState: () => checkbox.checked
+    };
+    checkbox.type = "checkbox";
+    checkbox.checked = val;
+    var guid = (0, utils_1.guidGenerator)();
+    checkbox.id = guid;
+    var elementLabel = document.createElement("label");
+    elementLabel.htmlFor = guid;
+    elementLabel.textContent = label;
+    var boxWithLabel = document.createElement("div");
+    boxWithLabel.appendChild(checkbox);
+    boxWithLabel.appendChild(elementLabel);
+    editor.element = boxWithLabel;
+    return editor;
+}
 function singleTextFieldEditor(txt) {
     var editor = {
         element: document.createElement("input"),
@@ -237,6 +258,7 @@ function multipleEditors(ls, empty, ed, includeSearch = false, searchFxn = (s, x
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.gDeckRegistry = exports.gDeckTypeRegistry = void 0;
+exports.saveDeck = saveDeck;
 exports.loadAllDecks = loadAllDecks;
 exports.runDeck = runDeck;
 exports.registerDeckType = registerDeckType;
@@ -386,9 +408,11 @@ exports.Flashcard = void 0;
 class Flashcard {
     el;
     check;
-    constructor(el, check) {
+    hint;
+    constructor(el, check, hint) {
         this.el = el;
         this.check = check;
+        this.hint = hint;
     }
     slideIn() {
         var flCont = document.getElementById("flashcard-container");
@@ -404,23 +428,21 @@ class Flashcard {
             this.el.remove();
             callback();
         };
+        document.getElementById("answer-hint").value = "";
     }
     markWrong() {
         this.el.classList.add("flashcard-incorrect");
         this.el.onanimationend = () => { this.el.classList.remove("flashcard-incorrect"); };
+        document.getElementById("answer-hint").value = this.hint;
     }
 }
 exports.Flashcard = Flashcard;
 function basicFlashcard(prompt, answer) {
     var el = document.createElement("p");
     el.textContent = prompt;
-    const flashcard = new Flashcard(el, (attempt) => answer == attempt);
+    const flashcard = new Flashcard(el, (attempt) => answer == attempt, answer);
     return flashcard;
 }
-var fl = basicFlashcard("1+2", "3");
-// setTimeout(() => fl.slideIn(), 2000);
-// setTimeout(() => fl.markWrong(), 4000);
-// setTimeout(() => fl.slideOut(), 6000);
 
 
 /***/ }),
@@ -502,7 +524,7 @@ class KVBasicTemplate extends flashcard_template_1.FlashcardTemplate {
     generateCard(data) {
         var a = document.createElement("a");
         a.textContent = data[0];
-        var fl = new flashcard_1.Flashcard(a, (answer) => data[1] == answer);
+        var fl = new flashcard_1.Flashcard(a, (answer) => data[1] == answer, data[1]);
         var fontSize = 100.0 / (10.0 * Math.log(10 + data[0].length));
         fl.el.style.fontSize = `${fontSize}vw`;
         return fl;

@@ -47,7 +47,7 @@ class KVBasicTemplate extends FlashcardTemplate<KVCardData> {
     generateCard(data: KVCardData): Flashcard {
         var a = document.createElement("a");
         a.textContent = data[0];
-        var fl = new Flashcard(a, (answer: string) => data[1] == answer);
+        var fl = new Flashcard(a, (answer: string) => data[1] == answer, data[1]);
         var fontSize = 100.0/(10.0*Math.log(10+data[0].length));
         fl.el.style.fontSize = `${fontSize}vw`;
         return fl;
