@@ -1,7 +1,9 @@
 import {
+    loadAllDecks,
     runDeck
 } from "./flashcard-deck"
 
+import "./fs"
 import "./uniform-fgen";
 
-runDeck("simple-key-value-deck");
+loadAllDecks().then((_) => runDeck("simple-key-value-deck"));

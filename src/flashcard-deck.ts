@@ -7,6 +7,10 @@ import {
 import {
     StateEditor
 } from "./editor"
+import {
+    getDeckJSON,
+    setDeckJSON
+} from "./fs"
 
 export type FlashcardDeckType<S, D> = {
     slug: string,
@@ -24,6 +28,26 @@ export type FlashcardDeck<S> = {
 export const gDeckTypeRegistry: IDictionary<FlashcardDeckType<any, any>> = {};
 export const gDeckRegistry: IDictionary<FlashcardDeck<any>> = {};
 
+function saveDeck(deckSlug: string, callback: () => void) {
+    setDeckJSON(deckSlug, JSON.stringify(gDeckRegistry[deckSlug])).then((_) => callback());
+}
+
+function loadDeckIfExists(deckSlug: string) {
+    return getDeckJSON(deckSlug).then((j) => {
+        console.log("GETTING DECK JSON!");
+        console.log(j);
+        if (j.length > 0) {
+            var d = <FlashcardDeck<any>>JSON.parse(j);
+            gDeckRegistry[d.slug] = d;
+        }
+    });
+}
+
+export function loadAllDecks() {
+    var deckSlugs = Object.keys(gDeckRegistry);
+    return Promise.all(deckSlugs.map((slug) => loadDeckIfExists(slug)))
+}
+
 /* Setup general-purpose menus */
 
 function menuSetup<S, D>(decktype: FlashcardDeckType<S, D>, deck: FlashcardDeck<S>) {
@@ -39,9 +63,10 @@ function menuSetup<S, D>(decktype: FlashcardDeckType<S, D>, deck: FlashcardDeck<
             editorOverlay.style.display = "none";
             deck.state = editor.menuToState();
             gDeckRegistry[deck.slug].state = deck.state;
+            saveDeck(deck.slug, () => {});
             runDeck(deck.slug);
-        }
-    }
+        };
+    };
 }
 
 function runWithGenerator<S, D>(decktype: FlashcardDeckType<S, D>, deck: FlashcardDeck<S>) {
