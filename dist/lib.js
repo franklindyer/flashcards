@@ -556,6 +556,7 @@ async function loadDeckGenFromRegistry(reg, slug) {
         return null;
     }
     gen.state = deck.state;
+    await emojis_1.openmojiDataPromise;
     await Promise.all(deck.resources.map((rname) => reg.resources[rname]()));
     return gen;
 }

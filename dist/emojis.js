@@ -1,25 +1,17 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.replaceEmojis = exports.buildOpenmojiImage = void 0;
-fetch("/openmoji.txt").then((r) => r.text().then((s) => {
+exports.replaceEmojis = exports.buildOpenmojiImage = exports.openmojiDataPromise = void 0;
+exports.openmojiDataPromise = fetch("/openmojis.txt").then((r) => r.text().then((s) => {
     var lns = s.split('\n');
-    var pts = lns.map((ln) => ln.split('\t'));
-    global.emojiDict = {};
-    for (var pt in pts) {
-        global.emojiDict[pt[0]] = pt[1];
+    var pts = lns.map((ln) => ln.split('\t').map((pt) => pt.trim()));
+    window.emojiDict = {};
+    for (var i in pts) {
+        var pt = pts[i];
+        if (pt.length < 2)
+            continue;
+        window.emojiDict[pt[0]] = pt[1].toUpperCase();
     }
 }));
-/* export function makeOpenmojiImage(emjSeq: string) {
-    var emjs = emjSeq.split("\u200D");
-    var hex = emjs.map((emj) => emj.codePointAt(0)!.toString(16)!.toUpperCase());
-    var imgId = hex.join("-200D-");
-    return buildOpenmojiImage(imgId);
-}
-
-export function makeOpenmojiFlagImage(emjFlag: string) {
-    var imgId = [...emjFlag].map((emj) => emj.codePointAt(0)!.toString(16)!.toUpperCase()).join("-");
-    return buildOpenmojiImage(imgId);
-} */
 function buildOpenmojiImage(emjId) {
     const img = document.createElement('img');
     img.classList.add("openmoji-svg-image");
@@ -30,14 +22,8 @@ function buildOpenmojiImage(emjId) {
 exports.buildOpenmojiImage = buildOpenmojiImage;
 function replaceEmojis(el) {
     var txtInside = el.innerHTML;
-    // txtInside = txtInside.replace(/[🇦-🇿]{2}/ug, function(match, capture) {
-    //     return new XMLSerializer().serializeToString(makeOpenmojiFlagImage(match));
-    // });
-    // txtInside = txtInside.replace(/(\p{RGI_Emoji}\u200D)*\p{RGI_Emoji}/vg, function(match, capture) {
-    //     return new XMLSerializer().serializeToString(makeOpenmojiImage(match));
-    // });
-    txtInside = txtInside.replace(/<<([a-z\-]+)>>/g, function (match, capture) {
-        return new XMLSerializer().serializeToString(buildOpenmojiImage(global.emojiDict[capture]));
+    txtInside = txtInside.replace(/\|([a-z\-]*)\|/g, function (match, capture) {
+        return new XMLSerializer().serializeToString(buildOpenmojiImage(window.emojiDict[capture]));
     });
     el.innerHTML = txtInside;
 }

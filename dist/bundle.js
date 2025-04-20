@@ -5565,32 +5565,25 @@ lib_1.providedGenerators["key-value-quizzer"] = keyValueQuizzer;
 /***/ }),
 
 /***/ 673:
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+/***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.openmojiDataPromise = void 0;
 exports.buildOpenmojiImage = buildOpenmojiImage;
 exports.replaceEmojis = replaceEmojis;
-fetch("/openmoji.txt").then((r) => r.text().then((s) => {
+exports.openmojiDataPromise = fetch("/openmojis.txt").then((r) => r.text().then((s) => {
     var lns = s.split('\n');
-    var pts = lns.map((ln) => ln.split('\t'));
-    __webpack_require__.g.emojiDict = {};
-    for (var pt in pts) {
-        __webpack_require__.g.emojiDict[pt[0]] = pt[1];
+    var pts = lns.map((ln) => ln.split('\t').map((pt) => pt.trim()));
+    window.emojiDict = {};
+    for (var i in pts) {
+        var pt = pts[i];
+        if (pt.length < 2)
+            continue;
+        window.emojiDict[pt[0]] = pt[1].toUpperCase();
     }
 }));
-/* export function makeOpenmojiImage(emjSeq: string) {
-    var emjs = emjSeq.split("\u200D");
-    var hex = emjs.map((emj) => emj.codePointAt(0)!.toString(16)!.toUpperCase());
-    var imgId = hex.join("-200D-");
-    return buildOpenmojiImage(imgId);
-}
-
-export function makeOpenmojiFlagImage(emjFlag: string) {
-    var imgId = [...emjFlag].map((emj) => emj.codePointAt(0)!.toString(16)!.toUpperCase()).join("-");
-    return buildOpenmojiImage(imgId);
-} */
 function buildOpenmojiImage(emjId) {
     const img = document.createElement('img');
     img.classList.add("openmoji-svg-image");
@@ -5600,14 +5593,8 @@ function buildOpenmojiImage(emjId) {
 }
 function replaceEmojis(el) {
     var txtInside = el.innerHTML;
-    // txtInside = txtInside.replace(/[🇦-🇿]{2}/ug, function(match, capture) {
-    //     return new XMLSerializer().serializeToString(makeOpenmojiFlagImage(match));
-    // });
-    // txtInside = txtInside.replace(/(\p{RGI_Emoji}\u200D)*\p{RGI_Emoji}/vg, function(match, capture) {
-    //     return new XMLSerializer().serializeToString(makeOpenmojiImage(match));
-    // });
-    txtInside = txtInside.replace(/<<([a-z\-]+)>>/g, function (match, capture) {
-        return new XMLSerializer().serializeToString(buildOpenmojiImage(__webpack_require__.g.emojiDict[capture]));
+    txtInside = txtInside.replace(/\|([a-z\-]*)\|/g, function (match, capture) {
+        return new XMLSerializer().serializeToString(buildOpenmojiImage(window.emojiDict[capture]));
     });
     el.innerHTML = txtInside;
 }
@@ -7349,6 +7336,7 @@ async function loadDeckGenFromRegistry(reg, slug) {
         return null;
     }
     gen.state = deck.state;
+    await emojis_1.openmojiDataPromise;
     await Promise.all(deck.resources.map((rname) => reg.resources[rname]()));
     return gen;
 }
