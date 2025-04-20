@@ -1,6 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.multipleEditors = exports.makeTranslationEditor = exports.combineEditors = exports.doubleTextFieldEditor = exports.validatedTextFieldEditor = exports.singleTextFieldEditor = void 0;
+exports.singleTextFieldEditor = singleTextFieldEditor;
+exports.validatedTextFieldEditor = validatedTextFieldEditor;
+exports.doubleTextFieldEditor = doubleTextFieldEditor;
+exports.combineEditors = combineEditors;
+exports.makeTranslationEditor = makeTranslationEditor;
+exports.multipleEditors = multipleEditors;
 const utils_1 = require("./utils");
 /* Some useful state editors */
 function singleTextFieldEditor(txt) {
@@ -11,7 +16,6 @@ function singleTextFieldEditor(txt) {
     editor.element.value = txt;
     return editor;
 }
-exports.singleTextFieldEditor = singleTextFieldEditor;
 function validatedTextFieldEditor(txt, pred = () => true) {
     var editor = singleTextFieldEditor(txt);
     editor.element.oninput = (e) => {
@@ -24,7 +28,6 @@ function validatedTextFieldEditor(txt, pred = () => true) {
     };
     return editor;
 }
-exports.validatedTextFieldEditor = validatedTextFieldEditor;
 function doubleTextFieldEditor(txts) {
     var children = [singleTextFieldEditor(txts[0]), singleTextFieldEditor(txts[1])];
     var editor = {
@@ -35,7 +38,6 @@ function doubleTextFieldEditor(txts) {
     editor.element.appendChild(children[1].element);
     return editor;
 }
-exports.doubleTextFieldEditor = doubleTextFieldEditor;
 function combineEditors(st, gen1, gen2) {
     var children = [gen1(st[0]), gen2(st[1])];
     var editor = {
@@ -46,11 +48,9 @@ function combineEditors(st, gen1, gen2) {
     editor.element.appendChild(children[1].element);
     return editor;
 }
-exports.combineEditors = combineEditors;
 function makeTranslationEditor(ls, validator) {
     return multipleEditors(ls, ["", ""], (item) => combineEditors(item, (s) => singleTextFieldEditor(s), (s) => validatedTextFieldEditor(s, validator)), true, (s, cd) => cd[0].includes(s) || cd[1].includes(s));
 }
-exports.makeTranslationEditor = makeTranslationEditor;
 function multipleEditors(ls, empty, ed, includeSearch = false, searchFxn = (s, x) => true) {
     var children = [];
     var editor = {
@@ -104,4 +104,3 @@ function multipleEditors(ls, empty, ed, includeSearch = false, searchFxn = (s, x
     }
     return editor;
 }
-exports.multipleEditors = multipleEditors;

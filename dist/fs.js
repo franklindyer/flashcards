@@ -1,6 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.setDeckJSON = exports.getDeckJSON = void 0;
+exports.getDeckJSON = getDeckJSON;
+exports.getDeckSlugs = getDeckSlugs;
+exports.setDeckJSON = setDeckJSON;
+exports.deleteDeck = deleteDeck;
 const opfsRootP = navigator.storage.getDirectory();
 const deckFolderP = opfsRootP.then((r) => r.getDirectoryHandle("decks", { create: true }));
 function getDeckJSON(deckSlug) {
@@ -9,13 +12,18 @@ function getDeckJSON(deckSlug) {
         .then((h) => h.getFile()).then((f) => f.text())
         .catch((e) => { console.log(e); return ""; });
 }
-exports.getDeckJSON = getDeckJSON;
+function getDeckSlugs() {
+    var entriesP = deckFolderP.then((h) => Array.fromAsync(h.entries()));
+    var namesP = entriesP.then((es) => es.map((entry) => entry[0]));
+    return namesP;
+}
 function setDeckJSON(deckSlug, deckBlob) {
-    console.log("SET DECK JSON");
     var deckHandleP = deckFolderP.then((f) => f.getFileHandle(deckSlug, { create: true }));
     var deckWriteableP = deckHandleP.then((h) => h.createWritable());
     return deckWriteableP.then((w) => {
         w.write(deckBlob).then(() => w.close());
     }).catch((e) => console.log(`ERROR WRITING DECK: ${e}`));
 }
-exports.setDeckJSON = setDeckJSON;
+function deleteDeck(deckSlug) {
+    deckFolderP.then((h) => h.removeEntry(deckSlug));
+}

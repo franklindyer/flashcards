@@ -9,9 +9,11 @@ var flashcards;
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.generateDecklistMenu = generateDecklistMenu;
+exports.setupDecklistMenu = setupDecklistMenu;
 const utils_1 = __webpack_require__(185);
 const flashcard_deck_1 = __webpack_require__(836);
 const editor_1 = __webpack_require__(43);
+const fs_1 = __webpack_require__(633);
 function generateDeckNameEditor(deck) {
     var nicknameEditor = (0, editor_1.singleTextFieldEditor)(deck.name);
     var colorEditor = (0, editor_1.singleTextFieldEditor)(deck.view.color);
@@ -43,7 +45,9 @@ function generateDecklistMenu(decklist, onfinish) {
     for (var k in decklist) {
         var deckDiv = document.createElement("div");
         var slug = decklist[k].slug;
-        deckDiv.textContent = decklist[k].name;
+        var deckLabel = document.createElement("a");
+        deckLabel.textContent = decklist[k].name;
+        deckDiv.appendChild(deckLabel);
         deckDiv.classList.add("deck-editor-entry");
         if (decklist[k].view !== undefined) {
             deckDiv.style.backgroundColor = decklist[k].view.color;
@@ -54,7 +58,6 @@ function generateDecklistMenu(decklist, onfinish) {
             (0, flashcard_deck_1.runDeck)(s);
         })(slug);
         var deckEditBtn = document.createElement("button");
-        //        deckEditBtn.textContent = "Rename";
         deckEditBtn.innerHTML = "<img src='/edit.png'/>";
         deckEditBtn.classList.add("deck-editor-button");
         deckEditBtn.onclick = ((dk, deckDiv) => (e) => {
@@ -72,12 +75,12 @@ function generateDecklistMenu(decklist, onfinish) {
         })(decklist[k], deckDiv);
         var deckDeleteBtn = document.createElement("button");
         deckDeleteBtn.classList.add("deck-editor-button");
-        //        deckDeleteBtn.textContent = "Delete";
         deckDeleteBtn.innerHTML = "<img src='/trash.png'/>";
         deckDeleteBtn.onclick = ((dk) => (e) => {
             var confirmation = confirm(`Are you sure you want to delete "${dk.name}"?`);
             if (confirmation) {
                 delete decklist[dk.slug];
+                (0, fs_1.deleteDeck)(dk.slug);
             }
             e.cancelBubble = true;
             if (e.stopPropagation)
@@ -86,7 +89,6 @@ function generateDecklistMenu(decklist, onfinish) {
         })(decklist[k]);
         var deckCloneBtn = document.createElement("button");
         deckCloneBtn.classList.add("deck-editor-button");
-        //        deckCloneBtn.textContent = "Clone";
         deckCloneBtn.innerHTML = "<img src='/copy.png'/>";
         deckCloneBtn.onclick = ((dk) => (e) => {
             var guid = (0, utils_1.guidGenerator)();
@@ -103,6 +105,14 @@ function generateDecklistMenu(decklist, onfinish) {
         deckDiv.appendChild(deckCloneBtn);
         decklistEditor.appendChild(deckDiv);
     }
+}
+function setupDecklistMenu() {
+    var decksBtn = document.getElementById("deck-list-button");
+    decksBtn.onclick = (e) => {
+        var decklistOverlay = document.getElementById("flashcard-decklist-overlay");
+        generateDecklistMenu(flashcard_deck_1.gDeckRegistry, (_) => { });
+        decklistOverlay.style.display = "block";
+    };
 }
 
 
@@ -238,8 +248,6 @@ function saveDeck(deckSlug, callback) {
 }
 function loadDeckIfExists(deckSlug) {
     return (0, fs_1.getDeckJSON)(deckSlug).then((j) => {
-        console.log("GETTING DECK JSON!");
-        console.log(j);
         if (j.length > 0) {
             var d = JSON.parse(j);
             exports.gDeckRegistry[d.slug] = d;
@@ -247,8 +255,9 @@ function loadDeckIfExists(deckSlug) {
     });
 }
 function loadAllDecks() {
+    var deckSlugsP = (0, fs_1.getDeckSlugs)();
     var deckSlugs = Object.keys(exports.gDeckRegistry);
-    return Promise.all(deckSlugs.map((slug) => loadDeckIfExists(slug)));
+    return deckSlugsP.then((slugs) => Promise.all(slugs.map(loadDeckIfExists)));
 }
 /* Setup general-purpose menus */
 function menuSetup(decktype, deck) {
@@ -422,7 +431,9 @@ var fl = basicFlashcard("1+2", "3");
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getDeckJSON = getDeckJSON;
+exports.getDeckSlugs = getDeckSlugs;
 exports.setDeckJSON = setDeckJSON;
+exports.deleteDeck = deleteDeck;
 const opfsRootP = navigator.storage.getDirectory();
 const deckFolderP = opfsRootP.then((r) => r.getDirectoryHandle("decks", { create: true }));
 function getDeckJSON(deckSlug) {
@@ -431,13 +442,20 @@ function getDeckJSON(deckSlug) {
         .then((h) => h.getFile()).then((f) => f.text())
         .catch((e) => { console.log(e); return ""; });
 }
+function getDeckSlugs() {
+    var entriesP = deckFolderP.then((h) => Array.fromAsync(h.entries()));
+    var namesP = entriesP.then((es) => es.map((entry) => entry[0]));
+    return namesP;
+}
 function setDeckJSON(deckSlug, deckBlob) {
-    console.log("SET DECK JSON");
     var deckHandleP = deckFolderP.then((f) => f.getFileHandle(deckSlug, { create: true }));
     var deckWriteableP = deckHandleP.then((h) => h.createWritable());
     return deckWriteableP.then((w) => {
         w.write(deckBlob).then(() => w.close());
     }).catch((e) => console.log(`ERROR WRITING DECK: ${e}`));
+}
+function deleteDeck(deckSlug) {
+    deckFolderP.then((h) => h.removeEntry(deckSlug));
 }
 
 
@@ -452,7 +470,8 @@ const flashcard_deck_1 = __webpack_require__(836);
 const decklist_1 = __webpack_require__(79);
 __webpack_require__(633);
 __webpack_require__(365);
-(0, decklist_1.generateDecklistMenu)(flashcard_deck_1.gDeckRegistry, (_) => { });
+// generateDecklistMenu(gDeckRegistry, (_) => {});
+(0, decklist_1.setupDecklistMenu)();
 (0, flashcard_deck_1.loadAllDecks)().then((_) => (0, flashcard_deck_1.runDeck)("key-value-quizzer"));
 
 

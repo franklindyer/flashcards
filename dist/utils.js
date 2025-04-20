@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.arrayReindex = exports.guidGenerator = void 0;
+exports.guidGenerator = guidGenerator;
+exports.arrayReindex = arrayReindex;
 // https://stackoverflow.com/questions/6860853/generate-random-string-for-div-id
 function guidGenerator() {
     var S4 = function () {
@@ -8,8 +9,6 @@ function guidGenerator() {
     };
     return (S4() + S4() + "-" + S4() + "-" + S4() + "-" + S4() + "-" + S4() + S4() + S4());
 }
-exports.guidGenerator = guidGenerator;
 function arrayReindex(ls) {
     return ls.filter((_) => true);
 }
-exports.arrayReindex = arrayReindex;

@@ -1,6 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.registerDeckType = exports.runDeck = exports.loadAllDecks = exports.gDeckRegistry = exports.gDeckTypeRegistry = void 0;
+exports.gDeckRegistry = exports.gDeckTypeRegistry = void 0;
+exports.loadAllDecks = loadAllDecks;
+exports.runDeck = runDeck;
+exports.registerDeckType = registerDeckType;
 const fs_1 = require("./fs");
 exports.gDeckTypeRegistry = {};
 exports.gDeckRegistry = {};
@@ -9,8 +12,6 @@ function saveDeck(deckSlug, callback) {
 }
 function loadDeckIfExists(deckSlug) {
     return (0, fs_1.getDeckJSON)(deckSlug).then((j) => {
-        console.log("GETTING DECK JSON!");
-        console.log(j);
         if (j.length > 0) {
             var d = JSON.parse(j);
             exports.gDeckRegistry[d.slug] = d;
@@ -18,10 +19,10 @@ function loadDeckIfExists(deckSlug) {
     });
 }
 function loadAllDecks() {
+    var deckSlugsP = (0, fs_1.getDeckSlugs)();
     var deckSlugs = Object.keys(exports.gDeckRegistry);
-    return Promise.all(deckSlugs.map((slug) => loadDeckIfExists(slug)));
+    return deckSlugsP.then((slugs) => Promise.all(slugs.map(loadDeckIfExists)));
 }
-exports.loadAllDecks = loadAllDecks;
 /* Setup general-purpose menus */
 function menuSetup(decktype, deck) {
     var editBtn = document.getElementById("deck-edit-button");
@@ -53,7 +54,6 @@ function runDeck(deckSlug) {
     var deckType = exports.gDeckTypeRegistry[deckTypeSlug];
     runWithGenerator(deckType, deck);
 }
-exports.runDeck = runDeck;
 /* Register a new type of deck */
 function registerDeckType(gen, tpl, mkEd, defaultSlug, defaultName, defaultState) {
     gen.template = tpl;
@@ -72,4 +72,3 @@ function registerDeckType(gen, tpl, mkEd, defaultSlug, defaultName, defaultState
         }
     };
 }
-exports.registerDeckType = registerDeckType;

@@ -53,7 +53,9 @@ export function generateDecklistMenu(
     for (var k in decklist) {
         var deckDiv = document.createElement("div");
         var slug = decklist[k].slug;
-        deckDiv.textContent = decklist[k].name;
+        var deckLabel = document.createElement("a");
+        deckLabel.textContent = decklist[k].name;
+        deckDiv.appendChild(deckLabel);
         deckDiv.classList.add("deck-editor-entry");
         if (decklist[k].view !== undefined) {
             deckDiv.style.backgroundColor = decklist[k].view!.color;

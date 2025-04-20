@@ -1,5 +1,6 @@
 button {
-    margin: 3px;
+    margin: 2px;
+    padding: 3px;
 }
 
 #flashcard-widget {
@@ -134,21 +135,25 @@ button {
     width: 90%;
     box-shadow: 0 6px #9999aa;
     opacity: 0.8;
+    display: block;
+    height: 30px;
 }
 
 .deck-editor-entry:hover {
     opacity: 1.0;
 }
 
+.deck-editor-entry a {
+    line-height: 30px;
+    text-align: center;
+}
+
 .deck-editor-entry input {
-    margin: 5px;
+    margin: 10px;
 }
 
 .deck-editor-button {
     float: right;
-    margin-left: 2px;
-    margin-right: 2px;
-    padding: 3px;
 }
 
 .deck-editor-button img {

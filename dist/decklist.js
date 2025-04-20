@@ -1,9 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.generateDecklistMenu = void 0;
+exports.generateDecklistMenu = generateDecklistMenu;
+exports.setupDecklistMenu = setupDecklistMenu;
 const utils_1 = require("./utils");
 const flashcard_deck_1 = require("./flashcard-deck");
 const editor_1 = require("./editor");
+const fs_1 = require("./fs");
 function generateDeckNameEditor(deck) {
     var nicknameEditor = (0, editor_1.singleTextFieldEditor)(deck.name);
     var colorEditor = (0, editor_1.singleTextFieldEditor)(deck.view.color);
@@ -35,7 +37,9 @@ function generateDecklistMenu(decklist, onfinish) {
     for (var k in decklist) {
         var deckDiv = document.createElement("div");
         var slug = decklist[k].slug;
-        deckDiv.textContent = decklist[k].name;
+        var deckLabel = document.createElement("a");
+        deckLabel.textContent = decklist[k].name;
+        deckDiv.appendChild(deckLabel);
         deckDiv.classList.add("deck-editor-entry");
         if (decklist[k].view !== undefined) {
             deckDiv.style.backgroundColor = decklist[k].view.color;
@@ -46,7 +50,6 @@ function generateDecklistMenu(decklist, onfinish) {
             (0, flashcard_deck_1.runDeck)(s);
         })(slug);
         var deckEditBtn = document.createElement("button");
-        //        deckEditBtn.textContent = "Rename";
         deckEditBtn.innerHTML = "<img src='/edit.png'/>";
         deckEditBtn.classList.add("deck-editor-button");
         deckEditBtn.onclick = ((dk, deckDiv) => (e) => {
@@ -64,12 +67,12 @@ function generateDecklistMenu(decklist, onfinish) {
         })(decklist[k], deckDiv);
         var deckDeleteBtn = document.createElement("button");
         deckDeleteBtn.classList.add("deck-editor-button");
-        //        deckDeleteBtn.textContent = "Delete";
         deckDeleteBtn.innerHTML = "<img src='/trash.png'/>";
         deckDeleteBtn.onclick = ((dk) => (e) => {
             var confirmation = confirm(`Are you sure you want to delete "${dk.name}"?`);
             if (confirmation) {
                 delete decklist[dk.slug];
+                (0, fs_1.deleteDeck)(dk.slug);
             }
             e.cancelBubble = true;
             if (e.stopPropagation)
@@ -78,7 +81,6 @@ function generateDecklistMenu(decklist, onfinish) {
         })(decklist[k]);
         var deckCloneBtn = document.createElement("button");
         deckCloneBtn.classList.add("deck-editor-button");
-        //        deckCloneBtn.textContent = "Clone";
         deckCloneBtn.innerHTML = "<img src='/copy.png'/>";
         deckCloneBtn.onclick = ((dk) => (e) => {
             var guid = (0, utils_1.guidGenerator)();
@@ -96,4 +98,11 @@ function generateDecklistMenu(decklist, onfinish) {
         decklistEditor.appendChild(deckDiv);
     }
 }
-exports.generateDecklistMenu = generateDecklistMenu;
+function setupDecklistMenu() {
+    var decksBtn = document.getElementById("deck-list-button");
+    decksBtn.onclick = (e) => {
+        var decklistOverlay = document.getElementById("flashcard-decklist-overlay");
+        generateDecklistMenu(flashcard_deck_1.gDeckRegistry, (_) => { });
+        decklistOverlay.style.display = "block";
+    };
+}
