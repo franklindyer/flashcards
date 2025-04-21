@@ -7,18 +7,17 @@ class FlashcardGen {
     getGenName() {
         throw new Error("getGenName not implemented!");
     }
-    state;
     template;
-    runOnce(callback) {
-        var cardData = this.getNextCard(this.state);
+    runOnce(s, setState, callback) {
+        var cardData = this.getNextCard(s);
         var card = this.template.generateCard(cardData);
         var inputBox = document.getElementById("answer-input");
         var inputCallback = (attempt) => {
             var correct = card.check(attempt);
             if (correct) {
-                card.slideOut(callback);
                 inputBox.value = "";
-                this.state = this.updateState(this.state, cardData, card.correctFirst);
+                setState(this.updateState(s, cardData, card.correctFirst));
+                card.slideOut(callback);
             }
             else {
                 card.markWrong();
@@ -32,12 +31,17 @@ class FlashcardGen {
             if (e.key == "Enter") {
                 inputCallback(inputBox.value);
             }
+            else if (e.key == "ArrowUp") {
+                inputBox.value = "";
+                setState(this.updateState(s, cardData, true));
+                card.slideOut(callback);
+            }
         };
         card.slideIn();
     }
-    runLoop(callback) {
+    runLoop(getState, setState, callback) {
         var looper = () => {
-            this.runOnce(() => {
+            this.runOnce(getState(), setState, () => {
                 callback();
                 looper();
             });

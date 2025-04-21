@@ -49,7 +49,7 @@ type SpacedRepCardContent = {
 
 type SpacedRepCardTiming = {
     due: Date | null,
-    intervalSeconds: number,
+    intervalMinutes: number,
     status: SpacedRepCardStatus,
     streak: number
 }
@@ -102,7 +102,7 @@ const defaultSpacedRepSettings = {
 function defaultCardTiming(): SpacedRepCardTiming {
     return {
         due: null,
-        intervalSeconds: 0,
+        intervalMinutes: 0,
         status: SpacedRepCardStatus.CardNew,
         streak: 0
     }
@@ -138,7 +138,7 @@ function makeSpacedRepCard(prompt: string, answers: string[]): SpacedRepCard {
         },
         timing: {
             due: null,
-            intervalSeconds: 0,
+            intervalMinutes: 0,
             status: SpacedRepCardStatus.CardNew,
             streak: 0
         }
@@ -151,9 +151,9 @@ function pickSpacedRepCard(st: SpacedRepState): SpacedRepCardData {
     var dueInds = inds.filter(
         (i) => st.cards[i].timing.due != null 
                 && (new Date(st.cards[i].timing.due!) < new Date())
-                && (st.cards[i].timing.intervalSeconds < st.settings.reviewCeilingDays*(24*3600)));
+                && (st.cards[i].timing.intervalMinutes < st.settings.reviewCeilingDays*(24*60)));
     var reviewInds = inds.filter(
-        (i) => st.cards[i].timing.intervalSeconds > st.settings.reviewCeilingDays*(24*3600))
+        (i) => st.cards[i].timing.intervalMinutes > st.settings.reviewCeilingDays*(24*60))
     switch (st.settings.studying) {
         case SpacedRepStudying.NewCards:
             if (newInds.length == 0) {
@@ -166,7 +166,6 @@ function pickSpacedRepCard(st: SpacedRepState): SpacedRepCardData {
                 isReview: false,
             };
         case SpacedRepStudying.DueCards:
-            console.log(reviewInds);
             if (dueInds.length == 0) {
                 return { content: undefined, cardsLeft: 0, isReview: false };
             } else if (reviewInds.length > 0 && Math.random() < st.settings.probReview) {
@@ -225,33 +224,31 @@ class SpacedRepGen extends FlashcardGen<SpacedRepState, SpacedRepCardData> {
         var cardState = state.cards[cardData.content!.guid];
         var dueDate = cardState.timing.due;
 
-        console.log("CARD BEFORE"); console.log(cardState);
-
         if (correct) {
-            cardState.timing.intervalSeconds 
-                = cardState.timing.intervalSeconds * state.settings.correctFactor;
+            cardState.timing.intervalMinutes 
+                = cardState.timing.intervalMinutes * state.settings.correctFactor;
             cardState.timing.streak += 1;
         } else {
-            cardState.timing.intervalSeconds 
-                = cardState.timing.intervalSeconds * state.settings.incorrectFactor;
+            cardState.timing.intervalMinutes
+                = cardState.timing.intervalMinutes * state.settings.incorrectFactor;
             cardState.timing.streak = 0;
         }                
 
         if (cardState.timing.due === null) {
             if (cardState.timing.streak >= 3) {
-                cardState.timing.intervalSeconds = state.settings.initialHours * 3600;
+                cardState.timing.intervalMinutes = state.settings.initialHours * 60;
                 cardState.timing.due = new Date();
                 cardState.timing.due!
-                    .setHours(cardState.timing.due!.getHours() + cardState.timing.intervalSeconds/3600); 
+                    .setHours(cardState.timing.due!.getHours() + cardState.timing.intervalMinutes/60); 
             }
         } else if (correct) {
             cardState.timing.due = new Date();
             cardState.timing.due!
-                .setHours(cardState.timing.due!.getHours() + cardState.timing.intervalSeconds/3600); 
+                .setHours(cardState.timing.due!.getHours() + cardState.timing.intervalMinutes/60); 
         }
         cardState.timing.due = <Date>JSON.parse(JSON.stringify(cardState.timing.due));
 
-        console.log("CARD AFTER"); console.log(cardState);
+        state.cards[cardData.content!.guid] = cardState;
 
         state.history.push({
             guid: cardData.content!.guid,
@@ -300,7 +297,7 @@ function spacedRepMenu(st: SpacedRepState): StateEditor<SpacedRepState> {
                     },
                     timing: {
                         due: c.timing.due,
-                        intervalSeconds: c.timing.intervalSeconds,
+                        intervalMinutes: c.timing.intervalMinutes,
                         streak: c.timing.streak,
                         status: c.timing.status,
                     }

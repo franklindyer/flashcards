@@ -26,7 +26,8 @@ export abstract class FlashcardGen<S, D> {
             var correct: boolean = card.check(attempt);
             if (correct) {
                 inputBox.value = "";
-                setState(this.updateState(s, cardData, card.correctFirst));
+                var newState = this.updateState(s, cardData, card.correctFirst);
+                setState(newState);
                 card.slideOut(callback);
             } else {
                 card.markWrong();

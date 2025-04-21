@@ -26,12 +26,16 @@ function loadAllDecks() {
     return deckSlugsP.then((slugs) => Promise.all(slugs.map(loadDeckIfExists)));
 }
 /* Setup general-purpose menus */
-function menuSetup(decktype, deck) {
+function menuSetup(deckSlug) {
+    var deck = exports.gDeckRegistry[deckSlug];
+    var decktypeSlug = deck.type;
+    var decktype = exports.gDeckTypeRegistry[decktypeSlug];
+    var getState = () => exports.gDeckRegistry[deckSlug].state;
     var editBtn = document.getElementById("deck-edit-button");
     editBtn.onclick = () => {
         var editorOverlay = document.getElementById("flashcard-deck-editor-overlay");
         var editorCont = document.getElementById("flashcard-deck-editor");
-        var editor = decktype.editor(deck.state);
+        var editor = decktype.editor(getState());
         editorOverlay.style.display = "inline-block";
         editorCont.replaceChildren(editor.element);
         var doneBtn = document.getElementById("flashcard-deck-editor-close");
@@ -44,7 +48,7 @@ function menuSetup(decktype, deck) {
         };
     };
 }
-function importExportSetup(deckSlug, setState) {
+function importExportSetup(deckSlug, setDeck) {
     var importBtn = document.getElementById("import-deck-button");
     var fileUploadInput = document.getElementById("deck-upload-file");
     var exportBtn = document.getElementById("export-deck-button");
@@ -59,7 +63,7 @@ function importExportSetup(deckSlug, setState) {
                 return;
             var reader = new FileReader();
             reader.onload = (e) => {
-                setState(JSON.parse(e.target.result).state);
+                setDeck(JSON.parse(e.target.result));
             };
             reader.readAsText(file, "UTF-8");
         };
@@ -68,25 +72,21 @@ function importExportSetup(deckSlug, setState) {
         (0, utils_1.downloadText)(deckSlug, JSON.stringify(exports.gDeckRegistry[deckSlug]));
     };
 }
-function runWithGenerator(decktype, deck, callback) {
-    document.getElementById("flashcard-container").innerHTML = "";
-    menuSetup(decktype, deck);
-    importExportSetup(deck.slug, (s) => {
-        decktype.gen.state = s;
-        saveDeck(deck.slug, () => { });
-        runWithGenerator(decktype, deck, callback);
-    });
-    decktype.gen.state = deck.state;
-    decktype.gen.runLoop(callback);
-}
 function runDeck(deckSlug) {
-    var deck = exports.gDeckRegistry[deckSlug];
-    var deckTypeSlug = deck.type;
-    var deckType = exports.gDeckTypeRegistry[deckTypeSlug];
-    var saver = () => {
-        saveDeck(deckSlug, () => { });
+    document.getElementById("flashcard-container").innerHTML = "";
+    var getState = () => exports.gDeckRegistry[deckSlug].state;
+    var setState = (state) => {
+        exports.gDeckRegistry[deckSlug].state = state;
     };
-    runWithGenerator(deckType, deck, saver);
+    menuSetup(deckSlug);
+    importExportSetup(deckSlug, (s) => {
+        exports.gDeckRegistry[deckSlug] = s;
+        saveDeck(deckSlug, () => {
+            runDeck(deckSlug);
+        });
+    });
+    var decktype = exports.gDeckTypeRegistry[exports.gDeckRegistry[deckSlug].type];
+    decktype.gen.runLoop(getState, setState, () => saveDeck(deckSlug, () => { }));
 }
 /* Register a new type of deck */
 function registerDeckType(gen, tpl, mkEd, defaultSlug, defaultName, defaultState) {

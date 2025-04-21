@@ -29,6 +29,7 @@ const defaultSpacedRepSettings = {
     incorrectFactor: 0.5,
     reviewCeilingDays: 365,
     studying: SpacedRepStudying.NewCards,
+    probReview: 0.1,
     order: SpacedRepOrder.RandomOrder
 };
 function defaultCardTiming() {
@@ -58,7 +59,6 @@ const defaultSpacedRepState = {
 };
 function makeSpacedRepCard(prompt, answers) {
     var guid = (0, utils_1.guidGenerator)();
-    console.log(guid);
     return {
         content: {
             guid: guid,
@@ -76,22 +76,42 @@ function makeSpacedRepCard(prompt, answers) {
 function pickSpacedRepCard(st) {
     var inds = Object.keys(st.cards);
     var newInds = inds.filter((i) => st.cards[i].timing.due == null);
-    var dueInds = inds.filter((i) => st.cards[i].timing.due != null && new Date(st.cards[i].timing.due) < new Date());
+    var dueInds = inds.filter((i) => st.cards[i].timing.due != null
+        && (new Date(st.cards[i].timing.due) < new Date())
+        && (st.cards[i].timing.intervalSeconds < st.settings.reviewCeilingDays * (24 * 3600)));
+    var reviewInds = inds.filter((i) => st.cards[i].timing.intervalSeconds > st.settings.reviewCeilingDays * (24 * 3600));
     switch (st.settings.studying) {
         case SpacedRepStudying.NewCards:
             if (newInds.length == 0) {
-                return { content: undefined, cardsLeft: 0 };
+                return { content: undefined, cardsLeft: 0, isReview: false };
             }
             var newInd = newInds[Math.floor(Math.random() * newInds.length)];
-            return { content: st.cards[newInd].content, cardsLeft: newInds.length };
+            return {
+                content: st.cards[newInd].content,
+                cardsLeft: newInds.length,
+                isReview: false,
+            };
         case SpacedRepStudying.DueCards:
-            if (newInds.length == 0) {
-                return { content: undefined, cardsLeft: 0 };
+            console.log(reviewInds);
+            if (dueInds.length == 0) {
+                return { content: undefined, cardsLeft: 0, isReview: false };
             }
-            var dueInd = Math.floor(Math.random() * dueInds.length);
-            return { content: st.cards[dueInd].content, cardsLeft: dueInds.length };
+            else if (reviewInds.length > 0 && Math.random() < st.settings.probReview) {
+                var reviewInd = reviewInds[Math.floor(Math.random() * reviewInds.length)];
+                return {
+                    content: st.cards[reviewInd].content,
+                    cardsLeft: dueInds.length,
+                    isReview: true
+                };
+            }
+            var dueInd = dueInds[Math.floor(Math.random() * dueInds.length)];
+            return {
+                content: st.cards[dueInd].content,
+                cardsLeft: dueInds.length,
+                isReview: false
+            };
     }
-    return { content: undefined, cardsLeft: 0 };
+    return { content: undefined, cardsLeft: 0, isReview: false };
 }
 class SpacedRepTemplate extends flashcard_template_1.FlashcardTemplate {
     generateCard(data) {
@@ -107,7 +127,11 @@ class SpacedRepTemplate extends flashcard_template_1.FlashcardTemplate {
         var fontSize = 100.0 / (10.0 * Math.log(10 + prompt.length));
         a.style.fontSize = `${fontSize}vw`;
         a.textContent = prompt;
-        return new flashcard_1.Flashcard(a, pred, hint);
+        var fl = new flashcard_1.Flashcard(a, pred, hint);
+        if (data.isReview) {
+            fl.el.style.backgroundColor = "#eeeeff";
+        }
+        return fl;
     }
 }
 class SpacedRepGen extends flashcard_generator_1.FlashcardGen {
@@ -118,6 +142,8 @@ class SpacedRepGen extends flashcard_generator_1.FlashcardGen {
     updateState(state, cardData, correct) {
         var cardState = state.cards[cardData.content.guid];
         var dueDate = cardState.timing.due;
+        console.log("CARD BEFORE");
+        console.log(cardState);
         if (correct) {
             cardState.timing.intervalSeconds
                 = cardState.timing.intervalSeconds * state.settings.correctFactor;
@@ -142,6 +168,9 @@ class SpacedRepGen extends flashcard_generator_1.FlashcardGen {
                 .setHours(cardState.timing.due.getHours() + cardState.timing.intervalSeconds / 3600);
         }
         cardState.timing.due = JSON.parse(JSON.stringify(cardState.timing.due));
+        state.cards[cardData.content.guid] = cardState;
+        console.log("CARD AFTER");
+        console.log(cardState);
         state.history.push({
             guid: cardData.content.guid,
             answered: new Date(),
@@ -157,6 +186,7 @@ function spacedRepMenu(st) {
     var conf = st.settings;
     var studyingNewEditor = (0, editor_1.boolEditor)("Studying new cards?", st.settings.studying === SpacedRepStudying.NewCards);
     var initHoursEditor = (0, editor_1.scrollNumberEditor)("Initial interval (hours): ", conf.initialHours, 1, 240, 1);
+    var reviewsEditor = (0, editor_1.scrollNumberEditor)("Probability of getting review cards: ", conf.probReview, 0, 0.5, 0.01);
     var correctFactor = (0, editor_1.scrollNumberEditor)("Correct factor: ", conf.correctFactor, 1, 10, 0.1);
     var incorrectFactor = (0, editor_1.scrollNumberEditor)("Incorrect factor: ", conf.incorrectFactor, 0, 1, 0.01);
     function makeCardEditor(c) {
@@ -203,7 +233,8 @@ function spacedRepMenu(st) {
         initHoursEditor.element,
         correctFactor.element,
         incorrectFactor.element,
-        cardsEditor.element
+        reviewsEditor.element,
+        cardsEditor.element,
     ];
     components.map((el) => contDiv.appendChild(el));
     return {
@@ -216,6 +247,7 @@ function spacedRepMenu(st) {
                     incorrectFactor: incorrectFactor.menuToState(),
                     studying: studyingNewEditor.menuToState() ? SpacedRepStudying.NewCards : SpacedRepStudying.DueCards,
                     reviewCeilingDays: st.settings.reviewCeilingDays,
+                    probReview: reviewsEditor.menuToState(),
                     order: SpacedRepOrder.RandomOrder,
                 },
                 cards: (0, utils_1.makeDict)(cardsEditor.menuToState(), (c) => c.content.guid),
