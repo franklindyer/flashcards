@@ -12,23 +12,22 @@ export abstract class FlashcardGen<S, D> {
         throw new Error("getGenName not implemented!");
     }
     
-    state?: S;
     template?: FlashcardTemplate<D>;
 
     abstract getNextCard(state: S): D;
     abstract updateState(state: S, cardData: D, correct: boolean): S;
 
-    runOnce(callback: () => void) {
-        var cardData: D = this.getNextCard(this.state!);
+    runOnce(s: S, setState: (s: S) => void, callback: () => void) {
+        var cardData: D = this.getNextCard(s);
         var card = this.template!.generateCard(cardData);
 
         var inputBox = <HTMLInputElement>document.getElementById("answer-input");
         var inputCallback = (attempt: string) => {
             var correct: boolean = card.check(attempt);
             if (correct) {
-                card.slideOut(callback);
                 inputBox.value = "";
-                this.state = this.updateState(this.state!, cardData, card.correctFirst);
+                setState(this.updateState(s, cardData, card.correctFirst));
+                card.slideOut(callback);
             } else {
                 card.markWrong();
                 inputBox.oninput = (e) => {
@@ -41,18 +40,18 @@ export abstract class FlashcardGen<S, D> {
             if (e.key == "Enter") {
                 inputCallback(inputBox.value);
             } else if (e.key == "ArrowUp") {
-                card.slideOut(callback);
                 inputBox.value = "";
-                this.state = this.updateState(this.state!, cardData, true);  
+                setState(this.updateState(s, cardData, true)); 
+                card.slideOut(callback);
             }
         };
 
         card.slideIn(); 
     }
 
-    runLoop(callback: () => void) {
+    runLoop(getState: () => S, setState: (s: S) => void, callback: () => void) {
         var looper = () => {
-            this.runOnce(() => {
+            this.runOnce(getState(), setState, () => {
                 callback();
                 looper();
             });

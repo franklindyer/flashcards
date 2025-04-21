@@ -56,6 +56,7 @@ type SpacedRepCardTiming = {
 
 type SpacedRepCardData = {
     content: SpacedRepCardContent | undefined,
+    isReview: boolean,
     cardsLeft: number
 }
 
@@ -70,6 +71,7 @@ type SpacedRepSettings = {
     incorrectFactor: number,
     reviewCeilingDays: number,
     studying: SpacedRepStudying,
+    probReview: number,
     order: SpacedRepOrder 
 }
 
@@ -93,6 +95,7 @@ const defaultSpacedRepSettings = {
     incorrectFactor: 0.5,
     reviewCeilingDays: 365,
     studying: SpacedRepStudying.NewCards,
+    probReview: 0.1,
     order: SpacedRepOrder.RandomOrder
 };
 
@@ -146,22 +149,42 @@ function pickSpacedRepCard(st: SpacedRepState): SpacedRepCardData {
     var inds = Object.keys(st.cards);
     var newInds = inds.filter((i) => st.cards[i].timing.due == null);
     var dueInds = inds.filter(
-        (i) => st.cards[i].timing.due != null && new Date(st.cards[i].timing.due!) < new Date());
+        (i) => st.cards[i].timing.due != null 
+                && (new Date(st.cards[i].timing.due!) < new Date())
+                && (st.cards[i].timing.intervalSeconds < st.settings.reviewCeilingDays*(24*3600)));
+    var reviewInds = inds.filter(
+        (i) => st.cards[i].timing.intervalSeconds > st.settings.reviewCeilingDays*(24*3600))
     switch (st.settings.studying) {
         case SpacedRepStudying.NewCards:
             if (newInds.length == 0) {
-                return { content: undefined, cardsLeft: 0 };
+                return { content: undefined, cardsLeft: 0, isReview: false };
             }
             var newInd = newInds[Math.floor(Math.random() * newInds.length)];
-            return { content: st.cards[newInd].content, cardsLeft: newInds.length };
+            return { 
+                content: st.cards[newInd].content, 
+                cardsLeft: newInds.length,
+                isReview: false,
+            };
         case SpacedRepStudying.DueCards:
-            if (newInds.length == 0) {
-                return { content: undefined, cardsLeft: 0 };
+            console.log(reviewInds);
+            if (dueInds.length == 0) {
+                return { content: undefined, cardsLeft: 0, isReview: false };
+            } else if (reviewInds.length > 0 && Math.random() < st.settings.probReview) {
+                var reviewInd = reviewInds[Math.floor(Math.random() * reviewInds.length)];
+                return {
+                    content: st.cards[reviewInd].content,
+                    cardsLeft: dueInds.length,
+                    isReview: true
+                };
             }
-            var dueInd = Math.floor(Math.random() * dueInds.length);
-            return { content: st.cards[dueInd].content, cardsLeft: dueInds.length };
+            var dueInd = dueInds[Math.floor(Math.random() * dueInds.length)];
+            return { 
+                content: st.cards[dueInd].content, 
+                cardsLeft: dueInds.length,
+                isReview: false
+            };
     }
-    return { content: undefined, cardsLeft: 0 };
+    return { content: undefined, cardsLeft: 0, isReview: false };
 }
 
 class SpacedRepTemplate extends FlashcardTemplate<SpacedRepCardData> {
@@ -180,12 +203,14 @@ class SpacedRepTemplate extends FlashcardTemplate<SpacedRepCardData> {
         var fontSize = 100.0/(10.0*Math.log(10+prompt.length));
         a.style.fontSize = `${fontSize}vw`;
         a.textContent = prompt;       
+
+        var fl = new Flashcard(a, pred, hint);
+
+        if (data.isReview) {
+            fl.el.style.backgroundColor = "#eeeeff";
+        }
  
-        return new Flashcard(
-            a,
-            pred,
-            hint
-        );
+        return fl;
     }
 }
 
@@ -199,6 +224,8 @@ class SpacedRepGen extends FlashcardGen<SpacedRepState, SpacedRepCardData> {
     updateState(state: SpacedRepState, cardData: SpacedRepCardData, correct: boolean): SpacedRepState {
         var cardState = state.cards[cardData.content!.guid];
         var dueDate = cardState.timing.due;
+
+        console.log("CARD BEFORE"); console.log(cardState);
 
         if (correct) {
             cardState.timing.intervalSeconds 
@@ -224,6 +251,8 @@ class SpacedRepGen extends FlashcardGen<SpacedRepState, SpacedRepCardData> {
         }
         cardState.timing.due = <Date>JSON.parse(JSON.stringify(cardState.timing.due));
 
+        console.log("CARD AFTER"); console.log(cardState);
+
         state.history.push({
             guid: cardData.content!.guid,
             answered: new Date(),
@@ -241,6 +270,8 @@ function spacedRepMenu(st: SpacedRepState): StateEditor<SpacedRepState> {
     var conf = st.settings;
     var studyingNewEditor = boolEditor("Studying new cards?", st.settings.studying === SpacedRepStudying.NewCards);
     var initHoursEditor = scrollNumberEditor("Initial interval (hours): ", conf.initialHours, 1, 240, 1);
+    var reviewsEditor = scrollNumberEditor("Probability of getting review cards: ", conf.probReview, 0, 0.5, 0.01);
+
     var correctFactor = scrollNumberEditor("Correct factor: ", conf.correctFactor, 1, 10, 0.1);
     var incorrectFactor = scrollNumberEditor("Incorrect factor: ", conf.incorrectFactor, 0, 1, 0.01);
 
@@ -292,7 +323,8 @@ function spacedRepMenu(st: SpacedRepState): StateEditor<SpacedRepState> {
         initHoursEditor.element,
         correctFactor.element,
         incorrectFactor.element,
-        cardsEditor.element
+        reviewsEditor.element,
+        cardsEditor.element,
     ];
     components.map((el) => contDiv.appendChild(el));
     return {
@@ -304,6 +336,7 @@ function spacedRepMenu(st: SpacedRepState): StateEditor<SpacedRepState> {
                 incorrectFactor: incorrectFactor.menuToState(),
                 studying: studyingNewEditor.menuToState() ? SpacedRepStudying.NewCards : SpacedRepStudying.DueCards,
                 reviewCeilingDays: st.settings.reviewCeilingDays,
+                probReview: reviewsEditor.menuToState(),
                 order: SpacedRepOrder.RandomOrder,
             },
             cards: makeDict(cardsEditor.menuToState(), (c) => c.content.guid),
