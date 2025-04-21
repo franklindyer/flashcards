@@ -2,11 +2,13 @@ export class Flashcard {
     el: HTMLElement;
     check: (answer: string) => boolean;
     hint: string;
+    correctFirst: boolean;
 
     constructor(el: HTMLElement, check: (answer: string) => boolean, hint: string) {
         this.el = el;
         this.check = check;
         this.hint = hint;
+        this.correctFirst = true;
     }
 
     slideIn() {
@@ -28,6 +30,7 @@ export class Flashcard {
     }
 
     markWrong() {
+        this.correctFirst = false;
         this.el.classList.add("flashcard-incorrect");
         this.el.onanimationend = () => { this.el.classList.remove("flashcard-incorrect"); };
         (<HTMLInputElement>document.getElementById("answer-hint")).value = this.hint;

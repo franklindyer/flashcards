@@ -30,6 +30,26 @@ export function boolEditor(label: string, val: boolean): StateEditor<boolean> {
     return editor;
 }
 
+export function scrollNumberEditor(label: string, val: number, min: number, max: number, step: number):
+    StateEditor<number> {
+    var scroller = document.createElement("input");
+    scroller.type = "number";
+    scroller.max = max.toString();
+    scroller.min = min.toString();
+    scroller.value = val.toString();
+    scroller.step = step.toString();
+    var scrollerLabel = document.createElement("a");
+    scrollerLabel.textContent = label;
+    var scrollerCont = document.createElement("div");
+    scrollerCont.appendChild(scrollerLabel);
+    scrollerCont.appendChild(scroller);
+    scrollerCont.style.display = "block";
+    return {
+        element: scrollerCont,
+        menuToState: () => parseFloat(scroller.value)
+    }
+}
+
 export function singleTextFieldEditor(txt: string): StateEditor<string> {
     var editor: StateEditor<string> = {
         element: document.createElement("input"),
@@ -91,6 +111,27 @@ export function makeTranslationEditor(ls: [string, string][], validator: (s: str
         true,
         (s, cd) => cd[0].includes(s) || cd[1].includes(s)
     )
+}
+
+export function fixedNumEditors<a, b>(ls: a[], ed: (st: a) => StateEditor<b>):
+    StateEditor<b[]> {
+    var children: StateEditor<b>[] = [];
+    var editor: StateEditor<b[]> = {
+        element: document.createElement("div"),
+        menuToState: () => arrayReindex(children.map((c) => c.menuToState()))
+    }
+    
+    var statePartEditorFactory = (statePart: a) => {
+        var newEditor = ed(statePart);
+        children.push(newEditor);
+        editor.element.appendChild(newEditor.element);
+    }
+    for (var i in ls) {
+        statePartEditorFactory(ls[i])
+    }
+
+    return editor;
+
 }
 
 export function multipleEditors<a>(

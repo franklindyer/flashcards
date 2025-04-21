@@ -13,3 +13,9 @@ export function guidGenerator(): string {
 export function arrayReindex<a>(ls: a[]): a[] { 
     return ls.filter((_) => true);
 }
+
+export function makeDict<a>(items: a[], key: (x: a) => string) {
+    var d: IDictionary<a> = {};
+    items.map((x) => { d[key(x)] = x; });
+    return d;
+}

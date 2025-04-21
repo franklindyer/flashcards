@@ -80,7 +80,7 @@ var kvDefaultState: KVFlashcardState = {
 // kvGen.template = new KVBasicTemplate();
 // kvGen.runLoop()
 
-const KV_DECK_SLUG = registerDeckType(
+registerDeckType(
     new KVFlashcardGen(),
     new KVBasicTemplate(),
     makeKVEditor,

@@ -25,10 +25,10 @@ export abstract class FlashcardGen<S, D> {
         var inputBox = <HTMLInputElement>document.getElementById("answer-input");
         var inputCallback = (attempt: string) => {
             var correct: boolean = card.check(attempt);
-            this.state = this.updateState(this.state!, cardData, correct);
             if (correct) {
                 card.slideOut(callback);
                 inputBox.value = "";
+                this.state = this.updateState(this.state!, cardData, card.correctFirst);
             } else {
                 card.markWrong();
                 inputBox.oninput = (e) => {
@@ -46,9 +46,12 @@ export abstract class FlashcardGen<S, D> {
         card.slideIn(); 
     }
 
-    runLoop() {
+    runLoop(callback: () => void) {
         var looper = () => {
-            this.runOnce(looper);
+            this.runOnce(() => {
+                callback();
+                looper();
+            });
         };
         looper();
     }

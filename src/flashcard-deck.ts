@@ -78,18 +78,21 @@ function menuSetup<S, D>(decktype: FlashcardDeckType<S, D>, deck: FlashcardDeck<
     };
 }
 
-function runWithGenerator<S, D>(decktype: FlashcardDeckType<S, D>, deck: FlashcardDeck<S>) {
+function runWithGenerator<S, D>(decktype: FlashcardDeckType<S, D>, deck: FlashcardDeck<S>, callback: () => void) {
     document.getElementById("flashcard-container")!.innerHTML = "";
     menuSetup(decktype, deck);    
     decktype.gen.state = deck.state;
-    decktype.gen.runLoop();
+    decktype.gen.runLoop(callback);
 }
 
 export function runDeck(deckSlug: string) {
     var deck = gDeckRegistry[deckSlug];
     var deckTypeSlug = deck.type;
     var deckType = gDeckTypeRegistry[deckTypeSlug];
-    runWithGenerator(deckType, deck)
+    var saver = () => {
+        saveDeck(deckSlug, () => {});
+    };
+    runWithGenerator(deckType, deck, saver);
 }
 
 /* Register a new type of deck */

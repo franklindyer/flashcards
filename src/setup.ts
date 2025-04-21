@@ -10,8 +10,8 @@ import {
 
 import "./fs"
 import "./uniform-fgen";
+import "./spaced-repetition";
 
-// generateDecklistMenu(gDeckRegistry, (_) => {});
 setupDecklistMenu();
 
 loadAllDecks().then((_) => runDeck("key-value-quizzer"));
