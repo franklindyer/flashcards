@@ -40,6 +40,10 @@ export abstract class FlashcardGen<S, D> {
         inputBox.onkeydown = (e) => {
             if (e.key == "Enter") {
                 inputCallback(inputBox.value);
+            } else if (e.key == "ArrowUp") {
+                card.slideOut(callback);
+                inputBox.value = "";
+                this.state = this.updateState(this.state!, cardData, true);  
             }
         };
 
