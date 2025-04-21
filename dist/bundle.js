@@ -125,11 +125,13 @@ function setupDecklistMenu() {
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.boolEditor = boolEditor;
+exports.scrollNumberEditor = scrollNumberEditor;
 exports.singleTextFieldEditor = singleTextFieldEditor;
 exports.validatedTextFieldEditor = validatedTextFieldEditor;
 exports.doubleTextFieldEditor = doubleTextFieldEditor;
 exports.combineEditors = combineEditors;
 exports.makeTranslationEditor = makeTranslationEditor;
+exports.fixedNumEditors = fixedNumEditors;
 exports.multipleEditors = multipleEditors;
 const utils_1 = __webpack_require__(185);
 /* Some useful state editors */
@@ -151,6 +153,24 @@ function boolEditor(label, val) {
     boxWithLabel.appendChild(elementLabel);
     editor.element = boxWithLabel;
     return editor;
+}
+function scrollNumberEditor(label, val, min, max, step) {
+    var scroller = document.createElement("input");
+    scroller.type = "number";
+    scroller.max = max.toString();
+    scroller.min = min.toString();
+    scroller.value = val.toString();
+    scroller.step = step.toString();
+    var scrollerLabel = document.createElement("a");
+    scrollerLabel.textContent = label;
+    var scrollerCont = document.createElement("div");
+    scrollerCont.appendChild(scrollerLabel);
+    scrollerCont.appendChild(scroller);
+    scrollerCont.style.display = "block";
+    return {
+        element: scrollerCont,
+        menuToState: () => parseFloat(scroller.value)
+    };
 }
 function singleTextFieldEditor(txt) {
     var editor = {
@@ -194,6 +214,22 @@ function combineEditors(st, gen1, gen2) {
 }
 function makeTranslationEditor(ls, validator) {
     return multipleEditors(ls, ["", ""], (item) => combineEditors(item, (s) => singleTextFieldEditor(s), (s) => validatedTextFieldEditor(s, validator)), true, (s, cd) => cd[0].includes(s) || cd[1].includes(s));
+}
+function fixedNumEditors(ls, ed) {
+    var children = [];
+    var editor = {
+        element: document.createElement("div"),
+        menuToState: () => (0, utils_1.arrayReindex)(children.map((c) => c.menuToState()))
+    };
+    var statePartEditorFactory = (statePart) => {
+        var newEditor = ed(statePart);
+        children.push(newEditor);
+        editor.element.appendChild(newEditor.element);
+    };
+    for (var i in ls) {
+        statePartEditorFactory(ls[i]);
+    }
+    return editor;
 }
 function multipleEditors(ls, empty, ed, includeSearch = false, searchFxn = (s, x) => true) {
     var children = [];
@@ -262,6 +298,7 @@ exports.saveDeck = saveDeck;
 exports.loadAllDecks = loadAllDecks;
 exports.runDeck = runDeck;
 exports.registerDeckType = registerDeckType;
+const utils_1 = __webpack_require__(185);
 const fs_1 = __webpack_require__(633);
 exports.gDeckTypeRegistry = {};
 exports.gDeckRegistry = {};
@@ -300,17 +337,49 @@ function menuSetup(decktype, deck) {
         };
     };
 }
-function runWithGenerator(decktype, deck) {
+function importExportSetup(deckSlug, setState) {
+    var importBtn = document.getElementById("import-deck-button");
+    var fileUploadInput = document.getElementById("deck-upload-file");
+    var exportBtn = document.getElementById("export-deck-button");
+    importBtn.onclick = (e) => {
+        fileUploadInput.click();
+        fileUploadInput.onchange = (e) => {
+            var files = fileUploadInput.files;
+            if (files == null)
+                return;
+            var file = files[0];
+            if (file == null)
+                return;
+            var reader = new FileReader();
+            reader.onload = (e) => {
+                setState(JSON.parse(e.target.result).state);
+            };
+            reader.readAsText(file, "UTF-8");
+        };
+    };
+    exportBtn.onclick = (e) => {
+        (0, utils_1.downloadText)(deckSlug, JSON.stringify(exports.gDeckRegistry[deckSlug]));
+    };
+}
+function runWithGenerator(decktype, deck, callback) {
     document.getElementById("flashcard-container").innerHTML = "";
     menuSetup(decktype, deck);
+    importExportSetup(deck.slug, (s) => {
+        decktype.gen.state = s;
+        saveDeck(deck.slug, () => { });
+        decktype.gen.runLoop(callback);
+    });
     decktype.gen.state = deck.state;
-    decktype.gen.runLoop();
+    decktype.gen.runLoop(callback);
 }
 function runDeck(deckSlug) {
     var deck = exports.gDeckRegistry[deckSlug];
     var deckTypeSlug = deck.type;
     var deckType = exports.gDeckTypeRegistry[deckTypeSlug];
-    runWithGenerator(deckType, deck);
+    var saver = () => {
+        saveDeck(deckSlug, () => { });
+    };
+    runWithGenerator(deckType, deck, saver);
 }
 /* Register a new type of deck */
 function registerDeckType(gen, tpl, mkEd, defaultSlug, defaultName, defaultState) {
@@ -354,10 +423,10 @@ class FlashcardGen {
         var inputBox = document.getElementById("answer-input");
         var inputCallback = (attempt) => {
             var correct = card.check(attempt);
-            this.state = this.updateState(this.state, cardData, correct);
             if (correct) {
                 card.slideOut(callback);
                 inputBox.value = "";
+                this.state = this.updateState(this.state, cardData, card.correctFirst);
             }
             else {
                 card.markWrong();
@@ -374,9 +443,12 @@ class FlashcardGen {
         };
         card.slideIn();
     }
-    runLoop() {
+    runLoop(callback) {
         var looper = () => {
-            this.runOnce(looper);
+            this.runOnce(() => {
+                callback();
+                looper();
+            });
         };
         looper();
     }
@@ -409,10 +481,12 @@ class Flashcard {
     el;
     check;
     hint;
+    correctFirst;
     constructor(el, check, hint) {
         this.el = el;
         this.check = check;
         this.hint = hint;
+        this.correctFirst = true;
     }
     slideIn() {
         var flCont = document.getElementById("flashcard-container");
@@ -420,6 +494,7 @@ class Flashcard {
         this.el.classList.add("flashcard-slide-in");
         this.el.onanimationend = () => { this.el.classList.remove("flashcard-slide-in"); };
         flCont.appendChild(this.el);
+        document.getElementById("answer-hint").value = "";
     }
     slideOut(callback) {
         this.el.classList.add("flashcard-slide-out");
@@ -431,6 +506,7 @@ class Flashcard {
         document.getElementById("answer-hint").value = "";
     }
     markWrong() {
+        this.correctFirst = false;
         this.el.classList.add("flashcard-incorrect");
         this.el.onanimationend = () => { this.el.classList.remove("flashcard-incorrect"); };
         document.getElementById("answer-hint").value = this.hint;
@@ -492,9 +568,242 @@ const flashcard_deck_1 = __webpack_require__(836);
 const decklist_1 = __webpack_require__(79);
 __webpack_require__(633);
 __webpack_require__(365);
-// generateDecklistMenu(gDeckRegistry, (_) => {});
+__webpack_require__(314);
 (0, decklist_1.setupDecklistMenu)();
 (0, flashcard_deck_1.loadAllDecks)().then((_) => (0, flashcard_deck_1.runDeck)("key-value-quizzer"));
+
+
+/***/ }),
+
+/***/ 314:
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const utils_1 = __webpack_require__(185);
+const flashcard_1 = __webpack_require__(88);
+const flashcard_template_1 = __webpack_require__(791);
+const flashcard_generator_1 = __webpack_require__(808);
+const flashcard_deck_1 = __webpack_require__(836);
+const editor_1 = __webpack_require__(43);
+var SpacedRepCardStatus;
+(function (SpacedRepCardStatus) {
+    SpacedRepCardStatus[SpacedRepCardStatus["CardNew"] = 1] = "CardNew";
+    SpacedRepCardStatus[SpacedRepCardStatus["CardStudying"] = 2] = "CardStudying";
+    SpacedRepCardStatus[SpacedRepCardStatus["CardReview"] = 3] = "CardReview";
+})(SpacedRepCardStatus || (SpacedRepCardStatus = {}));
+var SpacedRepStudying;
+(function (SpacedRepStudying) {
+    SpacedRepStudying[SpacedRepStudying["NewCards"] = 0] = "NewCards";
+    SpacedRepStudying[SpacedRepStudying["DueCards"] = 1] = "DueCards";
+})(SpacedRepStudying || (SpacedRepStudying = {}));
+var SpacedRepOrder;
+(function (SpacedRepOrder) {
+    SpacedRepOrder[SpacedRepOrder["RandomOrder"] = 1] = "RandomOrder";
+    SpacedRepOrder[SpacedRepOrder["ReviewFirst"] = 2] = "ReviewFirst";
+    SpacedRepOrder[SpacedRepOrder["NewFirst"] = 3] = "NewFirst";
+})(SpacedRepOrder || (SpacedRepOrder = {}));
+const defaultSpacedRepSettings = {
+    initialHours: 6,
+    correctFactor: 1.6,
+    incorrectFactor: 0.5,
+    reviewCeilingDays: 365,
+    studying: SpacedRepStudying.NewCards,
+    order: SpacedRepOrder.RandomOrder
+};
+function defaultCardTiming() {
+    return {
+        due: null,
+        intervalSeconds: 0,
+        status: SpacedRepCardStatus.CardNew,
+        streak: 0
+    };
+}
+function makeSpacedRepCardDict(cardDat) {
+    var cardDict = {};
+    for (var i in cardDat) {
+        var c = cardDat[i];
+        c.guid = (0, utils_1.guidGenerator)();
+        cardDict[c.guid] = { content: c, timing: defaultCardTiming() };
+    }
+    return cardDict;
+}
+const defaultSpacedRepState = {
+    cards: makeSpacedRepCardDict([
+        { guid: "", prompt: "apple", answers: ["manzana"] },
+        { guid: "", prompt: "banana", answers: ["plátano"] },
+        { guid: "", prompt: "orange", answers: ["naranja"] },
+    ]),
+    settings: defaultSpacedRepSettings,
+    history: []
+};
+function makeSpacedRepCard(prompt, answers) {
+    return {
+        content: {
+            guid: (0, utils_1.guidGenerator)(),
+            prompt: prompt,
+            answers: answers
+        },
+        timing: {
+            due: null,
+            intervalSeconds: 0,
+            status: SpacedRepCardStatus.CardNew,
+            streak: 0
+        }
+    };
+}
+function pickSpacedRepCard(st) {
+    var inds = Object.keys(st.cards);
+    var newInds = inds.filter((i) => st.cards[i].timing.due == null);
+    var dueInds = inds.filter((i) => st.cards[i].timing.due != null && new Date(st.cards[i].timing.due) < new Date());
+    switch (st.settings.studying) {
+        case SpacedRepStudying.NewCards:
+            if (newInds.length == 0) {
+                return { content: undefined, cardsLeft: 0 };
+            }
+            var newInd = newInds[Math.floor(Math.random() * newInds.length)];
+            return { content: st.cards[newInd].content, cardsLeft: newInds.length };
+        case SpacedRepStudying.DueCards:
+            if (newInds.length == 0) {
+                return { content: undefined, cardsLeft: 0 };
+            }
+            var dueInd = Math.floor(Math.random() * dueInds.length);
+            return { content: st.cards[dueInd].content, cardsLeft: dueInds.length };
+    }
+    return { content: undefined, cardsLeft: 0 };
+}
+class SpacedRepTemplate extends flashcard_template_1.FlashcardTemplate {
+    generateCard(data) {
+        var a = document.createElement("a");
+        var prompt = "No cards left to study.";
+        var pred = (_) => false;
+        var hint = "You cannot continue studying until more cards become due.";
+        if (data.content !== undefined) {
+            prompt = data.content.prompt;
+            pred = (answer) => data.content.answers.includes(answer);
+            hint = data.content.answers[0];
+        }
+        var fontSize = 100.0 / (10.0 * Math.log(10 + prompt.length));
+        a.style.fontSize = `${fontSize}vw`;
+        a.textContent = prompt;
+        return new flashcard_1.Flashcard(a, pred, hint);
+    }
+}
+class SpacedRepGen extends flashcard_generator_1.FlashcardGen {
+    getGenName() { return "spaced-repetition-generator"; }
+    getNextCard(state) {
+        return pickSpacedRepCard(state);
+    }
+    updateState(state, cardData, correct) {
+        var cardState = state.cards[cardData.content.guid];
+        var dueDate = cardState.timing.due;
+        if (correct) {
+            cardState.timing.intervalSeconds
+                = cardState.timing.intervalSeconds * state.settings.correctFactor;
+            cardState.timing.streak += 1;
+        }
+        else {
+            cardState.timing.intervalSeconds
+                = cardState.timing.intervalSeconds * state.settings.incorrectFactor;
+            cardState.timing.streak = 0;
+        }
+        if (cardState.timing.due === null) {
+            if (cardState.timing.streak >= 3) {
+                cardState.timing.intervalSeconds = state.settings.initialHours * 3600;
+                cardState.timing.due = new Date();
+                cardState.timing.due
+                    .setHours(cardState.timing.due.getHours() + cardState.timing.intervalSeconds / 3600);
+            }
+        }
+        else if (correct) {
+            cardState.timing.due = new Date();
+            cardState.timing.due
+                .setHours(cardState.timing.due.getHours() + cardState.timing.intervalSeconds / 3600);
+        }
+        cardState.timing.due = JSON.parse(JSON.stringify(cardState.timing.due));
+        state.history.push({
+            guid: cardData.content.guid,
+            answered: new Date(),
+            timing: state.cards[cardData.content.guid].timing,
+            correct: correct,
+            answerSeconds: 0
+        });
+        return state;
+    }
+}
+function spacedRepMenu(st) {
+    var contDiv = document.createElement("div");
+    var conf = st.settings;
+    var studyingNewEditor = (0, editor_1.boolEditor)("Studying new cards?", st.settings.studying === SpacedRepStudying.NewCards);
+    var initHoursEditor = (0, editor_1.scrollNumberEditor)("Initial interval (hours): ", conf.initialHours, 1, 240, 1);
+    var correctFactor = (0, editor_1.scrollNumberEditor)("Correct factor: ", conf.correctFactor, 1, 10, 0.1);
+    var incorrectFactor = (0, editor_1.scrollNumberEditor)("Incorrect factor: ", conf.incorrectFactor, 0, 1, 0.01);
+    function makeCardEditor(c) {
+        var ed = (0, editor_1.fixedNumEditors)([c.content.prompt, c.content.answers.join('|')], editor_1.singleTextFieldEditor);
+        var cardInfo = document.createElement("a");
+        cardInfo.style.color = "lightgray";
+        cardInfo.style.marginLeft = "10px";
+        cardInfo.style.marginRight = "10px";
+        cardInfo.style.verticalAlign = "middle";
+        if (c.timing.due === null) {
+            cardInfo.textContent = "not studied";
+        }
+        else {
+            cardInfo.textContent = `due ${c.timing.due.toLocaleString().split('T')[0]}`;
+        }
+        ed.element.appendChild(cardInfo);
+        return {
+            element: ed.element,
+            menuToState: () => {
+                let tp = ed.menuToState();
+                return {
+                    content: {
+                        guid: c.content.guid,
+                        prompt: tp[0],
+                        answers: tp[1].split('|')
+                    },
+                    timing: {
+                        due: c.timing.due,
+                        intervalSeconds: c.timing.intervalSeconds,
+                        streak: c.timing.streak,
+                        status: c.timing.status,
+                    }
+                };
+            }
+        };
+    }
+    ;
+    var cardsEditor = (0, editor_1.multipleEditors)(Object.values(st.cards), makeSpacedRepCard("", []), makeCardEditor, true, (s, cd) => cd.content.prompt.includes(s) || cd.content.answers.some((a) => a.includes(s)));
+    var cardsEditorTitle = document.createElement("h3");
+    cardsEditorTitle.textContent = "Cards";
+    cardsEditor.element.prepend(cardsEditorTitle);
+    var components = [
+        studyingNewEditor.element,
+        initHoursEditor.element,
+        correctFactor.element,
+        incorrectFactor.element,
+        cardsEditor.element
+    ];
+    components.map((el) => contDiv.appendChild(el));
+    return {
+        element: contDiv,
+        menuToState: () => {
+            return {
+                settings: {
+                    initialHours: initHoursEditor.menuToState(),
+                    correctFactor: correctFactor.menuToState(),
+                    incorrectFactor: incorrectFactor.menuToState(),
+                    studying: studyingNewEditor.menuToState() ? SpacedRepStudying.NewCards : SpacedRepStudying.DueCards,
+                    reviewCeilingDays: st.settings.reviewCeilingDays,
+                    order: SpacedRepOrder.RandomOrder,
+                },
+                cards: (0, utils_1.makeDict)(cardsEditor.menuToState(), (c) => c.content.guid),
+                history: st.history
+            };
+        }
+    };
+}
+(0, flashcard_deck_1.registerDeckType)(new SpacedRepGen(), new SpacedRepTemplate(), spacedRepMenu, "spaced-repetition-deck", "Spaced repetition deck", defaultSpacedRepState);
 
 
 /***/ }),
@@ -553,7 +862,7 @@ var kvDefaultState = {
 // kvGen.state = kvState;
 // kvGen.template = new KVBasicTemplate();
 // kvGen.runLoop()
-const KV_DECK_SLUG = (0, flashcard_deck_1.registerDeckType)(new KVFlashcardGen(), new KVBasicTemplate(), makeKVEditor, "key-value-quizzer", "Simple key-value quizzer", kvDefaultState);
+(0, flashcard_deck_1.registerDeckType)(new KVFlashcardGen(), new KVBasicTemplate(), makeKVEditor, "key-value-quizzer", "Simple key-value quizzer", kvDefaultState);
 
 
 /***/ }),
@@ -565,6 +874,8 @@ const KV_DECK_SLUG = (0, flashcard_deck_1.registerDeckType)(new KVFlashcardGen()
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.guidGenerator = guidGenerator;
 exports.arrayReindex = arrayReindex;
+exports.makeDict = makeDict;
+exports.downloadText = downloadText;
 // https://stackoverflow.com/questions/6860853/generate-random-string-for-div-id
 function guidGenerator() {
     var S4 = function () {
@@ -574,6 +885,21 @@ function guidGenerator() {
 }
 function arrayReindex(ls) {
     return ls.filter((_) => true);
+}
+function makeDict(items, key) {
+    var d = {};
+    items.map((x) => { d[key(x)] = x; });
+    return d;
+}
+// https://stackoverflow.com/questions/3665115/how-to-create-a-file-in-memory-for-user-to-download-but-not-through-server
+function downloadText(filename, text) {
+    var element = document.createElement('a');
+    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+    element.setAttribute('download', filename);
+    element.style.display = 'none';
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
 }
 
 

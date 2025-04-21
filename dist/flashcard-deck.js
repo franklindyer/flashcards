@@ -5,6 +5,7 @@ exports.saveDeck = saveDeck;
 exports.loadAllDecks = loadAllDecks;
 exports.runDeck = runDeck;
 exports.registerDeckType = registerDeckType;
+const utils_1 = require("./utils");
 const fs_1 = require("./fs");
 exports.gDeckTypeRegistry = {};
 exports.gDeckRegistry = {};
@@ -43,17 +44,49 @@ function menuSetup(decktype, deck) {
         };
     };
 }
-function runWithGenerator(decktype, deck) {
+function importExportSetup(deckSlug, setState) {
+    var importBtn = document.getElementById("import-deck-button");
+    var fileUploadInput = document.getElementById("deck-upload-file");
+    var exportBtn = document.getElementById("export-deck-button");
+    importBtn.onclick = (e) => {
+        fileUploadInput.click();
+        fileUploadInput.onchange = (e) => {
+            var files = fileUploadInput.files;
+            if (files == null)
+                return;
+            var file = files[0];
+            if (file == null)
+                return;
+            var reader = new FileReader();
+            reader.onload = (e) => {
+                setState(JSON.parse(e.target.result).state);
+            };
+            reader.readAsText(file, "UTF-8");
+        };
+    };
+    exportBtn.onclick = (e) => {
+        (0, utils_1.downloadText)(deckSlug, JSON.stringify(exports.gDeckRegistry[deckSlug]));
+    };
+}
+function runWithGenerator(decktype, deck, callback) {
     document.getElementById("flashcard-container").innerHTML = "";
     menuSetup(decktype, deck);
+    importExportSetup(deck.slug, (s) => {
+        decktype.gen.state = s;
+        saveDeck(deck.slug, () => { });
+        decktype.gen.runLoop(callback);
+    });
     decktype.gen.state = deck.state;
-    decktype.gen.runLoop();
+    decktype.gen.runLoop(callback);
 }
 function runDeck(deckSlug) {
     var deck = exports.gDeckRegistry[deckSlug];
     var deckTypeSlug = deck.type;
     var deckType = exports.gDeckTypeRegistry[deckTypeSlug];
-    runWithGenerator(deckType, deck);
+    var saver = () => {
+        saveDeck(deckSlug, () => { });
+    };
+    runWithGenerator(deckType, deck, saver);
 }
 /* Register a new type of deck */
 function registerDeckType(gen, tpl, mkEd, defaultSlug, defaultName, defaultState) {

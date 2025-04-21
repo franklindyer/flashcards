@@ -40,13 +40,13 @@ button {
         transform: translateX(0%);
         background-color: #ffeeee;
     } 20% {
-        transform: translateX(-2%);
+        transform: translateX(-1%);
     } 40% {
-        transform: translateX(2%);
+        transform: translateX(1%);
     } 60% {
-        transform: translateX(-2%);
+        transform: translateX(-1%);
     } 80% {
-        transform: translateX(2%);
+        transform: translateX(1%);
         background-color: #ffeeee;
     } 100% {
         transform: translateX(0%);
@@ -83,7 +83,7 @@ button {
 }
 
 .flashcard-incorrect {
-    animation: card-wrong 0.7s;
+    animation: card-wrong 0.4s;
     animation-timing-function: ease-in-out;
 }
 

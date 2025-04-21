@@ -1,11 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.boolEditor = boolEditor;
+exports.scrollNumberEditor = scrollNumberEditor;
 exports.singleTextFieldEditor = singleTextFieldEditor;
 exports.validatedTextFieldEditor = validatedTextFieldEditor;
 exports.doubleTextFieldEditor = doubleTextFieldEditor;
 exports.combineEditors = combineEditors;
 exports.makeTranslationEditor = makeTranslationEditor;
+exports.fixedNumEditors = fixedNumEditors;
 exports.multipleEditors = multipleEditors;
 const utils_1 = require("./utils");
 /* Some useful state editors */
@@ -27,6 +29,24 @@ function boolEditor(label, val) {
     boxWithLabel.appendChild(elementLabel);
     editor.element = boxWithLabel;
     return editor;
+}
+function scrollNumberEditor(label, val, min, max, step) {
+    var scroller = document.createElement("input");
+    scroller.type = "number";
+    scroller.max = max.toString();
+    scroller.min = min.toString();
+    scroller.value = val.toString();
+    scroller.step = step.toString();
+    var scrollerLabel = document.createElement("a");
+    scrollerLabel.textContent = label;
+    var scrollerCont = document.createElement("div");
+    scrollerCont.appendChild(scrollerLabel);
+    scrollerCont.appendChild(scroller);
+    scrollerCont.style.display = "block";
+    return {
+        element: scrollerCont,
+        menuToState: () => parseFloat(scroller.value)
+    };
 }
 function singleTextFieldEditor(txt) {
     var editor = {
@@ -70,6 +90,22 @@ function combineEditors(st, gen1, gen2) {
 }
 function makeTranslationEditor(ls, validator) {
     return multipleEditors(ls, ["", ""], (item) => combineEditors(item, (s) => singleTextFieldEditor(s), (s) => validatedTextFieldEditor(s, validator)), true, (s, cd) => cd[0].includes(s) || cd[1].includes(s));
+}
+function fixedNumEditors(ls, ed) {
+    var children = [];
+    var editor = {
+        element: document.createElement("div"),
+        menuToState: () => (0, utils_1.arrayReindex)(children.map((c) => c.menuToState()))
+    };
+    var statePartEditorFactory = (statePart) => {
+        var newEditor = ed(statePart);
+        children.push(newEditor);
+        editor.element.appendChild(newEditor.element);
+    };
+    for (var i in ls) {
+        statePartEditorFactory(ls[i]);
+    }
+    return editor;
 }
 function multipleEditors(ls, empty, ed, includeSearch = false, searchFxn = (s, x) => true) {
     var children = [];

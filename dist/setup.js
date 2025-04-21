@@ -4,6 +4,6 @@ const flashcard_deck_1 = require("./flashcard-deck");
 const decklist_1 = require("./decklist");
 require("./fs");
 require("./uniform-fgen");
-// generateDecklistMenu(gDeckRegistry, (_) => {});
+require("./spaced-repetition");
 (0, decklist_1.setupDecklistMenu)();
 (0, flashcard_deck_1.loadAllDecks)().then((_) => (0, flashcard_deck_1.runDeck)("key-value-quizzer"));

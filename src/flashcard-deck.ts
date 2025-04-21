@@ -1,6 +1,7 @@
 import {
     IDictionary,
-    guidGenerator
+    guidGenerator,
+    downloadText
 } from "./utils"
 import {
     FlashcardGen
@@ -78,9 +79,39 @@ function menuSetup<S, D>(decktype: FlashcardDeckType<S, D>, deck: FlashcardDeck<
     };
 }
 
+function importExportSetup<S>(deckSlug: string, setState: (s: S) => void) {
+    var importBtn = document.getElementById("import-deck-button")!;
+    var fileUploadInput = document.getElementById("deck-upload-file")!;
+    var exportBtn = document.getElementById("export-deck-button")!;
+
+    importBtn.onclick = (e) => {
+        fileUploadInput.click();
+        fileUploadInput.onchange = (e) => {
+            var files = (<HTMLInputElement>fileUploadInput).files;
+            if (files == null) return;
+            var file = files[0];
+            if (file == null) return;
+            var reader = new FileReader();
+            reader.onload = (e) => {
+                setState(JSON.parse(<string>e.target!.result).state);
+            };
+            reader.readAsText(file, "UTF-8");
+        };
+    }
+
+    exportBtn.onclick = (e) => {
+        downloadText(deckSlug, JSON.stringify(gDeckRegistry[deckSlug]));    
+    } 
+}
+
 function runWithGenerator<S, D>(decktype: FlashcardDeckType<S, D>, deck: FlashcardDeck<S>, callback: () => void) {
     document.getElementById("flashcard-container")!.innerHTML = "";
-    menuSetup(decktype, deck);    
+    menuSetup(decktype, deck);
+    importExportSetup(deck.slug, (s: any) => {
+        decktype.gen.state = s;
+        saveDeck(deck.slug, () => {});
+        runWithGenerator(decktype, deck, callback);
+    }); 
     decktype.gen.state = deck.state;
     decktype.gen.runLoop(callback);
 }

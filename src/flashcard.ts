@@ -17,6 +17,7 @@ export class Flashcard {
         this.el.classList.add("flashcard-slide-in");
         this.el.onanimationend = () => { this.el.classList.remove("flashcard-slide-in"); };
         flCont.appendChild(this.el);
+        (<HTMLInputElement>document.getElementById("answer-hint")).value = "";
     }
 
     slideOut(callback: () => void) {

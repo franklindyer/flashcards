@@ -5,10 +5,12 @@ class Flashcard {
     el;
     check;
     hint;
+    correctFirst;
     constructor(el, check, hint) {
         this.el = el;
         this.check = check;
         this.hint = hint;
+        this.correctFirst = true;
     }
     slideIn() {
         var flCont = document.getElementById("flashcard-container");
@@ -16,6 +18,7 @@ class Flashcard {
         this.el.classList.add("flashcard-slide-in");
         this.el.onanimationend = () => { this.el.classList.remove("flashcard-slide-in"); };
         flCont.appendChild(this.el);
+        document.getElementById("answer-hint").value = "";
     }
     slideOut(callback) {
         this.el.classList.add("flashcard-slide-out");
@@ -27,6 +30,7 @@ class Flashcard {
         document.getElementById("answer-hint").value = "";
     }
     markWrong() {
+        this.correctFirst = false;
         this.el.classList.add("flashcard-incorrect");
         this.el.onanimationend = () => { this.el.classList.remove("flashcard-incorrect"); };
         document.getElementById("answer-hint").value = this.hint;
