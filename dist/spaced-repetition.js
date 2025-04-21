@@ -43,7 +43,6 @@ function makeSpacedRepCardDict(cardDat) {
     var cardDict = {};
     for (var i in cardDat) {
         var c = cardDat[i];
-        c.guid = (0, utils_1.guidGenerator)();
         cardDict[c.guid] = { content: c, timing: defaultCardTiming() };
     }
     return cardDict;
@@ -58,9 +57,11 @@ const defaultSpacedRepState = {
     history: []
 };
 function makeSpacedRepCard(prompt, answers) {
+    var guid = (0, utils_1.guidGenerator)();
+    console.log(guid);
     return {
         content: {
-            guid: (0, utils_1.guidGenerator)(),
+            guid: guid,
             prompt: prompt,
             answers: answers
         },
@@ -193,7 +194,7 @@ function spacedRepMenu(st) {
         };
     }
     ;
-    var cardsEditor = (0, editor_1.multipleEditors)(Object.values(st.cards), makeSpacedRepCard("", []), makeCardEditor, true, (s, cd) => cd.content.prompt.includes(s) || cd.content.answers.some((a) => a.includes(s)));
+    var cardsEditor = (0, editor_1.multipleEditors)(Object.values(st.cards), () => makeSpacedRepCard("", []), makeCardEditor, true, (s, cd) => cd.content.prompt.includes(s) || cd.content.answers.some((a) => a.includes(s)));
     var cardsEditorTitle = document.createElement("h3");
     cardsEditorTitle.textContent = "Cards";
     cardsEditor.element.prepend(cardsEditorTitle);

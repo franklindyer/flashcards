@@ -109,7 +109,6 @@ function makeSpacedRepCardDict(cardDat: SpacedRepCardContent[]): IDictionary<Spa
     var cardDict: IDictionary<SpacedRepCard> = {};
     for (var i in cardDat) {
         var c = cardDat[i];
-        c.guid = guidGenerator();
         cardDict[c.guid] = { content: c, timing: defaultCardTiming() };
     }
     return cardDict;
@@ -127,9 +126,10 @@ const defaultSpacedRepState = {
 
 
 function makeSpacedRepCard(prompt: string, answers: string[]): SpacedRepCard {
+    var guid = guidGenerator();
     return {
         content: {
-            guid: guidGenerator(),
+            guid: guid,
             prompt: prompt,
             answers: answers
         },
@@ -279,7 +279,7 @@ function spacedRepMenu(st: SpacedRepState): StateEditor<SpacedRepState> {
     };
     var cardsEditor = multipleEditors(
         Object.values(st.cards), 
-        makeSpacedRepCard("", []), 
+        () => makeSpacedRepCard("", []), 
         makeCardEditor,
         true,
         (s, cd) => cd.content.prompt.includes(s) || cd.content.answers.some((a) => a.includes(s)));

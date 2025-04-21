@@ -89,7 +89,7 @@ function combineEditors(st, gen1, gen2) {
     return editor;
 }
 function makeTranslationEditor(ls, validator) {
-    return multipleEditors(ls, ["", ""], (item) => combineEditors(item, (s) => singleTextFieldEditor(s), (s) => validatedTextFieldEditor(s, validator)), true, (s, cd) => cd[0].includes(s) || cd[1].includes(s));
+    return multipleEditors(ls, () => ["", ""], (item) => combineEditors(item, (s) => singleTextFieldEditor(s), (s) => validatedTextFieldEditor(s, validator)), true, (s, cd) => cd[0].includes(s) || cd[1].includes(s));
 }
 function fixedNumEditors(ls, ed) {
     var children = [];
@@ -136,7 +136,7 @@ function multipleEditors(ls, empty, ed, includeSearch = false, searchFxn = (s, x
         listDiv.prepend(statePartDiv);
         statePartDivs.push(statePartDiv);
     };
-    addBtn.onclick = (e) => { statePartEditorFactory(empty); };
+    addBtn.onclick = (e) => { statePartEditorFactory(empty()); };
     editor.element.appendChild(addBtn);
     if (includeSearch) {
         var searchBar = document.createElement("input");

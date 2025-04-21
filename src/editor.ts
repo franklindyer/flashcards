@@ -102,7 +102,7 @@ export function makeTranslationEditor(ls: [string, string][], validator: (s: str
     StateEditor<[string, string][]> {
     return multipleEditors(
         ls,
-        ["", ""],
+        () => ["", ""],
         (item) => combineEditors(
             item,
             (s: string) => singleTextFieldEditor(s),
@@ -136,7 +136,7 @@ export function fixedNumEditors<a, b>(ls: a[], ed: (st: a) => StateEditor<b>):
 
 export function multipleEditors<a>(
     ls: a[], 
-    empty: a, 
+    empty: () => a, 
     ed: (st: a) => StateEditor<a>,
     includeSearch: boolean = false,
     searchFxn: (s: string, st: a) => boolean = (s: string, x: a) => true): 
@@ -170,7 +170,7 @@ export function multipleEditors<a>(
         listDiv.prepend(statePartDiv);
         statePartDivs.push(statePartDiv);
     }
-    addBtn.onclick = (e) => { statePartEditorFactory(empty); };
+    addBtn.onclick = (e) => { statePartEditorFactory(empty()); };
     editor.element.appendChild(addBtn);
 
     if (includeSearch) {

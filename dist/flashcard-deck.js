@@ -74,7 +74,7 @@ function runWithGenerator(decktype, deck, callback) {
     importExportSetup(deck.slug, (s) => {
         decktype.gen.state = s;
         saveDeck(deck.slug, () => { });
-        decktype.gen.runLoop(callback);
+        runWithGenerator(decktype, deck, callback);
     });
     decktype.gen.state = deck.state;
     decktype.gen.runLoop(callback);

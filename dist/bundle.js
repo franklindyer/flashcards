@@ -213,7 +213,7 @@ function combineEditors(st, gen1, gen2) {
     return editor;
 }
 function makeTranslationEditor(ls, validator) {
-    return multipleEditors(ls, ["", ""], (item) => combineEditors(item, (s) => singleTextFieldEditor(s), (s) => validatedTextFieldEditor(s, validator)), true, (s, cd) => cd[0].includes(s) || cd[1].includes(s));
+    return multipleEditors(ls, () => ["", ""], (item) => combineEditors(item, (s) => singleTextFieldEditor(s), (s) => validatedTextFieldEditor(s, validator)), true, (s, cd) => cd[0].includes(s) || cd[1].includes(s));
 }
 function fixedNumEditors(ls, ed) {
     var children = [];
@@ -260,7 +260,7 @@ function multipleEditors(ls, empty, ed, includeSearch = false, searchFxn = (s, x
         listDiv.prepend(statePartDiv);
         statePartDivs.push(statePartDiv);
     };
-    addBtn.onclick = (e) => { statePartEditorFactory(empty); };
+    addBtn.onclick = (e) => { statePartEditorFactory(empty()); };
     editor.element.appendChild(addBtn);
     if (includeSearch) {
         var searchBar = document.createElement("input");
@@ -367,7 +367,7 @@ function runWithGenerator(decktype, deck, callback) {
     importExportSetup(deck.slug, (s) => {
         decktype.gen.state = s;
         saveDeck(deck.slug, () => { });
-        decktype.gen.runLoop(callback);
+        runWithGenerator(decktype, deck, callback);
     });
     decktype.gen.state = deck.state;
     decktype.gen.runLoop(callback);
@@ -623,7 +623,6 @@ function makeSpacedRepCardDict(cardDat) {
     var cardDict = {};
     for (var i in cardDat) {
         var c = cardDat[i];
-        c.guid = (0, utils_1.guidGenerator)();
         cardDict[c.guid] = { content: c, timing: defaultCardTiming() };
     }
     return cardDict;
@@ -638,9 +637,11 @@ const defaultSpacedRepState = {
     history: []
 };
 function makeSpacedRepCard(prompt, answers) {
+    var guid = (0, utils_1.guidGenerator)();
+    console.log(guid);
     return {
         content: {
-            guid: (0, utils_1.guidGenerator)(),
+            guid: guid,
             prompt: prompt,
             answers: answers
         },
@@ -773,7 +774,7 @@ function spacedRepMenu(st) {
         };
     }
     ;
-    var cardsEditor = (0, editor_1.multipleEditors)(Object.values(st.cards), makeSpacedRepCard("", []), makeCardEditor, true, (s, cd) => cd.content.prompt.includes(s) || cd.content.answers.some((a) => a.includes(s)));
+    var cardsEditor = (0, editor_1.multipleEditors)(Object.values(st.cards), () => makeSpacedRepCard("", []), makeCardEditor, true, (s, cd) => cd.content.prompt.includes(s) || cd.content.answers.some((a) => a.includes(s)));
     var cardsEditorTitle = document.createElement("h3");
     cardsEditorTitle.textContent = "Cards";
     cardsEditor.element.prepend(cardsEditorTitle);
