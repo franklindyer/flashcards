@@ -3,6 +3,106 @@ var flashcards;
 /******/ 	"use strict";
 /******/ 	var __webpack_modules__ = ({
 
+/***/ 994:
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const utils_1 = __webpack_require__(185);
+const flashcard_1 = __webpack_require__(88);
+const flashcard_generator_1 = __webpack_require__(808);
+const flashcard_template_1 = __webpack_require__(791);
+const flashcard_deck_1 = __webpack_require__(836);
+class ClozeFlashcardGen extends flashcard_generator_1.FlashcardGen {
+    getGenName() { return "cloze-puzzles"; }
+    getNextCard(state) {
+        var key = Object.keys(state.cards)[Math.floor(Math.random() * Object.keys(state.cards).length)];
+        var group = state.cards[key];
+        return group.cards[Math.floor(Math.random() * Object.keys(group.cards).length)];
+    }
+    updateState(state, cardData, correct) {
+        if (correct) {
+            state.cards[cardData.group].correct += 1;
+        }
+        else {
+            state.cards[cardData.group].incorrect += 1;
+        }
+        return state;
+    }
+}
+class ClozeBasicTemplate extends flashcard_template_1.FlashcardTemplate {
+    generateCard(data) {
+        var el = document.createElement("div");
+        el.style.display = "block";
+        el.style.textAlign = "center";
+        var aUpper = document.createElement("p");
+        var aLower = document.createElement("p");
+        aUpper.style.display = "block";
+        aLower.style.display = "block";
+        el.appendChild(aUpper);
+        el.appendChild(document.createElement("hr"));
+        el.appendChild(aLower);
+        var targetWords = [];
+        aUpper.textContent = data.upper.replace(/(\{\{[^\{\}]+\}\})/, (match, p1) => {
+            targetWords.push(p1);
+            return "___";
+        });
+        var answer = targetWords.join(", ");
+        aLower.textContent = data.lower;
+        var fontSize = 100.0 / (10.0 * Math.log(10 + aUpper.textContent.length));
+        aUpper.style.fontSize = `${fontSize}vw`;
+        aLower.style.fontSize = `${0.7 * fontSize}vw`;
+        var fl = new flashcard_1.Flashcard(el, (attempt) => answer == attempt, answer);
+        return fl;
+    }
+}
+var clozeDefaultState = {
+    cards: {
+        "gehen": {
+            key: "gehen",
+            cards: [
+                {
+                    group: "gehen",
+                    guid: (0, utils_1.guidGenerator)(),
+                    upper: "Ich {{gehe}} ins Kino.",
+                    lower: "I go to the movies."
+                },
+                {
+                    group: "gehen",
+                    guid: (0, utils_1.guidGenerator)(),
+                    upper: "Wohin {{gehst}} du?",
+                    lower: "Where are you going?"
+                }
+            ],
+            correct: 0,
+            incorrect: 0
+        },
+        "haben": {
+            key: "haben",
+            cards: [
+                {
+                    group: "haben",
+                    guid: (0, utils_1.guidGenerator)(),
+                    upper: "Ich {{habe}} einen Hund.",
+                    lower: "I have a dog."
+                },
+                {
+                    group: "haben",
+                    guid: (0, utils_1.guidGenerator)(),
+                    upper: "{{Hast}} du einen Hund?",
+                    lower: "Do you have a dog?"
+                }
+            ],
+            correct: 0,
+            incorrect: 0
+        }
+    }
+};
+(0, flashcard_deck_1.registerDeckType)(new ClozeFlashcardGen(), new ClozeBasicTemplate(), () => null, "cloze-quizzer", "Simple German cloze quizzer", clozeDefaultState);
+
+
+/***/ }),
+
 /***/ 79:
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
@@ -424,7 +524,8 @@ class FlashcardGen {
             var correct = card.check(attempt);
             if (correct) {
                 inputBox.value = "";
-                setState(this.updateState(s, cardData, card.correctFirst));
+                var newState = this.updateState(s, cardData, card.correctFirst);
+                setState(newState);
                 card.slideOut(callback);
             }
             else {
@@ -573,6 +674,7 @@ const decklist_1 = __webpack_require__(79);
 __webpack_require__(633);
 __webpack_require__(365);
 __webpack_require__(314);
+__webpack_require__(994);
 (0, decklist_1.setupDecklistMenu)();
 (0, flashcard_deck_1.loadAllDecks)().then((_) => (0, flashcard_deck_1.runDeck)("key-value-quizzer"));
 
@@ -619,7 +721,7 @@ const defaultSpacedRepSettings = {
 function defaultCardTiming() {
     return {
         due: null,
-        intervalSeconds: 0,
+        intervalMinutes: 0,
         status: SpacedRepCardStatus.CardNew,
         streak: 0
     };
@@ -634,9 +736,9 @@ function makeSpacedRepCardDict(cardDat) {
 }
 const defaultSpacedRepState = {
     cards: makeSpacedRepCardDict([
-        { guid: "", prompt: "apple", answers: ["manzana"] },
-        { guid: "", prompt: "banana", answers: ["plátano"] },
-        { guid: "", prompt: "orange", answers: ["naranja"] },
+        { guid: (0, utils_1.guidGenerator)(), prompt: "apple", answers: ["manzana"] },
+        { guid: (0, utils_1.guidGenerator)(), prompt: "banana", answers: ["plátano"] },
+        { guid: (0, utils_1.guidGenerator)(), prompt: "orange", answers: ["naranja"] },
     ]),
     settings: defaultSpacedRepSettings,
     history: []
@@ -651,19 +753,28 @@ function makeSpacedRepCard(prompt, answers) {
         },
         timing: {
             due: null,
-            intervalSeconds: 0,
+            intervalMinutes: 0,
             status: SpacedRepCardStatus.CardNew,
             streak: 0
         }
     };
 }
+function getNew(st) {
+    return Object.keys(st.cards).filter((i) => st.cards[i].timing.due == null);
+}
+function getDue(st) {
+    return Object.keys(st.cards).filter((i) => st.cards[i].timing.due != null
+        && (new Date(st.cards[i].timing.due) < new Date())
+        && (st.cards[i].timing.intervalMinutes < st.settings.reviewCeilingDays * (24 * 60)));
+}
+function getReview(st) {
+    return Object.keys(st.cards).filter((i) => st.cards[i].timing.intervalMinutes > st.settings.reviewCeilingDays * (24 * 60));
+}
 function pickSpacedRepCard(st) {
     var inds = Object.keys(st.cards);
-    var newInds = inds.filter((i) => st.cards[i].timing.due == null);
-    var dueInds = inds.filter((i) => st.cards[i].timing.due != null
-        && (new Date(st.cards[i].timing.due) < new Date())
-        && (st.cards[i].timing.intervalSeconds < st.settings.reviewCeilingDays * (24 * 3600)));
-    var reviewInds = inds.filter((i) => st.cards[i].timing.intervalSeconds > st.settings.reviewCeilingDays * (24 * 3600));
+    var newInds = getNew(st);
+    var dueInds = getDue(st);
+    var reviewInds = getReview(st);
     switch (st.settings.studying) {
         case SpacedRepStudying.NewCards:
             if (newInds.length == 0) {
@@ -676,7 +787,6 @@ function pickSpacedRepCard(st) {
                 isReview: false,
             };
         case SpacedRepStudying.DueCards:
-            console.log(reviewInds);
             if (dueInds.length == 0) {
                 return { content: undefined, cardsLeft: 0, isReview: false };
             }
@@ -726,35 +836,31 @@ class SpacedRepGen extends flashcard_generator_1.FlashcardGen {
     updateState(state, cardData, correct) {
         var cardState = state.cards[cardData.content.guid];
         var dueDate = cardState.timing.due;
-        console.log("CARD BEFORE");
-        console.log(cardState);
         if (correct) {
-            cardState.timing.intervalSeconds
-                = cardState.timing.intervalSeconds * state.settings.correctFactor;
+            cardState.timing.intervalMinutes
+                = cardState.timing.intervalMinutes * state.settings.correctFactor;
             cardState.timing.streak += 1;
         }
         else {
-            cardState.timing.intervalSeconds
-                = cardState.timing.intervalSeconds * state.settings.incorrectFactor;
+            cardState.timing.intervalMinutes
+                = cardState.timing.intervalMinutes * state.settings.incorrectFactor;
             cardState.timing.streak = 0;
         }
         if (cardState.timing.due === null) {
             if (cardState.timing.streak >= 3) {
-                cardState.timing.intervalSeconds = state.settings.initialHours * 3600;
+                cardState.timing.intervalMinutes = state.settings.initialHours * 60;
                 cardState.timing.due = new Date();
                 cardState.timing.due
-                    .setHours(cardState.timing.due.getHours() + cardState.timing.intervalSeconds / 3600);
+                    .setHours(cardState.timing.due.getHours() + cardState.timing.intervalMinutes / 60);
             }
         }
         else if (correct) {
             cardState.timing.due = new Date();
             cardState.timing.due
-                .setHours(cardState.timing.due.getHours() + cardState.timing.intervalSeconds / 3600);
+                .setHours(cardState.timing.due.getHours() + cardState.timing.intervalMinutes / 60);
         }
         cardState.timing.due = JSON.parse(JSON.stringify(cardState.timing.due));
         state.cards[cardData.content.guid] = cardState;
-        console.log("CARD AFTER");
-        console.log(cardState);
         state.history.push({
             guid: cardData.content.guid,
             answered: new Date(),
@@ -767,6 +873,22 @@ class SpacedRepGen extends flashcard_generator_1.FlashcardGen {
 }
 function spacedRepMenu(st) {
     var contDiv = document.createElement("div");
+    var totP = document.createElement("p");
+    totP.textContent = `Total cards: ${Object.keys(st.cards).length}`;
+    totP.style.color = "#666666";
+    totP.style.fontWeight = "bold";
+    var newP = document.createElement("p");
+    newP.textContent = `New cards: ${getNew(st).length}`;
+    newP.style.color = "#9999ee";
+    newP.style.fontWeight = "bold";
+    var dueP = document.createElement("p");
+    dueP.textContent = `Due cards: ${getDue(st).length}`;
+    dueP.style.color = "#ee9999";
+    dueP.style.fontWeight = "bold";
+    var reviewP = document.createElement("p");
+    reviewP.textContent = `Review cards: ${getReview(st).length}`;
+    reviewP.style.color = "#99cc99";
+    reviewP.style.fontWeight = "bold";
     var conf = st.settings;
     var studyingNewEditor = (0, editor_1.boolEditor)("Studying new cards?", st.settings.studying === SpacedRepStudying.NewCards);
     var initHoursEditor = (0, editor_1.scrollNumberEditor)("Initial interval (hours): ", conf.initialHours, 1, 240, 1);
@@ -799,7 +921,7 @@ function spacedRepMenu(st) {
                     },
                     timing: {
                         due: c.timing.due,
-                        intervalSeconds: c.timing.intervalSeconds,
+                        intervalMinutes: c.timing.intervalMinutes,
                         streak: c.timing.streak,
                         status: c.timing.status,
                     }
@@ -813,6 +935,10 @@ function spacedRepMenu(st) {
     cardsEditorTitle.textContent = "Cards";
     cardsEditor.element.prepend(cardsEditorTitle);
     var components = [
+        totP,
+        newP,
+        dueP,
+        reviewP,
         studyingNewEditor.element,
         initHoursEditor.element,
         correctFactor.element,

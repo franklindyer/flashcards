@@ -11,6 +11,7 @@ import {
 import "./fs"
 import "./uniform-fgen";
 import "./spaced-repetition";
+import "./cloze-gen";
 
 setupDecklistMenu();
 

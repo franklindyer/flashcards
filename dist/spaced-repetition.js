@@ -35,7 +35,7 @@ const defaultSpacedRepSettings = {
 function defaultCardTiming() {
     return {
         due: null,
-        intervalSeconds: 0,
+        intervalMinutes: 0,
         status: SpacedRepCardStatus.CardNew,
         streak: 0
     };
@@ -50,9 +50,9 @@ function makeSpacedRepCardDict(cardDat) {
 }
 const defaultSpacedRepState = {
     cards: makeSpacedRepCardDict([
-        { guid: "", prompt: "apple", answers: ["manzana"] },
-        { guid: "", prompt: "banana", answers: ["plátano"] },
-        { guid: "", prompt: "orange", answers: ["naranja"] },
+        { guid: (0, utils_1.guidGenerator)(), prompt: "apple", answers: ["manzana"] },
+        { guid: (0, utils_1.guidGenerator)(), prompt: "banana", answers: ["plátano"] },
+        { guid: (0, utils_1.guidGenerator)(), prompt: "orange", answers: ["naranja"] },
     ]),
     settings: defaultSpacedRepSettings,
     history: []
@@ -67,19 +67,28 @@ function makeSpacedRepCard(prompt, answers) {
         },
         timing: {
             due: null,
-            intervalSeconds: 0,
+            intervalMinutes: 0,
             status: SpacedRepCardStatus.CardNew,
             streak: 0
         }
     };
 }
+function getNew(st) {
+    return Object.keys(st.cards).filter((i) => st.cards[i].timing.due == null);
+}
+function getDue(st) {
+    return Object.keys(st.cards).filter((i) => st.cards[i].timing.due != null
+        && (new Date(st.cards[i].timing.due) < new Date())
+        && (st.cards[i].timing.intervalMinutes < st.settings.reviewCeilingDays * (24 * 60)));
+}
+function getReview(st) {
+    return Object.keys(st.cards).filter((i) => st.cards[i].timing.intervalMinutes > st.settings.reviewCeilingDays * (24 * 60));
+}
 function pickSpacedRepCard(st) {
     var inds = Object.keys(st.cards);
-    var newInds = inds.filter((i) => st.cards[i].timing.due == null);
-    var dueInds = inds.filter((i) => st.cards[i].timing.due != null
-        && (new Date(st.cards[i].timing.due) < new Date())
-        && (st.cards[i].timing.intervalSeconds < st.settings.reviewCeilingDays * (24 * 3600)));
-    var reviewInds = inds.filter((i) => st.cards[i].timing.intervalSeconds > st.settings.reviewCeilingDays * (24 * 3600));
+    var newInds = getNew(st);
+    var dueInds = getDue(st);
+    var reviewInds = getReview(st);
     switch (st.settings.studying) {
         case SpacedRepStudying.NewCards:
             if (newInds.length == 0) {
@@ -92,7 +101,6 @@ function pickSpacedRepCard(st) {
                 isReview: false,
             };
         case SpacedRepStudying.DueCards:
-            console.log(reviewInds);
             if (dueInds.length == 0) {
                 return { content: undefined, cardsLeft: 0, isReview: false };
             }
@@ -142,35 +150,31 @@ class SpacedRepGen extends flashcard_generator_1.FlashcardGen {
     updateState(state, cardData, correct) {
         var cardState = state.cards[cardData.content.guid];
         var dueDate = cardState.timing.due;
-        console.log("CARD BEFORE");
-        console.log(cardState);
         if (correct) {
-            cardState.timing.intervalSeconds
-                = cardState.timing.intervalSeconds * state.settings.correctFactor;
+            cardState.timing.intervalMinutes
+                = cardState.timing.intervalMinutes * state.settings.correctFactor;
             cardState.timing.streak += 1;
         }
         else {
-            cardState.timing.intervalSeconds
-                = cardState.timing.intervalSeconds * state.settings.incorrectFactor;
+            cardState.timing.intervalMinutes
+                = cardState.timing.intervalMinutes * state.settings.incorrectFactor;
             cardState.timing.streak = 0;
         }
         if (cardState.timing.due === null) {
             if (cardState.timing.streak >= 3) {
-                cardState.timing.intervalSeconds = state.settings.initialHours * 3600;
+                cardState.timing.intervalMinutes = state.settings.initialHours * 60;
                 cardState.timing.due = new Date();
                 cardState.timing.due
-                    .setHours(cardState.timing.due.getHours() + cardState.timing.intervalSeconds / 3600);
+                    .setHours(cardState.timing.due.getHours() + cardState.timing.intervalMinutes / 60);
             }
         }
         else if (correct) {
             cardState.timing.due = new Date();
             cardState.timing.due
-                .setHours(cardState.timing.due.getHours() + cardState.timing.intervalSeconds / 3600);
+                .setHours(cardState.timing.due.getHours() + cardState.timing.intervalMinutes / 60);
         }
         cardState.timing.due = JSON.parse(JSON.stringify(cardState.timing.due));
         state.cards[cardData.content.guid] = cardState;
-        console.log("CARD AFTER");
-        console.log(cardState);
         state.history.push({
             guid: cardData.content.guid,
             answered: new Date(),
@@ -183,6 +187,22 @@ class SpacedRepGen extends flashcard_generator_1.FlashcardGen {
 }
 function spacedRepMenu(st) {
     var contDiv = document.createElement("div");
+    var totP = document.createElement("p");
+    totP.textContent = `Total cards: ${Object.keys(st.cards).length}`;
+    totP.style.color = "#666666";
+    totP.style.fontWeight = "bold";
+    var newP = document.createElement("p");
+    newP.textContent = `New cards: ${getNew(st).length}`;
+    newP.style.color = "#9999ee";
+    newP.style.fontWeight = "bold";
+    var dueP = document.createElement("p");
+    dueP.textContent = `Due cards: ${getDue(st).length}`;
+    dueP.style.color = "#ee9999";
+    dueP.style.fontWeight = "bold";
+    var reviewP = document.createElement("p");
+    reviewP.textContent = `Review cards: ${getReview(st).length}`;
+    reviewP.style.color = "#99cc99";
+    reviewP.style.fontWeight = "bold";
     var conf = st.settings;
     var studyingNewEditor = (0, editor_1.boolEditor)("Studying new cards?", st.settings.studying === SpacedRepStudying.NewCards);
     var initHoursEditor = (0, editor_1.scrollNumberEditor)("Initial interval (hours): ", conf.initialHours, 1, 240, 1);
@@ -215,7 +235,7 @@ function spacedRepMenu(st) {
                     },
                     timing: {
                         due: c.timing.due,
-                        intervalSeconds: c.timing.intervalSeconds,
+                        intervalMinutes: c.timing.intervalMinutes,
                         streak: c.timing.streak,
                         status: c.timing.status,
                     }
@@ -229,6 +249,10 @@ function spacedRepMenu(st) {
     cardsEditorTitle.textContent = "Cards";
     cardsEditor.element.prepend(cardsEditorTitle);
     var components = [
+        totP,
+        newP,
+        dueP,
+        reviewP,
         studyingNewEditor.element,
         initHoursEditor.element,
         correctFactor.element,
