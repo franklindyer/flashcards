@@ -83,6 +83,39 @@ export function doubleTextFieldEditor(txts: [string, string]): StateEditor<[stri
     return editor;
 }
 
+export function fileUploadEditor(label: string, callback: (s: string) => void): StateEditor<string> {
+    var content: string = "";
+    var container = document.createElement("div");
+    var importBtn = document.createElement("button");
+    importBtn.textContent = label;
+    var fileUploadInput = document.createElement("input");
+    fileUploadInput.type = "file";
+    fileUploadInput.style.display = "none";
+    container.appendChild(importBtn);
+    container.appendChild(fileUploadInput);
+
+    importBtn.onclick = (e) => {
+        fileUploadInput.click();
+        fileUploadInput.onchange = (e) => {
+            var files = (<HTMLInputElement>fileUploadInput).files;
+            if (files == null) return;
+            var file = files[0];
+            if (file == null) return;
+            var reader = new FileReader();
+            reader.onload = (e) => {
+                content = <string>e.target!.result;
+                callback(content);
+            };
+            reader.readAsText(file, "UTF-8");
+        }
+    };
+
+    return {
+        element: container,
+        menuToState: () => content
+    };
+}
+
 export function combineEditors<a, b>(
     st: [a, b], 
     gen1: (x: a) => StateEditor<a>,

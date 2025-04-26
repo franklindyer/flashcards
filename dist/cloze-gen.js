@@ -4,6 +4,7 @@ const utils_1 = require("./utils");
 const flashcard_1 = require("./flashcard");
 const flashcard_generator_1 = require("./flashcard-generator");
 const flashcard_template_1 = require("./flashcard-template");
+const editor_1 = require("./editor");
 const flashcard_deck_1 = require("./flashcard-deck");
 class ClozeFlashcardGen extends flashcard_generator_1.FlashcardGen {
     getGenName() { return "cloze-puzzles"; }
@@ -35,7 +36,7 @@ class ClozeBasicTemplate extends flashcard_template_1.FlashcardTemplate {
         el.appendChild(document.createElement("hr"));
         el.appendChild(aLower);
         var targetWords = [];
-        aUpper.textContent = data.upper.replace(/(\{\{[^\{\}]+\}\})/, (match, p1) => {
+        aUpper.textContent = data.upper.replace(/\{\{([^\{\}]+)\}\}/, (match, p1) => {
             targetWords.push(p1);
             return "___";
         });
@@ -47,6 +48,60 @@ class ClozeBasicTemplate extends flashcard_template_1.FlashcardTemplate {
         var fl = new flashcard_1.Flashcard(el, (attempt) => answer == attempt, answer);
         return fl;
     }
+}
+function makeClozeEditor(state) {
+    var container = document.createElement("div");
+    var fileEd = (0, editor_1.fileUploadEditor)("Upload cloze puzzles");
+    container.appendChild(fileEd.element);
+    var deckSummary = document.createElement("div");
+    var makeDeckSummary = () => {
+        deckSummary.innerHTML = "";
+        for (var i in Object.keys(state.cards)) {
+            var k = Object.keys(state.cards)[i];
+            var entryDiv = document.createElement("div");
+            entryDiv.classList.add("deck-editor-info-entry");
+            var entryKey = document.createElement("span");
+            entryKey.textContent = k;
+            var entryInfo = document.createElement("span");
+            entryInfo.textContent = `${state.cards[k].cards.length} puzzles`;
+            entryInfo.style.float = "left";
+            entryDiv.appendChild(entryKey);
+            entryDiv.appendChild(entryInfo);
+            deckSummary.appendChild(entryDiv);
+        }
+    };
+    makeDeckSummary();
+    container.appendChild(deckSummary);
+    return {
+        element: container,
+        menuToState: () => {
+            var deckStr = fileEd.menuToState();
+            if (deckStr.length > 0) {
+                var newCardDict = {};
+                var infoList = JSON.parse(deckStr);
+                console.log(infoList);
+                for (var i in Object.keys(infoList)) {
+                    var k = Object.keys(infoList)[i];
+                    newCardDict[k] = {
+                        key: k,
+                        cards: infoList[k].map((c) => {
+                            return {
+                                upper: c["prompt"],
+                                lower: c["translation"],
+                                guid: (0, utils_1.guidGenerator)(),
+                                group: k
+                            };
+                        }),
+                        correct: Object.keys(state.cards).includes(k) ? state.cards[k].correct : 0,
+                        incorrect: Object.keys(state.cards).includes(k) ? state.cards[k].incorrect : 0
+                    };
+                }
+                state.cards = newCardDict;
+                makeDeckSummary();
+            }
+            return state;
+        }
+    };
 }
 var clozeDefaultState = {
     cards: {
@@ -90,4 +145,4 @@ var clozeDefaultState = {
         }
     }
 };
-(0, flashcard_deck_1.registerDeckType)(new ClozeFlashcardGen(), new ClozeBasicTemplate(), () => null, "cloze-quizzer", "Simple German cloze quizzer", clozeDefaultState);
+(0, flashcard_deck_1.registerDeckType)(new ClozeFlashcardGen(), new ClozeBasicTemplate(), makeClozeEditor, "cloze-quizzer", "Simple German cloze quizzer", clozeDefaultState);

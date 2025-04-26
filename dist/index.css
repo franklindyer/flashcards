@@ -187,3 +187,11 @@ hr {
     display: block;
     width: 90%;
 }
+
+.deck-editor-info-entry {
+    margin: 10px;
+    padding: 5px;
+    background-color: #eeeeee;
+    box-shadow: 3px 3px #9999aa;
+    border-radius: 5px;
+}

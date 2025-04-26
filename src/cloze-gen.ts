@@ -12,6 +12,10 @@ import {
     FlashcardTemplate
 } from "./flashcard-template"
 import {
+    StateEditor,
+    fileUploadEditor
+} from "./editor"
+import {
     registerDeckType
 } from "./flashcard-deck"
 
@@ -82,6 +86,87 @@ class ClozeBasicTemplate extends FlashcardTemplate<ClozeCardData> {
     }
 }
 
+function makeClozeEditor(state: ClozeDeckState): StateEditor<ClozeDeckState> {
+    var container = document.createElement("div");
+
+    var loadCards = (s: string) => {
+         if (s.length > 0) {
+            var newCardDict: IDictionary<ClozeCardGroup> = {};
+            var infoList = <any>JSON.parse(s);
+            console.log(infoList);
+            for (var i in Object.keys(infoList)) {
+                var k = Object.keys(infoList)[i];
+                newCardDict[k] = {
+                    key: k,
+                    cards: infoList[k].map((c: any) => { return {
+                        upper: c["prompt"],
+                        lower: c["translation"],
+                        guid: guidGenerator(),
+                        group: k
+                    }; }),
+                    correct: Object.keys(state.cards).includes(k) ? state.cards[k].correct : 0,
+                    incorrect: Object.keys(state.cards).includes(k) ? state.cards[k].incorrect : 0
+                };
+            }
+            state.cards = newCardDict;
+        }
+    }
+
+    var deckSummary = document.createElement("div");
+    var makeDeckSummary = () => {
+        deckSummary.innerHTML = "";
+        var keys = Object.keys(state.cards).sort();
+        for (var i in keys) {
+            var k = keys[i];
+            var entryDiv = document.createElement("div");
+            entryDiv.classList.add("deck-editor-info-entry");
+            var entryKey = document.createElement("span");
+            entryKey.textContent = k;
+            var entryInfo = document.createElement("span");
+            entryInfo.textContent = `${state.cards[k].cards.length} puzzles`;
+            entryInfo.style.float = "right";
+            entryDiv.appendChild(entryKey);
+            entryDiv.appendChild(entryInfo);
+            deckSummary.appendChild(entryDiv);
+        }
+    };
+    makeDeckSummary();
+    var fileEd = fileUploadEditor("Upload cloze puzzles", (s) => {
+        loadCards(s);
+        makeDeckSummary();
+    });
+    container.appendChild(fileEd.element);
+    container.appendChild(deckSummary);
+
+    return {
+        element: container,
+        menuToState: () => {
+            var deckStr = fileEd.menuToState();
+            if (deckStr.length > 0) {
+                var newCardDict: IDictionary<ClozeCardGroup> = {};
+                var infoList = <any>JSON.parse(deckStr);
+                console.log(infoList);
+                for (var i in Object.keys(infoList)) {
+                    var k = Object.keys(infoList)[i];
+                    newCardDict[k] = {
+                        key: k,
+                        cards: infoList[k].map((c: any) => { return {
+                            upper: c["prompt"],
+                            lower: c["translation"],
+                            guid: guidGenerator(),
+                            group: k
+                        }; }),
+                        correct: Object.keys(state.cards).includes(k) ? state.cards[k].correct : 0,
+                        incorrect: Object.keys(state.cards).includes(k) ? state.cards[k].incorrect : 0
+                    };
+                }
+                state.cards = newCardDict;
+            }
+            return state;
+        }
+    };
+}
+
 var clozeDefaultState: ClozeDeckState = {
     cards: {
         "gehen": {
@@ -128,7 +213,7 @@ var clozeDefaultState: ClozeDeckState = {
 registerDeckType(
     new ClozeFlashcardGen(),
     new ClozeBasicTemplate(),
-    () => null!,
+    makeClozeEditor,
     "cloze-quizzer",
     "Simple German cloze quizzer",
     clozeDefaultState

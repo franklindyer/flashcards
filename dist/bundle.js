@@ -12,6 +12,7 @@ const utils_1 = __webpack_require__(185);
 const flashcard_1 = __webpack_require__(88);
 const flashcard_generator_1 = __webpack_require__(808);
 const flashcard_template_1 = __webpack_require__(791);
+const editor_1 = __webpack_require__(43);
 const flashcard_deck_1 = __webpack_require__(836);
 class ClozeFlashcardGen extends flashcard_generator_1.FlashcardGen {
     getGenName() { return "cloze-puzzles"; }
@@ -43,7 +44,7 @@ class ClozeBasicTemplate extends flashcard_template_1.FlashcardTemplate {
         el.appendChild(document.createElement("hr"));
         el.appendChild(aLower);
         var targetWords = [];
-        aUpper.textContent = data.upper.replace(/(\{\{[^\{\}]+\}\})/, (match, p1) => {
+        aUpper.textContent = data.upper.replace(/\{\{([^\{\}]+)\}\}/, (match, p1) => {
             targetWords.push(p1);
             return "___";
         });
@@ -55,6 +56,60 @@ class ClozeBasicTemplate extends flashcard_template_1.FlashcardTemplate {
         var fl = new flashcard_1.Flashcard(el, (attempt) => answer == attempt, answer);
         return fl;
     }
+}
+function makeClozeEditor(state) {
+    var container = document.createElement("div");
+    var fileEd = (0, editor_1.fileUploadEditor)("Upload cloze puzzles");
+    container.appendChild(fileEd.element);
+    var deckSummary = document.createElement("div");
+    var makeDeckSummary = () => {
+        deckSummary.innerHTML = "";
+        for (var i in Object.keys(state.cards)) {
+            var k = Object.keys(state.cards)[i];
+            var entryDiv = document.createElement("div");
+            entryDiv.classList.add("deck-editor-info-entry");
+            var entryKey = document.createElement("span");
+            entryKey.textContent = k;
+            var entryInfo = document.createElement("span");
+            entryInfo.textContent = `${state.cards[k].cards.length} puzzles`;
+            entryInfo.style.float = "left";
+            entryDiv.appendChild(entryKey);
+            entryDiv.appendChild(entryInfo);
+            deckSummary.appendChild(entryDiv);
+        }
+    };
+    makeDeckSummary();
+    container.appendChild(deckSummary);
+    return {
+        element: container,
+        menuToState: () => {
+            var deckStr = fileEd.menuToState();
+            if (deckStr.length > 0) {
+                var newCardDict = {};
+                var infoList = JSON.parse(deckStr);
+                console.log(infoList);
+                for (var i in Object.keys(infoList)) {
+                    var k = Object.keys(infoList)[i];
+                    newCardDict[k] = {
+                        key: k,
+                        cards: infoList[k].map((c) => {
+                            return {
+                                upper: c["prompt"],
+                                lower: c["translation"],
+                                guid: (0, utils_1.guidGenerator)(),
+                                group: k
+                            };
+                        }),
+                        correct: Object.keys(state.cards).includes(k) ? state.cards[k].correct : 0,
+                        incorrect: Object.keys(state.cards).includes(k) ? state.cards[k].incorrect : 0
+                    };
+                }
+                state.cards = newCardDict;
+                makeDeckSummary();
+            }
+            return state;
+        }
+    };
 }
 var clozeDefaultState = {
     cards: {
@@ -98,7 +153,7 @@ var clozeDefaultState = {
         }
     }
 };
-(0, flashcard_deck_1.registerDeckType)(new ClozeFlashcardGen(), new ClozeBasicTemplate(), () => null, "cloze-quizzer", "Simple German cloze quizzer", clozeDefaultState);
+(0, flashcard_deck_1.registerDeckType)(new ClozeFlashcardGen(), new ClozeBasicTemplate(), makeClozeEditor, "cloze-quizzer", "Simple German cloze quizzer", clozeDefaultState);
 
 
 /***/ }),
@@ -229,6 +284,7 @@ exports.scrollNumberEditor = scrollNumberEditor;
 exports.singleTextFieldEditor = singleTextFieldEditor;
 exports.validatedTextFieldEditor = validatedTextFieldEditor;
 exports.doubleTextFieldEditor = doubleTextFieldEditor;
+exports.fileUploadEditor = fileUploadEditor;
 exports.combineEditors = combineEditors;
 exports.makeTranslationEditor = makeTranslationEditor;
 exports.fixedNumEditors = fixedNumEditors;
@@ -301,6 +357,37 @@ function doubleTextFieldEditor(txts) {
     editor.element.appendChild(children[0].element);
     editor.element.appendChild(children[1].element);
     return editor;
+}
+function fileUploadEditor(label) {
+    var content = "";
+    var container = document.createElement("div");
+    var importBtn = document.createElement("button");
+    importBtn.textContent = label;
+    var fileUploadInput = document.createElement("input");
+    fileUploadInput.type = "file";
+    fileUploadInput.style.display = "none";
+    container.appendChild(importBtn);
+    container.appendChild(fileUploadInput);
+    importBtn.onclick = (e) => {
+        fileUploadInput.click();
+        fileUploadInput.onchange = (e) => {
+            var files = fileUploadInput.files;
+            if (files == null)
+                return;
+            var file = files[0];
+            if (file == null)
+                return;
+            var reader = new FileReader();
+            reader.onload = (e) => {
+                content = e.target.result;
+            };
+            reader.readAsText(file, "UTF-8");
+        };
+    };
+    return {
+        element: container,
+        menuToState: () => content
+    };
 }
 function combineEditors(st, gen1, gen2) {
     var children = [gen1(st[0]), gen2(st[1])];

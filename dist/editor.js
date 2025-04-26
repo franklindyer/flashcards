@@ -5,6 +5,7 @@ exports.scrollNumberEditor = scrollNumberEditor;
 exports.singleTextFieldEditor = singleTextFieldEditor;
 exports.validatedTextFieldEditor = validatedTextFieldEditor;
 exports.doubleTextFieldEditor = doubleTextFieldEditor;
+exports.fileUploadEditor = fileUploadEditor;
 exports.combineEditors = combineEditors;
 exports.makeTranslationEditor = makeTranslationEditor;
 exports.fixedNumEditors = fixedNumEditors;
@@ -77,6 +78,37 @@ function doubleTextFieldEditor(txts) {
     editor.element.appendChild(children[0].element);
     editor.element.appendChild(children[1].element);
     return editor;
+}
+function fileUploadEditor(label) {
+    var content = "";
+    var container = document.createElement("div");
+    var importBtn = document.createElement("button");
+    importBtn.textContent = label;
+    var fileUploadInput = document.createElement("input");
+    fileUploadInput.type = "file";
+    fileUploadInput.style.display = "none";
+    container.appendChild(importBtn);
+    container.appendChild(fileUploadInput);
+    importBtn.onclick = (e) => {
+        fileUploadInput.click();
+        fileUploadInput.onchange = (e) => {
+            var files = fileUploadInput.files;
+            if (files == null)
+                return;
+            var file = files[0];
+            if (file == null)
+                return;
+            var reader = new FileReader();
+            reader.onload = (e) => {
+                content = e.target.result;
+            };
+            reader.readAsText(file, "UTF-8");
+        };
+    };
+    return {
+        element: container,
+        menuToState: () => content
+    };
 }
 function combineEditors(st, gen1, gen2) {
     var children = [gen1(st[0]), gen2(st[1])];
