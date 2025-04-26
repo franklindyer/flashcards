@@ -119,9 +119,9 @@ function makeSpacedRepCardDict(cardDat: SpacedRepCardContent[]): IDictionary<Spa
 
 const defaultSpacedRepState = {
     cards: makeSpacedRepCardDict([
-        { guid: "", prompt: "apple", answers: ["manzana"] },
-        { guid: "", prompt: "banana", answers: ["plátano"] },
-        { guid: "", prompt: "orange", answers: ["naranja"] },
+        { guid: guidGenerator(), prompt: "apple", answers: ["manzana"] },
+        { guid: guidGenerator(), prompt: "banana", answers: ["plátano"] },
+        { guid: guidGenerator(), prompt: "orange", answers: ["naranja"] },
     ]),    
     settings: defaultSpacedRepSettings,
     history: []
@@ -145,15 +145,27 @@ function makeSpacedRepCard(prompt: string, answers: string[]): SpacedRepCard {
     }
 }
 
+function getNew(st: SpacedRepState): string[] {
+    return Object.keys(st.cards).filter((i) => st.cards[i].timing.due == null);
+}
+
+function getDue(st: SpacedRepState): string[] {
+    return Object.keys(st.cards).filter(
+        (i) => st.cards[i].timing.due != null
+            && (new Date(st.cards[i].timing.due!) < new Date())
+            && (st.cards[i].timing.intervalMinutes < st.settings.reviewCeilingDays*(24*60)));
+}
+
+function getReview(st: SpacedRepState): string[] {
+    return Object.keys(st.cards).filter(
+        (i) => st.cards[i].timing.intervalMinutes > st.settings.reviewCeilingDays*(24*60));
+}
+
 function pickSpacedRepCard(st: SpacedRepState): SpacedRepCardData {
     var inds = Object.keys(st.cards);
-    var newInds = inds.filter((i) => st.cards[i].timing.due == null);
-    var dueInds = inds.filter(
-        (i) => st.cards[i].timing.due != null 
-                && (new Date(st.cards[i].timing.due!) < new Date())
-                && (st.cards[i].timing.intervalMinutes < st.settings.reviewCeilingDays*(24*60)));
-    var reviewInds = inds.filter(
-        (i) => st.cards[i].timing.intervalMinutes > st.settings.reviewCeilingDays*(24*60))
+    var newInds = getNew(st);
+    var dueInds = getDue(st);
+    var reviewInds = getReview(st);
     switch (st.settings.studying) {
         case SpacedRepStudying.NewCards:
             if (newInds.length == 0) {
@@ -264,6 +276,24 @@ class SpacedRepGen extends FlashcardGen<SpacedRepState, SpacedRepCardData> {
 
 function spacedRepMenu(st: SpacedRepState): StateEditor<SpacedRepState> {
     var contDiv = document.createElement("div");
+
+    var totP = document.createElement("p");
+    totP.textContent = `Total cards: ${Object.keys(st.cards).length}`;
+    totP.style.color = "#666666";
+    totP.style.fontWeight = "bold";
+    var newP = document.createElement("p");
+    newP.textContent = `New cards: ${getNew(st).length}`;
+    newP.style.color = "#9999ee";
+    newP.style.fontWeight = "bold";
+    var dueP = document.createElement("p");
+    dueP.textContent = `Due cards: ${getDue(st).length}`;
+    dueP.style.color = "#ee9999";
+    dueP.style.fontWeight = "bold";
+    var reviewP = document.createElement("p");
+    reviewP.textContent = `Review cards: ${getReview(st).length}`;
+    reviewP.style.color = "#99cc99";
+    reviewP.style.fontWeight = "bold";
+
     var conf = st.settings;
     var studyingNewEditor = boolEditor("Studying new cards?", st.settings.studying === SpacedRepStudying.NewCards);
     var initHoursEditor = scrollNumberEditor("Initial interval (hours): ", conf.initialHours, 1, 240, 1);
@@ -316,6 +346,10 @@ function spacedRepMenu(st: SpacedRepState): StateEditor<SpacedRepState> {
     cardsEditor.element.prepend(cardsEditorTitle);
 
     var components = [
+        totP,
+        newP,
+        dueP,
+        reviewP,
         studyingNewEditor.element,
         initHoursEditor.element,
         correctFactor.element,
