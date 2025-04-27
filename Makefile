@@ -1,5 +1,11 @@
-build:
-	rm -r dist/*
+clean:
+	rm -rf dist/*
+
+docs: clean
+	mkdir dist/docs
+	./build_docs
+
+build: docs 
 	tsc --target es2022
 	cp src/*.html dist/
 	cp src/*.css dist/

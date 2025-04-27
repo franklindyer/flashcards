@@ -89,8 +89,7 @@ function runDeck(deckSlug) {
     decktype.gen.runLoop(getState, setState, () => saveDeck(deckSlug, () => { }));
 }
 /* Register a new type of deck */
-function registerDeckType(gen, tpl, mkEd, defaultSlug, defaultName, defaultState) {
-    gen.template = tpl;
+function registerDeckType(gen, mkEd, defaultSlug, defaultName, defaultState) {
     exports.gDeckTypeRegistry[gen.getGenName()] = {
         slug: gen.getGenName(),
         gen: gen,

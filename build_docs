@@ -1,0 +1,5 @@
+pwd
+for F in $(find ./docs -name '*.md' -exec basename {} \; | sed 's/.md//1'); do
+    echo $F
+    pandoc --standalone --template ./docs/template.html ./docs/$F.md -o ./dist/docs/$F.html; 
+done

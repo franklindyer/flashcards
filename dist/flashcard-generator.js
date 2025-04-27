@@ -13,10 +13,9 @@ class FlashcardGen {
     getGenName() {
         throw new Error("getGenName not implemented!");
     }
-    template;
     runOnce(s, setState, callback) {
         var cardData = this.getNextCard(s);
-        var card = this.template.generateCard(cardData);
+        var card = this.generateCard(cardData);
         var inputBox = document.getElementById("answer-input");
         var inputCallback = (attempt) => {
             var correct = card.check(attempt);

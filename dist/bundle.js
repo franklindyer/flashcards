@@ -11,7 +11,6 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const utils_1 = __webpack_require__(185);
 const flashcard_1 = __webpack_require__(88);
 const flashcard_generator_1 = __webpack_require__(808);
-const flashcard_template_1 = __webpack_require__(791);
 const editor_1 = __webpack_require__(43);
 const flashcard_deck_1 = __webpack_require__(836);
 class ClozeFlashcardGen extends flashcard_generator_1.FlashcardGen {
@@ -22,19 +21,17 @@ class ClozeFlashcardGen extends flashcard_generator_1.FlashcardGen {
         return group.cards[Math.floor(Math.random() * Object.keys(group.cards).length)];
     }
     updateState(state, cardData, result) {
-        if (result == flashcard_generator_1.FlashcardResult.Unanswered)
-            return state;
-        var correct = (result == flashcard_generator_1.FlashcardResult.Correct);
-        if (correct) {
+        if (result == flashcard_generator_1.FlashcardResult.Correct) {
             state.cards[cardData.group].correct += 1;
         }
-        else {
+        else if (result == flashcard_generator_1.FlashcardResult.Incorrect) {
             state.cards[cardData.group].incorrect += 1;
+        }
+        else {
+            state.cards[cardData.group].skipped += 1;
         }
         return state;
     }
-}
-class ClozeBasicTemplate extends flashcard_template_1.FlashcardTemplate {
     generateCard(data) {
         var el = document.createElement("div");
         el.style.display = "block";
@@ -80,7 +77,8 @@ function makeClozeEditor(state) {
                         };
                     }),
                     correct: Object.keys(state.cards).includes(k) ? state.cards[k].correct : 0,
-                    incorrect: Object.keys(state.cards).includes(k) ? state.cards[k].incorrect : 0
+                    incorrect: Object.keys(state.cards).includes(k) ? state.cards[k].incorrect : 0,
+                    skipped: Object.keys(state.cards).includes(k) ? state.cards[k].skipped : 0
                 };
             }
             state.cards = newCardDict;
@@ -132,7 +130,8 @@ function makeClozeEditor(state) {
                             };
                         }),
                         correct: Object.keys(state.cards).includes(k) ? state.cards[k].correct : 0,
-                        incorrect: Object.keys(state.cards).includes(k) ? state.cards[k].incorrect : 0
+                        incorrect: Object.keys(state.cards).includes(k) ? state.cards[k].incorrect : 0,
+                        skipped: Object.keys(state.cards).includes(k) ? state.cards[k].skipped : 0
                     };
                 }
                 state.cards = newCardDict;
@@ -160,7 +159,8 @@ var clozeDefaultState = {
                 }
             ],
             correct: 0,
-            incorrect: 0
+            incorrect: 0,
+            skipped: 0
         },
         "haben": {
             key: "haben",
@@ -179,11 +179,12 @@ var clozeDefaultState = {
                 }
             ],
             correct: 0,
-            incorrect: 0
+            incorrect: 0,
+            skipped: 0
         }
     }
 };
-(0, flashcard_deck_1.registerDeckType)(new ClozeFlashcardGen(), new ClozeBasicTemplate(), makeClozeEditor, "cloze-quizzer", "Simple German cloze quizzer", clozeDefaultState);
+(0, flashcard_deck_1.registerDeckType)(new ClozeFlashcardGen(), makeClozeEditor, "cloze-quizzer", "Simple German cloze quizzer", clozeDefaultState);
 
 
 /***/ }),
@@ -600,8 +601,7 @@ function runDeck(deckSlug) {
     decktype.gen.runLoop(getState, setState, () => saveDeck(deckSlug, () => { }));
 }
 /* Register a new type of deck */
-function registerDeckType(gen, tpl, mkEd, defaultSlug, defaultName, defaultState) {
-    gen.template = tpl;
+function registerDeckType(gen, mkEd, defaultSlug, defaultName, defaultState) {
     exports.gDeckTypeRegistry[gen.getGenName()] = {
         slug: gen.getGenName(),
         gen: gen,
@@ -639,10 +639,9 @@ class FlashcardGen {
     getGenName() {
         throw new Error("getGenName not implemented!");
     }
-    template;
     runOnce(s, setState, callback) {
         var cardData = this.getNextCard(s);
-        var card = this.template.generateCard(cardData);
+        var card = this.generateCard(cardData);
         var inputBox = document.getElementById("answer-input");
         var inputCallback = (attempt) => {
             var correct = card.check(attempt);
@@ -689,19 +688,6 @@ class FlashcardGen {
     }
 }
 exports.FlashcardGen = FlashcardGen;
-
-
-/***/ }),
-
-/***/ 791:
-/***/ ((__unused_webpack_module, exports) => {
-
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.FlashcardTemplate = void 0;
-class FlashcardTemplate {
-}
-exports.FlashcardTemplate = FlashcardTemplate;
 
 
 /***/ }),
@@ -819,7 +805,6 @@ __webpack_require__(994);
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const utils_1 = __webpack_require__(185);
 const flashcard_1 = __webpack_require__(88);
-const flashcard_template_1 = __webpack_require__(791);
 const flashcard_generator_1 = __webpack_require__(808);
 const flashcard_deck_1 = __webpack_require__(836);
 const editor_1 = __webpack_require__(43);
@@ -938,27 +923,6 @@ function pickSpacedRepCard(st) {
     }
     return { content: undefined, cardsLeft: 0, isReview: false };
 }
-class SpacedRepTemplate extends flashcard_template_1.FlashcardTemplate {
-    generateCard(data) {
-        var a = document.createElement("a");
-        var prompt = "No cards left to study.";
-        var pred = (_) => false;
-        var hint = "You cannot continue studying until more cards become due.";
-        if (data.content !== undefined) {
-            prompt = data.content.prompt;
-            pred = (answer) => data.content.answers.includes(answer);
-            hint = data.content.answers[0];
-        }
-        var fontSize = 100.0 / (10.0 * Math.log(10 + prompt.length));
-        a.style.fontSize = `${fontSize}vw`;
-        a.textContent = prompt;
-        var fl = new flashcard_1.Flashcard(a, pred, hint);
-        if (data.isReview) {
-            fl.el.style.backgroundColor = "#eeeeff";
-        }
-        return fl;
-    }
-}
 class SpacedRepGen extends flashcard_generator_1.FlashcardGen {
     getGenName() { return "spaced-repetition-generator"; }
     getNextCard(state) {
@@ -1003,6 +967,25 @@ class SpacedRepGen extends flashcard_generator_1.FlashcardGen {
             answerSeconds: 0
         });
         return state;
+    }
+    generateCard(data) {
+        var a = document.createElement("a");
+        var prompt = "No cards left to study.";
+        var pred = (_) => false;
+        var hint = "You cannot continue studying until more cards become due.";
+        if (data.content !== undefined) {
+            prompt = data.content.prompt;
+            pred = (answer) => data.content.answers.includes(answer);
+            hint = data.content.answers[0];
+        }
+        var fontSize = 100.0 / (10.0 * Math.log(10 + prompt.length));
+        a.style.fontSize = `${fontSize}vw`;
+        a.textContent = prompt;
+        var fl = new flashcard_1.Flashcard(a, pred, hint);
+        if (data.isReview) {
+            fl.el.style.backgroundColor = "#eeeeff";
+        }
+        return fl;
     }
 }
 function spacedRepMenu(st) {
@@ -1100,7 +1083,7 @@ function spacedRepMenu(st) {
         }
     };
 }
-(0, flashcard_deck_1.registerDeckType)(new SpacedRepGen(), new SpacedRepTemplate(), spacedRepMenu, "spaced-repetition-deck", "Spaced repetition deck", defaultSpacedRepState);
+(0, flashcard_deck_1.registerDeckType)(new SpacedRepGen(), spacedRepMenu, "spaced-repetition-deck", "Spaced repetition deck", defaultSpacedRepState);
 
 
 /***/ }),
@@ -1112,7 +1095,6 @@ function spacedRepMenu(st) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const flashcard_1 = __webpack_require__(88);
 const flashcard_generator_1 = __webpack_require__(808);
-const flashcard_template_1 = __webpack_require__(791);
 const flashcard_deck_1 = __webpack_require__(836);
 const editor_1 = __webpack_require__(43);
 class KVFlashcardGen extends flashcard_generator_1.FlashcardGen {
@@ -1127,8 +1109,6 @@ class KVFlashcardGen extends flashcard_generator_1.FlashcardGen {
         }
         return state;
     }
-}
-class KVBasicTemplate extends flashcard_template_1.FlashcardTemplate {
     generateCard(data) {
         var a = document.createElement("a");
         a.textContent = data[0];
@@ -1161,7 +1141,7 @@ var kvDefaultState = {
 // kvGen.state = kvState;
 // kvGen.template = new KVBasicTemplate();
 // kvGen.runLoop()
-(0, flashcard_deck_1.registerDeckType)(new KVFlashcardGen(), new KVBasicTemplate(), makeKVEditor, "key-value-quizzer", "Simple key-value quizzer", kvDefaultState);
+(0, flashcard_deck_1.registerDeckType)(new KVFlashcardGen(), makeKVEditor, "key-value-quizzer", "Simple key-value quizzer", kvDefaultState);
 
 
 /***/ }),

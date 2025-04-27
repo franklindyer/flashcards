@@ -2,7 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const utils_1 = require("./utils");
 const flashcard_1 = require("./flashcard");
-const flashcard_template_1 = require("./flashcard-template");
 const flashcard_generator_1 = require("./flashcard-generator");
 const flashcard_deck_1 = require("./flashcard-deck");
 const editor_1 = require("./editor");
@@ -121,27 +120,6 @@ function pickSpacedRepCard(st) {
     }
     return { content: undefined, cardsLeft: 0, isReview: false };
 }
-class SpacedRepTemplate extends flashcard_template_1.FlashcardTemplate {
-    generateCard(data) {
-        var a = document.createElement("a");
-        var prompt = "No cards left to study.";
-        var pred = (_) => false;
-        var hint = "You cannot continue studying until more cards become due.";
-        if (data.content !== undefined) {
-            prompt = data.content.prompt;
-            pred = (answer) => data.content.answers.includes(answer);
-            hint = data.content.answers[0];
-        }
-        var fontSize = 100.0 / (10.0 * Math.log(10 + prompt.length));
-        a.style.fontSize = `${fontSize}vw`;
-        a.textContent = prompt;
-        var fl = new flashcard_1.Flashcard(a, pred, hint);
-        if (data.isReview) {
-            fl.el.style.backgroundColor = "#eeeeff";
-        }
-        return fl;
-    }
-}
 class SpacedRepGen extends flashcard_generator_1.FlashcardGen {
     getGenName() { return "spaced-repetition-generator"; }
     getNextCard(state) {
@@ -186,6 +164,25 @@ class SpacedRepGen extends flashcard_generator_1.FlashcardGen {
             answerSeconds: 0
         });
         return state;
+    }
+    generateCard(data) {
+        var a = document.createElement("a");
+        var prompt = "No cards left to study.";
+        var pred = (_) => false;
+        var hint = "You cannot continue studying until more cards become due.";
+        if (data.content !== undefined) {
+            prompt = data.content.prompt;
+            pred = (answer) => data.content.answers.includes(answer);
+            hint = data.content.answers[0];
+        }
+        var fontSize = 100.0 / (10.0 * Math.log(10 + prompt.length));
+        a.style.fontSize = `${fontSize}vw`;
+        a.textContent = prompt;
+        var fl = new flashcard_1.Flashcard(a, pred, hint);
+        if (data.isReview) {
+            fl.el.style.backgroundColor = "#eeeeff";
+        }
+        return fl;
     }
 }
 function spacedRepMenu(st) {
@@ -283,4 +280,4 @@ function spacedRepMenu(st) {
         }
     };
 }
-(0, flashcard_deck_1.registerDeckType)(new SpacedRepGen(), new SpacedRepTemplate(), spacedRepMenu, "spaced-repetition-deck", "Spaced repetition deck", defaultSpacedRepState);
+(0, flashcard_deck_1.registerDeckType)(new SpacedRepGen(), spacedRepMenu, "spaced-repetition-deck", "Spaced repetition deck", defaultSpacedRepState);

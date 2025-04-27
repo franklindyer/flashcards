@@ -3,7 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const utils_1 = require("./utils");
 const flashcard_1 = require("./flashcard");
 const flashcard_generator_1 = require("./flashcard-generator");
-const flashcard_template_1 = require("./flashcard-template");
 const editor_1 = require("./editor");
 const flashcard_deck_1 = require("./flashcard-deck");
 class ClozeFlashcardGen extends flashcard_generator_1.FlashcardGen {
@@ -14,19 +13,17 @@ class ClozeFlashcardGen extends flashcard_generator_1.FlashcardGen {
         return group.cards[Math.floor(Math.random() * Object.keys(group.cards).length)];
     }
     updateState(state, cardData, result) {
-        if (result == flashcard_generator_1.FlashcardResult.Unanswered)
-            return state;
-        var correct = (result == flashcard_generator_1.FlashcardResult.Correct);
-        if (correct) {
+        if (result == flashcard_generator_1.FlashcardResult.Correct) {
             state.cards[cardData.group].correct += 1;
         }
-        else {
+        else if (result == flashcard_generator_1.FlashcardResult.Incorrect) {
             state.cards[cardData.group].incorrect += 1;
+        }
+        else {
+            state.cards[cardData.group].skipped += 1;
         }
         return state;
     }
-}
-class ClozeBasicTemplate extends flashcard_template_1.FlashcardTemplate {
     generateCard(data) {
         var el = document.createElement("div");
         el.style.display = "block";
@@ -72,7 +69,8 @@ function makeClozeEditor(state) {
                         };
                     }),
                     correct: Object.keys(state.cards).includes(k) ? state.cards[k].correct : 0,
-                    incorrect: Object.keys(state.cards).includes(k) ? state.cards[k].incorrect : 0
+                    incorrect: Object.keys(state.cards).includes(k) ? state.cards[k].incorrect : 0,
+                    skipped: Object.keys(state.cards).includes(k) ? state.cards[k].skipped : 0
                 };
             }
             state.cards = newCardDict;
@@ -124,7 +122,8 @@ function makeClozeEditor(state) {
                             };
                         }),
                         correct: Object.keys(state.cards).includes(k) ? state.cards[k].correct : 0,
-                        incorrect: Object.keys(state.cards).includes(k) ? state.cards[k].incorrect : 0
+                        incorrect: Object.keys(state.cards).includes(k) ? state.cards[k].incorrect : 0,
+                        skipped: Object.keys(state.cards).includes(k) ? state.cards[k].skipped : 0
                     };
                 }
                 state.cards = newCardDict;
@@ -152,7 +151,8 @@ var clozeDefaultState = {
                 }
             ],
             correct: 0,
-            incorrect: 0
+            incorrect: 0,
+            skipped: 0
         },
         "haben": {
             key: "haben",
@@ -171,8 +171,9 @@ var clozeDefaultState = {
                 }
             ],
             correct: 0,
-            incorrect: 0
+            incorrect: 0,
+            skipped: 0
         }
     }
 };
-(0, flashcard_deck_1.registerDeckType)(new ClozeFlashcardGen(), new ClozeBasicTemplate(), makeClozeEditor, "cloze-quizzer", "Simple German cloze quizzer", clozeDefaultState);
+(0, flashcard_deck_1.registerDeckType)(new ClozeFlashcardGen(), makeClozeEditor, "cloze-quizzer", "Simple German cloze quizzer", clozeDefaultState);

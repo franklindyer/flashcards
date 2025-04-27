@@ -2,7 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const flashcard_1 = require("./flashcard");
 const flashcard_generator_1 = require("./flashcard-generator");
-const flashcard_template_1 = require("./flashcard-template");
 const flashcard_deck_1 = require("./flashcard-deck");
 const editor_1 = require("./editor");
 class KVFlashcardGen extends flashcard_generator_1.FlashcardGen {
@@ -17,8 +16,6 @@ class KVFlashcardGen extends flashcard_generator_1.FlashcardGen {
         }
         return state;
     }
-}
-class KVBasicTemplate extends flashcard_template_1.FlashcardTemplate {
     generateCard(data) {
         var a = document.createElement("a");
         a.textContent = data[0];
@@ -51,4 +48,4 @@ var kvDefaultState = {
 // kvGen.state = kvState;
 // kvGen.template = new KVBasicTemplate();
 // kvGen.runLoop()
-(0, flashcard_deck_1.registerDeckType)(new KVFlashcardGen(), new KVBasicTemplate(), makeKVEditor, "key-value-quizzer", "Simple key-value quizzer", kvDefaultState);
+(0, flashcard_deck_1.registerDeckType)(new KVFlashcardGen(), makeKVEditor, "key-value-quizzer", "Simple key-value quizzer", kvDefaultState);
