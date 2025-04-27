@@ -21,7 +21,10 @@ class ClozeFlashcardGen extends flashcard_generator_1.FlashcardGen {
         var group = state.cards[key];
         return group.cards[Math.floor(Math.random() * Object.keys(group.cards).length)];
     }
-    updateState(state, cardData, correct) {
+    updateState(state, cardData, result) {
+        if (result == flashcard_generator_1.FlashcardResult.Unanswered)
+            return state;
+        var correct = (result == flashcard_generator_1.FlashcardResult.Correct);
         if (correct) {
             state.cards[cardData.group].correct += 1;
         }
@@ -59,26 +62,54 @@ class ClozeBasicTemplate extends flashcard_template_1.FlashcardTemplate {
 }
 function makeClozeEditor(state) {
     var container = document.createElement("div");
-    var fileEd = (0, editor_1.fileUploadEditor)("Upload cloze puzzles");
-    container.appendChild(fileEd.element);
+    var loadCards = (s) => {
+        if (s.length > 0) {
+            var newCardDict = {};
+            var infoList = JSON.parse(s);
+            console.log(infoList);
+            for (var i in Object.keys(infoList)) {
+                var k = Object.keys(infoList)[i];
+                newCardDict[k] = {
+                    key: k,
+                    cards: infoList[k].map((c) => {
+                        return {
+                            upper: c["prompt"],
+                            lower: c["translation"],
+                            guid: (0, utils_1.guidGenerator)(),
+                            group: k
+                        };
+                    }),
+                    correct: Object.keys(state.cards).includes(k) ? state.cards[k].correct : 0,
+                    incorrect: Object.keys(state.cards).includes(k) ? state.cards[k].incorrect : 0
+                };
+            }
+            state.cards = newCardDict;
+        }
+    };
     var deckSummary = document.createElement("div");
     var makeDeckSummary = () => {
         deckSummary.innerHTML = "";
-        for (var i in Object.keys(state.cards)) {
-            var k = Object.keys(state.cards)[i];
+        var keys = Object.keys(state.cards).sort();
+        for (var i in keys) {
+            var k = keys[i];
             var entryDiv = document.createElement("div");
             entryDiv.classList.add("deck-editor-info-entry");
             var entryKey = document.createElement("span");
             entryKey.textContent = k;
             var entryInfo = document.createElement("span");
             entryInfo.textContent = `${state.cards[k].cards.length} puzzles`;
-            entryInfo.style.float = "left";
+            entryInfo.style.float = "right";
             entryDiv.appendChild(entryKey);
             entryDiv.appendChild(entryInfo);
             deckSummary.appendChild(entryDiv);
         }
     };
     makeDeckSummary();
+    var fileEd = (0, editor_1.fileUploadEditor)("Upload cloze puzzles", (s) => {
+        loadCards(s);
+        makeDeckSummary();
+    });
+    container.appendChild(fileEd.element);
     container.appendChild(deckSummary);
     return {
         element: container,
@@ -105,7 +136,6 @@ function makeClozeEditor(state) {
                     };
                 }
                 state.cards = newCardDict;
-                makeDeckSummary();
             }
             return state;
         }
@@ -358,7 +388,7 @@ function doubleTextFieldEditor(txts) {
     editor.element.appendChild(children[1].element);
     return editor;
 }
-function fileUploadEditor(label) {
+function fileUploadEditor(label, callback) {
     var content = "";
     var container = document.createElement("div");
     var importBtn = document.createElement("button");
@@ -380,6 +410,7 @@ function fileUploadEditor(label) {
             var reader = new FileReader();
             reader.onload = (e) => {
                 content = e.target.result;
+                callback(content);
             };
             reader.readAsText(file, "UTF-8");
         };
@@ -595,7 +626,13 @@ function registerDeckType(gen, tpl, mkEd, defaultSlug, defaultName, defaultState
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.FlashcardGen = void 0;
+exports.FlashcardGen = exports.FlashcardResult = void 0;
+var FlashcardResult;
+(function (FlashcardResult) {
+    FlashcardResult[FlashcardResult["Correct"] = 0] = "Correct";
+    FlashcardResult[FlashcardResult["Incorrect"] = 1] = "Incorrect";
+    FlashcardResult[FlashcardResult["Unanswered"] = 2] = "Unanswered";
+})(FlashcardResult || (exports.FlashcardResult = FlashcardResult = {}));
 class FlashcardGen {
     // Type S is the state type for this flashcard deck
     // Type D is the type of the data involved in the single card
@@ -611,9 +648,10 @@ class FlashcardGen {
             var correct = card.check(attempt);
             if (correct) {
                 inputBox.value = "";
-                var newState = this.updateState(s, cardData, card.correctFirst);
+                var result = card.correctFirst ? FlashcardResult.Correct : FlashcardResult.Incorrect;
+                var newState = this.updateState(s, cardData, result);
                 setState(newState);
-                card.slideOut(callback);
+                card.slideOut(callback, true);
             }
             else {
                 card.markWrong();
@@ -629,8 +667,13 @@ class FlashcardGen {
             }
             else if (e.key == "ArrowUp") {
                 inputBox.value = "";
-                setState(this.updateState(s, cardData, true));
-                card.slideOut(callback);
+                setState(this.updateState(s, cardData, FlashcardResult.Correct));
+                card.slideOut(callback, true);
+            }
+            else if (e.key == "ArrowDown") {
+                inputBox.value = "";
+                setState(this.updateState(s, cardData, FlashcardResult.Unanswered));
+                card.slideOut(callback, false);
             }
         };
         card.slideIn();
@@ -688,10 +731,11 @@ class Flashcard {
         flCont.appendChild(this.el);
         document.getElementById("answer-hint").value = "";
     }
-    slideOut(callback) {
-        this.el.classList.add("flashcard-slide-out");
+    slideOut(callback, correct) {
+        var outClass = correct ? "flashcard-slide-out" : "flashcard-slide-out-unanswered";
+        this.el.classList.add(outClass);
         this.el.onanimationend = () => {
-            this.el.classList.remove("flashcard-slide-out");
+            this.el.classList.remove(outClass);
             this.el.remove();
             callback();
         };
@@ -920,7 +964,10 @@ class SpacedRepGen extends flashcard_generator_1.FlashcardGen {
     getNextCard(state) {
         return pickSpacedRepCard(state);
     }
-    updateState(state, cardData, correct) {
+    updateState(state, cardData, result) {
+        if (result == flashcard_generator_1.FlashcardResult.Unanswered)
+            return state;
+        var correct = (result == flashcard_generator_1.FlashcardResult.Correct);
         var cardState = state.cards[cardData.content.guid];
         var dueDate = cardState.timing.due;
         if (correct) {
@@ -1075,7 +1122,9 @@ class KVFlashcardGen extends flashcard_generator_1.FlashcardGen {
         return dat;
     }
     updateState(state, cardData, correct) {
-        state.history.push([cardData[0], correct]);
+        if (correct != flashcard_generator_1.FlashcardResult.Unanswered) {
+            state.history.push([cardData[0], correct == flashcard_generator_1.FlashcardResult.Correct]);
+        }
         return state;
     }
 }

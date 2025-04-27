@@ -1,6 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.FlashcardGen = void 0;
+exports.FlashcardGen = exports.FlashcardResult = void 0;
+var FlashcardResult;
+(function (FlashcardResult) {
+    FlashcardResult[FlashcardResult["Correct"] = 0] = "Correct";
+    FlashcardResult[FlashcardResult["Incorrect"] = 1] = "Incorrect";
+    FlashcardResult[FlashcardResult["Unanswered"] = 2] = "Unanswered";
+})(FlashcardResult || (exports.FlashcardResult = FlashcardResult = {}));
 class FlashcardGen {
     // Type S is the state type for this flashcard deck
     // Type D is the type of the data involved in the single card
@@ -16,9 +22,10 @@ class FlashcardGen {
             var correct = card.check(attempt);
             if (correct) {
                 inputBox.value = "";
-                var newState = this.updateState(s, cardData, card.correctFirst);
+                var result = card.correctFirst ? FlashcardResult.Correct : FlashcardResult.Incorrect;
+                var newState = this.updateState(s, cardData, result);
                 setState(newState);
-                card.slideOut(callback);
+                card.slideOut(callback, true);
             }
             else {
                 card.markWrong();
@@ -34,8 +41,13 @@ class FlashcardGen {
             }
             else if (e.key == "ArrowUp") {
                 inputBox.value = "";
-                setState(this.updateState(s, cardData, true));
-                card.slideOut(callback);
+                setState(this.updateState(s, cardData, FlashcardResult.Correct));
+                card.slideOut(callback, true);
+            }
+            else if (e.key == "ArrowDown") {
+                inputBox.value = "";
+                setState(this.updateState(s, cardData, FlashcardResult.Unanswered));
+                card.slideOut(callback, false);
             }
         };
         card.slideIn();

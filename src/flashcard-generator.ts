@@ -1,9 +1,6 @@
 import {
     Flashcard
 } from "./flashcard"
-import {
-    FlashcardTemplate
-} from "./flashcard-template"
 
 export enum FlashcardResult {
     Correct,
@@ -18,14 +15,13 @@ export abstract class FlashcardGen<S, D> {
         throw new Error("getGenName not implemented!");
     }
     
-    template?: FlashcardTemplate<D>;
-
     abstract getNextCard(state: S): D;
     abstract updateState(state: S, cardData: D, correct: FlashcardResult): S;
+    abstract generateCard(data: D): Flashcard;
 
     runOnce(s: S, setState: (s: S) => void, callback: () => void) {
         var cardData: D = this.getNextCard(s);
-        var card = this.template!.generateCard(cardData);
+        var card = this.generateCard(cardData);
 
         var inputBox = <HTMLInputElement>document.getElementById("answer-input");
         var inputCallback = (attempt: string) => {

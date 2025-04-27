@@ -20,10 +20,11 @@ class Flashcard {
         flCont.appendChild(this.el);
         document.getElementById("answer-hint").value = "";
     }
-    slideOut(callback) {
-        this.el.classList.add("flashcard-slide-out");
+    slideOut(callback, correct) {
+        var outClass = correct ? "flashcard-slide-out" : "flashcard-slide-out-unanswered";
+        this.el.classList.add(outClass);
         this.el.onanimationend = () => {
-            this.el.classList.remove("flashcard-slide-out");
+            this.el.classList.remove(outClass);
             this.el.remove();
             callback();
         };

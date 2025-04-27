@@ -28,10 +28,8 @@ button {
 @keyframes card-slide-out {
     from {
         transform: translateX(0%);
-        background-color: #eeffee;
     } to {
         transform: translateX(200%);
-        background-color: #ffffff;
     }
 }
 
@@ -78,6 +76,12 @@ button {
 }
 
 .flashcard-slide-out {
+    animation: card-slide-out 0.8s;
+    animation-timing-function: ease-in-out;
+    background-color: #eeffee;
+}
+
+.flashcard-slide-out-unanswered {
     animation: card-slide-out 0.8s;
     animation-timing-function: ease-in-out;
 }

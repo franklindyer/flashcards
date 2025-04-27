@@ -13,7 +13,10 @@ class ClozeFlashcardGen extends flashcard_generator_1.FlashcardGen {
         var group = state.cards[key];
         return group.cards[Math.floor(Math.random() * Object.keys(group.cards).length)];
     }
-    updateState(state, cardData, correct) {
+    updateState(state, cardData, result) {
+        if (result == flashcard_generator_1.FlashcardResult.Unanswered)
+            return state;
+        var correct = (result == flashcard_generator_1.FlashcardResult.Correct);
         if (correct) {
             state.cards[cardData.group].correct += 1;
         }
@@ -51,26 +54,54 @@ class ClozeBasicTemplate extends flashcard_template_1.FlashcardTemplate {
 }
 function makeClozeEditor(state) {
     var container = document.createElement("div");
-    var fileEd = (0, editor_1.fileUploadEditor)("Upload cloze puzzles");
-    container.appendChild(fileEd.element);
+    var loadCards = (s) => {
+        if (s.length > 0) {
+            var newCardDict = {};
+            var infoList = JSON.parse(s);
+            console.log(infoList);
+            for (var i in Object.keys(infoList)) {
+                var k = Object.keys(infoList)[i];
+                newCardDict[k] = {
+                    key: k,
+                    cards: infoList[k].map((c) => {
+                        return {
+                            upper: c["prompt"],
+                            lower: c["translation"],
+                            guid: (0, utils_1.guidGenerator)(),
+                            group: k
+                        };
+                    }),
+                    correct: Object.keys(state.cards).includes(k) ? state.cards[k].correct : 0,
+                    incorrect: Object.keys(state.cards).includes(k) ? state.cards[k].incorrect : 0
+                };
+            }
+            state.cards = newCardDict;
+        }
+    };
     var deckSummary = document.createElement("div");
     var makeDeckSummary = () => {
         deckSummary.innerHTML = "";
-        for (var i in Object.keys(state.cards)) {
-            var k = Object.keys(state.cards)[i];
+        var keys = Object.keys(state.cards).sort();
+        for (var i in keys) {
+            var k = keys[i];
             var entryDiv = document.createElement("div");
             entryDiv.classList.add("deck-editor-info-entry");
             var entryKey = document.createElement("span");
             entryKey.textContent = k;
             var entryInfo = document.createElement("span");
             entryInfo.textContent = `${state.cards[k].cards.length} puzzles`;
-            entryInfo.style.float = "left";
+            entryInfo.style.float = "right";
             entryDiv.appendChild(entryKey);
             entryDiv.appendChild(entryInfo);
             deckSummary.appendChild(entryDiv);
         }
     };
     makeDeckSummary();
+    var fileEd = (0, editor_1.fileUploadEditor)("Upload cloze puzzles", (s) => {
+        loadCards(s);
+        makeDeckSummary();
+    });
+    container.appendChild(fileEd.element);
     container.appendChild(deckSummary);
     return {
         element: container,
@@ -97,7 +128,6 @@ function makeClozeEditor(state) {
                     };
                 }
                 state.cards = newCardDict;
-                makeDeckSummary();
             }
             return state;
         }

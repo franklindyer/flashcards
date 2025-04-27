@@ -10,9 +10,6 @@ import {
     FlashcardGen
 } from "./flashcard-generator"
 import {
-    FlashcardTemplate
-} from "./flashcard-template"
-import {
     gDeckTypeRegistry,
     gDeckRegistry,
     registerDeckType
@@ -44,9 +41,7 @@ class KVFlashcardGen extends FlashcardGen<KVFlashcardState, KVCardData> {
         }
         return state;
     }
-}
-
-class KVBasicTemplate extends FlashcardTemplate<KVCardData> {
+    
     generateCard(data: KVCardData): Flashcard {
         var a = document.createElement("a");
         a.textContent = data[0];
@@ -85,7 +80,6 @@ var kvDefaultState: KVFlashcardState = {
 
 registerDeckType(
     new KVFlashcardGen(),
-    new KVBasicTemplate(),
     makeKVEditor,
     "key-value-quizzer",
     "Simple key-value quizzer",

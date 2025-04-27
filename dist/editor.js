@@ -79,7 +79,7 @@ function doubleTextFieldEditor(txts) {
     editor.element.appendChild(children[1].element);
     return editor;
 }
-function fileUploadEditor(label) {
+function fileUploadEditor(label, callback) {
     var content = "";
     var container = document.createElement("div");
     var importBtn = document.createElement("button");
@@ -101,6 +101,7 @@ function fileUploadEditor(label) {
             var reader = new FileReader();
             reader.onload = (e) => {
                 content = e.target.result;
+                callback(content);
             };
             reader.readAsText(file, "UTF-8");
         };

@@ -7,9 +7,6 @@ import {
     FlashcardGen
 } from "./flashcard-generator"
 import {
-    FlashcardTemplate
-} from "./flashcard-template"
-import {
     StateEditor
 } from "./editor"
 import {
@@ -134,13 +131,11 @@ export function runDeck(deckSlug: string) {
 
 export function registerDeckType<S, D>(
     gen: FlashcardGen<S, D>,
-    tpl: FlashcardTemplate<D>,
     mkEd: (s: S) => StateEditor<S>,
     defaultSlug: string,
     defaultName: string,
     defaultState: S,
     ) {
-    gen.template = tpl;
     gDeckTypeRegistry[gen.getGenName()] = {
         slug: gen.getGenName(),
         gen: gen,

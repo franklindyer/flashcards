@@ -7,9 +7,6 @@ import {
     Flashcard
 } from "./flashcard"
 import {
-    FlashcardTemplate
-} from "./flashcard-template"
-import {
     FlashcardResult,
     FlashcardGen
 } from "./flashcard-generator"
@@ -199,33 +196,6 @@ function pickSpacedRepCard(st: SpacedRepState): SpacedRepCardData {
     return { content: undefined, cardsLeft: 0, isReview: false };
 }
 
-class SpacedRepTemplate extends FlashcardTemplate<SpacedRepCardData> {
-    generateCard(data: SpacedRepCardData): Flashcard {
-        var a = document.createElement("a");
-        var prompt = "No cards left to study.";
-        var pred = (_: string) => false;
-        var hint = "You cannot continue studying until more cards become due.";
-
-        if (data.content !== undefined) {
-            prompt = data.content.prompt;
-            pred = (answer: string) => data.content!.answers.includes(answer);
-            hint = data.content.answers[0];
-        }
-
-        var fontSize = 100.0/(10.0*Math.log(10+prompt.length));
-        a.style.fontSize = `${fontSize}vw`;
-        a.textContent = prompt;       
-
-        var fl = new Flashcard(a, pred, hint);
-
-        if (data.isReview) {
-            fl.el.style.backgroundColor = "#eeeeff";
-        }
- 
-        return fl;
-    }
-}
-
 class SpacedRepGen extends FlashcardGen<SpacedRepState, SpacedRepCardData> {
     getGenName() { return "spaced-repetition-generator"; }
 
@@ -277,6 +247,32 @@ class SpacedRepGen extends FlashcardGen<SpacedRepState, SpacedRepCardData> {
 
         return state;
     }
+
+    generateCard(data: SpacedRepCardData): Flashcard {
+        var a = document.createElement("a");
+        var prompt = "No cards left to study.";
+        var pred = (_: string) => false;
+        var hint = "You cannot continue studying until more cards become due.";
+
+        if (data.content !== undefined) {
+            prompt = data.content.prompt;
+            pred = (answer: string) => data.content!.answers.includes(answer);
+            hint = data.content.answers[0];
+        }
+
+        var fontSize = 100.0/(10.0*Math.log(10+prompt.length));
+        a.style.fontSize = `${fontSize}vw`;
+        a.textContent = prompt;       
+
+        var fl = new Flashcard(a, pred, hint);
+
+        if (data.isReview) {
+            fl.el.style.backgroundColor = "#eeeeff";
+        }
+ 
+        return fl;
+    }
+
 }
 
 function spacedRepMenu(st: SpacedRepState): StateEditor<SpacedRepState> {
@@ -383,7 +379,6 @@ function spacedRepMenu(st: SpacedRepState): StateEditor<SpacedRepState> {
 
 registerDeckType(
     new SpacedRepGen(),
-    new SpacedRepTemplate(),
     spacedRepMenu,
     "spaced-repetition-deck",
     "Spaced repetition deck",

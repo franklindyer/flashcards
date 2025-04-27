@@ -147,7 +147,10 @@ class SpacedRepGen extends flashcard_generator_1.FlashcardGen {
     getNextCard(state) {
         return pickSpacedRepCard(state);
     }
-    updateState(state, cardData, correct) {
+    updateState(state, cardData, result) {
+        if (result == flashcard_generator_1.FlashcardResult.Unanswered)
+            return state;
+        var correct = (result == flashcard_generator_1.FlashcardResult.Correct);
         var cardState = state.cards[cardData.content.guid];
         var dueDate = cardState.timing.due;
         if (correct) {

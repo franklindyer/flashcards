@@ -12,7 +12,9 @@ class KVFlashcardGen extends flashcard_generator_1.FlashcardGen {
         return dat;
     }
     updateState(state, cardData, correct) {
-        state.history.push([cardData[0], correct]);
+        if (correct != flashcard_generator_1.FlashcardResult.Unanswered) {
+            state.history.push([cardData[0], correct == flashcard_generator_1.FlashcardResult.Correct]);
+        }
         return state;
     }
 }

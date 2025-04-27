@@ -10,9 +10,6 @@ import {
     FlashcardGen
 } from "./flashcard-generator"
 import {
-    FlashcardTemplate
-} from "./flashcard-template"
-import {
     StateEditor,
     fileUploadEditor
 } from "./editor"
@@ -31,7 +28,8 @@ type ClozeCardGroup = {
     key: string,
     cards: ClozeCardData[],
     correct: number,
-    incorrect: number
+    incorrect: number,
+    skipped: number
 }
 
 type ClozeDeckState = {
@@ -48,20 +46,16 @@ class ClozeFlashcardGen extends FlashcardGen<ClozeDeckState, ClozeCardData> {
     }
 
     updateState(state: ClozeDeckState, cardData: ClozeCardData, result: FlashcardResult): ClozeDeckState {
-        if (result == FlashcardResult.Unanswered)
-            return state;
-
-        var correct = (result == FlashcardResult.Correct);
-        if (correct) {
+        if (result == FlashcardResult.Correct) {
             state.cards[cardData.group].correct += 1;
-        } else {
+        } else if (result == FlashcardResult.Incorrect) {
             state.cards[cardData.group].incorrect += 1;
+        } else {
+            state.cards[cardData.group].skipped += 1;
         }
         return state;
     } 
-}
-
-class ClozeBasicTemplate extends FlashcardTemplate<ClozeCardData> {
+    
     generateCard(data: ClozeCardData): Flashcard {
         var el = document.createElement("div");
         el.style.display = "block";
@@ -110,7 +104,8 @@ function makeClozeEditor(state: ClozeDeckState): StateEditor<ClozeDeckState> {
                         group: k
                     }; }),
                     correct: Object.keys(state.cards).includes(k) ? state.cards[k].correct : 0,
-                    incorrect: Object.keys(state.cards).includes(k) ? state.cards[k].incorrect : 0
+                    incorrect: Object.keys(state.cards).includes(k) ? state.cards[k].incorrect : 0,
+                    skipped: Object.keys(state.cards).includes(k) ? state.cards[k].skipped : 0
                 };
             }
             state.cards = newCardDict;
@@ -162,7 +157,8 @@ function makeClozeEditor(state: ClozeDeckState): StateEditor<ClozeDeckState> {
                             group: k
                         }; }),
                         correct: Object.keys(state.cards).includes(k) ? state.cards[k].correct : 0,
-                        incorrect: Object.keys(state.cards).includes(k) ? state.cards[k].incorrect : 0
+                        incorrect: Object.keys(state.cards).includes(k) ? state.cards[k].incorrect : 0,
+                        skipped: Object.keys(state.cards).includes(k) ? state.cards[k].skipped : 0
                     };
                 }
                 state.cards = newCardDict;
@@ -191,7 +187,8 @@ var clozeDefaultState: ClozeDeckState = {
                 }
             ],
             correct: 0,
-            incorrect: 0
+            incorrect: 0,
+            skipped: 0
         },
         "haben": {
             key: "haben",
@@ -210,14 +207,14 @@ var clozeDefaultState: ClozeDeckState = {
                 }
             ],
             correct: 0,
-            incorrect: 0
+            incorrect: 0,
+            skipped: 0
         }
     }
 };
 
 registerDeckType(
     new ClozeFlashcardGen(),
-    new ClozeBasicTemplate(),
     makeClozeEditor,
     "cloze-quizzer",
     "Simple German cloze quizzer",
