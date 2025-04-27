@@ -20,10 +20,11 @@ export class Flashcard {
         (<HTMLInputElement>document.getElementById("answer-hint")).value = "";
     }
 
-    slideOut(callback: () => void) {
-        this.el.classList.add("flashcard-slide-out"); 
+    slideOut(callback: () => void, correct: boolean) {
+        var outClass = correct ? "flashcard-slide-out" : "flashcard-slide-out-unanswered";
+        this.el.classList.add(outClass); 
         this.el.onanimationend = () => { 
-            this.el.classList.remove("flashcard-slide-out");
+            this.el.classList.remove(outClass);
             this.el.remove();
             callback();
         };

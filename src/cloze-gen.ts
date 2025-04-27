@@ -6,6 +6,7 @@ import {
     Flashcard
 } from "./flashcard"
 import {
+    FlashcardResult,
     FlashcardGen
 } from "./flashcard-generator"
 import {
@@ -46,7 +47,11 @@ class ClozeFlashcardGen extends FlashcardGen<ClozeDeckState, ClozeCardData> {
         return group.cards[Math.floor(Math.random() * Object.keys(group.cards).length)];
     }
 
-    updateState(state: ClozeDeckState, cardData: ClozeCardData, correct: boolean): ClozeDeckState {
+    updateState(state: ClozeDeckState, cardData: ClozeCardData, result: FlashcardResult): ClozeDeckState {
+        if (result == FlashcardResult.Unanswered)
+            return state;
+
+        var correct = (result == FlashcardResult.Correct);
         if (correct) {
             state.cards[cardData.group].correct += 1;
         } else {

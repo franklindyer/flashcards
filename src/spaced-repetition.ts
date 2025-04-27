@@ -10,6 +10,7 @@ import {
     FlashcardTemplate
 } from "./flashcard-template"
 import {
+    FlashcardResult,
     FlashcardGen
 } from "./flashcard-generator"
 import {
@@ -232,7 +233,11 @@ class SpacedRepGen extends FlashcardGen<SpacedRepState, SpacedRepCardData> {
         return pickSpacedRepCard(state);
     }
 
-    updateState(state: SpacedRepState, cardData: SpacedRepCardData, correct: boolean): SpacedRepState {
+    updateState(state: SpacedRepState, cardData: SpacedRepCardData, result: FlashcardResult): SpacedRepState {
+        if (result == FlashcardResult.Unanswered)
+            return state;
+
+        var correct = (result == FlashcardResult.Correct);
         var cardState = state.cards[cardData.content!.guid];
         var dueDate = cardState.timing.due;
 

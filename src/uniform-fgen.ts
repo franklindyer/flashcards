@@ -6,6 +6,7 @@ import {
     Flashcard
 } from "./flashcard"
 import {
+    FlashcardResult,
     FlashcardGen
 } from "./flashcard-generator"
 import {
@@ -37,8 +38,10 @@ class KVFlashcardGen extends FlashcardGen<KVFlashcardState, KVCardData> {
         return dat;
     }
 
-    updateState(state: KVFlashcardState, cardData: KVCardData, correct: boolean): KVFlashcardState {
-        state.history.push([cardData[0], correct]);
+    updateState(state: KVFlashcardState, cardData: KVCardData, correct: FlashcardResult): KVFlashcardState {
+        if (correct != FlashcardResult.Unanswered) {
+            state.history.push([cardData[0], correct == FlashcardResult.Correct]);
+        }
         return state;
     }
 }
