@@ -42,8 +42,8 @@ function menuSetup(deckSlug) {
         doneBtn.onclick = () => {
             editorOverlay.style.display = "none";
             deck.state = editor.menuToState();
-            exports.gDeckRegistry[deck.slug].state = deck.state;
-            saveDeck(deck.slug, () => { });
+            exports.gDeckRegistry[deckSlug].state = deck.state;
+            saveDeck(deckSlug, () => { });
             runDeck(deck.slug);
         };
     };
@@ -89,7 +89,7 @@ function runDeck(deckSlug) {
     decktype.gen.runLoop(getState, setState, () => saveDeck(deckSlug, () => { }));
 }
 /* Register a new type of deck */
-function registerDeckType(gen, mkEd, defaultSlug, defaultName, defaultState) {
+function registerDeckType(gen, mkEd, defaultSlug, defaultName, defaultState, colorCode = "#ffffee") {
     exports.gDeckTypeRegistry[gen.getGenName()] = {
         slug: gen.getGenName(),
         gen: gen,
@@ -101,7 +101,7 @@ function registerDeckType(gen, mkEd, defaultSlug, defaultName, defaultState) {
         type: gen.getGenName(),
         state: defaultState,
         view: {
-            color: "#ffffee"
+            color: colorCode
         }
     };
 }
