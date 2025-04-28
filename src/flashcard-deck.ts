@@ -96,7 +96,9 @@ function importExportSetup<S>(deckSlug: string, setDeck: (s: S) => void) {
             if (file == null) return;
             var reader = new FileReader();
             reader.onload = (e) => {
-                setDeck(JSON.parse(<string>e.target!.result));
+                var importedDeck = JSON.parse(<string>e.target!.result);
+                importedDeck.slug = deckSlug;
+                setDeck(importedDeck);
             };
             reader.readAsText(file, "UTF-8");
         };
