@@ -1875,7 +1875,7 @@ flag-timor-leste	1f1f9-1f1f1
 flag-turkmenistan	1f1f9-1f1f2
 flag-tunisia	1f1f9-1f1f3
 flag-tonga	1f1f9-1f1f4
-flag-türkiye	1f1f9-1f1f7
+flag-turkey	1f1f9-1f1f7
 flag-trinidad-tobago	1f1f9-1f1f9
 flag-tuvalu	1f1f9-1f1fb
 flag-taiwan	1f1f9-1f1fc
