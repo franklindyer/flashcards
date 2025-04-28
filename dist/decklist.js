@@ -47,7 +47,7 @@ function generateDecklistMenu(decklist, onfinish) {
         deckDiv.onclick = ((s) => (e) => {
             decklistOverlay.style.display = "none";
             onfinish(decklist);
-            (0, flashcard_deck_1.runDeck)(s);
+            (0, flashcard_deck_1.saveDeck)(s, () => (0, flashcard_deck_1.runDeck)(s));
         })(slug);
         var deckEditBtn = document.createElement("button");
         deckEditBtn.innerHTML = "<img src='/edit.png'/>";

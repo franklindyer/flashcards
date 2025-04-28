@@ -63,7 +63,9 @@ function importExportSetup(deckSlug, setDeck) {
                 return;
             var reader = new FileReader();
             reader.onload = (e) => {
-                setDeck(JSON.parse(e.target.result));
+                var importedDeck = JSON.parse(e.target.result);
+                importedDeck.slug = deckSlug;
+                setDeck(importedDeck);
             };
             reader.readAsText(file, "UTF-8");
         };

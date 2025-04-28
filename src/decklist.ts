@@ -64,7 +64,7 @@ export function generateDecklistMenu(
         deckDiv.onclick = ((s) => (e) => {
             decklistOverlay.style.display = "none";
             onfinish(decklist);
-            runDeck(s);
+            saveDeck(s, () => runDeck(s));
         })(slug);
         var deckEditBtn = document.createElement("button");
         deckEditBtn.innerHTML = "<img src='/edit.png'/>";
