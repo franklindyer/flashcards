@@ -176,4 +176,4 @@ var clozeDefaultState = {
         }
     }
 };
-(0, flashcard_deck_1.registerDeckType)(new ClozeFlashcardGen(), makeClozeEditor, "cloze-quizzer", "Simple German cloze quizzer", clozeDefaultState);
+(0, flashcard_deck_1.registerDeckType)(new ClozeFlashcardGen(), makeClozeEditor, "cloze-quizzer", "Simple German cloze quizzer", clozeDefaultState, "#ffddbb");
