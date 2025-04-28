@@ -135,6 +135,7 @@ export function registerDeckType<S, D>(
     defaultSlug: string,
     defaultName: string,
     defaultState: S,
+    colorCode: string = "#ffffee"
     ) {
     gDeckTypeRegistry[gen.getGenName()] = {
         slug: gen.getGenName(),
@@ -147,7 +148,7 @@ export function registerDeckType<S, D>(
         type: gen.getGenName(),
         state: defaultState,
         view: {
-            color: "#ffffee"
+            color: colorCode
         }
     }
 }

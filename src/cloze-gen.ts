@@ -218,5 +218,6 @@ registerDeckType(
     makeClozeEditor,
     "cloze-quizzer",
     "Simple German cloze quizzer",
-    clozeDefaultState
+    clozeDefaultState,
+    "#ffddbb"
 );

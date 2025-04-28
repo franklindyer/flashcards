@@ -382,5 +382,6 @@ registerDeckType(
     spacedRepMenu,
     "spaced-repetition-deck",
     "Spaced repetition deck",
-    defaultSpacedRepState
+    defaultSpacedRepState,
+    "#ffffdd"
 )
