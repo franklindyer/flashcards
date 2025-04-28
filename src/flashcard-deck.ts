@@ -75,8 +75,8 @@ function menuSetup<S, D>(deckSlug: string) {
         doneBtn.onclick = () => {
             editorOverlay.style.display = "none";
             deck.state = editor.menuToState();
-            gDeckRegistry[deck.slug].state = deck.state;
-            saveDeck(deck.slug, () => {});
+            gDeckRegistry[deckSlug].state = deck.state;
+            saveDeck(deckSlug, () => {});
             runDeck(deck.slug);
         };
     };
