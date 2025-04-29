@@ -50,6 +50,8 @@ class KVFlashcardGen extends FlashcardGen<KVFlashcardState, KVCardData> {
         fl.el.style.fontSize = `${fontSize}vw`;
         return fl;
     }
+
+    correctEffect(_: KVFlashcardState, __: string, resolve: () => void) { resolve() };
 }
 
 function makeKVEditor(state: KVFlashcardState): StateEditor<KVFlashcardState> {

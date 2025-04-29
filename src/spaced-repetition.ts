@@ -14,6 +14,12 @@ import {
     registerDeckType
 } from "./flashcard-deck"
 import {
+    utter,
+    speechSettingsEditor,
+    defaultSpeechSettings,
+    SpeechSettings
+} from "./speech"
+import {
     StateEditor,
     boolEditor,
     scrollNumberEditor,
@@ -70,7 +76,9 @@ type SpacedRepSettings = {
     reviewCeilingDays: number,
     studying: SpacedRepStudying,
     probReview: number,
-    order: SpacedRepOrder 
+    order: SpacedRepOrder,
+    readCorrectAnswers: boolean,
+    speechSettings: SpeechSettings
 }
 
 type SpacedRepHistRecord = {
@@ -94,7 +102,9 @@ const defaultSpacedRepSettings = {
     reviewCeilingDays: 365,
     studying: SpacedRepStudying.NewCards,
     probReview: 0.1,
-    order: SpacedRepOrder.RandomOrder
+    order: SpacedRepOrder.RandomOrder,
+    readCorrectAnswers: false,
+    speechSettings: defaultSpeechSettings()
 };
 
 function defaultCardTiming(): SpacedRepCardTiming {
@@ -273,6 +283,15 @@ class SpacedRepGen extends FlashcardGen<SpacedRepState, SpacedRepCardData> {
         return fl;
     }
 
+    correctEffect(st: SpacedRepState, attempt: string, resolve: () => void) {
+        if (st.settings.readCorrectAnswers) {
+            var ss = st.settings.speechSettings;
+            utter(attempt, ss.voice, ss.rate, ss.pitch, resolve); 
+        } else {
+            resolve();
+        }
+    }
+
 }
 
 function spacedRepMenu(st: SpacedRepState): StateEditor<SpacedRepState> {
@@ -302,6 +321,9 @@ function spacedRepMenu(st: SpacedRepState): StateEditor<SpacedRepState> {
 
     var correctFactor = scrollNumberEditor("Correct factor: ", conf.correctFactor, 1, 10, 0.1);
     var incorrectFactor = scrollNumberEditor("Incorrect factor: ", conf.incorrectFactor, 0, 1, 0.01);
+
+    var speechCheckbox = boolEditor("Speak correct answers using text-to-speech?", st.settings.readCorrectAnswers);
+    var speechEditor = speechSettingsEditor(st.settings.speechSettings);
 
     function makeCardEditor(c: SpacedRepCard): StateEditor<SpacedRepCard> {
         var ed = fixedNumEditors([c.content.prompt, c.content.answers.join('|')], singleTextFieldEditor);
@@ -356,6 +378,8 @@ function spacedRepMenu(st: SpacedRepState): StateEditor<SpacedRepState> {
         correctFactor.element,
         incorrectFactor.element,
         reviewsEditor.element,
+        speechCheckbox.element,
+        speechEditor.element,
         cardsEditor.element,
     ];
     components.map((el) => contDiv.appendChild(el));
@@ -370,6 +394,8 @@ function spacedRepMenu(st: SpacedRepState): StateEditor<SpacedRepState> {
                 reviewCeilingDays: st.settings.reviewCeilingDays,
                 probReview: reviewsEditor.menuToState(),
                 order: SpacedRepOrder.RandomOrder,
+                readCorrectAnswers: speechCheckbox.menuToState(),
+                speechSettings: speechEditor.menuToState()
             },
             cards: makeDict(cardsEditor.menuToState(), (c) => c.content.guid),
             history: st.history
