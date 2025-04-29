@@ -199,7 +199,6 @@ exports.setupDecklistMenu = setupDecklistMenu;
 const utils_1 = __webpack_require__(185);
 const flashcard_deck_1 = __webpack_require__(836);
 const editor_1 = __webpack_require__(43);
-const fs_1 = __webpack_require__(633);
 function generateDeckNameEditor(deck) {
     var nicknameEditor = (0, editor_1.singleTextFieldEditor)(deck.name);
     var colorEditor = (0, editor_1.singleTextFieldEditor)(deck.view.color);
@@ -266,8 +265,7 @@ function generateDecklistMenu(decklist, onfinish) {
         deckDeleteBtn.onclick = ((dk) => (e) => {
             var confirmation = confirm(`Are you sure you want to delete "${dk.name}"?`);
             if (confirmation) {
-                delete decklist[dk.slug];
-                (0, fs_1.deleteDeck)(dk.slug);
+                (0, flashcard_deck_1.eraseDeck)(dk.slug);
             }
             e.cancelBubble = true;
             if (e.stopPropagation)
@@ -515,6 +513,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.gDeckRegistry = exports.gDeckTypeRegistry = void 0;
 exports.saveDeck = saveDeck;
 exports.loadAllDecks = loadAllDecks;
+exports.eraseDeck = eraseDeck;
 exports.runDeck = runDeck;
 exports.registerDeckType = registerDeckType;
 const utils_1 = __webpack_require__(185);
@@ -536,6 +535,10 @@ function loadAllDecks() {
     var deckSlugsP = (0, fs_1.getDeckSlugs)();
     var deckSlugs = Object.keys(exports.gDeckRegistry);
     return deckSlugsP.then((slugs) => Promise.all(slugs.map(loadDeckIfExists)));
+}
+function eraseDeck(deckSlug) {
+    (0, fs_1.deleteDeck)(deckSlug);
+    delete exports.gDeckRegistry[deckSlug];
 }
 /* Setup general-purpose menus */
 function menuSetup(deckSlug) {

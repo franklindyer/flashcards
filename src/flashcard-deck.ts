@@ -13,6 +13,7 @@ import {
     getDeckSlugs,
     getDeckJSON,
     setDeckJSON,
+    deleteDeck
 } from "./fs"
 
 export type FlashcardDeckType<S, D> = {
@@ -53,6 +54,11 @@ export function loadAllDecks() {
     var deckSlugsP = getDeckSlugs(); 
     var deckSlugs = Object.keys(gDeckRegistry);
     return deckSlugsP.then((slugs) => Promise.all(slugs.map(loadDeckIfExists)));
+}
+
+export function eraseDeck(deckSlug: string) {
+    deleteDeck(deckSlug);
+    delete gDeckRegistry[deckSlug];
 }
 
 /* Setup general-purpose menus */
