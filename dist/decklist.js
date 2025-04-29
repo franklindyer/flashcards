@@ -5,7 +5,6 @@ exports.setupDecklistMenu = setupDecklistMenu;
 const utils_1 = require("./utils");
 const flashcard_deck_1 = require("./flashcard-deck");
 const editor_1 = require("./editor");
-const fs_1 = require("./fs");
 function generateDeckNameEditor(deck) {
     var nicknameEditor = (0, editor_1.singleTextFieldEditor)(deck.name);
     var colorEditor = (0, editor_1.singleTextFieldEditor)(deck.view.color);
@@ -72,8 +71,7 @@ function generateDecklistMenu(decklist, onfinish) {
         deckDeleteBtn.onclick = ((dk) => (e) => {
             var confirmation = confirm(`Are you sure you want to delete "${dk.name}"?`);
             if (confirmation) {
-                delete decklist[dk.slug];
-                (0, fs_1.deleteDeck)(dk.slug);
+                (0, flashcard_deck_1.eraseDeck)(dk.slug);
             }
             e.cancelBubble = true;
             if (e.stopPropagation)

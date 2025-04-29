@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.gDeckRegistry = exports.gDeckTypeRegistry = void 0;
 exports.saveDeck = saveDeck;
 exports.loadAllDecks = loadAllDecks;
+exports.eraseDeck = eraseDeck;
 exports.runDeck = runDeck;
 exports.registerDeckType = registerDeckType;
 const utils_1 = require("./utils");
@@ -24,6 +25,10 @@ function loadAllDecks() {
     var deckSlugsP = (0, fs_1.getDeckSlugs)();
     var deckSlugs = Object.keys(exports.gDeckRegistry);
     return deckSlugsP.then((slugs) => Promise.all(slugs.map(loadDeckIfExists)));
+}
+function eraseDeck(deckSlug) {
+    (0, fs_1.deleteDeck)(deckSlug);
+    delete exports.gDeckRegistry[deckSlug];
 }
 /* Setup general-purpose menus */
 function menuSetup(deckSlug) {
