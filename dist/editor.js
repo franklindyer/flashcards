@@ -5,6 +5,7 @@ exports.scrollNumberEditor = scrollNumberEditor;
 exports.singleTextFieldEditor = singleTextFieldEditor;
 exports.validatedTextFieldEditor = validatedTextFieldEditor;
 exports.doubleTextFieldEditor = doubleTextFieldEditor;
+exports.optionsEditor = optionsEditor;
 exports.fileUploadEditor = fileUploadEditor;
 exports.combineEditors = combineEditors;
 exports.makeTranslationEditor = makeTranslationEditor;
@@ -78,6 +79,25 @@ function doubleTextFieldEditor(txts) {
     editor.element.appendChild(children[0].element);
     editor.element.appendChild(children[1].element);
     return editor;
+}
+function optionsEditor(st, opts, labels) {
+    var pickerEl = document.createElement("select");
+    var optDict = {};
+    for (var x of opts) {
+        var optEl = document.createElement("option");
+        var label = labels(x);
+        optDict[label] = x;
+        optEl.textContent = label;
+        optEl.setAttribute("value", label);
+        pickerEl.appendChild(optEl);
+        if (label == labels(st)) {
+            pickerEl.value = label;
+        }
+    }
+    return {
+        element: pickerEl,
+        menuToState: () => optDict[pickerEl.selectedOptions[0].getAttribute("value")]
+    };
 }
 function fileUploadEditor(label, callback) {
     var content = "";

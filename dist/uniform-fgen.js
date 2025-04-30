@@ -24,6 +24,8 @@ class KVFlashcardGen extends flashcard_generator_1.FlashcardGen {
         fl.el.style.fontSize = `${fontSize}vw`;
         return fl;
     }
+    correctEffect(_, __, resolve) { resolve(); }
+    ;
 }
 function makeKVEditor(state) {
     var transEd = (0, editor_1.makeTranslationEditor)(state.deck, (x) => true);

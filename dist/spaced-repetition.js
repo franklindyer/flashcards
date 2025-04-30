@@ -4,6 +4,7 @@ const utils_1 = require("./utils");
 const flashcard_1 = require("./flashcard");
 const flashcard_generator_1 = require("./flashcard-generator");
 const flashcard_deck_1 = require("./flashcard-deck");
+const speech_1 = require("./speech");
 const editor_1 = require("./editor");
 var SpacedRepCardStatus;
 (function (SpacedRepCardStatus) {
@@ -29,7 +30,9 @@ const defaultSpacedRepSettings = {
     reviewCeilingDays: 365,
     studying: SpacedRepStudying.NewCards,
     probReview: 0.1,
-    order: SpacedRepOrder.RandomOrder
+    order: SpacedRepOrder.RandomOrder,
+    readCorrectAnswers: false,
+    speechSettings: (0, speech_1.defaultSpeechSettings)()
 };
 function defaultCardTiming() {
     return {
@@ -182,7 +185,20 @@ class SpacedRepGen extends flashcard_generator_1.FlashcardGen {
         if (data.isReview) {
             fl.el.style.backgroundColor = "#eeeeff";
         }
+        var cardsLeft = document.createElement("span");
+        cardsLeft.classList.add("cards-left-span");
+        cardsLeft.textContent = `${data.cardsLeft} cards remaining`;
+        fl.el.appendChild(cardsLeft);
         return fl;
+    }
+    correctEffect(st, attempt, resolve) {
+        if (st.settings.readCorrectAnswers) {
+            var ss = st.settings.speechSettings;
+            (0, speech_1.utter)(attempt, ss.voice, ss.rate, ss.pitch, resolve);
+        }
+        else {
+            resolve();
+        }
     }
 }
 function spacedRepMenu(st) {
@@ -209,6 +225,8 @@ function spacedRepMenu(st) {
     var reviewsEditor = (0, editor_1.scrollNumberEditor)("Probability of getting review cards: ", conf.probReview, 0, 0.5, 0.01);
     var correctFactor = (0, editor_1.scrollNumberEditor)("Correct factor: ", conf.correctFactor, 1, 10, 0.1);
     var incorrectFactor = (0, editor_1.scrollNumberEditor)("Incorrect factor: ", conf.incorrectFactor, 0, 1, 0.01);
+    var speechCheckbox = (0, editor_1.boolEditor)("Speak correct answers using text-to-speech?", st.settings.readCorrectAnswers);
+    var speechEditor = (0, speech_1.speechSettingsEditor)(st.settings.speechSettings);
     function makeCardEditor(c) {
         var ed = (0, editor_1.fixedNumEditors)([c.content.prompt, c.content.answers.join('|')], editor_1.singleTextFieldEditor);
         var cardInfo = document.createElement("a");
@@ -258,6 +276,8 @@ function spacedRepMenu(st) {
         correctFactor.element,
         incorrectFactor.element,
         reviewsEditor.element,
+        speechCheckbox.element,
+        speechEditor.element,
         cardsEditor.element,
     ];
     components.map((el) => contDiv.appendChild(el));
@@ -273,6 +293,8 @@ function spacedRepMenu(st) {
                     reviewCeilingDays: st.settings.reviewCeilingDays,
                     probReview: reviewsEditor.menuToState(),
                     order: SpacedRepOrder.RandomOrder,
+                    readCorrectAnswers: speechCheckbox.menuToState(),
+                    speechSettings: speechEditor.menuToState()
                 },
                 cards: (0, utils_1.makeDict)(cardsEditor.menuToState(), (c) => c.content.guid),
                 history: st.history

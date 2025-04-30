@@ -279,7 +279,12 @@ class SpacedRepGen extends FlashcardGen<SpacedRepState, SpacedRepCardData> {
         if (data.isReview) {
             fl.el.style.backgroundColor = "#eeeeff";
         }
- 
+
+        var cardsLeft = document.createElement("span");
+        cardsLeft.classList.add("cards-left-span");
+        cardsLeft.textContent = `${data.cardsLeft} cards remaining`;
+        fl.el.appendChild(cardsLeft);
+
         return fl;
     }
 

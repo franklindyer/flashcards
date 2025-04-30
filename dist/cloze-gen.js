@@ -48,6 +48,7 @@ class ClozeFlashcardGen extends flashcard_generator_1.FlashcardGen {
         var fl = new flashcard_1.Flashcard(el, (attempt) => answer == attempt, answer);
         return fl;
     }
+    correctEffect(_, __, resolve) { resolve(); }
 }
 function makeClozeEditor(state) {
     var container = document.createElement("div");
