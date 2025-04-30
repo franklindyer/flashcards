@@ -39,12 +39,14 @@ export type SpeechSettings = {
 }
 
 export function defaultSpeechSettings() {
+    var voices = gSynth.getVoices();
     return {
-        voice: gSynth.getVoices()[0].name,
+        voice: voices.length > 0 ? voices[0].name : "",
         rate: 1.0,
         pitch: 1.0
     };
 }
+defaultSpeechSettings();
 
 export function speechSettingsEditor(ss: SpeechSettings): StateEditor<SpeechSettings> {
     var voices = gSynth.getVoices().map((v) => v.name);
