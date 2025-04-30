@@ -56,6 +56,7 @@ class ClozeFlashcardGen extends flashcard_generator_1.FlashcardGen {
         var fl = new flashcard_1.Flashcard(el, (attempt) => answer == attempt, answer);
         return fl;
     }
+    correctEffect(_, __, resolve) { resolve(); }
 }
 function makeClozeEditor(state) {
     var container = document.createElement("div");
@@ -313,6 +314,7 @@ exports.scrollNumberEditor = scrollNumberEditor;
 exports.singleTextFieldEditor = singleTextFieldEditor;
 exports.validatedTextFieldEditor = validatedTextFieldEditor;
 exports.doubleTextFieldEditor = doubleTextFieldEditor;
+exports.optionsEditor = optionsEditor;
 exports.fileUploadEditor = fileUploadEditor;
 exports.combineEditors = combineEditors;
 exports.makeTranslationEditor = makeTranslationEditor;
@@ -386,6 +388,25 @@ function doubleTextFieldEditor(txts) {
     editor.element.appendChild(children[0].element);
     editor.element.appendChild(children[1].element);
     return editor;
+}
+function optionsEditor(st, opts, labels) {
+    var pickerEl = document.createElement("select");
+    var optDict = {};
+    for (var x of opts) {
+        var optEl = document.createElement("option");
+        var label = labels(x);
+        optDict[label] = x;
+        optEl.textContent = label;
+        optEl.setAttribute("value", label);
+        pickerEl.appendChild(optEl);
+        if (label == labels(st)) {
+            pickerEl.value = label;
+        }
+    }
+    return {
+        element: pickerEl,
+        menuToState: () => optDict[pickerEl.selectedOptions[0].getAttribute("value")]
+    };
 }
 function fileUploadEditor(label, callback) {
     var content = "";
@@ -651,11 +672,13 @@ class FlashcardGen {
         var inputCallback = (attempt) => {
             var correct = card.check(attempt);
             if (correct) {
-                inputBox.value = "";
                 var result = card.correctFirst ? FlashcardResult.Correct : FlashcardResult.Incorrect;
                 var newState = this.updateState(s, cardData, result);
-                setState(newState);
-                card.slideOut(callback, true);
+                this.correctEffect(newState, attempt, () => {
+                    inputBox.value = "";
+                    setState(newState);
+                    card.slideOut(callback, true);
+                });
             }
             else {
                 card.markWrong();
@@ -797,6 +820,7 @@ __webpack_require__(633);
 __webpack_require__(365);
 __webpack_require__(314);
 __webpack_require__(994);
+__webpack_require__(192);
 (0, decklist_1.setupDecklistMenu)();
 (0, flashcard_deck_1.loadAllDecks)().then((_) => (0, flashcard_deck_1.runDeck)("key-value-quizzer"));
 
@@ -812,6 +836,7 @@ const utils_1 = __webpack_require__(185);
 const flashcard_1 = __webpack_require__(88);
 const flashcard_generator_1 = __webpack_require__(808);
 const flashcard_deck_1 = __webpack_require__(836);
+const speech_1 = __webpack_require__(192);
 const editor_1 = __webpack_require__(43);
 var SpacedRepCardStatus;
 (function (SpacedRepCardStatus) {
@@ -837,7 +862,9 @@ const defaultSpacedRepSettings = {
     reviewCeilingDays: 365,
     studying: SpacedRepStudying.NewCards,
     probReview: 0.1,
-    order: SpacedRepOrder.RandomOrder
+    order: SpacedRepOrder.RandomOrder,
+    readCorrectAnswers: false,
+    speechSettings: (0, speech_1.defaultSpeechSettings)()
 };
 function defaultCardTiming() {
     return {
@@ -990,7 +1017,20 @@ class SpacedRepGen extends flashcard_generator_1.FlashcardGen {
         if (data.isReview) {
             fl.el.style.backgroundColor = "#eeeeff";
         }
+        var cardsLeft = document.createElement("span");
+        cardsLeft.classList.add("cards-left-span");
+        cardsLeft.textContent = `${data.cardsLeft} cards remaining`;
+        fl.el.appendChild(cardsLeft);
         return fl;
+    }
+    correctEffect(st, attempt, resolve) {
+        if (st.settings.readCorrectAnswers) {
+            var ss = st.settings.speechSettings;
+            (0, speech_1.utter)(attempt, ss.voice, ss.rate, ss.pitch, resolve);
+        }
+        else {
+            resolve();
+        }
     }
 }
 function spacedRepMenu(st) {
@@ -1017,6 +1057,8 @@ function spacedRepMenu(st) {
     var reviewsEditor = (0, editor_1.scrollNumberEditor)("Probability of getting review cards: ", conf.probReview, 0, 0.5, 0.01);
     var correctFactor = (0, editor_1.scrollNumberEditor)("Correct factor: ", conf.correctFactor, 1, 10, 0.1);
     var incorrectFactor = (0, editor_1.scrollNumberEditor)("Incorrect factor: ", conf.incorrectFactor, 0, 1, 0.01);
+    var speechCheckbox = (0, editor_1.boolEditor)("Speak correct answers using text-to-speech?", st.settings.readCorrectAnswers);
+    var speechEditor = (0, speech_1.speechSettingsEditor)(st.settings.speechSettings);
     function makeCardEditor(c) {
         var ed = (0, editor_1.fixedNumEditors)([c.content.prompt, c.content.answers.join('|')], editor_1.singleTextFieldEditor);
         var cardInfo = document.createElement("a");
@@ -1066,6 +1108,8 @@ function spacedRepMenu(st) {
         correctFactor.element,
         incorrectFactor.element,
         reviewsEditor.element,
+        speechCheckbox.element,
+        speechEditor.element,
         cardsEditor.element,
     ];
     components.map((el) => contDiv.appendChild(el));
@@ -1081,6 +1125,8 @@ function spacedRepMenu(st) {
                     reviewCeilingDays: st.settings.reviewCeilingDays,
                     probReview: reviewsEditor.menuToState(),
                     order: SpacedRepOrder.RandomOrder,
+                    readCorrectAnswers: speechCheckbox.menuToState(),
+                    speechSettings: speechEditor.menuToState()
                 },
                 cards: (0, utils_1.makeDict)(cardsEditor.menuToState(), (c) => c.content.guid),
                 history: st.history
@@ -1089,6 +1135,73 @@ function spacedRepMenu(st) {
     };
 }
 (0, flashcard_deck_1.registerDeckType)(new SpacedRepGen(), spacedRepMenu, "spaced-repetition-deck", "Spaced repetition deck", defaultSpacedRepState, "#ffffdd");
+
+
+/***/ }),
+
+/***/ 192:
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.gSynth = void 0;
+exports.utter = utter;
+exports.defaultSpeechSettings = defaultSpeechSettings;
+exports.speechSettingsEditor = speechSettingsEditor;
+const editor_1 = __webpack_require__(43);
+exports.gSynth = window.speechSynthesis;
+function getVoice(voiceName) {
+    var voices = exports.gSynth.getVoices();
+    for (var i in voices) {
+        var voice = voices[i];
+        if (voice.name == voiceName) {
+            return voice;
+        }
+    }
+    return voices[0]; // Default behavior
+}
+function utter(txt, voice, rate = 1, pitch = 1, callback = () => { }) {
+    const utterThis = new SpeechSynthesisUtterance(txt);
+    utterThis.voice = getVoice(voice);
+    utterThis.rate = rate;
+    utterThis.pitch = pitch;
+    utterThis.onend = callback;
+    console.log(`Speaking "${txt}"...`);
+    exports.gSynth.speak(utterThis);
+}
+function defaultSpeechSettings() {
+    var voices = exports.gSynth.getVoices();
+    return {
+        voice: voices.length > 0 ? voices[0].name : "",
+        rate: 1.0,
+        pitch: 1.0
+    };
+}
+defaultSpeechSettings();
+function speechSettingsEditor(ss) {
+    var voices = exports.gSynth.getVoices().map((v) => v.name);
+    var voiceEditor = (0, editor_1.optionsEditor)(ss.voice, voices, (v) => `${getVoice(v).name} (${getVoice(v).lang})`);
+    var rateEditor = (0, editor_1.scrollNumberEditor)("Speech rate: ", ss.rate, 0.5, 2.0, 0.05);
+    var pitchEditor = (0, editor_1.scrollNumberEditor)("Speech pitch: ", ss.pitch, 0, 2, 0.05);
+    var contDiv = document.createElement("div");
+    var accordion = document.createElement("details");
+    var accordionSummary = document.createElement("summary");
+    accordionSummary.textContent = "Text-to-speech settings";
+    accordion.appendChild(accordionSummary);
+    [voiceEditor, rateEditor, pitchEditor].map((ed) => accordion.appendChild(ed.element));
+    contDiv.appendChild(accordion);
+    return {
+        element: contDiv,
+        menuToState: () => {
+            return {
+                voice: voiceEditor.menuToState(),
+                rate: rateEditor.menuToState(),
+                pitch: pitchEditor.menuToState()
+            };
+        }
+    };
+}
+// utter("Hello, my name is Albert.", gSynth.getVoices()[0], 1, 1);
 
 
 /***/ }),
@@ -1122,6 +1235,8 @@ class KVFlashcardGen extends flashcard_generator_1.FlashcardGen {
         fl.el.style.fontSize = `${fontSize}vw`;
         return fl;
     }
+    correctEffect(_, __, resolve) { resolve(); }
+    ;
 }
 function makeKVEditor(state) {
     var transEd = (0, editor_1.makeTranslationEditor)(state.deck, (x) => true);

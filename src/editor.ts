@@ -1,4 +1,5 @@
 import {
+    IDictionary,
     arrayReindex,
     guidGenerator
 } from "./utils"
@@ -81,6 +82,26 @@ export function doubleTextFieldEditor(txts: [string, string]): StateEditor<[stri
     editor.element.appendChild(children[0].element);
     editor.element.appendChild(children[1].element);
     return editor;
+}
+
+export function optionsEditor<a>(st: a, opts: a[], labels: (x: a) => string): StateEditor<a> {
+    var pickerEl = document.createElement("select");
+    var optDict: IDictionary<a> = {};
+    for (var x of opts) {
+        var optEl = document.createElement("option");
+        var label = labels(x);
+        optDict[label] = x;
+        optEl.textContent = label;
+        optEl.setAttribute("value", label);
+        pickerEl.appendChild(optEl);
+        if (label == labels(st)) {
+            pickerEl.value = label;
+        }
+    }
+    return {
+        element: pickerEl,
+        menuToState: () => optDict[pickerEl.selectedOptions[0].getAttribute("value")!] 
+    }
 }
 
 export function fileUploadEditor(label: string, callback: (s: string) => void): StateEditor<string> {

@@ -199,3 +199,12 @@ hr {
     box-shadow: 3px 3px #9999aa;
     border-radius: 5px;
 }
+
+.cards-left-span {
+    color: #bbbbbb;
+    float: left;
+    position: absolute;
+    bottom: 0;
+    font-size: 18px;
+    display: block;
+}

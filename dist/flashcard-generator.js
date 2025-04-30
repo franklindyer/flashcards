@@ -20,11 +20,13 @@ class FlashcardGen {
         var inputCallback = (attempt) => {
             var correct = card.check(attempt);
             if (correct) {
-                inputBox.value = "";
                 var result = card.correctFirst ? FlashcardResult.Correct : FlashcardResult.Incorrect;
                 var newState = this.updateState(s, cardData, result);
-                setState(newState);
-                card.slideOut(callback, true);
+                this.correctEffect(newState, attempt, () => {
+                    inputBox.value = "";
+                    setState(newState);
+                    card.slideOut(callback, true);
+                });
             }
             else {
                 card.markWrong();
