@@ -329,6 +329,18 @@ function spacedRepMenu(st: SpacedRepState): StateEditor<SpacedRepState> {
 
     var speechCheckbox = boolEditor("Speak correct answers using text-to-speech?", st.settings.readCorrectAnswers);
     var speechEditor = speechSettingsEditor(st.settings.speechSettings);
+    var speechDiv = document.createElement("div");
+    speechDiv.appendChild(speechCheckbox.element);
+    speechDiv.appendChild(speechEditor.element);
+
+    [
+        studyingNewEditor.element,
+        initHoursEditor.element,
+        reviewsEditor.element,
+        correctFactor.element,
+        incorrectFactor.element,
+        speechDiv
+    ].map((el) => el.classList.add("deck-menu-submenu"))
 
     function makeCardEditor(c: SpacedRepCard): StateEditor<SpacedRepCard> {
         var ed = fixedNumEditors([c.content.prompt, c.content.answers.join('|')], singleTextFieldEditor);
@@ -372,6 +384,7 @@ function spacedRepMenu(st: SpacedRepState): StateEditor<SpacedRepState> {
     var cardsEditorTitle = document.createElement("h3");
     cardsEditorTitle.textContent = "Cards";
     cardsEditor.element.prepend(cardsEditorTitle);
+    cardsEditor.element.classList.add("deck-menu-submenu");
 
     var components = [
         totP,
@@ -383,8 +396,7 @@ function spacedRepMenu(st: SpacedRepState): StateEditor<SpacedRepState> {
         correctFactor.element,
         incorrectFactor.element,
         reviewsEditor.element,
-        speechCheckbox.element,
-        speechEditor.element,
+        speechDiv,
         cardsEditor.element,
     ];
     components.map((el) => contDiv.appendChild(el));

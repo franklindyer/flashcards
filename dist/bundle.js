@@ -1059,6 +1059,17 @@ function spacedRepMenu(st) {
     var incorrectFactor = (0, editor_1.scrollNumberEditor)("Incorrect factor: ", conf.incorrectFactor, 0, 1, 0.01);
     var speechCheckbox = (0, editor_1.boolEditor)("Speak correct answers using text-to-speech?", st.settings.readCorrectAnswers);
     var speechEditor = (0, speech_1.speechSettingsEditor)(st.settings.speechSettings);
+    var speechDiv = document.createElement("div");
+    speechDiv.appendChild(speechCheckbox.element);
+    speechDiv.appendChild(speechEditor.element);
+    [
+        studyingNewEditor.element,
+        initHoursEditor.element,
+        reviewsEditor.element,
+        correctFactor.element,
+        incorrectFactor.element,
+        speechDiv
+    ].map((el) => el.classList.add("deck-menu-submenu"));
     function makeCardEditor(c) {
         var ed = (0, editor_1.fixedNumEditors)([c.content.prompt, c.content.answers.join('|')], editor_1.singleTextFieldEditor);
         var cardInfo = document.createElement("a");
@@ -1098,6 +1109,7 @@ function spacedRepMenu(st) {
     var cardsEditorTitle = document.createElement("h3");
     cardsEditorTitle.textContent = "Cards";
     cardsEditor.element.prepend(cardsEditorTitle);
+    cardsEditor.element.classList.add("deck-menu-submenu");
     var components = [
         totP,
         newP,
@@ -1108,8 +1120,7 @@ function spacedRepMenu(st) {
         correctFactor.element,
         incorrectFactor.element,
         reviewsEditor.element,
-        speechCheckbox.element,
-        speechEditor.element,
+        speechDiv,
         cardsEditor.element,
     ];
     components.map((el) => contDiv.appendChild(el));
