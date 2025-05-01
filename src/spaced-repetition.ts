@@ -27,6 +27,10 @@ import {
     fixedNumEditors,
     multipleEditors
 } from "./editor"
+import {
+    randomizeStringSub
+} from "./random-templating"
+
 
 enum SpacedRepCardStatus {
     CardNew = 1,
@@ -258,6 +262,26 @@ class SpacedRepGen extends FlashcardGen<SpacedRepState, SpacedRepCardData> {
         return state;
     }
 
+    applyRandomTemplating(data: SpacedRepCardContent): SpacedRepCardContent {
+        var subData = randomizeStringSub(data.prompt);
+        var prompt = subData[0];
+        var rands = subData[1];
+
+        var answers: string[] = [];
+        for (var i in data.answers) {
+            subData = randomizeStringSub(data.answers[i], rands);
+            var ans = subData[0];
+            rands = subData[1];
+            answers.push(ans);
+        }
+
+        return {
+            guid: data.guid,
+            prompt: prompt,
+            answers: answers
+        }       
+    }
+
     generateCard(data: SpacedRepCardData): Flashcard {
         var a = document.createElement("a");
         var prompt = "No cards left to study.";
@@ -265,9 +289,10 @@ class SpacedRepGen extends FlashcardGen<SpacedRepState, SpacedRepCardData> {
         var hint = "You cannot continue studying until more cards become due.";
 
         if (data.content !== undefined) {
-            prompt = data.content.prompt;
-            pred = (answer: string) => data.content!.answers.includes(answer);
-            hint = data.content.answers[0];
+            var tplContent = this.applyRandomTemplating(data.content);
+            prompt = tplContent.prompt;
+            pred = (answer: string) => tplContent.answers.includes(answer);
+            hint = tplContent.answers[0];
         }
 
         var fontSize = 100.0/(10.0*Math.log(10+prompt.length));
