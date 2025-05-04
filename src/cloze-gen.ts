@@ -11,6 +11,9 @@ import {
     FlashcardGen
 } from "./flashcard-generator"
 import {
+    renderCard
+} from "./flashcard-template"
+import {
     StateEditor,
     boolEditor,
     fileUploadEditor
@@ -70,31 +73,7 @@ class ClozeFlashcardGen extends FlashcardGen<ClozeDeckState, ClozeCardData> {
     } 
     
     generateCard(data: ClozeCardData): Flashcard {
-        var el = document.createElement("div");
-        el.style.display = "block";
-        el.style.textAlign = "center";
-        var aUpper = document.createElement("p");
-        var aLower = document.createElement("p");
-        aUpper.style.display = "block";
-        aLower.style.display = "block";
-        el.appendChild(aUpper);
-        el.appendChild(document.createElement("hr"));        
-        el.appendChild(aLower);
-
-        var targetWords: string[] = [];
-        aUpper.textContent = data.upper.replace(/\{\{([^\{\}]+)\}\}/, (match, p1) => {
-            targetWords.push(p1);
-            return "___";
-        });
-        var answer = targetWords.join(", ");
-        aLower.textContent = data.lower;
-
-        var fontSize = 100.0/(10.0*Math.log(10+aUpper.textContent.length));
-        aUpper.style.fontSize = `${fontSize}vw`;
-        aLower.style.fontSize = `${0.7*fontSize}vw`;
-
-        var fl = new Flashcard(el, (attempt: string) => answer == attempt, answer);
-        return fl;
+        return renderCard("cloze-template", data);
     }
 
     correctEffect(_: ClozeDeckState, __: string, resolve: () => void) { resolve(); }

@@ -8,6 +8,9 @@ import {
     setupDecklistMenu
 } from "./decklist"
 
+import "./basic-template"
+import "./cloze-template"
+
 import "./fs"
 import "./uniform-fgen";
 import "./spaced-repetition";

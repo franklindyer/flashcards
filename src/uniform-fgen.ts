@@ -15,40 +15,39 @@ import {
     registerDeckType
 } from "./flashcard-deck"
 import {
+    renderCard
+} from "./flashcard-template"
+import {
+    BasicCardData
+} from "./basic-template"
+import {
     StateEditor,
     makeTranslationEditor,
     multipleEditors
 } from "./editor"
 
-type KVCardData = [string, string];
-
 type KVFlashcardState = {
-    deck: KVCardData[],
+    deck: BasicCardData[],
     history: [string, boolean][]
 }
 
-class KVFlashcardGen extends FlashcardGen<KVFlashcardState, KVCardData> {
+class KVFlashcardGen extends FlashcardGen<KVFlashcardState, BasicCardData> {
     getGenName() { return "uniform-key-value"; }
 
-    getNextCard(state: KVFlashcardState): KVCardData {
+    getNextCard(state: KVFlashcardState): BasicCardData {
         var dat = state.deck[Math.floor(Math.random() * Object.keys(state.deck).length)];
         return dat;
     }
 
-    updateState(state: KVFlashcardState, cardData: KVCardData, correct: FlashcardResult): KVFlashcardState {
+    updateState(state: KVFlashcardState, cardData: BasicCardData, correct: FlashcardResult): KVFlashcardState {
         if (correct != FlashcardResult.Unanswered) {
             state.history.push([cardData[0], correct == FlashcardResult.Correct]);
         }
         return state;
     }
     
-    generateCard(data: KVCardData): Flashcard {
-        var a = document.createElement("a");
-        a.textContent = data[0];
-        var fl = new Flashcard(a, (answer: string) => data[1] == answer, data[1]);
-        var fontSize = 100.0/(10.0*Math.log(10+data[0].length));
-        fl.el.style.fontSize = `${fontSize}vw`;
-        return fl;
+    generateCard(data: BasicCardData): Flashcard {
+        return renderCard("basic-template", data);
     }
 
     correctEffect(_: KVFlashcardState, __: string, resolve: () => void) { resolve() };
@@ -74,11 +73,6 @@ var kvDefaultState: KVFlashcardState = {
     ],
     history: []
 };
-
-// var kvGen = new KVFlashcardGen();
-// kvGen.state = kvState;
-// kvGen.template = new KVBasicTemplate();
-// kvGen.runLoop()
 
 registerDeckType(
     new KVFlashcardGen(),
