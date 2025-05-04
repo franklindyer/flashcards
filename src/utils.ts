@@ -30,3 +30,5 @@ export function downloadText(filename: string, text: string) {
   element.click();
   document.body.removeChild(element);
 }
+
+export const getUuid = require("uuid-by-string");
