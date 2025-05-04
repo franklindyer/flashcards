@@ -29,7 +29,8 @@ import {
     StateEditor,
     makeTranslationEditor,
     multipleEditors,
-    singleTextFieldEditor
+    singleTextFieldEditor,
+    fileUploadEditor
 } from "./editor"
 
 type TranscriptDeckSettings = {
@@ -64,25 +65,22 @@ class TranscriptFlashcardGen extends FlashcardGen<TranscriptDeckState, Transcrip
 }
 
 function makeTranscriptEditor(state: TranscriptDeckState): StateEditor<TranscriptDeckState> {
-    var entriesEd = multipleEditors(
-        state.deck,
-        () => "",
-        singleTextFieldEditor
-    );
-    entriesEd.element.classList.add("deck-menu-submenu");
-    
     var speechEd = speechSettingsEditor(state.settings.speechSettings);
     speechEd.element.classList.add("deck-menu-submenu");
 
+    var fileEd = fileUploadEditor("Upload a list of phrases", (s: string) => {});
+    fileEd.element.classList.add("deck-menu-submenu");   
+ 
     var container = document.createElement("div");
     container.appendChild(speechEd.element);
-    container.appendChild(entriesEd.element);
+    container.appendChild(fileEd.element);
 
     return {
         element: container,
         menuToState: () => {
+            var fileInput = fileEd.menuToState();
             return {
-                deck: entriesEd.menuToState(),
+                deck: fileInput.length == 0 ? state.deck : fileInput.split('\n').map((x: string) => x.trim()),
                 settings: {
                     speechSettings: speechEd.menuToState()
                 }
