@@ -216,3 +216,13 @@ hr {
     font-size: 18px;
     display: block;
 }
+
+.transcription-audio-button {
+    aspect-ratio: 1;
+    width: 100px;
+    border-radius: 5px;
+}
+
+.transcription-audio-button:hover {
+    border: 3px solid #eeeeff;
+}

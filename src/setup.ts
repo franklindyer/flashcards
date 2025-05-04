@@ -10,11 +10,13 @@ import {
 
 import "./basic-template"
 import "./cloze-template"
+import "./transcript-template"
 
 import "./fs"
 import "./uniform-fgen";
 import "./spaced-repetition";
 import "./cloze-gen";
+import "./transcript-gen";
 
 import "./speech";
 

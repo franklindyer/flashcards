@@ -6,6 +6,7 @@ const flashcard_generator_1 = require("./flashcard-generator");
 const flashcard_deck_1 = require("./flashcard-deck");
 const speech_1 = require("./speech");
 const editor_1 = require("./editor");
+const random_templating_1 = require("./random-templating");
 var SpacedRepCardStatus;
 (function (SpacedRepCardStatus) {
     SpacedRepCardStatus[SpacedRepCardStatus["CardNew"] = 1] = "CardNew";
@@ -168,15 +169,33 @@ class SpacedRepGen extends flashcard_generator_1.FlashcardGen {
         });
         return state;
     }
+    applyRandomTemplating(data) {
+        var subData = (0, random_templating_1.randomizeStringSub)(data.prompt);
+        var prompt = subData[0];
+        var rands = subData[1];
+        var answers = [];
+        for (var i in data.answers) {
+            subData = (0, random_templating_1.randomizeStringSub)(data.answers[i], rands);
+            var ans = subData[0];
+            rands = subData[1];
+            answers.push(ans);
+        }
+        return {
+            guid: data.guid,
+            prompt: prompt,
+            answers: answers
+        };
+    }
     generateCard(data) {
         var a = document.createElement("a");
         var prompt = "No cards left to study.";
         var pred = (_) => false;
         var hint = "You cannot continue studying until more cards become due.";
         if (data.content !== undefined) {
-            prompt = data.content.prompt;
-            pred = (answer) => data.content.answers.includes(answer);
-            hint = data.content.answers[0];
+            var tplContent = this.applyRandomTemplating(data.content);
+            prompt = tplContent.prompt;
+            pred = (answer) => tplContent.answers.includes(answer);
+            hint = tplContent.answers[0];
         }
         var fontSize = 100.0 / (10.0 * Math.log(10 + prompt.length));
         a.style.fontSize = `${fontSize}vw`;

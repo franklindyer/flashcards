@@ -2,10 +2,14 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const flashcard_deck_1 = require("./flashcard-deck");
 const decklist_1 = require("./decklist");
+require("./basic-template");
+require("./cloze-template");
+require("./transcript-template");
 require("./fs");
 require("./uniform-fgen");
 require("./spaced-repetition");
 require("./cloze-gen");
+require("./transcript-gen");
 require("./speech");
 (0, decklist_1.setupDecklistMenu)();
 (0, flashcard_deck_1.loadAllDecks)().then((_) => (0, flashcard_deck_1.runDeck)("key-value-quizzer"));
