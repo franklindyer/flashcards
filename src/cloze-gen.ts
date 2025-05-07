@@ -72,7 +72,7 @@ class ClozeFlashcardGen extends FlashcardGen<ClozeDeckState, ClozeCardData> {
         return state;
     } 
     
-    generateCard(data: ClozeCardData): Flashcard {
+    generateCard(st: ClozeDeckState, data: ClozeCardData): Flashcard {
         return renderCard("cloze-template", data);
     }
 

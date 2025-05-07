@@ -20,6 +20,12 @@ import {
     SpeechSettings
 } from "./speech"
 import {
+    TextFilterSettings,
+    applyTextFilter,
+    textFilterSelectionMenu,
+    defaultTextFilterSettings
+} from "./text-filters"
+import {
     StateEditor,
     boolEditor,
     scrollNumberEditor,
@@ -82,7 +88,8 @@ type SpacedRepSettings = {
     probReview: number,
     order: SpacedRepOrder,
     readCorrectAnswers: boolean,
-    speechSettings: SpeechSettings
+    speechSettings: SpeechSettings,
+    filterSettings: TextFilterSettings 
 }
 
 type SpacedRepHistRecord = {
@@ -108,7 +115,8 @@ const defaultSpacedRepSettings = {
     probReview: 0.1,
     order: SpacedRepOrder.RandomOrder,
     readCorrectAnswers: false,
-    speechSettings: defaultSpeechSettings()
+    speechSettings: defaultSpeechSettings(),
+    filterSettings: defaultTextFilterSettings
 };
 
 function defaultCardTiming(): SpacedRepCardTiming {
@@ -282,16 +290,17 @@ class SpacedRepGen extends FlashcardGen<SpacedRepState, SpacedRepCardData> {
         }       
     }
 
-    generateCard(data: SpacedRepCardData): Flashcard {
+    generateCard(st: SpacedRepState, data: SpacedRepCardData): Flashcard {
         var a = document.createElement("a");
         var prompt = "No cards left to study.";
         var pred = (_: string) => false;
         var hint = "You cannot continue studying until more cards become due.";
+        var tf = (s: string) => applyTextFilter(s, st.settings.filterSettings);
 
         if (data.content !== undefined) {
             var tplContent = this.applyRandomTemplating(data.content);
             prompt = tplContent.prompt;
-            pred = (answer: string) => tplContent.answers.includes(answer);
+            pred = (answer: string) => tplContent.answers.map(tf).includes(tf(answer));
             hint = tplContent.answers[0];
         }
 
@@ -358,13 +367,16 @@ function spacedRepMenu(st: SpacedRepState): StateEditor<SpacedRepState> {
     speechDiv.appendChild(speechCheckbox.element);
     speechDiv.appendChild(speechEditor.element);
 
+    var filterEditor = textFilterSelectionMenu(st.settings.filterSettings);
+
     [
         studyingNewEditor.element,
         initHoursEditor.element,
         reviewsEditor.element,
         correctFactor.element,
         incorrectFactor.element,
-        speechDiv
+        speechDiv,
+        filterEditor.element
     ].map((el) => el.classList.add("deck-menu-submenu"))
 
     function makeCardEditor(c: SpacedRepCard): StateEditor<SpacedRepCard> {
@@ -422,6 +434,7 @@ function spacedRepMenu(st: SpacedRepState): StateEditor<SpacedRepState> {
         incorrectFactor.element,
         reviewsEditor.element,
         speechDiv,
+        filterEditor.element,
         cardsEditor.element,
     ];
     components.map((el) => contDiv.appendChild(el));
@@ -437,7 +450,8 @@ function spacedRepMenu(st: SpacedRepState): StateEditor<SpacedRepState> {
                 probReview: reviewsEditor.menuToState(),
                 order: SpacedRepOrder.RandomOrder,
                 readCorrectAnswers: speechCheckbox.menuToState(),
-                speechSettings: speechEditor.menuToState()
+                speechSettings: speechEditor.menuToState(),
+                filterSettings: filterEditor.menuToState()
             },
             cards: makeDict(cardsEditor.menuToState(), (c) => c.content.guid),
             history: st.history

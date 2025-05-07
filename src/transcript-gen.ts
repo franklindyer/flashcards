@@ -57,7 +57,7 @@ class TranscriptFlashcardGen extends FlashcardGen<TranscriptDeckState, Transcrip
         return state;
     }
     
-    generateCard(data: TranscriptCardData): Flashcard {
+    generateCard(st: TranscriptDeckState, data: TranscriptCardData): Flashcard {
         return renderCard("transcript-template", data);
     }
 

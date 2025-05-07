@@ -46,7 +46,7 @@ class KVFlashcardGen extends FlashcardGen<KVFlashcardState, BasicCardData> {
         return state;
     }
     
-    generateCard(data: BasicCardData): Flashcard {
+    generateCard(state: KVFlashcardState, data: BasicCardData): Flashcard {
         return renderCard("basic-template", data);
     }
 
