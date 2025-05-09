@@ -6,6 +6,7 @@ const flashcard_generator_1 = require("./flashcard-generator");
 const flashcard_deck_1 = require("./flashcard-deck");
 const speech_1 = require("./speech");
 const editor_1 = require("./editor");
+const random_templating_1 = require("./random-templating");
 var SpacedRepCardStatus;
 (function (SpacedRepCardStatus) {
     SpacedRepCardStatus[SpacedRepCardStatus["CardNew"] = 1] = "CardNew";
@@ -168,15 +169,33 @@ class SpacedRepGen extends flashcard_generator_1.FlashcardGen {
         });
         return state;
     }
+    applyRandomTemplating(data) {
+        var subData = (0, random_templating_1.randomizeStringSub)(data.prompt);
+        var prompt = subData[0];
+        var rands = subData[1];
+        var answers = [];
+        for (var i in data.answers) {
+            subData = (0, random_templating_1.randomizeStringSub)(data.answers[i], rands);
+            var ans = subData[0];
+            rands = subData[1];
+            answers.push(ans);
+        }
+        return {
+            guid: data.guid,
+            prompt: prompt,
+            answers: answers
+        };
+    }
     generateCard(data) {
         var a = document.createElement("a");
         var prompt = "No cards left to study.";
         var pred = (_) => false;
         var hint = "You cannot continue studying until more cards become due.";
         if (data.content !== undefined) {
-            prompt = data.content.prompt;
-            pred = (answer) => data.content.answers.includes(answer);
-            hint = data.content.answers[0];
+            var tplContent = this.applyRandomTemplating(data.content);
+            prompt = tplContent.prompt;
+            pred = (answer) => tplContent.answers.includes(answer);
+            hint = tplContent.answers[0];
         }
         var fontSize = 100.0 / (10.0 * Math.log(10 + prompt.length));
         a.style.fontSize = `${fontSize}vw`;
@@ -227,6 +246,17 @@ function spacedRepMenu(st) {
     var incorrectFactor = (0, editor_1.scrollNumberEditor)("Incorrect factor: ", conf.incorrectFactor, 0, 1, 0.01);
     var speechCheckbox = (0, editor_1.boolEditor)("Speak correct answers using text-to-speech?", st.settings.readCorrectAnswers);
     var speechEditor = (0, speech_1.speechSettingsEditor)(st.settings.speechSettings);
+    var speechDiv = document.createElement("div");
+    speechDiv.appendChild(speechCheckbox.element);
+    speechDiv.appendChild(speechEditor.element);
+    [
+        studyingNewEditor.element,
+        initHoursEditor.element,
+        reviewsEditor.element,
+        correctFactor.element,
+        incorrectFactor.element,
+        speechDiv
+    ].map((el) => el.classList.add("deck-menu-submenu"));
     function makeCardEditor(c) {
         var ed = (0, editor_1.fixedNumEditors)([c.content.prompt, c.content.answers.join('|')], editor_1.singleTextFieldEditor);
         var cardInfo = document.createElement("a");
@@ -266,6 +296,7 @@ function spacedRepMenu(st) {
     var cardsEditorTitle = document.createElement("h3");
     cardsEditorTitle.textContent = "Cards";
     cardsEditor.element.prepend(cardsEditorTitle);
+    cardsEditor.element.classList.add("deck-menu-submenu");
     var components = [
         totP,
         newP,
@@ -276,8 +307,7 @@ function spacedRepMenu(st) {
         correctFactor.element,
         incorrectFactor.element,
         reviewsEditor.element,
-        speechCheckbox.element,
-        speechEditor.element,
+        speechDiv,
         cardsEditor.element,
     ];
     components.map((el) => contDiv.appendChild(el));

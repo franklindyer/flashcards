@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.getUuid = void 0;
 exports.guidGenerator = guidGenerator;
 exports.arrayReindex = arrayReindex;
 exports.makeDict = makeDict;
@@ -29,3 +30,4 @@ function downloadText(filename, text) {
     element.click();
     document.body.removeChild(element);
 }
+exports.getUuid = require("uuid-by-string");

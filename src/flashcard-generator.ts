@@ -17,14 +17,14 @@ export abstract class FlashcardGen<S, D> {
     
     abstract getNextCard(state: S): D;
     abstract updateState(state: S, cardData: D, correct: FlashcardResult): S;
-    abstract generateCard(data: D): Flashcard;
+    abstract generateCard(state: S, data: D): Flashcard;
 
     // Should not attempt to change the deck's state
     abstract correctEffect(state: S, attempt: string, resolve: () => void): void;   
 
     runOnce(s: S, setState: (s: S) => void, callback: () => void) {
         var cardData: D = this.getNextCard(s);
-        var card = this.generateCard(cardData);
+        var card = this.generateCard(s, cardData);
 
         var inputBox = <HTMLInputElement>document.getElementById("answer-input");
         var inputCallback = (attempt: string) => {

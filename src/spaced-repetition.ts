@@ -20,6 +20,12 @@ import {
     SpeechSettings
 } from "./speech"
 import {
+    TextFilterSettings,
+    applyTextFilter,
+    textFilterSelectionMenu,
+    defaultTextFilterSettings
+} from "./text-filters"
+import {
     StateEditor,
     boolEditor,
     scrollNumberEditor,
@@ -27,6 +33,10 @@ import {
     fixedNumEditors,
     multipleEditors
 } from "./editor"
+import {
+    randomizeStringSub
+} from "./random-templating"
+
 
 enum SpacedRepCardStatus {
     CardNew = 1,
@@ -78,7 +88,8 @@ type SpacedRepSettings = {
     probReview: number,
     order: SpacedRepOrder,
     readCorrectAnswers: boolean,
-    speechSettings: SpeechSettings
+    speechSettings: SpeechSettings,
+    filterSettings: TextFilterSettings 
 }
 
 type SpacedRepHistRecord = {
@@ -104,7 +115,8 @@ const defaultSpacedRepSettings = {
     probReview: 0.1,
     order: SpacedRepOrder.RandomOrder,
     readCorrectAnswers: false,
-    speechSettings: defaultSpeechSettings()
+    speechSettings: defaultSpeechSettings(),
+    filterSettings: defaultTextFilterSettings
 };
 
 function defaultCardTiming(): SpacedRepCardTiming {
@@ -258,16 +270,38 @@ class SpacedRepGen extends FlashcardGen<SpacedRepState, SpacedRepCardData> {
         return state;
     }
 
-    generateCard(data: SpacedRepCardData): Flashcard {
+    applyRandomTemplating(data: SpacedRepCardContent): SpacedRepCardContent {
+        var subData = randomizeStringSub(data.prompt);
+        var prompt = subData[0];
+        var rands = subData[1];
+
+        var answers: string[] = [];
+        for (var i in data.answers) {
+            subData = randomizeStringSub(data.answers[i], rands);
+            var ans = subData[0];
+            rands = subData[1];
+            answers.push(ans);
+        }
+
+        return {
+            guid: data.guid,
+            prompt: prompt,
+            answers: answers
+        }       
+    }
+
+    generateCard(st: SpacedRepState, data: SpacedRepCardData): Flashcard {
         var a = document.createElement("a");
         var prompt = "No cards left to study.";
         var pred = (_: string) => false;
         var hint = "You cannot continue studying until more cards become due.";
+        var tf = (s: string) => applyTextFilter(s, st.settings.filterSettings);
 
         if (data.content !== undefined) {
-            prompt = data.content.prompt;
-            pred = (answer: string) => data.content!.answers.includes(answer);
-            hint = data.content.answers[0];
+            var tplContent = this.applyRandomTemplating(data.content);
+            prompt = tplContent.prompt;
+            pred = (answer: string) => tplContent.answers.map(tf).includes(tf(answer));
+            hint = tplContent.answers[0];
         }
 
         var fontSize = 100.0/(10.0*Math.log(10+prompt.length));
@@ -329,6 +363,21 @@ function spacedRepMenu(st: SpacedRepState): StateEditor<SpacedRepState> {
 
     var speechCheckbox = boolEditor("Speak correct answers using text-to-speech?", st.settings.readCorrectAnswers);
     var speechEditor = speechSettingsEditor(st.settings.speechSettings);
+    var speechDiv = document.createElement("div");
+    speechDiv.appendChild(speechCheckbox.element);
+    speechDiv.appendChild(speechEditor.element);
+
+    var filterEditor = textFilterSelectionMenu(st.settings.filterSettings);
+
+    [
+        studyingNewEditor.element,
+        initHoursEditor.element,
+        reviewsEditor.element,
+        correctFactor.element,
+        incorrectFactor.element,
+        speechDiv,
+        filterEditor.element
+    ].map((el) => el.classList.add("deck-menu-submenu"))
 
     function makeCardEditor(c: SpacedRepCard): StateEditor<SpacedRepCard> {
         var ed = fixedNumEditors([c.content.prompt, c.content.answers.join('|')], singleTextFieldEditor);
@@ -372,6 +421,7 @@ function spacedRepMenu(st: SpacedRepState): StateEditor<SpacedRepState> {
     var cardsEditorTitle = document.createElement("h3");
     cardsEditorTitle.textContent = "Cards";
     cardsEditor.element.prepend(cardsEditorTitle);
+    cardsEditor.element.classList.add("deck-menu-submenu");
 
     var components = [
         totP,
@@ -383,8 +433,8 @@ function spacedRepMenu(st: SpacedRepState): StateEditor<SpacedRepState> {
         correctFactor.element,
         incorrectFactor.element,
         reviewsEditor.element,
-        speechCheckbox.element,
-        speechEditor.element,
+        speechDiv,
+        filterEditor.element,
         cardsEditor.element,
     ];
     components.map((el) => contDiv.appendChild(el));
@@ -400,7 +450,8 @@ function spacedRepMenu(st: SpacedRepState): StateEditor<SpacedRepState> {
                 probReview: reviewsEditor.menuToState(),
                 order: SpacedRepOrder.RandomOrder,
                 readCorrectAnswers: speechCheckbox.menuToState(),
-                speechSettings: speechEditor.menuToState()
+                speechSettings: speechEditor.menuToState(),
+                filterSettings: filterEditor.menuToState()
             },
             cards: makeDict(cardsEditor.menuToState(), (c) => c.content.guid),
             history: st.history

@@ -1,6 +1,7 @@
 import {
     IDictionary,
-    guidGenerator
+    guidGenerator,
+    getUuid
 } from "./utils"
 import {
     Flashcard
@@ -10,7 +11,11 @@ import {
     FlashcardGen
 } from "./flashcard-generator"
 import {
+    renderCard
+} from "./flashcard-template"
+import {
     StateEditor,
+    boolEditor,
     fileUploadEditor
 } from "./editor"
 import {
@@ -32,17 +37,25 @@ type ClozeCardGroup = {
     skipped: number
 }
 
+type ClozeDeckSettings = {
+    blacklist: string[],
+    blacklistSkipped: boolean
+}
+
 type ClozeDeckState = {
-    cards: IDictionary<ClozeCardGroup>
+    cards: IDictionary<ClozeCardGroup>,
+    settings: ClozeDeckSettings
 }
 
 class ClozeFlashcardGen extends FlashcardGen<ClozeDeckState, ClozeCardData> {
     getGenName() { return "cloze-puzzles"; }
 
     getNextCard(state: ClozeDeckState): ClozeCardData {
-        var key = Object.keys(state.cards)[Math.floor(Math.random() * Object.keys(state.cards).length)];
-        var group = state.cards[key];
-        return group.cards[Math.floor(Math.random() * Object.keys(group.cards).length)];
+        var cardIsOk = (c: ClozeCardData) => !(state.settings.blacklist.includes(c.guid));
+        var validKeys = Object.keys(state.cards).filter((k) => state.cards[k].cards.some(cardIsOk));
+        var key = validKeys[Math.floor(Math.random() * validKeys.length)];
+        var group = state.cards[key].cards.filter(cardIsOk);
+        return group[Math.floor(Math.random() * group.length)];
     }
 
     updateState(state: ClozeDeckState, cardData: ClozeCardData, result: FlashcardResult): ClozeDeckState {
@@ -52,43 +65,37 @@ class ClozeFlashcardGen extends FlashcardGen<ClozeDeckState, ClozeCardData> {
             state.cards[cardData.group].incorrect += 1;
         } else {
             state.cards[cardData.group].skipped += 1;
+            if (state.settings.blacklistSkipped) {
+                state.settings.blacklist.push(cardData.guid);
+            }
         }
         return state;
     } 
     
-    generateCard(data: ClozeCardData): Flashcard {
-        var el = document.createElement("div");
-        el.style.display = "block";
-        el.style.textAlign = "center";
-        var aUpper = document.createElement("p");
-        var aLower = document.createElement("p");
-        aUpper.style.display = "block";
-        aLower.style.display = "block";
-        el.appendChild(aUpper);
-        el.appendChild(document.createElement("hr"));        
-        el.appendChild(aLower);
-
-        var targetWords: string[] = [];
-        aUpper.textContent = data.upper.replace(/\{\{([^\{\}]+)\}\}/, (match, p1) => {
-            targetWords.push(p1);
-            return "___";
-        });
-        var answer = targetWords.join(", ");
-        aLower.textContent = data.lower;
-
-        var fontSize = 100.0/(10.0*Math.log(10+aUpper.textContent.length));
-        aUpper.style.fontSize = `${fontSize}vw`;
-        aLower.style.fontSize = `${0.7*fontSize}vw`;
-
-        var fl = new Flashcard(el, (attempt: string) => answer == attempt, answer);
-        return fl;
+    generateCard(st: ClozeDeckState, data: ClozeCardData): Flashcard {
+        return renderCard("cloze-template", data);
     }
 
     correctEffect(_: ClozeDeckState, __: string, resolve: () => void) { resolve(); }
 }
 
+function makeClozeCard(group: string, top: string, bottom: string): ClozeCardData {
+    return {
+        group: group,
+        guid: getUuid(`${top} | ${bottom}`, 5),
+        upper: top,
+        lower: bottom
+    };
+}
+
 function makeClozeEditor(state: ClozeDeckState): StateEditor<ClozeDeckState> {
     var container = document.createElement("div");
+
+    var blacklistEditor = boolEditor("Permanently remove skipped cards?", state.settings.blacklistSkipped);
+    blacklistEditor.element.classList.add("deck-menu-submenu");
+
+    var summaryContainer = document.createElement("div");
+    summaryContainer.classList.add("deck-menu-submenu");
 
     var loadCards = (s: string) => {
          if (s.length > 0) {
@@ -137,8 +144,11 @@ function makeClozeEditor(state: ClozeDeckState): StateEditor<ClozeDeckState> {
         loadCards(s);
         makeDeckSummary();
     });
-    container.appendChild(fileEd.element);
-    container.appendChild(deckSummary);
+    summaryContainer.appendChild(fileEd.element);
+    summaryContainer.appendChild(deckSummary);
+
+    container.appendChild(blacklistEditor.element);
+    container.appendChild(summaryContainer);
 
     return {
         element: container,
@@ -152,12 +162,7 @@ function makeClozeEditor(state: ClozeDeckState): StateEditor<ClozeDeckState> {
                     var k = Object.keys(infoList)[i];
                     newCardDict[k] = {
                         key: k,
-                        cards: infoList[k].map((c: any) => { return {
-                            upper: c["prompt"],
-                            lower: c["translation"],
-                            guid: guidGenerator(),
-                            group: k
-                        }; }),
+                        cards: infoList[k].map((c: any) => makeClozeCard(k, c["prompt"], c["translation"])),
                         correct: Object.keys(state.cards).includes(k) ? state.cards[k].correct : 0,
                         incorrect: Object.keys(state.cards).includes(k) ? state.cards[k].incorrect : 0,
                         skipped: Object.keys(state.cards).includes(k) ? state.cards[k].skipped : 0
@@ -165,6 +170,7 @@ function makeClozeEditor(state: ClozeDeckState): StateEditor<ClozeDeckState> {
                 }
                 state.cards = newCardDict;
             }
+            state.settings.blacklistSkipped  = blacklistEditor.menuToState();
             return state;
         }
     };
@@ -175,18 +181,8 @@ var clozeDefaultState: ClozeDeckState = {
         "gehen": {
             key: "gehen",
             cards: [
-                {
-                    group: "gehen",
-                    guid: guidGenerator(),
-                    upper: "Ich {{gehe}} ins Kino.",
-                    lower: "I go to the movies."
-                },
-                {
-                    group: "gehen",
-                    guid: guidGenerator(),
-                    upper: "Wohin {{gehst}} du?",
-                    lower: "Where are you going?" 
-                }
+                makeClozeCard("gehen", "Ich {{gehe}} ins Kino.", "I go to the movies."),
+                makeClozeCard("gehen", "Wohin {{gehst}} du?", "Where are you going?")
             ],
             correct: 0,
             incorrect: 0,
@@ -195,23 +191,17 @@ var clozeDefaultState: ClozeDeckState = {
         "haben": {
             key: "haben",
             cards: [
-                {
-                    group: "haben",
-                    guid: guidGenerator(),
-                    upper: "Ich {{habe}} einen Hund.",
-                    lower: "I have a dog."
-                },
-                {
-                    group: "haben",
-                    guid: guidGenerator(),
-                    upper: "{{Hast}} du einen Hund?",
-                    lower: "Do you have a dog?"
-                }
+                makeClozeCard("haben", "Ich {{habe}} einen Hund.", "I have a dog."),
+                makeClozeCard("haben", "{{Hast}} du einen Hund?", "Do you have a dog?")
             ],
             correct: 0,
             incorrect: 0,
             skipped: 0
         }
+    },
+    settings: {
+        blacklist: [],
+        blacklistSkipped: true
     }
 };
 
