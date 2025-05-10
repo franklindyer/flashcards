@@ -46,11 +46,15 @@ class KVFlashcardGen extends FlashcardGen<KVFlashcardState, BasicCardData> {
         return state;
     }
     
-    generateCard(state: KVFlashcardState, data: BasicCardData): Flashcard {
+    checkAnswer(ans: string, state: KVFlashcardState, cardData: BasicCardData) {
+        return (ans == cardData[1]);
+    }
+    
+    generateCard(data: BasicCardData): Flashcard {
         return renderCard("basic-template", data);
     }
 
-    correctEffect(_: KVFlashcardState, __: string, resolve: () => void) { resolve() };
+    correctEffect(_: KVFlashcardState, __: BasicCardData, ___: string, resolve: () => void) { resolve() };
 }
 
 function makeKVEditor(state: KVFlashcardState): StateEditor<KVFlashcardState> {

@@ -17,26 +17,29 @@ export abstract class FlashcardGen<S, D> {
     
     abstract getNextCard(state: S): D;
     abstract updateState(state: S, cardData: D, correct: FlashcardResult): S;
-    abstract generateCard(state: S, data: D): Flashcard;
+    abstract generateCard(data: D): Flashcard;
+    abstract checkAnswer(answer: string, state: S, data: D): boolean;
 
     // Should not attempt to change the deck's state
-    abstract correctEffect(state: S, attempt: string, resolve: () => void): void;   
+    abstract correctEffect(state: S, cardData: D, attempt: string, resolve: () => void): void;   
 
     runOnce(s: S, setState: (s: S) => void, callback: () => void) {
         var cardData: D = this.getNextCard(s);
-        var card = this.generateCard(s, cardData);
+        var card = this.generateCard(cardData);
+        card.check = (ans: string) => this.checkAnswer(ans, s, cardData);
 
         var inputBox = <HTMLInputElement>document.getElementById("answer-input");
+        var correctCallback = (newState: S) => () => {
+            inputBox.value = "";
+            setState(newState);
+            card.slideOut(callback, true);
+        };
         var inputCallback = (attempt: string) => {
             var correct: boolean = card.check(attempt);
             if (correct) {
                 var result = card.correctFirst ? FlashcardResult.Correct : FlashcardResult.Incorrect;
                 var newState = this.updateState(s, cardData, result);
-                this.correctEffect(newState, attempt, () => {
-                    inputBox.value = "";
-                    setState(newState);
-                    card.slideOut(callback, true)
-                });
+                this.correctEffect(newState, cardData, attempt, correctCallback(newState));
             } else {
                 card.markWrong();
                 inputBox.oninput = (e) => {
@@ -49,9 +52,13 @@ export abstract class FlashcardGen<S, D> {
             if (e.key == "Enter") {
                 inputCallback(inputBox.value);
             } else if (e.key == "ArrowUp") {
-                inputBox.value = "";
-                setState(this.updateState(s, cardData, FlashcardResult.Correct)); 
-                card.slideOut(callback, true);
+                // console.log("UP");
+                var newState = this.updateState(s, cardData, FlashcardResult.Correct);
+                // correctCallback(newState)();
+                this.correctEffect(newState, cardData, "", correctCallback(newState));
+                // inputBox.value = "";
+                // setState(this.updateState(s, cardData, FlashcardResult.Correct)); 
+                // card.slideOut(callback, true);
             } else if (e.key == "ArrowDown") {
                 inputBox.value = "";
                 setState(this.updateState(s, cardData, FlashcardResult.Unanswered)); 

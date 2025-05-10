@@ -222,7 +222,11 @@ class SpacedRepGen extends FlashcardGen<SpacedRepState, SpacedRepCardData> {
     getGenName() { return "spaced-repetition-generator"; }
 
     getNextCard(state: SpacedRepState): SpacedRepCardData {
-        return pickSpacedRepCard(state);
+        var cardData = pickSpacedRepCard(state);
+        if (cardData.content != undefined) {
+            cardData.content = this.applyRandomTemplating(cardData.content);
+        }
+        return cardData;
     }
 
     updateState(state: SpacedRepState, cardData: SpacedRepCardData, result: FlashcardResult): SpacedRepState {
@@ -290,25 +294,30 @@ class SpacedRepGen extends FlashcardGen<SpacedRepState, SpacedRepCardData> {
         }       
     }
 
-    generateCard(st: SpacedRepState, data: SpacedRepCardData): Flashcard {
+    checkAnswer(answer: string, st: SpacedRepState, cardData: SpacedRepCardData) {
+        var tf = (s: string) => applyTextFilter(s, st.settings.filterSettings);
+        if (cardData.content === undefined) return false;
+        else {
+            return cardData.content.answers.map(tf).includes(tf(answer));
+        }
+    }
+
+    generateCard(data: SpacedRepCardData): Flashcard {
         var a = document.createElement("a");
         var prompt = "No cards left to study.";
-        var pred = (_: string) => false;
         var hint = "You cannot continue studying until more cards become due.";
-        var tf = (s: string) => applyTextFilter(s, st.settings.filterSettings);
 
         if (data.content !== undefined) {
-            var tplContent = this.applyRandomTemplating(data.content);
-            prompt = tplContent.prompt;
-            pred = (answer: string) => tplContent.answers.map(tf).includes(tf(answer));
-            hint = tplContent.answers[0];
+            // var tplContent = this.applyRandomTemplating(data.content);
+            prompt = data.content.prompt; // tplContent.prompt;
+            hint = data.content.answers[0]; // tplContent.answers[0];
         }
 
         var fontSize = 100.0/(10.0*Math.log(10+prompt.length));
         a.style.fontSize = `${fontSize}vw`;
         a.textContent = prompt;       
 
-        var fl = new Flashcard(a, pred, hint);
+        var fl = new Flashcard(a, hint);
 
         if (data.isReview) {
             fl.el.style.backgroundColor = "#eeeeff";
@@ -322,10 +331,14 @@ class SpacedRepGen extends FlashcardGen<SpacedRepState, SpacedRepCardData> {
         return fl;
     }
 
-    correctEffect(st: SpacedRepState, attempt: string, resolve: () => void) {
+    correctEffect(st: SpacedRepState, c: SpacedRepCardData, attempt: string, resolve: () => void) {
         if (st.settings.readCorrectAnswers) {
             var ss = st.settings.speechSettings;
-            utter(attempt, ss.voice, ss.rate, ss.pitch, resolve); 
+            if (attempt.length > 0) {
+                utter(attempt, ss.voice, ss.rate, ss.pitch, resolve);
+            } else {
+                utter(c.content!.answers[0], ss.voice, ss.rate, ss.pitch, resolve);
+            }
         } else {
             resolve();
         }

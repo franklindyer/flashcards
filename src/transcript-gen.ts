@@ -57,11 +57,15 @@ class TranscriptFlashcardGen extends FlashcardGen<TranscriptDeckState, Transcrip
         return state;
     }
     
-    generateCard(st: TranscriptDeckState, data: TranscriptCardData): Flashcard {
+    checkAnswer(ans: string, st: TranscriptDeckState, data: TranscriptCardData) {
+        return (ans == data.text);
+    }
+
+    generateCard(data: TranscriptCardData): Flashcard {
         return renderCard("transcript-template", data);
     }
 
-    correctEffect(_: TranscriptDeckState, __: string, resolve: () => void) { resolve() };
+    correctEffect(_: TranscriptDeckState, __: TranscriptCardData, ___: string, resolve: () => void) { resolve() };
 }
 
 function makeTranscriptEditor(state: TranscriptDeckState): StateEditor<TranscriptDeckState> {

@@ -31,7 +31,7 @@ class ClozeFlashcardTemplate extends FlashcardTemplate<ClozeCardData> {
         el.appendChild(aLower);
 
         var targetWords: string[] = [];
-        aUpper.textContent = data.upper.replace(/\{\{([^\{\}]+)\}\}/, (match, p1) => {
+        aUpper.textContent = data.upper.replaceAll(/\{\{([^\{\}]+)\}\}/g, (match, p1) => {
             targetWords.push(p1);
             return "___";
         });
@@ -42,7 +42,7 @@ class ClozeFlashcardTemplate extends FlashcardTemplate<ClozeCardData> {
         aUpper.style.fontSize = `${fontSize}vw`;
         aLower.style.fontSize = `${0.7*fontSize}vw`; 
     
-        var fl = new Flashcard(el, (attempt: string) => answer == attempt, answer);
+        var fl = new Flashcard(el, answer);
         return fl;
     }
 }

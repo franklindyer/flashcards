@@ -4,7 +4,7 @@ export class Flashcard {
     hint: string;
     correctFirst: boolean;
 
-    constructor(el: HTMLElement, check: (answer: string) => boolean, hint: string) {
+    constructor(el: HTMLElement, hint: string, check: (answer: string) => boolean = (_: string) => false) {
         this.el = el;
         this.check = check;
         this.hint = hint;
@@ -38,12 +38,5 @@ export class Flashcard {
         (<HTMLInputElement>document.getElementById("answer-hint")).value = this.hint;
     }
     
-}
-
-function basicFlashcard(prompt: string, answer: string) {
-    var el = document.createElement("p");
-    el.textContent = prompt;
-    const flashcard = new Flashcard(el, (attempt: string) => answer == attempt, answer);
-    return flashcard;
 }
 
