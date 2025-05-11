@@ -73,7 +73,9 @@ function makeKVEditor(state: KVFlashcardState): StateEditor<KVFlashcardState> {
 var kvDefaultState: KVFlashcardState = {
     deck: [
         ["cat", "gato"],
-        ["dog", "perro"]
+        ["dog", "perro"],
+        ["{r0:the dog,the cat} runs", "{r0:el perro,el gato} corre"],
+        ["{r0:I want,you want,he wants} {r1:to eat,to drink}", "{r0:quiero,quieres,quiere} {r1:comer,beber}"]
     ],
     history: []
 };
