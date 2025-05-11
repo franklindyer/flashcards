@@ -116,6 +116,7 @@ function importExportSetup<S>(deckSlug: string, setDeck: (s: S) => void) {
 }
 
 export function runDeck(deckSlug: string) {
+    setLastDeck(deckSlug);
     document.getElementById("flashcard-container")!.innerHTML = "";
 
     var getState = () => gDeckRegistry[deckSlug].state;
@@ -133,6 +134,18 @@ export function runDeck(deckSlug: string) {
 
     var decktype = gDeckTypeRegistry[gDeckRegistry[deckSlug].type];
     decktype.gen.runLoop(getState, setState, () => saveDeck(deckSlug, () => {}));
+}
+
+export function setLastDeck(deckSlug: string) {
+    localStorage.setItem("last-deck-slug", deckSlug);
+}
+
+export function getStartingDeck(defaultSlug: string): string {
+    var lastDeckSlug = localStorage.getItem("last-deck-slug");
+    if ((lastDeckSlug == undefined) || !(lastDeckSlug! in gDeckRegistry)) {
+        return defaultSlug;
+    }
+    return lastDeckSlug;
 }
 
 /* Register a new type of deck */
