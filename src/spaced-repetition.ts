@@ -142,6 +142,8 @@ const defaultSpacedRepState = {
         { guid: guidGenerator(), prompt: "apple", answers: ["manzana"] },
         { guid: guidGenerator(), prompt: "banana", answers: ["plátano"] },
         { guid: guidGenerator(), prompt: "orange", answers: ["naranja"] },
+        { guid: guidGenerator(), prompt: "I have {r0:an apple,a banana,an orange}", answers: ["tengo {r0:una manzana,un plátano,una naranja}"] },
+        { guid: guidGenerator(), prompt: "{r0:I want,you want,he wants} {r1:an apple,a banana,an orange}", answers: ["{r0:quiero,quieres,quiere} {r1:una manzana,un plátano,una naranja}"] },
     ]),    
     settings: defaultSpacedRepSettings,
     history: []
