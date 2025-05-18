@@ -46,11 +46,15 @@ class KVFlashcardGen extends FlashcardGen<KVFlashcardState, BasicCardData> {
         return state;
     }
     
-    generateCard(state: KVFlashcardState, data: BasicCardData): Flashcard {
+    checkAnswer(ans: string, state: KVFlashcardState, cardData: BasicCardData) {
+        return (ans == cardData[1]);
+    }
+    
+    generateCard(data: BasicCardData): Flashcard {
         return renderCard("basic-template", data);
     }
 
-    correctEffect(_: KVFlashcardState, __: string, resolve: () => void) { resolve() };
+    correctEffect(_: KVFlashcardState, __: BasicCardData, ___: string, resolve: () => void) { resolve() };
 }
 
 function makeKVEditor(state: KVFlashcardState): StateEditor<KVFlashcardState> {
@@ -69,7 +73,9 @@ function makeKVEditor(state: KVFlashcardState): StateEditor<KVFlashcardState> {
 var kvDefaultState: KVFlashcardState = {
     deck: [
         ["cat", "gato"],
-        ["dog", "perro"]
+        ["dog", "perro"],
+        ["{r0:the dog,the cat} runs", "{r0:el perro,el gato} corre"],
+        ["{r0:I want,you want,he wants} {r1:to eat,to drink}", "{r0:quiero,quieres,quiere} {r1:comer,beber}"]
     ],
     history: []
 };

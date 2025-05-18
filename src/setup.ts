@@ -1,7 +1,8 @@
 import {
     loadAllDecks,
     runDeck,
-    gDeckRegistry
+    gDeckRegistry,
+    getStartingDeck
 } from "./flashcard-deck"
 import {
     generateDecklistMenu,
@@ -22,4 +23,4 @@ import "./speech";
 
 setupDecklistMenu();
 
-loadAllDecks().then((_) => runDeck("key-value-quizzer"));
+loadAllDecks().then((_) => runDeck(getStartingDeck("key-value-quizzer")));

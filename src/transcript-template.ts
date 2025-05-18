@@ -31,7 +31,7 @@ class TranscriptFlashcardTemplate extends FlashcardTemplate<TranscriptCardData> 
         };
         container.appendChild(playBtn);
 
-        var fl = new Flashcard(container, (answer: string) => data.text == answer, data.text);
+        var fl = new Flashcard(container, data.text);
         return fl;
     }
 }

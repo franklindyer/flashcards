@@ -72,11 +72,21 @@ class ClozeFlashcardGen extends FlashcardGen<ClozeDeckState, ClozeCardData> {
         return state;
     } 
     
-    generateCard(st: ClozeDeckState, data: ClozeCardData): Flashcard {
+    checkAnswer(ans: string, st: ClozeDeckState, cardData: ClozeCardData) {
+        var targetWords: string[] = [];
+        cardData.upper.replaceAll(/\{\{([^\{\}]+)\}\}/g, (match, p1) => {
+            targetWords.push(p1);
+            return match;
+        });
+        var correctAns = targetWords.join(", ");
+        return (ans == correctAns);
+    }
+
+    generateCard(data: ClozeCardData): Flashcard {
         return renderCard("cloze-template", data);
     }
 
-    correctEffect(_: ClozeDeckState, __: string, resolve: () => void) { resolve(); }
+    correctEffect(_: ClozeDeckState, __: ClozeCardData, ___: string, resolve: () => void) { resolve(); }
 }
 
 function makeClozeCard(group: string, top: string, bottom: string): ClozeCardData {
