@@ -14,6 +14,9 @@ export abstract class FlashcardGen<S, D> {
     getGenName(): string {  
         throw new Error("getGenName not implemented!");
     }
+
+    // Repair the raw JSON associated with the deck, mainly used for update compatibility
+    abstract repairDeckState(state: any): any;
     
     abstract getNextCard(state: S): D;
     abstract updateState(state: S, cardData: D, correct: FlashcardResult): S;

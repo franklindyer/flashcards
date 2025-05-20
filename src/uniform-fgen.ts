@@ -55,6 +55,7 @@ class KVFlashcardGen extends FlashcardGen<KVFlashcardState, BasicCardData> {
     }
 
     correctEffect(_: KVFlashcardState, __: BasicCardData, ___: string, resolve: () => void) { resolve() };
+    repairDeckState(st: any) { return st; }
 }
 
 function makeKVEditor(state: KVFlashcardState): StateEditor<KVFlashcardState> {

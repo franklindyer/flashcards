@@ -66,6 +66,7 @@ class TranscriptFlashcardGen extends FlashcardGen<TranscriptDeckState, Transcrip
     }
 
     correctEffect(_: TranscriptDeckState, __: TranscriptCardData, ___: string, resolve: () => void) { resolve() };
+    repairDeckState(st: any) { return st; } 
 }
 
 function makeTranscriptEditor(state: TranscriptDeckState): StateEditor<TranscriptDeckState> {

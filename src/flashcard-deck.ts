@@ -119,6 +119,9 @@ export function runDeck(deckSlug: string) {
     setLastDeck(deckSlug);
     document.getElementById("flashcard-container")!.innerHTML = "";
 
+    var decktype = gDeckTypeRegistry[gDeckRegistry[deckSlug].type];
+    gDeckRegistry[deckSlug].state = decktype.gen.repairDeckState(gDeckRegistry[deckSlug].state)
+
     var getState = () => gDeckRegistry[deckSlug].state;
     var setState = (state: any) => {
         gDeckRegistry[deckSlug].state = state;
@@ -132,7 +135,6 @@ export function runDeck(deckSlug: string) {
         })
     });
 
-    var decktype = gDeckTypeRegistry[gDeckRegistry[deckSlug].type];
     decktype.gen.runLoop(getState, setState, () => saveDeck(deckSlug, () => {}));
 }
 

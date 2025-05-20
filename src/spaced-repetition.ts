@@ -71,6 +71,7 @@ type SpacedRepCardTiming = {
 type SpacedRepCardData = {
     content: SpacedRepCardContent | undefined,
     isReview: boolean,
+    isPractice: boolean,
     cardsLeft: number
 }
 
@@ -85,6 +86,7 @@ type SpacedRepSettings = {
     incorrectFactor: number,
     reviewCeilingDays: number,
     studying: SpacedRepStudying,
+    practiceMode: boolean,
     probReview: number,
     order: SpacedRepOrder,
     readCorrectAnswers: boolean,
@@ -112,6 +114,7 @@ const defaultSpacedRepSettings = {
     incorrectFactor: 0.5,
     reviewCeilingDays: 365,
     studying: SpacedRepStudying.NewCards,
+    practiceMode: false,
     probReview: 0.1,
     order: SpacedRepOrder.RandomOrder,
     readCorrectAnswers: false,
@@ -191,33 +194,36 @@ function pickSpacedRepCard(st: SpacedRepState): SpacedRepCardData {
     switch (st.settings.studying) {
         case SpacedRepStudying.NewCards:
             if (newInds.length == 0) {
-                return { content: undefined, cardsLeft: 0, isReview: false };
+                return { content: undefined, cardsLeft: 0, isReview: false, isPractice: false };
             }
             var newInd = newInds[Math.floor(Math.random() * newInds.length)];
             return { 
                 content: st.cards[newInd].content, 
                 cardsLeft: newInds.length,
                 isReview: false,
+                isPractice: st.settings.practiceMode
             };
         case SpacedRepStudying.DueCards:
             if (dueInds.length == 0) {
-                return { content: undefined, cardsLeft: 0, isReview: false };
+                return { content: undefined, cardsLeft: 0, isReview: false, isPractice: false };
             } else if (reviewInds.length > 0 && Math.random() < st.settings.probReview) {
                 var reviewInd = reviewInds[Math.floor(Math.random() * reviewInds.length)];
                 return {
                     content: st.cards[reviewInd].content,
                     cardsLeft: dueInds.length,
-                    isReview: true
+                    isReview: true,
+                    isPractice: st.settings.practiceMode
                 };
             }
             var dueInd = dueInds[Math.floor(Math.random() * dueInds.length)];
             return { 
                 content: st.cards[dueInd].content, 
                 cardsLeft: dueInds.length,
-                isReview: false
+                isReview: false,
+                isPractice: st.settings.practiceMode
             };
     }
-    return { content: undefined, cardsLeft: 0, isReview: false };
+    return { content: undefined, cardsLeft: 0, isReview: false, isPractice: false };
 }
 
 class SpacedRepGen extends FlashcardGen<SpacedRepState, SpacedRepCardData> {
@@ -232,7 +238,7 @@ class SpacedRepGen extends FlashcardGen<SpacedRepState, SpacedRepCardData> {
     }
 
     updateState(state: SpacedRepState, cardData: SpacedRepCardData, result: FlashcardResult): SpacedRepState {
-        if (result == FlashcardResult.Unanswered)
+        if (result == FlashcardResult.Unanswered || state.settings.practiceMode)
             return state;
 
         var correct = (result == FlashcardResult.Correct);
@@ -327,7 +333,12 @@ class SpacedRepGen extends FlashcardGen<SpacedRepState, SpacedRepCardData> {
 
         var cardsLeft = document.createElement("span");
         cardsLeft.classList.add("cards-left-span");
-        cardsLeft.textContent = `${data.cardsLeft} cards remaining`;
+        if (data.isPractice) {
+            cardsLeft.textContent = "This is a practice card. It will not affect your progress.";
+            fl.el.style.backgroundColor = "#ffffee";
+        } else {
+            cardsLeft.textContent = `${data.cardsLeft} cards remaining`;
+        }
         fl.el.appendChild(cardsLeft);
 
         return fl;
@@ -346,6 +357,11 @@ class SpacedRepGen extends FlashcardGen<SpacedRepState, SpacedRepCardData> {
         }
     }
 
+    repairDeckState(st: any) {
+        if (st.settings.practiceMode == null)
+            st.settings.practiceMode = false;
+        return st;
+    } 
 }
 
 function spacedRepMenu(st: SpacedRepState): StateEditor<SpacedRepState> {
@@ -370,6 +386,7 @@ function spacedRepMenu(st: SpacedRepState): StateEditor<SpacedRepState> {
 
     var conf = st.settings;
     var studyingNewEditor = boolEditor("Studying new cards?", st.settings.studying === SpacedRepStudying.NewCards);
+    var practiceModeEditor = boolEditor("Just practicing?", st.settings.practiceMode);
     var initHoursEditor = scrollNumberEditor("Initial interval (hours): ", conf.initialHours, 1, 240, 1);
     var reviewsEditor = scrollNumberEditor("Probability of getting review cards: ", conf.probReview, 0, 0.5, 0.01);
 
@@ -386,6 +403,7 @@ function spacedRepMenu(st: SpacedRepState): StateEditor<SpacedRepState> {
 
     [
         studyingNewEditor.element,
+        practiceModeEditor.element,
         initHoursEditor.element,
         reviewsEditor.element,
         correctFactor.element,
@@ -444,6 +462,7 @@ function spacedRepMenu(st: SpacedRepState): StateEditor<SpacedRepState> {
         dueP,
         reviewP,
         studyingNewEditor.element,
+        practiceModeEditor.element,
         initHoursEditor.element,
         correctFactor.element,
         incorrectFactor.element,
@@ -461,6 +480,7 @@ function spacedRepMenu(st: SpacedRepState): StateEditor<SpacedRepState> {
                 correctFactor: correctFactor.menuToState(),
                 incorrectFactor: incorrectFactor.menuToState(),
                 studying: studyingNewEditor.menuToState() ? SpacedRepStudying.NewCards : SpacedRepStudying.DueCards,
+                practiceMode: practiceModeEditor.menuToState(),
                 reviewCeilingDays: st.settings.reviewCeilingDays,
                 probReview: reviewsEditor.menuToState(),
                 order: SpacedRepOrder.RandomOrder,
