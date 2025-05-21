@@ -22,7 +22,7 @@ function utter(txt, voice, rate = 1, pitch = 1, callback = () => { }) {
     utterThis.rate = rate;
     utterThis.pitch = pitch;
     utterThis.onend = callback;
-    console.log(`Speaking "${txt}"...`);
+    // console.log(`Speaking "${txt}"...`);
     exports.gSynth.speak(utterThis);
 }
 function defaultSpeechSettings() {

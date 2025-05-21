@@ -8,7 +8,7 @@ class BasicFlashcardTemplate extends flashcard_template_1.FlashcardTemplate {
         var a = document.createElement("a");
         a.textContent = data[0];
         var fontSize = 100.0 / (10.0 * Math.log(10 + data[0].length));
-        var fl = new flashcard_1.Flashcard(a, (answer) => data[1] == answer, data[1]);
+        var fl = new flashcard_1.Flashcard(a, data[1]);
         fl.el.style.fontSize = `${fontSize}vw`;
         return fl;
     }

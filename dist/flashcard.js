@@ -6,7 +6,7 @@ class Flashcard {
     check;
     hint;
     correctFirst;
-    constructor(el, check, hint) {
+    constructor(el, hint, check = (_) => false) {
         this.el = el;
         this.check = check;
         this.hint = hint;
@@ -38,9 +38,3 @@ class Flashcard {
     }
 }
 exports.Flashcard = Flashcard;
-function basicFlashcard(prompt, answer) {
-    var el = document.createElement("p");
-    el.textContent = prompt;
-    const flashcard = new Flashcard(el, (attempt) => answer == attempt, answer);
-    return flashcard;
-}

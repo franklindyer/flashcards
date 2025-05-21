@@ -12,4 +12,4 @@ require("./cloze-gen");
 require("./transcript-gen");
 require("./speech");
 (0, decklist_1.setupDecklistMenu)();
-(0, flashcard_deck_1.loadAllDecks)().then((_) => (0, flashcard_deck_1.runDeck)("key-value-quizzer"));
+(0, flashcard_deck_1.loadAllDecks)().then((_) => (0, flashcard_deck_1.runDeck)((0, flashcard_deck_1.getStartingDeck)("key-value-quizzer")));

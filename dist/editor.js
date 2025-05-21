@@ -8,6 +8,7 @@ exports.doubleTextFieldEditor = doubleTextFieldEditor;
 exports.optionsEditor = optionsEditor;
 exports.fileUploadEditor = fileUploadEditor;
 exports.combineEditors = combineEditors;
+exports.makeSwappingEditor = makeSwappingEditor;
 exports.makeTranslationEditor = makeTranslationEditor;
 exports.fixedNumEditors = fixedNumEditors;
 exports.multipleEditors = multipleEditors;
@@ -140,6 +141,26 @@ function combineEditors(st, gen1, gen2) {
     editor.element.appendChild(children[0].element);
     editor.element.appendChild(children[1].element);
     return editor;
+}
+function makeSwappingEditor(spr) {
+    var ed1 = singleTextFieldEditor(spr[0]);
+    var ed2 = singleTextFieldEditor(spr[1]);
+    var container = document.createElement("div");
+    var handler = (e) => {
+        if (e.shiftKey && e.key == "ArrowRight") {
+            var tmp = ed1.element.value;
+            ed1.element.value = ed2.element.value;
+            ed2.element.value = tmp;
+        }
+    };
+    ed1.element.addEventListener('keydown', handler);
+    ed2.element.addEventListener('keydown', handler);
+    container.appendChild(ed1.element);
+    container.appendChild(ed2.element);
+    return {
+        element: container,
+        menuToState: () => [ed1.menuToState(), ed2.menuToState()]
+    };
 }
 function makeTranslationEditor(ls, validator) {
     return multipleEditors(ls, () => ["", ""], (item) => combineEditors(item, (s) => singleTextFieldEditor(s), (s) => validatedTextFieldEditor(s, validator)), true, (s, cd) => cd[0].includes(s) || cd[1].includes(s));

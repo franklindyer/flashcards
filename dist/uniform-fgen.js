@@ -16,11 +16,15 @@ class KVFlashcardGen extends flashcard_generator_1.FlashcardGen {
         }
         return state;
     }
+    checkAnswer(ans, state, cardData) {
+        return (ans == cardData[1]);
+    }
     generateCard(data) {
         return (0, flashcard_template_1.renderCard)("basic-template", data);
     }
-    correctEffect(_, __, resolve) { resolve(); }
+    correctEffect(_, __, ___, resolve) { resolve(); }
     ;
+    repairDeckState(st) { return st; }
 }
 function makeKVEditor(state) {
     var transEd = (0, editor_1.makeTranslationEditor)(state.deck, (x) => true);
@@ -37,7 +41,9 @@ function makeKVEditor(state) {
 var kvDefaultState = {
     deck: [
         ["cat", "gato"],
-        ["dog", "perro"]
+        ["dog", "perro"],
+        ["{r0:the dog,the cat} runs", "{r0:el perro,el gato} corre"],
+        ["{r0:I want,you want,he wants} {r1:to eat,to drink}", "{r0:quiero,quieres,quiere} {r1:comer,beber}"]
     ],
     history: []
 };

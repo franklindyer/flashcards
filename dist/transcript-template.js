@@ -15,7 +15,7 @@ class TranscriptFlashcardTemplate extends flashcard_template_1.FlashcardTemplate
             (0, speech_1.utter)(data.text, ss.voice, ss.rate, ss.pitch);
         };
         container.appendChild(playBtn);
-        var fl = new flashcard_1.Flashcard(container, (answer) => data.text == answer, data.text);
+        var fl = new flashcard_1.Flashcard(container, data.text);
         return fl;
     }
 }

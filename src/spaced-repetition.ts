@@ -31,6 +31,7 @@ import {
     scrollNumberEditor,
     singleTextFieldEditor,
     fixedNumEditors,
+    makeSwappingEditor,
     multipleEditors
 } from "./editor"
 import {
@@ -413,7 +414,7 @@ function spacedRepMenu(st: SpacedRepState): StateEditor<SpacedRepState> {
     ].map((el) => el.classList.add("deck-menu-submenu"))
 
     function makeCardEditor(c: SpacedRepCard): StateEditor<SpacedRepCard> {
-        var ed = fixedNumEditors([c.content.prompt, c.content.answers.join('|')], singleTextFieldEditor);
+        var ed = makeSwappingEditor([c.content.prompt, c.content.answers.join('|')]);
         var cardInfo = document.createElement("a");
         cardInfo.style.color = "lightgray";
         cardInfo.style.marginLeft = "10px";

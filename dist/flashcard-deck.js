@@ -5,6 +5,8 @@ exports.saveDeck = saveDeck;
 exports.loadAllDecks = loadAllDecks;
 exports.eraseDeck = eraseDeck;
 exports.runDeck = runDeck;
+exports.setLastDeck = setLastDeck;
+exports.getStartingDeck = getStartingDeck;
 exports.registerDeckType = registerDeckType;
 const utils_1 = require("./utils");
 const fs_1 = require("./fs");
@@ -80,7 +82,10 @@ function importExportSetup(deckSlug, setDeck) {
     };
 }
 function runDeck(deckSlug) {
+    setLastDeck(deckSlug);
     document.getElementById("flashcard-container").innerHTML = "";
+    var decktype = exports.gDeckTypeRegistry[exports.gDeckRegistry[deckSlug].type];
+    exports.gDeckRegistry[deckSlug].state = decktype.gen.repairDeckState(exports.gDeckRegistry[deckSlug].state);
     var getState = () => exports.gDeckRegistry[deckSlug].state;
     var setState = (state) => {
         exports.gDeckRegistry[deckSlug].state = state;
@@ -92,8 +97,17 @@ function runDeck(deckSlug) {
             runDeck(deckSlug);
         });
     });
-    var decktype = exports.gDeckTypeRegistry[exports.gDeckRegistry[deckSlug].type];
     decktype.gen.runLoop(getState, setState, () => saveDeck(deckSlug, () => { }));
+}
+function setLastDeck(deckSlug) {
+    localStorage.setItem("last-deck-slug", deckSlug);
+}
+function getStartingDeck(defaultSlug) {
+    var lastDeckSlug = localStorage.getItem("last-deck-slug");
+    if ((lastDeckSlug == undefined) || !(lastDeckSlug in exports.gDeckRegistry)) {
+        return defaultSlug;
+    }
+    return lastDeckSlug;
 }
 /* Register a new type of deck */
 function registerDeckType(gen, mkEd, defaultSlug, defaultName, defaultState, colorCode = "#ffffee") {

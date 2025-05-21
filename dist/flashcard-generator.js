@@ -16,17 +16,19 @@ class FlashcardGen {
     runOnce(s, setState, callback) {
         var cardData = this.getNextCard(s);
         var card = this.generateCard(cardData);
+        card.check = (ans) => this.checkAnswer(ans, s, cardData);
         var inputBox = document.getElementById("answer-input");
+        var correctCallback = (newState) => () => {
+            inputBox.value = "";
+            setState(newState);
+            card.slideOut(callback, true);
+        };
         var inputCallback = (attempt) => {
             var correct = card.check(attempt);
             if (correct) {
                 var result = card.correctFirst ? FlashcardResult.Correct : FlashcardResult.Incorrect;
                 var newState = this.updateState(s, cardData, result);
-                this.correctEffect(newState, attempt, () => {
-                    inputBox.value = "";
-                    setState(newState);
-                    card.slideOut(callback, true);
-                });
+                this.correctEffect(newState, cardData, attempt, correctCallback(newState));
             }
             else {
                 card.markWrong();
@@ -41,9 +43,13 @@ class FlashcardGen {
                 inputCallback(inputBox.value);
             }
             else if (e.key == "ArrowUp") {
-                inputBox.value = "";
-                setState(this.updateState(s, cardData, FlashcardResult.Correct));
-                card.slideOut(callback, true);
+                // console.log("UP");
+                var newState = this.updateState(s, cardData, FlashcardResult.Correct);
+                // correctCallback(newState)();
+                this.correctEffect(newState, cardData, "", correctCallback(newState));
+                // inputBox.value = "";
+                // setState(this.updateState(s, cardData, FlashcardResult.Correct)); 
+                // card.slideOut(callback, true);
             }
             else if (e.key == "ArrowDown") {
                 inputBox.value = "";
