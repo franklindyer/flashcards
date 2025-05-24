@@ -373,6 +373,8 @@ class SpacedRepGen extends FlashcardGen<SpacedRepState, SpacedRepCardData> {
             st.settings.practiceMode = false;
         if (st.settings.inactiveTags == null)
             st.settings.inactiveTags = [];
+        if (st.settings.filterSettings == null)
+            st.settings.filterSettings = defaultTextFilterSettings;
 
         Object.keys(st.cards).map((k) => {
             var c = st.cards[k];
