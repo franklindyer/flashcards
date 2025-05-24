@@ -36,7 +36,8 @@ const defaultSpacedRepSettings = {
     order: SpacedRepOrder.RandomOrder,
     readCorrectAnswers: false,
     speechSettings: (0, speech_1.defaultSpeechSettings)(),
-    filterSettings: text_filters_1.defaultTextFilterSettings
+    filterSettings: text_filters_1.defaultTextFilterSettings,
+    inactiveTags: []
 };
 function defaultCardTiming() {
     return {
@@ -56,11 +57,11 @@ function makeSpacedRepCardDict(cardDat) {
 }
 const defaultSpacedRepState = {
     cards: makeSpacedRepCardDict([
-        { guid: (0, utils_1.guidGenerator)(), prompt: "apple", answers: ["manzana"] },
-        { guid: (0, utils_1.guidGenerator)(), prompt: "banana", answers: ["plátano"] },
-        { guid: (0, utils_1.guidGenerator)(), prompt: "orange", answers: ["naranja"] },
-        { guid: (0, utils_1.guidGenerator)(), prompt: "I have {r0:an apple,a banana,an orange}", answers: ["tengo {r0:una manzana,un plátano,una naranja}"] },
-        { guid: (0, utils_1.guidGenerator)(), prompt: "{r0:I want,you want,he wants} {r1:an apple,a banana,an orange}", answers: ["{r0:quiero,quieres,quiere} {r1:una manzana,un plátano,una naranja}"] },
+        { guid: (0, utils_1.guidGenerator)(), prompt: "apple", answers: ["manzana"], tags: [] },
+        { guid: (0, utils_1.guidGenerator)(), prompt: "banana", answers: ["plátano"], tags: [] },
+        { guid: (0, utils_1.guidGenerator)(), prompt: "orange", answers: ["naranja"], tags: [] },
+        { guid: (0, utils_1.guidGenerator)(), prompt: "I have {r0:an apple,a banana,an orange}", answers: ["tengo {r0:una manzana,un plátano,una naranja}"], tags: [] },
+        { guid: (0, utils_1.guidGenerator)(), prompt: "{r0:I want,you want,he wants} {r1:an apple,a banana,an orange}", answers: ["{r0:quiero,quieres,quiere} {r1:una manzana,un plátano,una naranja}"], tags: [] },
     ]),
     settings: defaultSpacedRepSettings,
     history: []
@@ -71,7 +72,8 @@ function makeSpacedRepCard(prompt, answers) {
         content: {
             guid: guid,
             prompt: prompt,
-            answers: answers
+            answers: answers,
+            tags: []
         },
         timing: {
             due: null,
@@ -82,15 +84,19 @@ function makeSpacedRepCard(prompt, answers) {
     };
 }
 function getNew(st) {
-    return Object.keys(st.cards).filter((i) => st.cards[i].timing.due == null);
+    return Object.keys(st.cards)
+        .filter((i) => st.cards[i].timing.due == null)
+        .filter((i) => st.cards[i].content.tags.filter((t) => st.settings.inactiveTags.includes(t)).length == 0);
 }
 function getDue(st) {
     return Object.keys(st.cards).filter((i) => st.cards[i].timing.due != null
         && (new Date(st.cards[i].timing.due) < new Date())
-        && (st.cards[i].timing.intervalMinutes < st.settings.reviewCeilingDays * (24 * 60)));
+        && (st.cards[i].timing.intervalMinutes < st.settings.reviewCeilingDays * (24 * 60))
+        && (st.cards[i].content.tags.filter((t) => st.settings.inactiveTags.includes(t)).length == 0));
 }
 function getReview(st) {
-    return Object.keys(st.cards).filter((i) => st.cards[i].timing.intervalMinutes > st.settings.reviewCeilingDays * (24 * 60));
+    return Object.keys(st.cards).filter((i) => (st.cards[i].timing.intervalMinutes > st.settings.reviewCeilingDays * (24 * 60))
+        && (st.cards[i].content.tags.filter((t) => st.settings.inactiveTags.includes(t)).length == 0));
 }
 function pickSpacedRepCard(st) {
     var inds = Object.keys(st.cards);
@@ -195,7 +201,8 @@ class SpacedRepGen extends flashcard_generator_1.FlashcardGen {
         return {
             guid: data.guid,
             prompt: prompt,
-            answers: answers
+            answers: answers,
+            tags: data.tags
         };
     }
     checkAnswer(answer, st, cardData) {
@@ -251,6 +258,16 @@ class SpacedRepGen extends flashcard_generator_1.FlashcardGen {
     repairDeckState(st) {
         if (st.settings.practiceMode == null)
             st.settings.practiceMode = false;
+        if (st.settings.inactiveTags == null)
+            st.settings.inactiveTags = [];
+        if (st.settings.filterSettings == null)
+            st.settings.filterSettings = text_filters_1.defaultTextFilterSettings;
+        Object.keys(st.cards).map((k) => {
+            var c = st.cards[k];
+            if (c.content.tags == null)
+                c.content.tags = [];
+            st.cards[k] = c;
+        });
         return st;
     }
 }
@@ -284,6 +301,11 @@ function spacedRepMenu(st) {
     var speechDiv = document.createElement("div");
     speechDiv.appendChild(speechCheckbox.element);
     speechDiv.appendChild(speechEditor.element);
+    var omitTagsEditor = (0, editor_1.singleTextFieldEditor)(st.settings.inactiveTags.join(','));
+    omitTagsEditor.element.placeholder = "comma-separated tags...";
+    var omitTagsCont = document.createElement("div");
+    omitTagsCont.textContent = "Omit cards with the following tags: ";
+    omitTagsCont.appendChild(omitTagsEditor.element);
     var filterEditor = (0, text_filters_1.textFilterSelectionMenu)(st.settings.filterSettings);
     [
         studyingNewEditor.element,
@@ -292,11 +314,20 @@ function spacedRepMenu(st) {
         reviewsEditor.element,
         correctFactor.element,
         incorrectFactor.element,
+        omitTagsCont,
         speechDiv,
         filterEditor.element
     ].map((el) => el.classList.add("deck-menu-submenu"));
     function makeCardEditor(c) {
-        var ed = (0, editor_1.makeSwappingEditor)([c.content.prompt, c.content.answers.join('|')]);
+        var ed = (0, editor_1.combineEditors)([[c.content.prompt, c.content.answers.join('|')], c.content.tags.join(',')], (pr) => {
+            var ed2 = (0, editor_1.makeSwappingEditor)(pr);
+            ed2.element.style.display = "inline-block";
+            return ed2;
+        }, (ts) => {
+            var ed2 = (0, editor_1.singleTextFieldEditor)(ts);
+            ed2.element.placeholder = "tags...";
+            return ed2;
+        });
         var cardInfo = document.createElement("a");
         cardInfo.style.color = "lightgray";
         cardInfo.style.marginLeft = "10px";
@@ -316,8 +347,9 @@ function spacedRepMenu(st) {
                 return {
                     content: {
                         guid: c.content.guid,
-                        prompt: tp[0],
-                        answers: tp[1].split('|')
+                        prompt: tp[0][0],
+                        answers: tp[0][1].split('|'),
+                        tags: tp[1].split(',').filter((t) => t.length > 0)
                     },
                     timing: {
                         due: c.timing.due,
@@ -346,6 +378,7 @@ function spacedRepMenu(st) {
         correctFactor.element,
         incorrectFactor.element,
         reviewsEditor.element,
+        omitTagsCont,
         speechDiv,
         filterEditor.element,
         cardsEditor.element,
@@ -366,7 +399,8 @@ function spacedRepMenu(st) {
                     order: SpacedRepOrder.RandomOrder,
                     readCorrectAnswers: speechCheckbox.menuToState(),
                     speechSettings: speechEditor.menuToState(),
-                    filterSettings: filterEditor.menuToState()
+                    filterSettings: filterEditor.menuToState(),
+                    inactiveTags: omitTagsEditor.menuToState().split(',')
                 },
                 cards: (0, utils_1.makeDict)(cardsEditor.menuToState(), (c) => c.content.guid),
                 history: st.history
