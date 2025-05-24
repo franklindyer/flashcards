@@ -17,25 +17,30 @@ class TranscriptFlashcardGen extends flashcard_generator_1.FlashcardGen {
     updateState(state, cardData, correct) {
         return state;
     }
+    checkAnswer(ans, st, data) {
+        return (ans == data.text);
+    }
     generateCard(data) {
         return (0, flashcard_template_1.renderCard)("transcript-template", data);
     }
-    correctEffect(_, __, resolve) { resolve(); }
+    correctEffect(_, __, ___, resolve) { resolve(); }
     ;
+    repairDeckState(st) { return st; }
 }
 function makeTranscriptEditor(state) {
-    var entriesEd = (0, editor_1.multipleEditors)(state.deck, () => "", editor_1.singleTextFieldEditor);
-    entriesEd.element.classList.add("deck-menu-submenu");
     var speechEd = (0, speech_1.speechSettingsEditor)(state.settings.speechSettings);
     speechEd.element.classList.add("deck-menu-submenu");
+    var fileEd = (0, editor_1.fileUploadEditor)("Upload a list of phrases", (s) => { });
+    fileEd.element.classList.add("deck-menu-submenu");
     var container = document.createElement("div");
     container.appendChild(speechEd.element);
-    container.appendChild(entriesEd.element);
+    container.appendChild(fileEd.element);
     return {
         element: container,
         menuToState: () => {
+            var fileInput = fileEd.menuToState();
             return {
-                deck: entriesEd.menuToState(),
+                deck: fileInput.length == 0 ? state.deck : fileInput.split('\n').map((x) => x.trim()),
                 settings: {
                     speechSettings: speechEd.menuToState()
                 }

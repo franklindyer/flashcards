@@ -152,6 +152,31 @@ export function combineEditors<a, b>(
     return editor;
 }
 
+export function makeSwappingEditor(spr: [string, string]):
+    StateEditor<[string, string]> {
+    var ed1 = singleTextFieldEditor(spr[0]);
+    var ed2 = singleTextFieldEditor(spr[1]);
+    var container = document.createElement("div");
+
+    var handler = (e: KeyboardEvent) => {
+        if (e.shiftKey && e.key == "ArrowRight") {
+            var tmp = (<HTMLInputElement>ed1.element).value;
+            (<HTMLInputElement>ed1.element).value = (<HTMLInputElement>ed2.element).value;
+            (<HTMLInputElement>ed2.element).value = tmp;
+        }
+    }
+    ed1.element.addEventListener('keydown', handler);
+    ed2.element.addEventListener('keydown', handler);
+
+    container.appendChild(ed1.element);
+    container.appendChild(ed2.element);
+
+    return {
+        element: container,
+        menuToState: () => [ed1.menuToState(), ed2.menuToState()]
+    };
+}
+
 export function makeTranslationEditor(ls: [string, string][], validator: (s: string) => boolean):
     StateEditor<[string, string][]> {
     return multipleEditors(

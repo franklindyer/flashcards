@@ -16,7 +16,7 @@ class ClozeFlashcardTemplate extends flashcard_template_1.FlashcardTemplate {
         el.appendChild(document.createElement("hr"));
         el.appendChild(aLower);
         var targetWords = [];
-        aUpper.textContent = data.upper.replace(/\{\{([^\{\}]+)\}\}/, (match, p1) => {
+        aUpper.textContent = data.upper.replaceAll(/\{\{([^\{\}]+)\}\}/g, (match, p1) => {
             targetWords.push(p1);
             return "___";
         });
@@ -25,7 +25,7 @@ class ClozeFlashcardTemplate extends flashcard_template_1.FlashcardTemplate {
         var fontSize = 100.0 / (10.0 * Math.log(10 + aUpper.textContent.length));
         aUpper.style.fontSize = `${fontSize}vw`;
         aLower.style.fontSize = `${0.7 * fontSize}vw`;
-        var fl = new flashcard_1.Flashcard(el, (attempt) => answer == attempt, answer);
+        var fl = new flashcard_1.Flashcard(el, answer);
         return fl;
     }
 }

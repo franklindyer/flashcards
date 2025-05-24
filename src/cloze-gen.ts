@@ -87,6 +87,7 @@ class ClozeFlashcardGen extends FlashcardGen<ClozeDeckState, ClozeCardData> {
     }
 
     correctEffect(_: ClozeDeckState, __: ClozeCardData, ___: string, resolve: () => void) { resolve(); }
+    repairDeckState(st: any) { return st; } 
 }
 
 function makeClozeCard(group: string, top: string, bottom: string): ClozeCardData {

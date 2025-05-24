@@ -29,10 +29,20 @@ class ClozeFlashcardGen extends flashcard_generator_1.FlashcardGen {
         }
         return state;
     }
+    checkAnswer(ans, st, cardData) {
+        var targetWords = [];
+        cardData.upper.replaceAll(/\{\{([^\{\}]+)\}\}/g, (match, p1) => {
+            targetWords.push(p1);
+            return match;
+        });
+        var correctAns = targetWords.join(", ");
+        return (ans == correctAns);
+    }
     generateCard(data) {
         return (0, flashcard_template_1.renderCard)("cloze-template", data);
     }
-    correctEffect(_, __, resolve) { resolve(); }
+    correctEffect(_, __, ___, resolve) { resolve(); }
+    repairDeckState(st) { return st; }
 }
 function makeClozeCard(group, top, bottom) {
     return {
