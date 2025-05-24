@@ -40,6 +40,7 @@ export abstract class FlashcardGen<S, D> {
         var inputCallback = (attempt: string) => {
             var correct: boolean = card.check(attempt);
             if (correct) {
+                inputBox.onkeydown = (e) => {}; // To prevent multiple submissions by accident
                 var result = card.correctFirst ? FlashcardResult.Correct : FlashcardResult.Incorrect;
                 var newState = this.updateState(s, cardData, result);
                 this.correctEffect(newState, cardData, attempt, correctCallback(newState));
