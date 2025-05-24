@@ -32,7 +32,8 @@ import {
     singleTextFieldEditor,
     fixedNumEditors,
     makeSwappingEditor,
-    multipleEditors
+    multipleEditors,
+    combineEditors
 } from "./editor"
 import {
     randomizeStringSub
@@ -59,7 +60,8 @@ enum SpacedRepOrder {
 type SpacedRepCardContent = {
     guid: string,
     prompt: string,
-    answers: string[]
+    answers: string[],
+    tags: string[]
 }
 
 type SpacedRepCardTiming = {
@@ -92,7 +94,8 @@ type SpacedRepSettings = {
     order: SpacedRepOrder,
     readCorrectAnswers: boolean,
     speechSettings: SpeechSettings,
-    filterSettings: TextFilterSettings 
+    filterSettings: TextFilterSettings,
+    inactiveTags: string[] 
 }
 
 type SpacedRepHistRecord = {
@@ -120,7 +123,8 @@ const defaultSpacedRepSettings = {
     order: SpacedRepOrder.RandomOrder,
     readCorrectAnswers: false,
     speechSettings: defaultSpeechSettings(),
-    filterSettings: defaultTextFilterSettings
+    filterSettings: defaultTextFilterSettings,
+    inactiveTags: []
 };
 
 function defaultCardTiming(): SpacedRepCardTiming {
@@ -143,11 +147,11 @@ function makeSpacedRepCardDict(cardDat: SpacedRepCardContent[]): IDictionary<Spa
 
 const defaultSpacedRepState = {
     cards: makeSpacedRepCardDict([
-        { guid: guidGenerator(), prompt: "apple", answers: ["manzana"] },
-        { guid: guidGenerator(), prompt: "banana", answers: ["plátano"] },
-        { guid: guidGenerator(), prompt: "orange", answers: ["naranja"] },
-        { guid: guidGenerator(), prompt: "I have {r0:an apple,a banana,an orange}", answers: ["tengo {r0:una manzana,un plátano,una naranja}"] },
-        { guid: guidGenerator(), prompt: "{r0:I want,you want,he wants} {r1:an apple,a banana,an orange}", answers: ["{r0:quiero,quieres,quiere} {r1:una manzana,un plátano,una naranja}"] },
+        { guid: guidGenerator(), prompt: "apple", answers: ["manzana"], tags: [] },
+        { guid: guidGenerator(), prompt: "banana", answers: ["plátano"], tags: [] },
+        { guid: guidGenerator(), prompt: "orange", answers: ["naranja"], tags: [] },
+        { guid: guidGenerator(), prompt: "I have {r0:an apple,a banana,an orange}", answers: ["tengo {r0:una manzana,un plátano,una naranja}"], tags: [] },
+        { guid: guidGenerator(), prompt: "{r0:I want,you want,he wants} {r1:an apple,a banana,an orange}", answers: ["{r0:quiero,quieres,quiere} {r1:una manzana,un plátano,una naranja}"], tags: [] },
     ]),    
     settings: defaultSpacedRepSettings,
     history: []
@@ -160,7 +164,8 @@ function makeSpacedRepCard(prompt: string, answers: string[]): SpacedRepCard {
         content: {
             guid: guid,
             prompt: prompt,
-            answers: answers
+            answers: answers,
+            tags: []
         },
         timing: {
             due: null,
@@ -172,19 +177,23 @@ function makeSpacedRepCard(prompt: string, answers: string[]): SpacedRepCard {
 }
 
 function getNew(st: SpacedRepState): string[] {
-    return Object.keys(st.cards).filter((i) => st.cards[i].timing.due == null);
+    return Object.keys(st.cards)
+            .filter((i) => st.cards[i].timing.due == null)
+            .filter((i) => st.cards[i].content.tags.filter((t) => st.settings.inactiveTags.includes(t)).length == 0);
 }
 
 function getDue(st: SpacedRepState): string[] {
     return Object.keys(st.cards).filter(
         (i) => st.cards[i].timing.due != null
             && (new Date(st.cards[i].timing.due!) < new Date())
-            && (st.cards[i].timing.intervalMinutes < st.settings.reviewCeilingDays*(24*60)));
+            && (st.cards[i].timing.intervalMinutes < st.settings.reviewCeilingDays*(24*60))
+            && (st.cards[i].content.tags.filter((t) => st.settings.inactiveTags.includes(t)).length == 0));
 }
 
 function getReview(st: SpacedRepState): string[] {
     return Object.keys(st.cards).filter(
-        (i) => st.cards[i].timing.intervalMinutes > st.settings.reviewCeilingDays*(24*60));
+        (i) => (st.cards[i].timing.intervalMinutes > st.settings.reviewCeilingDays*(24*60))
+                && (st.cards[i].content.tags.filter((t) => st.settings.inactiveTags.includes(t)).length == 0));
 }
 
 function pickSpacedRepCard(st: SpacedRepState): SpacedRepCardData {
@@ -299,7 +308,8 @@ class SpacedRepGen extends FlashcardGen<SpacedRepState, SpacedRepCardData> {
         return {
             guid: data.guid,
             prompt: prompt,
-            answers: answers
+            answers: answers,
+            tags: data.tags
         }       
     }
 
@@ -361,6 +371,16 @@ class SpacedRepGen extends FlashcardGen<SpacedRepState, SpacedRepCardData> {
     repairDeckState(st: any) {
         if (st.settings.practiceMode == null)
             st.settings.practiceMode = false;
+        if (st.settings.inactiveTags == null)
+            st.settings.inactiveTags = [];
+
+        Object.keys(st.cards).map((k) => {
+            var c = st.cards[k];
+            if (c.content.tags == null)
+                c.content.tags = [];
+            st.cards[k] = c;
+        });
+
         return st;
     } 
 }
@@ -400,6 +420,12 @@ function spacedRepMenu(st: SpacedRepState): StateEditor<SpacedRepState> {
     speechDiv.appendChild(speechCheckbox.element);
     speechDiv.appendChild(speechEditor.element);
 
+    var omitTagsEditor = singleTextFieldEditor(st.settings.inactiveTags.join(','));
+    (<HTMLInputElement>omitTagsEditor.element).placeholder = "comma-separated tags...";
+    var omitTagsCont = document.createElement("div");
+    omitTagsCont.textContent = "Omit cards with the following tags: "
+    omitTagsCont.appendChild(omitTagsEditor.element);
+
     var filterEditor = textFilterSelectionMenu(st.settings.filterSettings);
 
     [
@@ -409,12 +435,25 @@ function spacedRepMenu(st: SpacedRepState): StateEditor<SpacedRepState> {
         reviewsEditor.element,
         correctFactor.element,
         incorrectFactor.element,
+        omitTagsCont,
         speechDiv,
         filterEditor.element
     ].map((el) => el.classList.add("deck-menu-submenu"))
 
     function makeCardEditor(c: SpacedRepCard): StateEditor<SpacedRepCard> {
-        var ed = makeSwappingEditor([c.content.prompt, c.content.answers.join('|')]);
+        var ed = combineEditors(
+            [[c.content.prompt, c.content.answers.join('|')], c.content.tags.join(',')],
+            (pr: any) => { 
+                var ed2 = makeSwappingEditor(pr); 
+                ed2.element.style.display = "inline-block";
+                return ed2;
+            },
+            (ts: string) => {
+                var ed2 = singleTextFieldEditor(ts);
+                (<HTMLInputElement>ed2.element).placeholder = "tags...";
+                return ed2;
+            }
+        );
         var cardInfo = document.createElement("a");
         cardInfo.style.color = "lightgray";
         cardInfo.style.marginLeft = "10px";
@@ -433,8 +472,9 @@ function spacedRepMenu(st: SpacedRepState): StateEditor<SpacedRepState> {
                 return {
                     content: {
                         guid: c.content.guid,
-                        prompt: tp[0],
-                        answers: tp[1].split('|')
+                        prompt: tp[0][0],
+                        answers: tp[0][1].split('|'),
+                        tags: tp[1].split(',').filter((t) => t.length > 0)
                     },
                     timing: {
                         due: c.timing.due,
@@ -468,6 +508,7 @@ function spacedRepMenu(st: SpacedRepState): StateEditor<SpacedRepState> {
         correctFactor.element,
         incorrectFactor.element,
         reviewsEditor.element,
+        omitTagsCont,
         speechDiv,
         filterEditor.element,
         cardsEditor.element,
@@ -487,7 +528,8 @@ function spacedRepMenu(st: SpacedRepState): StateEditor<SpacedRepState> {
                 order: SpacedRepOrder.RandomOrder,
                 readCorrectAnswers: speechCheckbox.menuToState(),
                 speechSettings: speechEditor.menuToState(),
-                filterSettings: filterEditor.menuToState()
+                filterSettings: filterEditor.menuToState(),
+                inactiveTags: omitTagsEditor.menuToState().split(',')
             },
             cards: makeDict(cardsEditor.menuToState(), (c) => c.content.guid),
             history: st.history
