@@ -369,6 +369,7 @@ class SpacedRepGen extends FlashcardGen<SpacedRepState, SpacedRepCardData> {
     }
 
     repairDeckState(st: any) {
+        
         if (st.settings.practiceMode == null)
             st.settings.practiceMode = false;
         if (st.settings.inactiveTags == null)
