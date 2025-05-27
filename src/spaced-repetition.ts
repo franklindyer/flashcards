@@ -31,7 +31,7 @@ import {
     scrollNumberEditor,
     singleTextFieldEditor,
     fixedNumEditors,
-    makeSwappingEditor,
+    swappingTextEditor,
     multipleEditors,
     combineEditors
 } from "./editor"
@@ -447,7 +447,7 @@ function spacedRepMenu(st: SpacedRepState): StateEditor<SpacedRepState> {
         var ed = combineEditors(
             [[c.content.prompt, c.content.answers.join('|')], c.content.tags.join(',')],
             (pr: any) => { 
-                var ed2 = makeSwappingEditor(pr); 
+                var ed2 = swappingTextEditor(pr); 
                 ed2.element.style.display = "inline-block";
                 return ed2;
             },
