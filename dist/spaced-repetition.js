@@ -113,7 +113,7 @@ function pickSpacedRepCard(st) {
                 content: st.cards[newInd].content,
                 cardsLeft: newInds.length,
                 isReview: false,
-                isPractice: true
+                isPractice: false
             };
         case SpacedRepStudying.DueCards:
             if (dueInds.length == 0) {
