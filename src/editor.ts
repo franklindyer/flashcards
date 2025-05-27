@@ -31,6 +31,45 @@ export function boolEditor(label: string, val: boolean): StateEditor<boolean> {
     return editor;
 }
 
+export function radioEditor<a>(selected: a, options: a[], labels: string[]): StateEditor<a> {
+    var container = document.createElement("div");
+    var radioName = guidGenerator();
+    var valueMap: IDictionary<a> = {};
+    var radios: HTMLInputElement[] = [];
+    for (var i in options) {
+        var opt = options[i];
+        var label = labels[i];
+        var radioId = guidGenerator();
+        var radioBtn = document.createElement("input");
+        radioBtn.type = "radio";
+        radioBtn.id = radioId;
+        radioBtn.name = radioName;
+        var radioLabel = document.createElement("label");
+        radioLabel.textContent = label;
+        radioLabel.htmlFor = radioId;
+        var radioDiv = document.createElement("div");
+        radioDiv.appendChild(radioBtn);
+        radioDiv.appendChild(radioLabel);
+        container.appendChild(radioDiv);
+        radioBtn.value = radioId;
+        valueMap[radioId] = opt;
+        radioBtn.checked = (opt == selected);
+        radios.push(radioBtn);
+    }
+    return {
+        element: container,
+        menuToState: () => {
+            for (var i in radios) {
+                var r = radios[i];
+                if (r.checked) {
+                    return valueMap[r.value];
+                }
+            }
+            return null!;
+        }
+    }
+}
+
 export function scrollNumberEditor(label: string, val: number, min: number, max: number, step: number):
     StateEditor<number> {
     var scroller = document.createElement("input");
