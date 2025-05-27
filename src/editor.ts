@@ -31,6 +31,45 @@ export function boolEditor(label: string, val: boolean): StateEditor<boolean> {
     return editor;
 }
 
+export function radioEditor<a>(selected: a, options: a[], labels: string[]): StateEditor<a> {
+    var container = document.createElement("div");
+    var radioName = guidGenerator();
+    var valueMap: IDictionary<a> = {};
+    var radios: HTMLInputElement[] = [];
+    for (var i in options) {
+        var opt = options[i];
+        var label = labels[i];
+        var radioId = guidGenerator();
+        var radioBtn = document.createElement("input");
+        radioBtn.type = "radio";
+        radioBtn.id = radioId;
+        radioBtn.name = radioName;
+        var radioLabel = document.createElement("label");
+        radioLabel.textContent = label;
+        radioLabel.htmlFor = radioId;
+        var radioDiv = document.createElement("div");
+        radioDiv.appendChild(radioBtn);
+        radioDiv.appendChild(radioLabel);
+        container.appendChild(radioDiv);
+        radioBtn.value = radioId;
+        valueMap[radioId] = opt;
+        radioBtn.checked = (opt == selected);
+        radios.push(radioBtn);
+    }
+    return {
+        element: container,
+        menuToState: () => {
+            for (var i in radios) {
+                var r = radios[i];
+                if (r.checked) {
+                    return valueMap[r.value];
+                }
+            }
+            return null!;
+        }
+    }
+}
+
 export function scrollNumberEditor(label: string, val: number, min: number, max: number, step: number):
     StateEditor<number> {
     var scroller = document.createElement("input");
@@ -152,23 +191,22 @@ export function combineEditors<a, b>(
     return editor;
 }
 
-export function makeSwappingEditor(spr: [string, string]):
+export function swappingTextEditor(spr: [string, string]):
     StateEditor<[string, string]> {
     var ed1 = singleTextFieldEditor(spr[0]);
     var ed2 = singleTextFieldEditor(spr[1]);
     var container = document.createElement("div");
 
-    var handler = (e: KeyboardEvent) => {
-        if (e.shiftKey && e.key == "ArrowRight") {
-            var tmp = (<HTMLInputElement>ed1.element).value;
-            (<HTMLInputElement>ed1.element).value = (<HTMLInputElement>ed2.element).value;
-            (<HTMLInputElement>ed2.element).value = tmp;
-        }
-    }
-    ed1.element.addEventListener('keydown', handler);
-    ed2.element.addEventListener('keydown', handler);
+    var btn = document.createElement("button");
+    btn.onclick = () => {
+        var tmp = (<HTMLInputElement>ed1.element).value;
+        (<HTMLInputElement>ed1.element).value = (<HTMLInputElement>ed2.element).value;
+        (<HTMLInputElement>ed2.element).value = tmp;
+    };
+    btn.textContent = "↔";
 
     container.appendChild(ed1.element);
+    container.appendChild(btn);
     container.appendChild(ed2.element);
 
     return {
