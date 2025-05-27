@@ -1432,6 +1432,7 @@ function setupDecklistMenu() {
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.boolEditor = boolEditor;
+exports.radioEditor = radioEditor;
 exports.scrollNumberEditor = scrollNumberEditor;
 exports.singleTextFieldEditor = singleTextFieldEditor;
 exports.validatedTextFieldEditor = validatedTextFieldEditor;
@@ -1439,7 +1440,7 @@ exports.doubleTextFieldEditor = doubleTextFieldEditor;
 exports.optionsEditor = optionsEditor;
 exports.fileUploadEditor = fileUploadEditor;
 exports.combineEditors = combineEditors;
-exports.makeSwappingEditor = makeSwappingEditor;
+exports.swappingTextEditor = swappingTextEditor;
 exports.makeTranslationEditor = makeTranslationEditor;
 exports.fixedNumEditors = fixedNumEditors;
 exports.multipleEditors = multipleEditors;
@@ -1463,6 +1464,44 @@ function boolEditor(label, val) {
     boxWithLabel.appendChild(elementLabel);
     editor.element = boxWithLabel;
     return editor;
+}
+function radioEditor(selected, options, labels) {
+    var container = document.createElement("div");
+    var radioName = (0, utils_1.guidGenerator)();
+    var valueMap = {};
+    var radios = [];
+    for (var i in options) {
+        var opt = options[i];
+        var label = labels[i];
+        var radioId = (0, utils_1.guidGenerator)();
+        var radioBtn = document.createElement("input");
+        radioBtn.type = "radio";
+        radioBtn.id = radioId;
+        radioBtn.name = radioName;
+        var radioLabel = document.createElement("label");
+        radioLabel.textContent = label;
+        radioLabel.htmlFor = radioId;
+        var radioDiv = document.createElement("div");
+        radioDiv.appendChild(radioBtn);
+        radioDiv.appendChild(radioLabel);
+        container.appendChild(radioDiv);
+        radioBtn.value = radioId;
+        valueMap[radioId] = opt;
+        radioBtn.checked = (opt == selected);
+        radios.push(radioBtn);
+    }
+    return {
+        element: container,
+        menuToState: () => {
+            for (var i in radios) {
+                var r = radios[i];
+                if (r.checked) {
+                    return valueMap[r.value];
+                }
+            }
+            return null;
+        }
+    };
 }
 function scrollNumberEditor(label, val, min, max, step) {
     var scroller = document.createElement("input");
@@ -1573,20 +1612,19 @@ function combineEditors(st, gen1, gen2) {
     editor.element.appendChild(children[1].element);
     return editor;
 }
-function makeSwappingEditor(spr) {
+function swappingTextEditor(spr) {
     var ed1 = singleTextFieldEditor(spr[0]);
     var ed2 = singleTextFieldEditor(spr[1]);
     var container = document.createElement("div");
-    var handler = (e) => {
-        if (e.shiftKey && e.key == "ArrowRight") {
-            var tmp = ed1.element.value;
-            ed1.element.value = ed2.element.value;
-            ed2.element.value = tmp;
-        }
+    var btn = document.createElement("button");
+    btn.onclick = () => {
+        var tmp = ed1.element.value;
+        ed1.element.value = ed2.element.value;
+        ed2.element.value = tmp;
     };
-    ed1.element.addEventListener('keydown', handler);
-    ed2.element.addEventListener('keydown', handler);
+    btn.textContent = "↔";
     container.appendChild(ed1.element);
+    container.appendChild(btn);
     container.appendChild(ed2.element);
     return {
         element: container,
@@ -2101,8 +2139,9 @@ var SpacedRepCardStatus;
 })(SpacedRepCardStatus || (SpacedRepCardStatus = {}));
 var SpacedRepStudying;
 (function (SpacedRepStudying) {
-    SpacedRepStudying[SpacedRepStudying["NewCards"] = 0] = "NewCards";
-    SpacedRepStudying[SpacedRepStudying["DueCards"] = 1] = "DueCards";
+    SpacedRepStudying[SpacedRepStudying["NewCards"] = 1] = "NewCards";
+    SpacedRepStudying[SpacedRepStudying["DueCards"] = 2] = "DueCards";
+    SpacedRepStudying[SpacedRepStudying["RandomCards"] = 3] = "RandomCards";
 })(SpacedRepStudying || (SpacedRepStudying = {}));
 var SpacedRepOrder;
 (function (SpacedRepOrder) {
@@ -2116,7 +2155,6 @@ const defaultSpacedRepSettings = {
     incorrectFactor: 0.5,
     reviewCeilingDays: 365,
     studying: SpacedRepStudying.NewCards,
-    practiceMode: false,
     probReview: 0.1,
     order: SpacedRepOrder.RandomOrder,
     readCorrectAnswers: false,
@@ -2198,7 +2236,7 @@ function pickSpacedRepCard(st) {
                 content: st.cards[newInd].content,
                 cardsLeft: newInds.length,
                 isReview: false,
-                isPractice: st.settings.practiceMode
+                isPractice: true
             };
         case SpacedRepStudying.DueCards:
             if (dueInds.length == 0) {
@@ -2210,7 +2248,7 @@ function pickSpacedRepCard(st) {
                     content: st.cards[reviewInd].content,
                     cardsLeft: dueInds.length,
                     isReview: true,
-                    isPractice: st.settings.practiceMode
+                    isPractice: false
                 };
             }
             var dueInd = dueInds[Math.floor(Math.random() * dueInds.length)];
@@ -2218,7 +2256,15 @@ function pickSpacedRepCard(st) {
                 content: st.cards[dueInd].content,
                 cardsLeft: dueInds.length,
                 isReview: false,
-                isPractice: st.settings.practiceMode
+                isPractice: false
+            };
+        case SpacedRepStudying.RandomCards:
+            var ind = inds[Math.floor(Math.random() * inds.length)];
+            return {
+                content: st.cards[ind].content,
+                cardsLeft: 0,
+                isReview: false,
+                isPractice: true
             };
     }
     return { content: undefined, cardsLeft: 0, isReview: false, isPractice: false };
@@ -2233,7 +2279,7 @@ class SpacedRepGen extends flashcard_generator_1.FlashcardGen {
         return cardData;
     }
     updateState(state, cardData, result) {
-        if (result == flashcard_generator_1.FlashcardResult.Unanswered || state.settings.practiceMode)
+        if (result == flashcard_generator_1.FlashcardResult.Unanswered || state.settings.studying == SpacedRepStudying.RandomCards)
             return state;
         var correct = (result == flashcard_generator_1.FlashcardResult.Correct);
         var cardState = state.cards[cardData.content.guid];
@@ -2375,8 +2421,7 @@ function spacedRepMenu(st) {
     reviewP.style.color = "#99cc99";
     reviewP.style.fontWeight = "bold";
     var conf = st.settings;
-    var studyingNewEditor = (0, editor_1.boolEditor)("Studying new cards?", st.settings.studying === SpacedRepStudying.NewCards);
-    var practiceModeEditor = (0, editor_1.boolEditor)("Just practicing?", st.settings.practiceMode);
+    var studyingNewEditor = (0, editor_1.radioEditor)(st.settings.studying, [SpacedRepStudying.NewCards, SpacedRepStudying.DueCards, SpacedRepStudying.RandomCards], ["Study new cards", "Study due cards", "Practice random cards"]);
     var initHoursEditor = (0, editor_1.scrollNumberEditor)("Initial interval (hours): ", conf.initialHours, 1, 240, 1);
     var reviewsEditor = (0, editor_1.scrollNumberEditor)("Probability of getting review cards: ", conf.probReview, 0, 0.5, 0.01);
     var correctFactor = (0, editor_1.scrollNumberEditor)("Correct factor: ", conf.correctFactor, 1, 10, 0.1);
@@ -2394,7 +2439,6 @@ function spacedRepMenu(st) {
     var filterEditor = (0, text_filters_1.textFilterSelectionMenu)(st.settings.filterSettings);
     [
         studyingNewEditor.element,
-        practiceModeEditor.element,
         initHoursEditor.element,
         reviewsEditor.element,
         correctFactor.element,
@@ -2405,7 +2449,7 @@ function spacedRepMenu(st) {
     ].map((el) => el.classList.add("deck-menu-submenu"));
     function makeCardEditor(c) {
         var ed = (0, editor_1.combineEditors)([[c.content.prompt, c.content.answers.join('|')], c.content.tags.join(',')], (pr) => {
-            var ed2 = (0, editor_1.makeSwappingEditor)(pr);
+            var ed2 = (0, editor_1.swappingTextEditor)(pr);
             ed2.element.style.display = "inline-block";
             return ed2;
         }, (ts) => {
@@ -2458,7 +2502,6 @@ function spacedRepMenu(st) {
         dueP,
         reviewP,
         studyingNewEditor.element,
-        practiceModeEditor.element,
         initHoursEditor.element,
         correctFactor.element,
         incorrectFactor.element,
@@ -2477,8 +2520,7 @@ function spacedRepMenu(st) {
                     initialHours: initHoursEditor.menuToState(),
                     correctFactor: correctFactor.menuToState(),
                     incorrectFactor: incorrectFactor.menuToState(),
-                    studying: studyingNewEditor.menuToState() ? SpacedRepStudying.NewCards : SpacedRepStudying.DueCards,
-                    practiceMode: practiceModeEditor.menuToState(),
+                    studying: studyingNewEditor.menuToState(),
                     reviewCeilingDays: st.settings.reviewCeilingDays,
                     probReview: reviewsEditor.menuToState(),
                     order: SpacedRepOrder.RandomOrder,

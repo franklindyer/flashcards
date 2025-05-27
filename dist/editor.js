@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.boolEditor = boolEditor;
+exports.radioEditor = radioEditor;
 exports.scrollNumberEditor = scrollNumberEditor;
 exports.singleTextFieldEditor = singleTextFieldEditor;
 exports.validatedTextFieldEditor = validatedTextFieldEditor;
@@ -8,7 +9,7 @@ exports.doubleTextFieldEditor = doubleTextFieldEditor;
 exports.optionsEditor = optionsEditor;
 exports.fileUploadEditor = fileUploadEditor;
 exports.combineEditors = combineEditors;
-exports.makeSwappingEditor = makeSwappingEditor;
+exports.swappingTextEditor = swappingTextEditor;
 exports.makeTranslationEditor = makeTranslationEditor;
 exports.fixedNumEditors = fixedNumEditors;
 exports.multipleEditors = multipleEditors;
@@ -32,6 +33,44 @@ function boolEditor(label, val) {
     boxWithLabel.appendChild(elementLabel);
     editor.element = boxWithLabel;
     return editor;
+}
+function radioEditor(selected, options, labels) {
+    var container = document.createElement("div");
+    var radioName = (0, utils_1.guidGenerator)();
+    var valueMap = {};
+    var radios = [];
+    for (var i in options) {
+        var opt = options[i];
+        var label = labels[i];
+        var radioId = (0, utils_1.guidGenerator)();
+        var radioBtn = document.createElement("input");
+        radioBtn.type = "radio";
+        radioBtn.id = radioId;
+        radioBtn.name = radioName;
+        var radioLabel = document.createElement("label");
+        radioLabel.textContent = label;
+        radioLabel.htmlFor = radioId;
+        var radioDiv = document.createElement("div");
+        radioDiv.appendChild(radioBtn);
+        radioDiv.appendChild(radioLabel);
+        container.appendChild(radioDiv);
+        radioBtn.value = radioId;
+        valueMap[radioId] = opt;
+        radioBtn.checked = (opt == selected);
+        radios.push(radioBtn);
+    }
+    return {
+        element: container,
+        menuToState: () => {
+            for (var i in radios) {
+                var r = radios[i];
+                if (r.checked) {
+                    return valueMap[r.value];
+                }
+            }
+            return null;
+        }
+    };
 }
 function scrollNumberEditor(label, val, min, max, step) {
     var scroller = document.createElement("input");
@@ -142,20 +181,19 @@ function combineEditors(st, gen1, gen2) {
     editor.element.appendChild(children[1].element);
     return editor;
 }
-function makeSwappingEditor(spr) {
+function swappingTextEditor(spr) {
     var ed1 = singleTextFieldEditor(spr[0]);
     var ed2 = singleTextFieldEditor(spr[1]);
     var container = document.createElement("div");
-    var handler = (e) => {
-        if (e.shiftKey && e.key == "ArrowRight") {
-            var tmp = ed1.element.value;
-            ed1.element.value = ed2.element.value;
-            ed2.element.value = tmp;
-        }
+    var btn = document.createElement("button");
+    btn.onclick = () => {
+        var tmp = ed1.element.value;
+        ed1.element.value = ed2.element.value;
+        ed2.element.value = tmp;
     };
-    ed1.element.addEventListener('keydown', handler);
-    ed2.element.addEventListener('keydown', handler);
+    btn.textContent = "↔";
     container.appendChild(ed1.element);
+    container.appendChild(btn);
     container.appendChild(ed2.element);
     return {
         element: container,
