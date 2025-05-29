@@ -22,8 +22,16 @@ function generateDeckNameEditor(deck: FlashcardDeck<any>): StateEditor<Flashcard
     var colorEditor = singleTextFieldEditor(deck.view.color); 
     var closeBtn = document.createElement("button");
     closeBtn.textContent = "Save";
+    var deckIdA= document.createElement("A");
+    deckIdA.textContent = `Internal deck ID: ${deck.slug}`
     var contDiv = document.createElement("div");
-    [nicknameEditor.element, colorEditor.element, closeBtn].map((el) => contDiv.appendChild(el));
+    [
+        nicknameEditor.element, 
+        colorEditor.element, 
+        closeBtn,
+        document.createElement("br"),
+        deckIdA
+    ].map((el) => contDiv.appendChild(el));
     contDiv.onclick = (e) => {
         e.cancelBubble = true;
         if (e.stopPropagation) e.stopPropagation();
