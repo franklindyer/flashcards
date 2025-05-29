@@ -16,6 +16,9 @@ import {
     singleTextFieldEditor,
     StateEditor
 } from "./editor"
+import {
+    promptForSyncCreds
+} from "./synchronization"
 
 function generateDeckNameEditor(deck: FlashcardDeck<any>): StateEditor<FlashcardDeck<any>> {
     var nicknameEditor = singleTextFieldEditor(deck.name);
@@ -55,7 +58,12 @@ export function generateDecklistMenu(
     var decklistEditor = <HTMLElement>document.getElementById("flashcard-decklist-editor");
     decklistEditor.innerHTML = "";
     var decklistOverlay = <HTMLElement>document.getElementById("flashcard-decklist-overlay");
-   
+
+    var syncServerBtn = document.createElement("button");
+    syncServerBtn.textContent = "Setup sync server";
+    syncServerBtn.onclick = promptForSyncCreds;
+    decklistEditor.appendChild(syncServerBtn);   
+
     Object.keys(decklist).sort(); 
     for (var k in decklist) {
         var deckDiv = document.createElement("div");

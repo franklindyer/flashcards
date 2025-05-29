@@ -1,9 +1,13 @@
 import datetime
 import json
 import os
+
 from flask import Flask, abort, request
+from flask_cors import CORS, cross_origin
 
 app = Flask(__name__)
+cors = CORS(app)
+app.config['CORS_HEADERS'] = 'Content-Type'
 
 KEYS = [ln.strip() for ln in open("/data/keys.txt").readlines() if len(ln) > 0]
 
@@ -28,10 +32,12 @@ def get_file(key, file_id, data=False):
     return filedict
 
 @app.route("/")
+@cross_origin()
 def hello_world():
     return "<p>Hello, World!</p>"
 
 @app.route("/status", methods=['POST'])
+@cross_origin()
 def get_status():
     j = request.json
     if j.get('key') not in KEYS:
@@ -39,6 +45,7 @@ def get_status():
     return {}
 
 @app.route("/put", methods=['POST'])
+@cross_origin()
 def put_data():
     j = request.json
     key = j.get('key')
@@ -59,6 +66,7 @@ def put_data():
     return {}
 
 @app.route("/get", methods=['POST'])
+@cross_origin()
 def get_data():
     j = request.json
     key = j.get('key')
@@ -67,6 +75,7 @@ def get_data():
     return contents
 
 @app.route("/info", methods=['POST'])
+@cross_origin()
 def get_info():
     j = request.json
     key = j.get('key')
