@@ -5,13 +5,22 @@ exports.setupDecklistMenu = setupDecklistMenu;
 const utils_1 = require("./utils");
 const flashcard_deck_1 = require("./flashcard-deck");
 const editor_1 = require("./editor");
+const synchronization_1 = require("./synchronization");
 function generateDeckNameEditor(deck) {
     var nicknameEditor = (0, editor_1.singleTextFieldEditor)(deck.name);
     var colorEditor = (0, editor_1.singleTextFieldEditor)(deck.view.color);
     var closeBtn = document.createElement("button");
     closeBtn.textContent = "Save";
+    var deckIdA = document.createElement("A");
+    deckIdA.textContent = `Internal deck ID: ${deck.slug}`;
     var contDiv = document.createElement("div");
-    [nicknameEditor.element, colorEditor.element, closeBtn].map((el) => contDiv.appendChild(el));
+    [
+        nicknameEditor.element,
+        colorEditor.element,
+        closeBtn,
+        document.createElement("br"),
+        deckIdA
+    ].map((el) => contDiv.appendChild(el));
     contDiv.onclick = (e) => {
         e.cancelBubble = true;
         if (e.stopPropagation)
@@ -32,6 +41,17 @@ function generateDecklistMenu(decklist, onfinish) {
     var decklistEditor = document.getElementById("flashcard-decklist-editor");
     decklistEditor.innerHTML = "";
     var decklistOverlay = document.getElementById("flashcard-decklist-overlay");
+    var syncServerBtn = document.createElement("button");
+    syncServerBtn.textContent = "Setup sync server";
+    syncServerBtn.onclick = synchronization_1.promptForSyncCreds;
+    decklistEditor.appendChild(syncServerBtn);
+    var addRemoteBtn = document.createElement("button");
+    addRemoteBtn.textContent = "Add external deck";
+    addRemoteBtn.onclick = (e) => {
+        var deckslug = prompt("Enter the ID of the deck you would like to download.") || "";
+        (0, synchronization_1.syncDownloadDeck)(deckslug, (s) => { console.log(s); (0, flashcard_deck_1.setDeck)(deckslug, s, () => { }); });
+    };
+    decklistEditor.appendChild(addRemoteBtn);
     Object.keys(decklist).sort();
     for (var k in decklist) {
         var deckDiv = document.createElement("div");
@@ -91,6 +111,26 @@ function generateDecklistMenu(decklist, onfinish) {
                 e.stopPropagation();
             generateDecklistMenu(decklist, onfinish);
         })(decklist[k]);
+        var deckUploadBtn = document.createElement("button");
+        deckUploadBtn.classList.add("deck-editor-button");
+        deckUploadBtn.innerHTML = "<img src='/upcloud.png'/>";
+        deckUploadBtn.onclick = ((dk) => (e) => {
+            (0, synchronization_1.syncUploadDeck)(dk);
+            e.cancelBubble = true;
+            if (e.stopPropagation)
+                e.stopPropagation();
+        })(decklist[k]);
+        var deckDownloadBtn = document.createElement("button");
+        deckDownloadBtn.classList.add("deck-editor-button");
+        deckDownloadBtn.innerHTML = "<img src='/downcloud.png'/>";
+        deckDownloadBtn.onclick = ((k) => (e) => {
+            (0, synchronization_1.syncDownloadDeck)(k, (s) => { (0, flashcard_deck_1.setDeck)(k, s, () => { }); });
+            e.cancelBubble = true;
+            if (e.stopPropagation)
+                e.stopPropagation();
+        })(k);
+        deckDiv.appendChild(deckUploadBtn);
+        deckDiv.appendChild(deckDownloadBtn);
         deckDiv.appendChild(deckEditBtn);
         deckDiv.appendChild(deckDeleteBtn);
         deckDiv.appendChild(deckCloneBtn);

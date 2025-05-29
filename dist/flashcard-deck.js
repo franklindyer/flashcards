@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.gDeckRegistry = exports.gDeckTypeRegistry = void 0;
+exports.setDeck = setDeck;
 exports.saveDeck = saveDeck;
 exports.loadAllDecks = loadAllDecks;
 exports.eraseDeck = eraseDeck;
@@ -12,6 +13,11 @@ const utils_1 = require("./utils");
 const fs_1 = require("./fs");
 exports.gDeckTypeRegistry = {};
 exports.gDeckRegistry = {};
+function setDeck(deckSlug, deckString, callback) {
+    var deck = JSON.parse(deckString);
+    exports.gDeckRegistry[deckSlug] = deck;
+    saveDeck(deckSlug, callback);
+}
 function saveDeck(deckSlug, callback) {
     (0, fs_1.setDeckJSON)(deckSlug, JSON.stringify(exports.gDeckRegistry[deckSlug])).then((_) => callback());
 }

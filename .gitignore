@@ -3,3 +3,5 @@ node_modules/**
 **/*.swp
 **/*.numbers
 **/venv
+**/__pycache__
+**/sync-data

@@ -1,0 +1,7 @@
+services:
+    api:
+        build: .
+        ports:
+            - 5051:8080
+        volumes:
+            - ./sync-data:/data
