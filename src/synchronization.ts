@@ -1,7 +1,9 @@
 import {
     guidGenerator
 } from "./utils"
-
+import {
+    FlashcardDeck
+} from "./flashcard-deck"
 
 export function getHostname() {
     var host = localStorage.getItem("host");
@@ -28,7 +30,7 @@ export function getSyncKey(): string | null {
     return localStorage.getItem("synckey");
 }
 
-export function validateSyncCreds() {
+export function validateSyncCreds(goodCallback: (r: string, k: string) => void, badCallback: () => void) {
     var remote = getRemote()!;
     var key = getSyncKey()!;
 
@@ -41,10 +43,10 @@ export function validateSyncCreds() {
             },
             body: JSON.stringify({ key: key })
         }).then(res => res.json())
-          .then(res => alert("Synchronization server successfully connected."))
-          .catch(res => alert("Error setting up synchronization server."));
+          .then(res => goodCallback(remote, key))
+          .catch(res => badCallback());
     } catch (e) {
-        alert("Error setting up synchronization server.");
+        badCallback();
     }
 }
 
@@ -53,5 +55,58 @@ export function promptForSyncCreds() {
     var key = window.prompt("Enter your key with the synchronization server.") || "";
     setRemote(remote);
     setSyncKey(key);
-    validateSyncCreds();
+    validateSyncCreds(
+        (_, __) => alert("Successfully paired with synchronization server."),
+        () => alert("Error attempting to connect to synchronization server. Try again.")
+    );
+}
+
+export function syncUploadDeck(deck: FlashcardDeck<any>): void {
+    var badCallback = () => alert("Could not upload deck. Ensure your sync server is set up.");
+    var host = getHostname();
+    validateSyncCreds(
+        (remote, key) => {
+            try {
+                fetch(`${remote}/put`, {
+                    method: "POST",
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ host: host, key: key, id: deck.slug, data: JSON.stringify(deck) })
+                }).catch(res => badCallback());
+            } catch (e) {
+                badCallback();
+            }
+        },
+        () => badCallback()
+    );
+}
+
+export function syncDownloadDeck(slug: string, setDeck: (deckstr: string) => void): void {
+    var badCallback = () => alert("Could not download deck. Ensure your sync server is set up and that the deck ID is correct.");
+    var host = getHostname();
+    validateSyncCreds(
+        (remote, key) => {
+            try {
+                fetch(`${remote}/get`, {
+                    method: "POST",
+                    headers: {
+                        'Accept': 'application/json, text/plain, */*',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ host: host, key: key, id: slug })
+                }).then(res => res.json())
+                  .then(res => {
+                        if (confirm("Are you sure you want to download this deck? Any local version will be overwritten.")) { 
+                            setDeck(res['data']);
+                            alert("Deck downloaded successfully.");
+                        } 
+                  })
+                  .catch(res => badCallback());
+            } catch (e) {
+                badCallback();
+            }
+        },
+        () => badCallback()
+    );
 }

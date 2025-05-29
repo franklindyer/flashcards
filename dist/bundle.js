@@ -1321,13 +1321,22 @@ exports.setupDecklistMenu = setupDecklistMenu;
 const utils_1 = __webpack_require__(185);
 const flashcard_deck_1 = __webpack_require__(836);
 const editor_1 = __webpack_require__(43);
+const synchronization_1 = __webpack_require__(36);
 function generateDeckNameEditor(deck) {
     var nicknameEditor = (0, editor_1.singleTextFieldEditor)(deck.name);
     var colorEditor = (0, editor_1.singleTextFieldEditor)(deck.view.color);
     var closeBtn = document.createElement("button");
     closeBtn.textContent = "Save";
+    var deckIdA = document.createElement("A");
+    deckIdA.textContent = `Internal deck ID: ${deck.slug}`;
     var contDiv = document.createElement("div");
-    [nicknameEditor.element, colorEditor.element, closeBtn].map((el) => contDiv.appendChild(el));
+    [
+        nicknameEditor.element,
+        colorEditor.element,
+        closeBtn,
+        document.createElement("br"),
+        deckIdA
+    ].map((el) => contDiv.appendChild(el));
     contDiv.onclick = (e) => {
         e.cancelBubble = true;
         if (e.stopPropagation)
@@ -1348,6 +1357,17 @@ function generateDecklistMenu(decklist, onfinish) {
     var decklistEditor = document.getElementById("flashcard-decklist-editor");
     decklistEditor.innerHTML = "";
     var decklistOverlay = document.getElementById("flashcard-decklist-overlay");
+    var syncServerBtn = document.createElement("button");
+    syncServerBtn.textContent = "Setup sync server";
+    syncServerBtn.onclick = synchronization_1.promptForSyncCreds;
+    decklistEditor.appendChild(syncServerBtn);
+    var addRemoteBtn = document.createElement("button");
+    addRemoteBtn.textContent = "Add external deck";
+    addRemoteBtn.onclick = (e) => {
+        var deckslug = prompt("Enter the ID of the deck you would like to download.") || "";
+        (0, synchronization_1.syncDownloadDeck)(deckslug, (s) => { console.log(s); (0, flashcard_deck_1.setDeck)(deckslug, s, () => { }); });
+    };
+    decklistEditor.appendChild(addRemoteBtn);
     Object.keys(decklist).sort();
     for (var k in decklist) {
         var deckDiv = document.createElement("div");
@@ -1407,6 +1427,26 @@ function generateDecklistMenu(decklist, onfinish) {
                 e.stopPropagation();
             generateDecklistMenu(decklist, onfinish);
         })(decklist[k]);
+        var deckUploadBtn = document.createElement("button");
+        deckUploadBtn.classList.add("deck-editor-button");
+        deckUploadBtn.innerHTML = "<img src='/upcloud.png'/>";
+        deckUploadBtn.onclick = ((dk) => (e) => {
+            (0, synchronization_1.syncUploadDeck)(dk);
+            e.cancelBubble = true;
+            if (e.stopPropagation)
+                e.stopPropagation();
+        })(decklist[k]);
+        var deckDownloadBtn = document.createElement("button");
+        deckDownloadBtn.classList.add("deck-editor-button");
+        deckDownloadBtn.innerHTML = "<img src='/downcloud.png'/>";
+        deckDownloadBtn.onclick = ((k) => (e) => {
+            (0, synchronization_1.syncDownloadDeck)(k, (s) => { (0, flashcard_deck_1.setDeck)(k, s, () => { }); });
+            e.cancelBubble = true;
+            if (e.stopPropagation)
+                e.stopPropagation();
+        })(k);
+        deckDiv.appendChild(deckUploadBtn);
+        deckDiv.appendChild(deckDownloadBtn);
         deckDiv.appendChild(deckEditBtn);
         deckDiv.appendChild(deckDeleteBtn);
         deckDiv.appendChild(deckCloneBtn);
@@ -1714,6 +1754,7 @@ function multipleEditors(ls, empty, ed, includeSearch = false, searchFxn = (s, x
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.gDeckRegistry = exports.gDeckTypeRegistry = void 0;
+exports.setDeck = setDeck;
 exports.saveDeck = saveDeck;
 exports.loadAllDecks = loadAllDecks;
 exports.eraseDeck = eraseDeck;
@@ -1725,6 +1766,11 @@ const utils_1 = __webpack_require__(185);
 const fs_1 = __webpack_require__(633);
 exports.gDeckTypeRegistry = {};
 exports.gDeckRegistry = {};
+function setDeck(deckSlug, deckString, callback) {
+    var deck = JSON.parse(deckString);
+    exports.gDeckRegistry[deckSlug] = deck;
+    saveDeck(deckSlug, callback);
+}
 function saveDeck(deckSlug, callback) {
     (0, fs_1.setDeckJSON)(deckSlug, JSON.stringify(exports.gDeckRegistry[deckSlug])).then((_) => callback());
 }
@@ -2604,6 +2650,116 @@ function speechSettingsEditor(ss) {
     };
 }
 // utter("Hello, my name is Albert.", gSynth.getVoices()[0], 1, 1);
+
+
+/***/ }),
+
+/***/ 36:
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getHostname = getHostname;
+exports.setRemote = setRemote;
+exports.getRemote = getRemote;
+exports.setSyncKey = setSyncKey;
+exports.getSyncKey = getSyncKey;
+exports.validateSyncCreds = validateSyncCreds;
+exports.promptForSyncCreds = promptForSyncCreds;
+exports.syncUploadDeck = syncUploadDeck;
+exports.syncDownloadDeck = syncDownloadDeck;
+const utils_1 = __webpack_require__(185);
+function getHostname() {
+    var host = localStorage.getItem("host");
+    if (host === null) {
+        host = (0, utils_1.guidGenerator)();
+        localStorage.setItem("host", host);
+    }
+    return host;
+}
+function setRemote(url) {
+    localStorage.setItem("syncserver", url);
+}
+function getRemote() {
+    return localStorage.getItem("syncserver");
+}
+function setSyncKey(key) {
+    localStorage.setItem("synckey", key);
+}
+function getSyncKey() {
+    return localStorage.getItem("synckey");
+}
+function validateSyncCreds(goodCallback, badCallback) {
+    var remote = getRemote();
+    var key = getSyncKey();
+    try {
+        fetch(`${remote}/status`, {
+            method: "POST",
+            headers: {
+                'Accept': 'application/json, text/plain, */*',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ key: key })
+        }).then(res => res.json())
+            .then(res => goodCallback(remote, key))
+            .catch(res => badCallback());
+    }
+    catch (e) {
+        badCallback();
+    }
+}
+function promptForSyncCreds() {
+    var remote = window.prompt("Enter the URL of your synchronization server.") || "";
+    var key = window.prompt("Enter your key with the synchronization server.") || "";
+    setRemote(remote);
+    setSyncKey(key);
+    validateSyncCreds((_, __) => alert("Successfully paired with synchronization server."), () => alert("Error attempting to connect to synchronization server. Try again."));
+}
+function syncUploadDeck(deck) {
+    var badCallback = () => alert("Could not upload deck. Ensure your sync server is set up.");
+    var host = getHostname();
+    validateSyncCreds((remote, key) => {
+        try {
+            fetch(`${remote}/put`, {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ host: host, key: key, id: deck.slug, data: JSON.stringify(deck) })
+            }).catch(res => badCallback());
+        }
+        catch (e) {
+            badCallback();
+        }
+    }, () => badCallback());
+}
+function syncDownloadDeck(slug, setDeck) {
+    var badCallback = () => alert("Could not download deck. Ensure your sync server is set up and that the deck ID is correct.");
+    var host = getHostname();
+    validateSyncCreds((remote, key) => {
+        try {
+            fetch(`${remote}/get`, {
+                method: "POST",
+                headers: {
+                    'Accept': 'application/json, text/plain, */*',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ host: host, key: key, id: slug })
+            }).then(res => res.json())
+                .then(res => {
+                if (confirm("Are you sure you want to download this deck? Any local version will be overwritten.")) {
+                    setDeck(res['data']);
+                    alert("Deck downloaded successfully.");
+                }
+            })
+                .catch(res => badCallback());
+        }
+        catch (e) {
+            badCallback();
+        }
+    }, () => badCallback());
+}
 
 
 /***/ }),
