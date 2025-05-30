@@ -74,7 +74,9 @@ export function generateDecklistMenu(
     addRemoteBtn.textContent = "Add external deck";
     addRemoteBtn.onclick = (e) => {
         var deckslug = prompt("Enter the ID of the deck you would like to download.") || "";
-        syncDownloadDeck(deckslug, (s: string) => { console.log(s); setDeck(deckslug, s, () => {}); });
+        syncDownloadDeck(deckslug, (s: string) => { console.log(s); setDeck(deckslug, s, () => {
+            generateDecklistMenu(decklist, onfinish);
+        }); });
     };
     decklistEditor.appendChild(addRemoteBtn);
 

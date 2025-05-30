@@ -53,12 +53,6 @@ enum SpacedRepStudying {
     RandomCards
 }
 
-enum SpacedRepOrder {
-    RandomOrder = 1,
-    ReviewFirst,
-    NewFirst
-}
-
 type SpacedRepCardContent = {
     guid: string,
     prompt: string,
@@ -91,8 +85,9 @@ type SpacedRepSettings = {
     incorrectFactor: number,
     reviewCeilingDays: number,
     studying: SpacedRepStudying,
+    newQueueSize: number,
+    shuffleNewQueue: boolean,
     probReview: number,
-    order: SpacedRepOrder,
     readCorrectAnswers: boolean,
     speechSettings: SpeechSettings,
     filterSettings: TextFilterSettings,
@@ -109,6 +104,8 @@ type SpacedRepHistRecord = {
 
 type SpacedRepState = {
     cards: IDictionary<SpacedRepCard>,
+    newQueue: string[],
+    newIndex: number,
     settings: SpacedRepSettings,
     history: SpacedRepHistRecord[]
 }
@@ -119,8 +116,9 @@ const defaultSpacedRepSettings = {
     incorrectFactor: 0.5,
     reviewCeilingDays: 365,
     studying: SpacedRepStudying.NewCards,
+    newQueueSize: 10,
+    shuffleNewQueue: true,
     probReview: 0.1,
-    order: SpacedRepOrder.RandomOrder,
     readCorrectAnswers: false,
     speechSettings: defaultSpeechSettings(),
     filterSettings: defaultTextFilterSettings,
@@ -152,7 +150,9 @@ const defaultSpacedRepState = {
         { guid: guidGenerator(), prompt: "orange", answers: ["naranja"], tags: [] },
         { guid: guidGenerator(), prompt: "I have {r0:an apple,a banana,an orange}", answers: ["tengo {r0:una manzana,un plátano,una naranja}"], tags: [] },
         { guid: guidGenerator(), prompt: "{r0:I want,you want,he wants} {r1:an apple,a banana,an orange}", answers: ["{r0:quiero,quieres,quiere} {r1:una manzana,un plátano,una naranja}"], tags: [] },
-    ]),    
+    ]),
+    newQueue: [],
+    newIndex: 0,    
     settings: defaultSpacedRepSettings,
     history: []
 }
@@ -198,18 +198,23 @@ function getReview(st: SpacedRepState): string[] {
 
 function pickSpacedRepCard(st: SpacedRepState): SpacedRepCardData {
     var inds = Object.keys(st.cards);
-    var newInds = getNew(st);
+    var newInds = getNew(st).filter((i) => !st.newQueue.includes(i));
     var dueInds = getDue(st);
     var reviewInds = getReview(st);
     switch (st.settings.studying) {
         case SpacedRepStudying.NewCards:
-            if (newInds.length == 0) {
+            if (newInds.length == 0 && st.newQueue.length == 0) {
                 return { content: undefined, cardsLeft: 0, isReview: false, isPractice: false };
             }
-            var newInd = newInds[Math.floor(Math.random() * newInds.length)];
+            var newInd;
+            if (st.newIndex < st.newQueue.length) {
+                newInd = st.newQueue[st.newIndex];
+            } else { 
+                newInd = newInds[Math.floor(Math.random() * newInds.length)];
+            }
             return { 
                 content: st.cards[newInd].content, 
-                cardsLeft: newInds.length,
+                cardsLeft: newInds.length + st.newQueue.length,
                 isReview: false,
                 isPractice: false
             };
@@ -274,11 +279,24 @@ class SpacedRepGen extends FlashcardGen<SpacedRepState, SpacedRepCardData> {
         }                
 
         if (cardState.timing.due === null) {
+            if (!state.newQueue.includes(cardData.content!.guid)) {
+                state.newQueue.push(cardData.content!.guid);
+            }
             if (cardState.timing.streak >= 3) {
+                state.newQueue = state.newQueue.filter((i) => i != cardData.content!.guid);
                 cardState.timing.intervalMinutes = state.settings.initialHours * 60;
                 cardState.timing.due = new Date();
                 cardState.timing.due!
                     .setHours(cardState.timing.due!.getHours() + cardState.timing.intervalMinutes/60); 
+            }
+            if (state.settings.studying == SpacedRepStudying.NewCards) {
+                var maxNewQueueSize = Math.min(state.settings.newQueueSize, getNew(state).length);
+                state.newQueue = state.newQueue.slice(0, state.settings.newQueueSize);
+                state.newIndex += 1; 
+                if (state.newIndex >= maxNewQueueSize) {
+                    state.newIndex = 0;
+                    // state.newQueue = state.newQueue.sort((a, b) => 0.5 - Math.random());
+                } 
             }
         } else if (correct) {
             cardState.timing.due = new Date();
@@ -377,13 +395,21 @@ class SpacedRepGen extends FlashcardGen<SpacedRepState, SpacedRepCardData> {
     }
 
     repairDeckState(st: any) {
-        
+        if (st.newQueue == null)
+            st.newQueue = [];
+        if (st.newIndex == null)
+            st.newIndex = 0;    
+    
         if (st.settings.practiceMode == null)
             st.settings.practiceMode = false;
         if (st.settings.inactiveTags == null)
             st.settings.inactiveTags = [];
         if (st.settings.filterSettings == null)
             st.settings.filterSettings = defaultTextFilterSettings;
+        if (st.settings.newQueueSize == null)
+            st.settings.newQueueSize = 10;
+        if (st.settings.shuffleNewQueue == null)
+            st.settings.shuffleNewQueue = true;
 
         Object.keys(st.cards).map((k) => {
             var c = st.cards[k];
@@ -423,6 +449,9 @@ function spacedRepMenu(st: SpacedRepState): StateEditor<SpacedRepState> {
         ["Study new cards", "Study due cards", "Practice random cards"]
     );
     var initHoursEditor = scrollNumberEditor("Initial interval (hours): ", conf.initialHours, 1, 240, 1);
+    var newQueueShuffleEditor = boolEditor("Shuffle new cards while studying: ", conf.shuffleNewQueue);
+    var newQueueSizeEditor = scrollNumberEditor("Max new cards to study at once: ", conf.newQueueSize, 1, 100, 1);
+    newQueueSizeEditor.element.appendChild(newQueueShuffleEditor.element);
     var reviewsEditor = scrollNumberEditor("Probability of getting review cards: ", conf.probReview, 0, 0.5, 0.01);
 
     var correctFactor = scrollNumberEditor("Correct factor: ", conf.correctFactor, 1, 10, 0.1);
@@ -448,6 +477,7 @@ function spacedRepMenu(st: SpacedRepState): StateEditor<SpacedRepState> {
         reviewsEditor.element,
         correctFactor.element,
         incorrectFactor.element,
+        newQueueSizeEditor.element,
         omitTagsCont,
         speechDiv,
         filterEditor.element
@@ -519,6 +549,7 @@ function spacedRepMenu(st: SpacedRepState): StateEditor<SpacedRepState> {
         initHoursEditor.element,
         correctFactor.element,
         incorrectFactor.element,
+        newQueueSizeEditor.element,
         reviewsEditor.element,
         omitTagsCont,
         speechDiv,
@@ -535,13 +566,16 @@ function spacedRepMenu(st: SpacedRepState): StateEditor<SpacedRepState> {
                 incorrectFactor: incorrectFactor.menuToState(),
                 studying: studyingNewEditor.menuToState(),
                 reviewCeilingDays: st.settings.reviewCeilingDays,
+                newQueueSize: newQueueSizeEditor.menuToState(),
+                shuffleNewQueue: newQueueShuffleEditor.menuToState(),
                 probReview: reviewsEditor.menuToState(),
-                order: SpacedRepOrder.RandomOrder,
                 readCorrectAnswers: speechCheckbox.menuToState(),
                 speechSettings: speechEditor.menuToState(),
                 filterSettings: filterEditor.menuToState(),
                 inactiveTags: omitTagsEditor.menuToState().split(',')
             },
+            newQueue: st.newQueue,
+            newIndex: st.newIndex,
             cards: makeDict(cardsEditor.menuToState(), (c) => c.content.guid),
             history: st.history
         }}
