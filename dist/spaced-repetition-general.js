@@ -45,7 +45,7 @@ class AbstractSpacedRepGen extends flashcard_generator_1.FlashcardGen {
                 return {
                     data: st.cards[newInd],
                     context: {
-                        cardsLeft: newInds.length + st.newQueue.length,
+                        cardsLeft: newInds.length,
                         isPractice: false
                     }
                 };
@@ -87,20 +87,19 @@ class AbstractSpacedRepGen extends flashcard_generator_1.FlashcardGen {
         var cardGuid = cardData.guid;
         var cardState = st.cards[cardGuid];
         var cardNewState = this.updateCard(st.settings, card, result);
-        if (this.cardIsNew(cardState)) {
+        if (st.studying == SpacedRepStudying.NewCards) {
             if (!st.newQueue.includes(cardData.guid)) {
                 st.newQueue.push(cardData.guid);
             }
-            if (this.cardIsDue(cardNewState)) {
+            if (!this.cardIsNew(cardNewState)) {
                 st.newQueue = st.newQueue.filter((i) => i != cardData.guid);
             }
-            if (st.studying == SpacedRepStudying.NewCards) {
-                var maxNewQueueSize = Math.min(st.newQueueSize, this.getNew(st).length);
-                st.newQueue = st.newQueue.slice(0, st.newQueueSize);
-                st.newIndex += 1;
-                if (st.newIndex >= maxNewQueueSize) {
-                    st.newIndex = 0;
-                }
+            var maxNewQueueSize = Math.min(st.newQueueSize, this.getNew(st).length);
+            st.newQueue = st.newQueue.slice(0, st.newQueueSize);
+            st.newIndex += 1;
+            if (st.newIndex >= maxNewQueueSize) {
+                st.newIndex = 0;
+                st.newQueue = st.newQueue.sort((a, b) => 0.5 - Math.random());
             }
         }
         st.cards[cardGuid] = cardNewState;

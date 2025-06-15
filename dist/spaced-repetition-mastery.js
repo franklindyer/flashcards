@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SimpleSpacedRepGen = void 0;
+exports.MasterSpacedRepGen = void 0;
 const utils_1 = require("./utils");
 const flashcard_1 = require("./flashcard");
 const flashcard_generator_1 = require("./flashcard-generator");
@@ -9,26 +9,31 @@ const speech_1 = require("./speech");
 const text_filters_1 = require("./text-filters");
 const editor_1 = require("./editor");
 const flashcard_deck_1 = require("./flashcard-deck");
-const defaultSimpleSRSettings = {
+const defaultMasterSRSettings = {
     initialHours: 6,
-    correctFactor: 1.6,
-    incorrectFactor: 0.5,
+    correctMaxFactor: 5.0,
+    correctMinFactor: 1.1,
+    incorrectMaxFactor: 0.5,
+    incorrectMinFactor: 0.1,
+    punishmentExponent: 1.5,
+    initialMastery: 0.5,
+    masteryDeficitHalflife: 3,
     inactiveTags: [],
     readCorrectAnswers: false,
     speechSettings: (0, speech_1.defaultSpeechSettings)(),
     filterSettings: text_filters_1.defaultTextFilterSettings
 };
-const defaultSimpleSRState = {
+const defaultMasterSRState = {
     cards: (0, spaced_repetition_general_1.makeSpacedRepCardDict)([
         { prompt: "the dog", answers: ["le chien"], tags: [] },
         { prompt: "the man", answers: ["l'homme"], tags: [] },
         { prompt: "the woman", answers: ["la dame"], tags: [] }
-    ], () => { return { streak: 0, intervalMinutes: 0, due: undefined }; }),
+    ], () => { return { streak: 0, intervalMinutes: 0, due: undefined, numCorrect: 0, numIncorrect: 0, mastery: 0.5 }; }),
     newIndex: 0,
     newQueue: [],
     newQueueSize: 10,
     studying: spaced_repetition_general_1.SpacedRepStudying.NewCards,
-    settings: defaultSimpleSRSettings
+    settings: defaultMasterSRSettings
 };
 function makeEmptyCard() {
     return {
@@ -41,11 +46,22 @@ function makeEmptyCard() {
         timing: {
             streak: 0,
             intervalMinutes: 0,
+            numCorrect: 0,
+            numIncorrect: 0,
+            mastery: 0.5,
             due: undefined
         }
     };
 }
-class SimpleSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGen {
+function calculateMasteryCoef(settings, card) {
+    var c = card.timing.numCorrect;
+    var d = card.timing.numIncorrect;
+    var k = settings.masteryDeficitHalflife;
+    var p = settings.initialMastery;
+    var alpha = settings.punishmentExponent;
+    return (c + p * k) / (c + Math.pow(d, alpha) + k);
+}
+class MasterSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGen {
     getGenName() { return "simple-spaced-repetition"; }
     cardIsDue(card) {
         return (card.timing.due != undefined) && (new Date(card.timing.due) < new Date());
@@ -59,21 +75,27 @@ class SimpleSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGe
         if (card.context.isPractice) {
             return cardData;
         }
+        var mastery = calculateMasteryCoef(settings, card.data);
+        cardData.timing.mastery = mastery;
         if (correct == flashcard_generator_1.FlashcardResult.Correct) {
             cardData.timing.streak += 1;
+            cardData.timing.numCorrect += 1;
             if (isNew && cardData.timing.streak >= 3) {
                 cardData.timing.intervalMinutes = settings.initialHours * 60;
                 cardData.timing.due = new Date();
                 cardData.timing.due.setHours(cardData.timing.due.getHours() + cardData.timing.intervalMinutes / 60);
             }
             else if (!isNew) {
-                cardData.timing.intervalMinutes = settings.correctFactor * cardData.timing.intervalMinutes;
+                var factor = settings.correctMinFactor + (settings.correctMaxFactor - settings.correctMinFactor) * mastery;
+                cardData.timing.intervalMinutes = factor * cardData.timing.intervalMinutes;
             }
         }
         else if (correct == flashcard_generator_1.FlashcardResult.Incorrect) {
             cardData.timing.streak = 0;
+            cardData.timing.numIncorrect += 1;
             if (!isNew) {
-                cardData.timing.intervalMinutes = settings.incorrectFactor * cardData.timing.intervalMinutes;
+                var factor = settings.incorrectMinFactor + (settings.incorrectMaxFactor - settings.correctMinFactor) * mastery;
+                cardData.timing.intervalMinutes = factor * cardData.timing.intervalMinutes;
             }
         }
         // Reschedule card if it came due
@@ -90,9 +112,12 @@ class SimpleSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGe
         var a = document.createElement("a");
         var prompt = "No cards left to study.";
         var hint = "You cannot continue studying until more cards become due.";
+        var masteryColor = "white";
         if (card.data !== undefined) {
             prompt = card.data.content.prompt;
             hint = card.data.content.answers[0];
+            var masteryColorParam = Math.floor(50 * card.data.timing.mastery);
+            masteryColor = `rgb(${255 - masteryColorParam},${205 + masteryColorParam},200)`;
         }
         var fontSize = 100.0 / (10.0 * Math.log(10 + prompt.length));
         a.style.fontSize = `${fontSize}vw`;
@@ -100,6 +125,7 @@ class SimpleSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGe
         var fl = new flashcard_1.Flashcard(a, hint);
         var infoText = document.createElement("span");
         infoText.classList.add("cards-left-span");
+        infoText.style.backgroundColor = masteryColor;
         if (card.context.isPractice) {
             infoText.textContent = "This is a practice card. It will not affect your progress.";
             fl.el.style.backgroundColor = "#ffffee";
@@ -133,7 +159,7 @@ class SimpleSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGe
         }
     }
 }
-exports.SimpleSpacedRepGen = SimpleSpacedRepGen;
+exports.MasterSpacedRepGen = MasterSpacedRepGen;
 function simpleSRMenu(st) {
     var contDiv = document.createElement("div");
     var totP = document.createElement("p");
@@ -152,8 +178,24 @@ function simpleSRMenu(st) {
     var settings = st.settings;
     var initHoursEditor = (0, editor_1.scrollNumberEditor)("Initial interval (hours): ", settings.initialHours, 1, 240, 1);
     var newQueueSizeEditor = (0, editor_1.scrollNumberEditor)("Max new cards to study at once: ", st.newQueueSize, 1, 100, 1);
-    var correctFactor = (0, editor_1.scrollNumberEditor)("Correct factor: ", settings.correctFactor, 1, 10, 0.1);
-    var incorrectFactor = (0, editor_1.scrollNumberEditor)("Incorrect factor: ", settings.incorrectFactor, 0, 1.0, 0.01);
+    var correctMaxEditor = (0, editor_1.scrollNumberEditor)("Max correct factor: ", settings.correctMaxFactor, 1, 10, 0.1);
+    var correctMinEditor = (0, editor_1.scrollNumberEditor)("Min correct factor: ", settings.correctMinFactor, 1, 10, 0.1);
+    var incorrectMaxEditor = (0, editor_1.scrollNumberEditor)("Max incorrect factor: ", settings.incorrectMaxFactor, 0.1, 0.9, 0.01);
+    var incorrectMinEditor = (0, editor_1.scrollNumberEditor)("Min incorrect factor: ", settings.incorrectMinFactor, 0.1, 0.9, 0.01);
+    var punishmentEditor = (0, editor_1.scrollNumberEditor)("Punishment exponent: ", settings.punishmentExponent, 1.0, 5.0, 0.1);
+    var initialMasteryEditor = (0, editor_1.scrollNumberEditor)("Initial mastery value: ", settings.initialMastery, 0.0, 1.0, 0.01);
+    var halflifeEditor = (0, editor_1.scrollNumberEditor)("Number of correct answers to halve initial mastery deficit: ", settings.masteryDeficitHalflife, 1, 50, 1);
+    var paramsDiv = document.createElement("div");
+    [
+        initHoursEditor,
+        correctMaxEditor,
+        correctMinEditor,
+        incorrectMaxEditor,
+        incorrectMinEditor,
+        punishmentEditor,
+        initialMasteryEditor,
+        halflifeEditor
+    ].map((ed2) => paramsDiv.appendChild(ed2.element));
     var speechCheckbox = (0, editor_1.boolEditor)("Speak correct answers using text-to-speech?", settings.readCorrectAnswers);
     var speechEditor = (0, speech_1.speechSettingsEditor)(settings.speechSettings);
     var speechDiv = document.createElement("div");
@@ -167,9 +209,7 @@ function simpleSRMenu(st) {
     var filterEditor = (0, text_filters_1.textFilterSelectionMenu)(settings.filterSettings);
     [
         studyingEditor.element,
-        initHoursEditor.element,
-        correctFactor.element,
-        incorrectFactor.element,
+        paramsDiv,
         newQueueSizeEditor.element,
         omitTagsCont,
         speechDiv,
@@ -224,9 +264,7 @@ function simpleSRMenu(st) {
         newP,
         dueP,
         studyingEditor.element,
-        initHoursEditor.element,
-        correctFactor.element,
-        incorrectFactor.element,
+        paramsDiv,
         newQueueSizeEditor.element,
         omitTagsCont,
         speechDiv,
@@ -241,8 +279,13 @@ function simpleSRMenu(st) {
                 studying: studyingEditor.menuToState(),
                 settings: {
                     initialHours: initHoursEditor.menuToState(),
-                    correctFactor: correctFactor.menuToState(),
-                    incorrectFactor: incorrectFactor.menuToState(),
+                    correctMaxFactor: correctMaxEditor.menuToState(),
+                    correctMinFactor: correctMinEditor.menuToState(),
+                    incorrectMaxFactor: incorrectMaxEditor.menuToState(),
+                    incorrectMinFactor: incorrectMinEditor.menuToState(),
+                    punishmentExponent: punishmentEditor.menuToState(),
+                    initialMastery: initialMasteryEditor.menuToState(),
+                    masteryDeficitHalflife: halflifeEditor.menuToState(),
                     readCorrectAnswers: speechCheckbox.menuToState(),
                     speechSettings: speechEditor.menuToState(),
                     filterSettings: filterEditor.menuToState(),
@@ -256,4 +299,4 @@ function simpleSRMenu(st) {
         }
     };
 }
-(0, flashcard_deck_1.registerDeckType)(new SimpleSpacedRepGen(), simpleSRMenu, "simple-spaced-repetition-deck", "Simple spaced repetition deck", defaultSimpleSRState, "#ffffdd");
+(0, flashcard_deck_1.registerDeckType)(new MasterSpacedRepGen(), simpleSRMenu, "master--spaced-repetition-deck", "Mastery-based spaced repetition deck", defaultMasterSRState, "#ffffdd");
