@@ -67,7 +67,8 @@ function syncUploadDeck(deck) {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ host: host, key: key, id: deck.slug, data: JSON.stringify(deck) })
-            }).catch(res => badCallback());
+            }).then(res => alert("Deck uploaded successfully."))
+                .catch(res => badCallback());
         }
         catch (e) {
             badCallback();

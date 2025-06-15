@@ -49,7 +49,12 @@ function generateDecklistMenu(decklist, onfinish) {
     addRemoteBtn.textContent = "Add external deck";
     addRemoteBtn.onclick = (e) => {
         var deckslug = prompt("Enter the ID of the deck you would like to download.") || "";
-        (0, synchronization_1.syncDownloadDeck)(deckslug, (s) => { console.log(s); (0, flashcard_deck_1.setDeck)(deckslug, s, () => { }); });
+        (0, synchronization_1.syncDownloadDeck)(deckslug, (s) => {
+            console.log(s);
+            (0, flashcard_deck_1.setDeck)(deckslug, s, () => {
+                generateDecklistMenu(decklist, onfinish);
+            });
+        });
     };
     decklistEditor.appendChild(addRemoteBtn);
     Object.keys(decklist).sort();
@@ -69,6 +74,7 @@ function generateDecklistMenu(decklist, onfinish) {
             (0, flashcard_deck_1.saveDeck)(s, () => (0, flashcard_deck_1.runDeck)(s));
         })(slug);
         var deckEditBtn = document.createElement("button");
+        deckEditBtn.title = "Edit deck";
         deckEditBtn.innerHTML = "<img src='/edit.png'/>";
         deckEditBtn.classList.add("deck-editor-button");
         deckEditBtn.onclick = ((dk, deckDiv) => (e) => {
@@ -86,6 +92,7 @@ function generateDecklistMenu(decklist, onfinish) {
                 e.stopPropagation();
         })(decklist[k], deckDiv);
         var deckDeleteBtn = document.createElement("button");
+        deckDeleteBtn.title = "Delete deck";
         deckDeleteBtn.classList.add("deck-editor-button");
         deckDeleteBtn.innerHTML = "<img src='/trash.png'/>";
         deckDeleteBtn.onclick = ((dk) => (e) => {
@@ -99,6 +106,7 @@ function generateDecklistMenu(decklist, onfinish) {
             generateDecklistMenu(decklist, onfinish);
         })(decklist[k]);
         var deckCloneBtn = document.createElement("button");
+        deckCloneBtn.title = "Clone deck";
         deckCloneBtn.classList.add("deck-editor-button");
         deckCloneBtn.innerHTML = "<img src='/copy.png'/>";
         deckCloneBtn.onclick = ((dk) => (e) => {
@@ -112,6 +120,7 @@ function generateDecklistMenu(decklist, onfinish) {
             generateDecklistMenu(decklist, onfinish);
         })(decklist[k]);
         var deckUploadBtn = document.createElement("button");
+        deckUploadBtn.title = "Upload deck to server";
         deckUploadBtn.classList.add("deck-editor-button");
         deckUploadBtn.innerHTML = "<img src='/upcloud.png'/>";
         deckUploadBtn.onclick = ((dk) => (e) => {
@@ -121,6 +130,7 @@ function generateDecklistMenu(decklist, onfinish) {
                 e.stopPropagation();
         })(decklist[k]);
         var deckDownloadBtn = document.createElement("button");
+        deckDownloadBtn.title = "Download deck from server";
         deckDownloadBtn.classList.add("deck-editor-button");
         deckDownloadBtn.innerHTML = "<img src='/downcloud.png'/>";
         deckDownloadBtn.onclick = ((k) => (e) => {

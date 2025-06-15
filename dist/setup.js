@@ -8,6 +8,8 @@ require("./transcript-template");
 require("./fs");
 require("./uniform-fgen");
 require("./spaced-repetition");
+require("./spaced-repetition-simple");
+require("./spaced-repetition-mastery");
 require("./cloze-gen");
 require("./transcript-gen");
 require("./speech");

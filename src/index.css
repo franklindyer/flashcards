@@ -1,3 +1,8 @@
+body {
+    overflow-x: hidden;
+    overflow-y: hidden;
+}
+
 button {
     margin: 2px;
     padding: 3px;
@@ -117,11 +122,12 @@ button {
     left: 0;
     padding: 20px;
     display: none;
+    overflow-x: hidden;
+    overflow-y: hidden;
 }
 
 #flashcard-decklist-overlay {
     display: none;
-    overflow-y: scroll;
 }
 
 .menu-overlay {
@@ -215,6 +221,12 @@ hr {
     bottom: 0;
     font-size: 18px;
     display: block;
+    border-radius: 3px;
+    padding: 3px;
+    margin-left: 5px;
+    margin-right: 5px;
+    margin-top: 3px;
+    margin-bottom: 3px;
 }
 
 .transcription-audio-button {
