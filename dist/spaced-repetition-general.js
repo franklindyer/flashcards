@@ -1,6 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AbstractSpacedRepGen = exports.SpacedRepStudying = void 0;
+exports.makeSpacedRepCardDict = makeSpacedRepCardDict;
+const utils_1 = require("./utils");
 const flashcard_generator_1 = require("./flashcard-generator");
 var SpacedRepStudying;
 (function (SpacedRepStudying) {
@@ -8,6 +10,15 @@ var SpacedRepStudying;
     SpacedRepStudying[SpacedRepStudying["DueCards"] = 2] = "DueCards";
     SpacedRepStudying[SpacedRepStudying["RandomCards"] = 3] = "RandomCards";
 })(SpacedRepStudying || (exports.SpacedRepStudying = SpacedRepStudying = {}));
+function makeSpacedRepCardDict(cards, defaultTiming) {
+    var cardDict = {};
+    for (var i in cards) {
+        var c = cards[i];
+        var guid = (0, utils_1.guidGenerator)();
+        cardDict[guid] = { guid: guid, content: c, timing: defaultTiming() };
+    }
+    return cardDict;
+}
 class AbstractSpacedRepGen extends flashcard_generator_1.FlashcardGen {
     getNew(st) {
         return Object.keys(st.cards).filter((k) => this.cardIsNew(st.cards[k]));

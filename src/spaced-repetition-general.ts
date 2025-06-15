@@ -37,11 +37,22 @@ export type SpacedRepState<content, timing, settings> = {
     settings: settings
 }
 
+export function makeSpacedRepCardDict<content, timing>(
+    cards: content[],
+    defaultTiming: () => timing): 
+    IDictionary<SpacedRepCard<content, timing>> {
+    var cardDict: IDictionary<SpacedRepCard<content, timing>> = {};
+    for (var i in cards) {
+        var c = cards[i];
+        var guid = guidGenerator();
+        cardDict[guid] = { guid: guid, content: c, timing: defaultTiming() };
+    }
+    return cardDict;
+}
+
 export abstract class AbstractSpacedRepGen<content, timing, settings>
     extends FlashcardGen<SpacedRepState<content, timing, settings>, SpacedRepCardPhysical<content, timing>> {
 
-    abstract makeEmptyCard(): SpacedRepCard<content, timing>;
-    abstract cardHint(card: SpacedRepCard<content, timing>): boolean;
     abstract cardIsDue(card: SpacedRepCard<content, timing>): boolean;
     abstract cardIsNew(card: SpacedRepCard<content, timing>): boolean;
     abstract updateCard(
@@ -77,7 +88,7 @@ export abstract class AbstractSpacedRepGen<content, timing, settings>
                 return {
                     data: st.cards[newInd],
                     context: {
-                        cardsLeft: newInds.length + st.newQueue.length,
+                        cardsLeft: newInds.length,
                         isPractice: false
                     }
                 };
@@ -127,21 +138,20 @@ export abstract class AbstractSpacedRepGen<content, timing, settings>
 
         var cardNewState = this.updateCard(st.settings, card, result);
 
-        if (this.cardIsNew(cardState)) {
+        if (st.studying == SpacedRepStudying.NewCards) {
             if (!st.newQueue.includes(cardData.guid)) {
                 st.newQueue.push(cardData.guid);
             }
-            if (this.cardIsDue(cardNewState)) {
+            if (!this.cardIsNew(cardNewState)) {
                 st.newQueue = st.newQueue.filter((i) => i != cardData.guid);
             }
-            if (st.studying == SpacedRepStudying.NewCards) {
-                var maxNewQueueSize = Math.min(st.newQueueSize, this.getNew(st).length);
-                st.newQueue = st.newQueue.slice(0, st.newQueueSize);
-                st.newIndex += 1;
-                if (st.newIndex >= maxNewQueueSize) {
-                    st.newIndex = 0;
-                }
-            } 
+            var maxNewQueueSize = Math.min(st.newQueueSize, this.getNew(st).length);
+            st.newQueue = st.newQueue.slice(0, st.newQueueSize);
+            st.newIndex += 1;
+            if (st.newIndex >= maxNewQueueSize) {
+                st.newIndex = 0;
+                st.newQueue = st.newQueue.sort((a, b) => 0.5 - Math.random());
+            }
         } 
 
         st.cards[cardGuid] = cardNewState;    
