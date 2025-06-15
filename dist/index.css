@@ -1,3 +1,8 @@
+body {
+    overflow-x: hidden;
+    overflow-y: hidden;
+}
+
 button {
     margin: 2px;
     padding: 3px;
@@ -117,11 +122,12 @@ button {
     left: 0;
     padding: 20px;
     display: none;
+    overflow-x: hidden;
+    overflow-y: hidden;
 }
 
 #flashcard-decklist-overlay {
     display: none;
-    overflow-y: scroll;
 }
 
 .menu-overlay {
