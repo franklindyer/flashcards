@@ -49,7 +49,12 @@ function generateDecklistMenu(decklist, onfinish) {
     addRemoteBtn.textContent = "Add external deck";
     addRemoteBtn.onclick = (e) => {
         var deckslug = prompt("Enter the ID of the deck you would like to download.") || "";
-        (0, synchronization_1.syncDownloadDeck)(deckslug, (s) => { console.log(s); (0, flashcard_deck_1.setDeck)(deckslug, s, () => { }); });
+        (0, synchronization_1.syncDownloadDeck)(deckslug, (s) => {
+            console.log(s);
+            (0, flashcard_deck_1.setDeck)(deckslug, s, () => {
+                generateDecklistMenu(decklist, onfinish);
+            });
+        });
     };
     decklistEditor.appendChild(addRemoteBtn);
     Object.keys(decklist).sort();

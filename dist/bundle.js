@@ -1365,7 +1365,12 @@ function generateDecklistMenu(decklist, onfinish) {
     addRemoteBtn.textContent = "Add external deck";
     addRemoteBtn.onclick = (e) => {
         var deckslug = prompt("Enter the ID of the deck you would like to download.") || "";
-        (0, synchronization_1.syncDownloadDeck)(deckslug, (s) => { console.log(s); (0, flashcard_deck_1.setDeck)(deckslug, s, () => { }); });
+        (0, synchronization_1.syncDownloadDeck)(deckslug, (s) => {
+            console.log(s);
+            (0, flashcard_deck_1.setDeck)(deckslug, s, () => {
+                generateDecklistMenu(decklist, onfinish);
+            });
+        });
     };
     decklistEditor.appendChild(addRemoteBtn);
     Object.keys(decklist).sort();
@@ -2189,20 +2194,15 @@ var SpacedRepStudying;
     SpacedRepStudying[SpacedRepStudying["DueCards"] = 2] = "DueCards";
     SpacedRepStudying[SpacedRepStudying["RandomCards"] = 3] = "RandomCards";
 })(SpacedRepStudying || (SpacedRepStudying = {}));
-var SpacedRepOrder;
-(function (SpacedRepOrder) {
-    SpacedRepOrder[SpacedRepOrder["RandomOrder"] = 1] = "RandomOrder";
-    SpacedRepOrder[SpacedRepOrder["ReviewFirst"] = 2] = "ReviewFirst";
-    SpacedRepOrder[SpacedRepOrder["NewFirst"] = 3] = "NewFirst";
-})(SpacedRepOrder || (SpacedRepOrder = {}));
 const defaultSpacedRepSettings = {
     initialHours: 6,
     correctFactor: 1.6,
     incorrectFactor: 0.5,
     reviewCeilingDays: 365,
     studying: SpacedRepStudying.NewCards,
+    newQueueSize: 10,
+    shuffleNewQueue: true,
     probReview: 0.1,
-    order: SpacedRepOrder.RandomOrder,
     readCorrectAnswers: false,
     speechSettings: (0, speech_1.defaultSpeechSettings)(),
     filterSettings: text_filters_1.defaultTextFilterSettings,
@@ -2232,6 +2232,8 @@ const defaultSpacedRepState = {
         { guid: (0, utils_1.guidGenerator)(), prompt: "I have {r0:an apple,a banana,an orange}", answers: ["tengo {r0:una manzana,un plátano,una naranja}"], tags: [] },
         { guid: (0, utils_1.guidGenerator)(), prompt: "{r0:I want,you want,he wants} {r1:an apple,a banana,an orange}", answers: ["{r0:quiero,quieres,quiere} {r1:una manzana,un plátano,una naranja}"], tags: [] },
     ]),
+    newQueue: [],
+    newIndex: 0,
     settings: defaultSpacedRepSettings,
     history: []
 };
@@ -2269,18 +2271,24 @@ function getReview(st) {
 }
 function pickSpacedRepCard(st) {
     var inds = Object.keys(st.cards);
-    var newInds = getNew(st);
+    var newInds = getNew(st).filter((i) => !st.newQueue.includes(i));
     var dueInds = getDue(st);
     var reviewInds = getReview(st);
     switch (st.settings.studying) {
         case SpacedRepStudying.NewCards:
-            if (newInds.length == 0) {
+            if (newInds.length == 0 && st.newQueue.length == 0) {
                 return { content: undefined, cardsLeft: 0, isReview: false, isPractice: false };
             }
-            var newInd = newInds[Math.floor(Math.random() * newInds.length)];
+            var newInd;
+            if (st.newIndex < st.newQueue.length) {
+                newInd = st.newQueue[st.newIndex];
+            }
+            else {
+                newInd = newInds[Math.floor(Math.random() * newInds.length)];
+            }
             return {
                 content: st.cards[newInd].content,
-                cardsLeft: newInds.length,
+                cardsLeft: newInds.length + st.newQueue.length,
                 isReview: false,
                 isPractice: false
             };
@@ -2341,11 +2349,24 @@ class SpacedRepGen extends flashcard_generator_1.FlashcardGen {
             cardState.timing.streak = 0;
         }
         if (cardState.timing.due === null) {
+            if (!state.newQueue.includes(cardData.content.guid)) {
+                state.newQueue.push(cardData.content.guid);
+            }
             if (cardState.timing.streak >= 3) {
+                state.newQueue = state.newQueue.filter((i) => i != cardData.content.guid);
                 cardState.timing.intervalMinutes = state.settings.initialHours * 60;
                 cardState.timing.due = new Date();
                 cardState.timing.due
                     .setHours(cardState.timing.due.getHours() + cardState.timing.intervalMinutes / 60);
+            }
+            if (state.settings.studying == SpacedRepStudying.NewCards) {
+                var maxNewQueueSize = Math.min(state.settings.newQueueSize, getNew(state).length);
+                state.newQueue = state.newQueue.slice(0, state.settings.newQueueSize);
+                state.newIndex += 1;
+                if (state.newIndex >= maxNewQueueSize) {
+                    state.newIndex = 0;
+                    // state.newQueue = state.newQueue.sort((a, b) => 0.5 - Math.random());
+                }
             }
         }
         else if (correct) {
@@ -2433,12 +2454,20 @@ class SpacedRepGen extends flashcard_generator_1.FlashcardGen {
         }
     }
     repairDeckState(st) {
+        if (st.newQueue == null)
+            st.newQueue = [];
+        if (st.newIndex == null)
+            st.newIndex = 0;
         if (st.settings.practiceMode == null)
             st.settings.practiceMode = false;
         if (st.settings.inactiveTags == null)
             st.settings.inactiveTags = [];
         if (st.settings.filterSettings == null)
             st.settings.filterSettings = text_filters_1.defaultTextFilterSettings;
+        if (st.settings.newQueueSize == null)
+            st.settings.newQueueSize = 10;
+        if (st.settings.shuffleNewQueue == null)
+            st.settings.shuffleNewQueue = true;
         Object.keys(st.cards).map((k) => {
             var c = st.cards[k];
             if (c.content.tags == null)
@@ -2469,6 +2498,9 @@ function spacedRepMenu(st) {
     var conf = st.settings;
     var studyingNewEditor = (0, editor_1.radioEditor)(st.settings.studying, [SpacedRepStudying.NewCards, SpacedRepStudying.DueCards, SpacedRepStudying.RandomCards], ["Study new cards", "Study due cards", "Practice random cards"]);
     var initHoursEditor = (0, editor_1.scrollNumberEditor)("Initial interval (hours): ", conf.initialHours, 1, 240, 1);
+    var newQueueShuffleEditor = (0, editor_1.boolEditor)("Shuffle new cards while studying: ", conf.shuffleNewQueue);
+    var newQueueSizeEditor = (0, editor_1.scrollNumberEditor)("Max new cards to study at once: ", conf.newQueueSize, 1, 100, 1);
+    newQueueSizeEditor.element.appendChild(newQueueShuffleEditor.element);
     var reviewsEditor = (0, editor_1.scrollNumberEditor)("Probability of getting review cards: ", conf.probReview, 0, 0.5, 0.01);
     var correctFactor = (0, editor_1.scrollNumberEditor)("Correct factor: ", conf.correctFactor, 1, 10, 0.1);
     var incorrectFactor = (0, editor_1.scrollNumberEditor)("Incorrect factor: ", conf.incorrectFactor, 0, 1, 0.01);
@@ -2489,6 +2521,7 @@ function spacedRepMenu(st) {
         reviewsEditor.element,
         correctFactor.element,
         incorrectFactor.element,
+        newQueueSizeEditor.element,
         omitTagsCont,
         speechDiv,
         filterEditor.element
@@ -2551,6 +2584,7 @@ function spacedRepMenu(st) {
         initHoursEditor.element,
         correctFactor.element,
         incorrectFactor.element,
+        newQueueSizeEditor.element,
         reviewsEditor.element,
         omitTagsCont,
         speechDiv,
@@ -2568,13 +2602,16 @@ function spacedRepMenu(st) {
                     incorrectFactor: incorrectFactor.menuToState(),
                     studying: studyingNewEditor.menuToState(),
                     reviewCeilingDays: st.settings.reviewCeilingDays,
+                    newQueueSize: newQueueSizeEditor.menuToState(),
+                    shuffleNewQueue: newQueueShuffleEditor.menuToState(),
                     probReview: reviewsEditor.menuToState(),
-                    order: SpacedRepOrder.RandomOrder,
                     readCorrectAnswers: speechCheckbox.menuToState(),
                     speechSettings: speechEditor.menuToState(),
                     filterSettings: filterEditor.menuToState(),
                     inactiveTags: omitTagsEditor.menuToState().split(',')
                 },
+                newQueue: st.newQueue,
+                newIndex: st.newIndex,
                 cards: (0, utils_1.makeDict)(cardsEditor.menuToState(), (c) => c.content.guid),
                 history: st.history
             };
@@ -2727,7 +2764,8 @@ function syncUploadDeck(deck) {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ host: host, key: key, id: deck.slug, data: JSON.stringify(deck) })
-            }).catch(res => badCallback());
+            }).then(res => alert("Deck uploaded successfully."))
+                .catch(res => badCallback());
         }
         catch (e) {
             badCallback();
