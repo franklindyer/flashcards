@@ -8,19 +8,19 @@ import {
     FlashcardResult
 } from "./flashcard-generator"
 
-enum SpacedRepStudying {
+export enum SpacedRepStudying {
     NewCards = 1,
     DueCards,
     RandomCards
 }
 
-type SpacedRepCard<content, timing> = {
+export type SpacedRepCard<content, timing> = {
     guid: string,
     content: content,
     timing: timing
 }
 
-type SpacedRepCardPhysical<content, timing> = {
+export type SpacedRepCardPhysical<content, timing> = {
     data?: SpacedRepCard<content, timing>,
     context: {
         cardsLeft: number,
@@ -28,7 +28,7 @@ type SpacedRepCardPhysical<content, timing> = {
     }
 }
 
-type SpacedRepState<content, timing, settings> = {
+export type SpacedRepState<content, timing, settings> = {
     cards: IDictionary<SpacedRepCard<content, timing>>,
     newIndex: number,
     newQueue: string[],
@@ -49,11 +49,6 @@ export abstract class AbstractSpacedRepGen<content, timing, settings>
         cardData: SpacedRepCardPhysical<content, timing>,
         correct: FlashcardResult
     ): SpacedRepCard<content, timing>;
-    abstract cardTransitionNewToDue(
-        settings: settings,
-        cardData: SpacedRepCardPhysical<content, timing>,
-        correct: FlashcardResult
-    ): boolean;
 
     getNew(st: SpacedRepState<content, timing, settings>): string[] {
         return Object.keys(st.cards).filter((k) => this.cardIsNew(st.cards[k]));
@@ -63,7 +58,7 @@ export abstract class AbstractSpacedRepGen<content, timing, settings>
         return Object.keys(st.cards).filter((k) => this.cardIsDue(st.cards[k]));
     }
 
-    pickSpacedRepCard(st: SpacedRepState<content, timing, settings>): 
+    getNextCard(st: SpacedRepState<content, timing, settings>): 
         SpacedRepCardPhysical<content, timing> {
         var inds = Object.keys(st.cards);
         var newInds = this.getNew(st);

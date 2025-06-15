@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SimpleSpacedRepGen = void 0;
+exports.ExampleSpacedRepGen = void 0;
 const spaced_repetition_general_1 = require("./spaced-repetition-general");
-class SimpleSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGen {
+class ExampleSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGen {
     getGenName() { return "simple-spaced-repetition"; }
     makeEmptyCard() { return null; }
     cardHint(card) { return null; }
@@ -22,4 +22,4 @@ class SimpleSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGe
         return null;
     }
 }
-exports.SimpleSpacedRepGen = SimpleSpacedRepGen;
+exports.ExampleSpacedRepGen = ExampleSpacedRepGen;
