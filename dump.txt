@@ -1,206 +1,31 @@
-
-> web-flashcards@1.0.0 develop
-> webpack-dev-server
-
-assets by status 265 KiB [cached] 1 asset
-runtime modules 27.4 KiB 13 modules
-orphan modules 32.5 KiB [orphan] 4 modules
-cacheable modules 215 KiB
-  modules by path ./src/*.ts 69 KiB
-    ./src/index.ts 97 bytes [built] [code generated]
-    ./src/setup.ts 593 bytes [built] [code generated]
-    ./src/flashcard-deck.ts 4.73 KiB [built] [code generated]
-    ./src/fs.ts 1.21 KiB [built] [code generated]
-    + 17 modules
-  modules by path ./node_modules/ 146 KiB
-    modules by path ./node_modules/webpack-dev-server/client/ 81.9 KiB 4 modules
-    modules by path ./node_modules/webpack/hot/*.js 5.17 KiB 4 modules
-    modules by path ./node_modules/uuid-by-string/src/*.js 5.86 KiB 2 modules
-    + 4 modules
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decklist.ts
-./src/decklist.ts 76:82-83
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decklist.ts(76,83)
-      TS1005: ';' expected.
- @ ./src/setup.ts 4:19-40
- @ ./src/index.ts 3:0-18
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decklist.ts
-./src/decklist.ts 166:0-1
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decklist.ts(166,1)
-      TS1128: Declaration or statement expected.
- @ ./src/setup.ts 4:19-40
- @ ./src/index.ts 3:0-18
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decklist.ts
-./src/decklist.ts 78:4-18
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decklist.ts(78,5)
-      TS2304: Cannot find name 'decklistEditor'.
- @ ./src/setup.ts 4:19-40
- @ ./src/index.ts 3:0-18
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decklist.ts
-./src/decklist.ts 78:31-43
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decklist.ts(78,32)
-      TS2304: Cannot find name 'addRemoteBtn'.
- @ ./src/setup.ts 4:19-40
- @ ./src/index.ts 3:0-18
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decklist.ts
-./src/decklist.ts 80:16-24
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decklist.ts(80,17)
-      TS2304: Cannot find name 'decklist'.
- @ ./src/setup.ts 4:19-40
- @ ./src/index.ts 3:0-18
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decklist.ts
-./src/decklist.ts 81:18-26
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decklist.ts(81,19)
-      TS2304: Cannot find name 'decklist'.
- @ ./src/setup.ts 4:19-40
- @ ./src/index.ts 3:0-18
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decklist.ts
-./src/decklist.ts 83:19-27
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decklist.ts(83,20)
-      TS2304: Cannot find name 'decklist'.
- @ ./src/setup.ts 4:19-40
- @ ./src/index.ts 3:0-18
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decklist.ts
-./src/decklist.ts 85:32-40
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decklist.ts(85,33)
-      TS2304: Cannot find name 'decklist'.
- @ ./src/setup.ts 4:19-40
- @ ./src/index.ts 3:0-18
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decklist.ts
-./src/decklist.ts 88:12-20
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decklist.ts(88,13)
-      TS2304: Cannot find name 'decklist'.
- @ ./src/setup.ts 4:19-40
- @ ./src/index.ts 3:0-18
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decklist.ts
-./src/decklist.ts 89:44-52
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decklist.ts(89,45)
-      TS2304: Cannot find name 'decklist'.
- @ ./src/setup.ts 4:19-40
- @ ./src/index.ts 3:0-18
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decklist.ts
-./src/decklist.ts 92:12-27
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decklist.ts(92,13)
-      TS2304: Cannot find name 'decklistOverlay'.
- @ ./src/setup.ts 4:19-40
- @ ./src/index.ts 3:0-18
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decklist.ts
-./src/decklist.ts 93:12-20
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decklist.ts(93,13)
-      TS2304: Cannot find name 'onfinish'.
- @ ./src/setup.ts 4:19-40
- @ ./src/index.ts 3:0-18
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decklist.ts
-./src/decklist.ts 93:21-29
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decklist.ts(93,22)
-      TS2304: Cannot find name 'decklist'.
- @ ./src/setup.ts 4:19-40
- @ ./src/index.ts 3:0-18
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decklist.ts
-./src/decklist.ts 105:16-24
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decklist.ts(105,17)
-      TS2304: Cannot find name 'decklist'.
- @ ./src/setup.ts 4:19-40
- @ ./src/index.ts 3:0-18
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decklist.ts
-./src/decklist.ts 107:37-45
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decklist.ts(107,38)
-      TS2304: Cannot find name 'decklist'.
- @ ./src/setup.ts 4:19-40
- @ ./src/index.ts 3:0-18
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decklist.ts
-./src/decklist.ts 107:47-55
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decklist.ts(107,48)
-      TS2304: Cannot find name 'onfinish'.
- @ ./src/setup.ts 4:19-40
- @ ./src/index.ts 3:0-18
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decklist.ts
-./src/decklist.ts 112:11-19
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decklist.ts(112,12)
-      TS2304: Cannot find name 'decklist'.
- @ ./src/setup.ts 4:19-40
- @ ./src/index.ts 3:0-18
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decklist.ts
-./src/decklist.ts 124:33-41
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decklist.ts(124,34)
-      TS2304: Cannot find name 'decklist'.
- @ ./src/setup.ts 4:19-40
- @ ./src/index.ts 3:0-18
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decklist.ts
-./src/decklist.ts 124:43-51
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decklist.ts(124,44)
-      TS2304: Cannot find name 'onfinish'.
- @ ./src/setup.ts 4:19-40
- @ ./src/index.ts 3:0-18
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decklist.ts
-./src/decklist.ts 125:11-19
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decklist.ts(125,12)
-      TS2304: Cannot find name 'decklist'.
- @ ./src/setup.ts 4:19-40
- @ ./src/index.ts 3:0-18
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decklist.ts
-./src/decklist.ts 134:12-20
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decklist.ts(134,13)
-      TS2304: Cannot find name 'decklist'.
- @ ./src/setup.ts 4:19-40
- @ ./src/index.ts 3:0-18
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decklist.ts
-./src/decklist.ts 137:33-41
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decklist.ts(137,34)
-      TS2304: Cannot find name 'decklist'.
- @ ./src/setup.ts 4:19-40
- @ ./src/index.ts 3:0-18
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decklist.ts
-./src/decklist.ts 137:43-51
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decklist.ts(137,44)
-      TS2304: Cannot find name 'onfinish'.
- @ ./src/setup.ts 4:19-40
- @ ./src/index.ts 3:0-18
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decklist.ts
-./src/decklist.ts 138:11-19
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decklist.ts(138,12)
-      TS2304: Cannot find name 'decklist'.
- @ ./src/setup.ts 4:19-40
- @ ./src/index.ts 3:0-18
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decklist.ts
-./src/decklist.ts 147:11-19
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decklist.ts(147,12)
-      TS2304: Cannot find name 'decklist'.
- @ ./src/setup.ts 4:19-40
- @ ./src/index.ts 3:0-18
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decklist.ts
-./src/decklist.ts 163:8-22
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decklist.ts(163,9)
-      TS2304: Cannot find name 'decklistEditor'.
- @ ./src/setup.ts 4:19-40
- @ ./src/index.ts 3:0-18
-
-26 errors have detailed information that is not shown.
-Use 'stats.errorDetails: true' resp. '--stats-error-details' to show it.
-
-webpack 5.97.1 compiled with 26 errors in 857 ms
+rm -rf dist/*
+mkdir dist/docs
+./build_docs
+/Users/franklindyer/Documents/dev/snippets/web-flashcards
+help
+about
+tsc --target es2022
+cp src/*.html dist/
+cp src/*.css dist/
+cp src/*.png dist/
+cp src/*.txt dist/
+mkdir dist/data
+cp data/* dist/data/
+npx webpack
+asset bundle.js 116 KiB [emitted] (name: main)
+runtime modules 251 bytes 2 modules
+modules by path ./src/*.ts 71.3 KiB
+  ./src/index.ts 97 bytes [built] [code generated]
+  ./src/setup.ts 593 bytes [built] [code generated]
+  ./src/flashcard-deck.ts 4.92 KiB [built] [code generated]
+  ./src/fs.ts 1.21 KiB [built] [code generated]
+  ./src/decklist.ts 6.48 KiB [built] [code generated]
+  ./src/basic-template.ts 677 bytes [built] [code generated]
+  + 15 modules
+modules by path ./node_modules/ 40.4 KiB
+  modules by path ./node_modules/uuid-by-string/src/*.js 5.86 KiB
+    ./node_modules/uuid-by-string/src/index.js 1.49 KiB [built] [code generated]
+    ./node_modules/uuid-by-string/src/lib.js 4.37 KiB [built] [code generated]
+  ./node_modules/js-md5/src/md5.js 22.7 KiB [built] [code generated]
+  ./node_modules/js-sha1/src/sha1.js 11.9 KiB [built] [code generated]
+webpack 5.97.1 compiled successfully in 868 ms
