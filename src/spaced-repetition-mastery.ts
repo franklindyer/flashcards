@@ -182,6 +182,7 @@ export class MasterSpacedRepGen
                 cardData.timing.intervalMinutes = factor * cardData.timing.intervalMinutes;
             }
         }
+        cardData.timing.intervalMinutes = Math.max(cardData.timing.intervalMinutes, settings.initialHours * 60);
 
         // Reschedule card if it came due
         if (!isNew) {
