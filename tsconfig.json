@@ -11,7 +11,7 @@
   "outDir": "dist",
   "rootDir": "src",
   "module": "commonjs",
-  "types": ["node"],
+  "types": ["node", "jest"],
   "resolveJsonModule": true,
   "moduleResolution": "node",
   "paths": {

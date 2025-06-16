@@ -98,7 +98,7 @@ const defaultMasterSRState: SpacedRepState<SRMasterContent, SRMasterTiming, SRMa
         { prompt: "the dog", answers: ["le chien"], tags: [] },
         { prompt: "the man", answers: ["l'homme"], tags: [] },
         { prompt: "the woman", answers: ["la dame"], tags: [] }
-    ], () => { return { streak: 0, intervalMinutes: 0, due: undefined, numCorrect: 0, numIncorrect: 0, mastery: 0.5 }; }),
+    ], () => { return { streak: 0, intervalMinutes: 0, due: undefined, numCorrect: 0, numIncorrect: 0, mastery: 0 }; }),
     newIndex: 0,
     newQueue: [],
     newQueueSize: 10,
@@ -173,6 +173,9 @@ export class MasterSpacedRepGen
             } else if (!isNew) {
                 var factor = settings.correctMinFactor + (settings.correctMaxFactor - settings.correctMinFactor)*mastery;
                 cardData.timing.intervalMinutes = factor * cardData.timing.intervalMinutes;
+                // Reschedule card if it came due and was correct
+                cardData.timing.due = new Date();
+                cardData.timing.due!.setHours(cardData.timing.due!.getHours() + cardData.timing.intervalMinutes/60);
             }
         } else if (correct == FlashcardResult.Incorrect) {
             cardData.timing.streak = 0;
@@ -183,12 +186,6 @@ export class MasterSpacedRepGen
             }
         }
         cardData.timing.intervalMinutes = Math.max(cardData.timing.intervalMinutes, settings.initialHours * 60);
-
-        // Reschedule card if it came due
-        if (!isNew) {
-            cardData.timing.due = new Date();
-            cardData.timing.due!.setHours(cardData.timing.due!.getHours() + cardData.timing.intervalMinutes/60);
-        }
 
         return cardData;
     }

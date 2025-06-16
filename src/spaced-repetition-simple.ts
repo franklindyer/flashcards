@@ -137,6 +137,9 @@ export class SimpleSpacedRepGen
                 cardData.timing.due!.setHours(cardData.timing.due!.getHours() + cardData.timing.intervalMinutes/60);
             } else if (!isNew) {
                 cardData.timing.intervalMinutes = settings.correctFactor * cardData.timing.intervalMinutes;
+                // Reschedule card if it came due
+                cardData.timing.due = new Date();
+                cardData.timing.due!.setHours(cardData.timing.due!.getHours() + cardData.timing.intervalMinutes/60);
             }
         } else if (correct == FlashcardResult.Incorrect) {
             cardData.timing.streak = 0;
@@ -145,12 +148,6 @@ export class SimpleSpacedRepGen
             }
         }
         cardData.timing.intervalMinutes = Math.max(cardData.timing.intervalMinutes, settings.initialHours * 60);
-
-        // Reschedule card if it came due
-        if (!isNew) {
-            cardData.timing.due = new Date();
-            cardData.timing.due!.setHours(cardData.timing.due!.getHours() + cardData.timing.intervalMinutes/60);
-        }
 
         return cardData;
     }

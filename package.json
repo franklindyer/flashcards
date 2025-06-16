@@ -43,9 +43,12 @@
     "uuid-by-string": "^4.0.0"
   },
   "devDependencies": {
+    "@types/jest": "^30.0.0",
     "@types/node": "^22.10.2",
     "@types/plotly.js": "^2.35.1",
+    "jest": "^30.0.0",
     "json-loader": "^0.5.7",
+    "ts-jest": "^29.4.0",
     "ts-loader": "^9.5.1",
     "ts-node": "^10.9.2",
     "webpack": "^5.97.1",
