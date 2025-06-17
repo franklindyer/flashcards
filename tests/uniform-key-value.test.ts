@@ -6,7 +6,7 @@ import {
     KVFlashcardGen
 } from "../src/uniform-key-value"
 
-function makeKvTestState(): KVFlashcardState {
+function makeKVTestState(): KVFlashcardState {
     return {
         deck: [
             ["a", "a"],
@@ -20,7 +20,7 @@ function makeKvTestState(): KVFlashcardState {
 
 describe('uniform key-value generator unit tests', () => {
     test('can generate cards', () => {
-        var st = makeKvTestState();
+        var st = makeKVTestState();
         var fgen = new KVFlashcardGen();
         var i = 0;
         for (i = 0; i < 20; i++) {
@@ -30,7 +30,7 @@ describe('uniform key-value generator unit tests', () => {
     });
 
     test('generated cards appear uniformly distributed', () => {
-        var st = makeKvTestState();
+        var st = makeKVTestState();
         var fgen = new KVFlashcardGen();
         var results = Array(1000).fill(0).map((_) => fgen.getNextCard(st)[0]);
 
@@ -44,8 +44,8 @@ describe('uniform key-value generator unit tests', () => {
     });
 
     test('deck state does not change', () => {
-        var st = makeKvTestState();
-        var st0 = makeKvTestState();
+        var st = makeKVTestState();
+        var st0 = makeKVTestState();
         var fgen = new KVFlashcardGen();
 
         var i = 0;
