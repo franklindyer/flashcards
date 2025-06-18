@@ -34,6 +34,21 @@ function makeSimpleSRGenerator(): SimpleSpacedRepTestGen {
     return fgen;
 }
 
+function studyAllNewCards(
+    fgen: SimpleSpacedRepTestGen,
+    st: SpacedRepState<SRSimpleContent, SRSimpleTiming, SRSimpleSettings>):
+    SpacedRepState<SRSimpleContent, SRSimpleTiming, SRSimpleSettings> {
+    var prevStudying = st.studying;
+    st.studying = SpacedRepStudying.NewCards;
+    var x = fgen.getNextCard(st);
+    while (x.data !== undefined) {
+        st = fgen.updateState(st, x, FlashcardResult.Correct);
+        x = fgen.getNextCard(st);
+    }
+    st.studying = prevStudying;
+    return st; 
+}
+
 const cardPairList = [
     ["a", "a"],
     ["b", "b"],
@@ -89,14 +104,9 @@ describe('simple spaced repetition generator unit tests', () => {
         var st = makeSimpleSRTestState(cardPairList);
         st.studying = SpacedRepStudying.NewCards; 
         var fgen = makeSimpleSRGenerator(); 
-        var i = 0;
-        for (i = 0; i < 12; i++) {
-            var x = fgen.getNextCard(st);
-            expect(x.data).toBeDefined();
-            fgen.updateState(st, x, FlashcardResult.Correct);
-        }
+        st = studyAllNewCards(fgen, st);
+
         st.studying = SpacedRepStudying.DueCards;
-        
         var dt = new Date();
         dt.setTime(fgen.getDate().getTime() + (st.settings.initialHours * 60*60*1000));
         fgen.setDate(dt);
@@ -104,5 +114,24 @@ describe('simple spaced repetition generator unit tests', () => {
         expect(x.data).toBeDefined();
     });
 
+    test('due cards can be studied each day for many days', () => {
+        var st = makeSimpleSRTestState(cardPairList);
+        st.studying = SpacedRepStudying.NewCards;
+        var fgen = makeSimpleSRGenerator();
+        st = studyAllNewCards(fgen, st);
+       
+        var i = 0; 
+        st.studying = SpacedRepStudying.DueCards;
+        for (i = 0; i < 100; i++) {
+            var x = fgen.getNextCard(st);
+            while (x.data !== undefined) {
+                st = fgen.updateState(st, x, FlashcardResult.Correct);
+                x = fgen.getNextCard(st);
+            }
+            var dt = new Date();
+            dt.setTime(fgen.getDate().getTime() + 24*60*60*1000);
+            fgen.setDate(dt);
+        }
+    });
 });
 
