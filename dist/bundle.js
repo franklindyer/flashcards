@@ -1391,7 +1391,7 @@ function generateDecklistMenu(decklist, onfinish) {
         })(slug);
         var deckEditBtn = document.createElement("button");
         deckEditBtn.title = "Edit deck";
-        deckEditBtn.innerHTML = "<img src='/edit.png'/>";
+        deckEditBtn.innerHTML = "<img src='/static/images/edit.png'/>";
         deckEditBtn.classList.add("deck-editor-button");
         deckEditBtn.onclick = ((dk, deckDiv) => (e) => {
             var ed = generateDeckNameEditor(dk);
@@ -1410,7 +1410,7 @@ function generateDecklistMenu(decklist, onfinish) {
         var deckDeleteBtn = document.createElement("button");
         deckDeleteBtn.title = "Delete deck";
         deckDeleteBtn.classList.add("deck-editor-button");
-        deckDeleteBtn.innerHTML = "<img src='/trash.png'/>";
+        deckDeleteBtn.innerHTML = "<img src='/static/images/trash.png'/>";
         deckDeleteBtn.onclick = ((dk) => (e) => {
             var confirmation = confirm(`Are you sure you want to delete "${dk.name}"?`);
             if (confirmation) {
@@ -1424,7 +1424,7 @@ function generateDecklistMenu(decklist, onfinish) {
         var deckCloneBtn = document.createElement("button");
         deckCloneBtn.title = "Clone deck";
         deckCloneBtn.classList.add("deck-editor-button");
-        deckCloneBtn.innerHTML = "<img src='/copy.png'/>";
+        deckCloneBtn.innerHTML = "<img src='/static/images/copy.png'/>";
         deckCloneBtn.onclick = ((dk) => (e) => {
             var guid = (0, utils_1.guidGenerator)();
             var deckClone = JSON.parse(JSON.stringify(dk));
@@ -1438,7 +1438,7 @@ function generateDecklistMenu(decklist, onfinish) {
         var deckUploadBtn = document.createElement("button");
         deckUploadBtn.title = "Upload deck to server";
         deckUploadBtn.classList.add("deck-editor-button");
-        deckUploadBtn.innerHTML = "<img src='/upcloud.png'/>";
+        deckUploadBtn.innerHTML = "<img src='/static/images/upcloud.png'/>";
         deckUploadBtn.onclick = ((dk) => (e) => {
             (0, synchronization_1.syncUploadDeck)(dk);
             e.cancelBubble = true;
@@ -1448,7 +1448,7 @@ function generateDecklistMenu(decklist, onfinish) {
         var deckDownloadBtn = document.createElement("button");
         deckDownloadBtn.title = "Download deck from server";
         deckDownloadBtn.classList.add("deck-editor-button");
-        deckDownloadBtn.innerHTML = "<img src='/downcloud.png'/>";
+        deckDownloadBtn.innerHTML = "<img src='/static/images/downcloud.png'/>";
         deckDownloadBtn.onclick = ((k) => (e) => {
             (0, synchronization_1.syncDownloadDeck)(k, (s) => { (0, flashcard_deck_1.setDeck)(k, s, () => { }); });
             e.cancelBubble = true;
@@ -3659,7 +3659,7 @@ class TranscriptFlashcardTemplate extends flashcard_template_1.FlashcardTemplate
     render(data) {
         var container = document.createElement("div");
         var playBtn = document.createElement("img");
-        playBtn.src = "/speaker.png";
+        playBtn.src = "/static/images/speaker.png";
         playBtn.classList.add("transcription-audio-button");
         playBtn.onclick = (e) => {
             var ss = data.speechSettings;
