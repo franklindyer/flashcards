@@ -11,7 +11,7 @@ import {
 import {
     SimpleSpacedRepGen,
     SRSimpleContent,
-    SRSimpleTiming,
+    SRSimpleAuxData,
     SRSimpleSettings,
     defaultSimpleSRState
 } from "../src/spaced-repetition-simple"
@@ -91,7 +91,7 @@ export function makeSharedSRTests<content, timing, settings> (
             expect(x.data).toBeUndefined();
         });
 
-        /* test('new cards come due after enough hours', () => {
+        test('new cards come due after enough hours', () => {
             var st = mkState(cardPairList);
             st.studying = SpacedRepStudying.NewCards; 
             var fgen = mkGen(); 
@@ -99,11 +99,11 @@ export function makeSharedSRTests<content, timing, settings> (
 
             st.studying = SpacedRepStudying.DueCards;
             var dt = new Date();
-            dt.setTime(fgen.getDate().getTime() + (st.settings.initialHours * 60*60*1000));
+            dt.setTime(fgen.getDate().getTime() + 10000 * 60*60*1000);
             fgen.setDate(dt);
             var x = fgen.getNextCard(st);
             expect(x.data).toBeDefined();
-        }); */
+        });
 
         test('due cards can be studied each day for many days', () => {
             var st = mkState(cardPairList);
@@ -125,7 +125,7 @@ export function makeSharedSRTests<content, timing, settings> (
             }
         });
 
-        /* test('number of due cards decreases by 1 precisely when card is marked correct', () => {
+        test('number of due cards decreases by 1 precisely when card is marked correct', () => {
             var st = mkState(Array.from(Array(100).keys()).map((x) => [''+x, ''+x]));
             var fgen = mkGen();
             st = studyAllNewCards(fgen, st);
@@ -141,7 +141,7 @@ export function makeSharedSRTests<content, timing, settings> (
                 var currCardsLeft = x.context.cardsLeft;
                 expect(correct).toBe(currCardsLeft < prevCardsLeft);
             }
-        }); */
+        });
     });
 }
 
