@@ -133,5 +133,23 @@ describe('simple spaced repetition generator unit tests', () => {
             fgen.setDate(dt);
         }
     });
+
+    test('number of due cards decreases by 1 precisely when card is marked correct', () => {
+        var st = makeSimpleSRTestState(Array.from(Array(100).keys()).map((x) => [''+x, ''+x]));
+        var fgen = makeSimpleSRGenerator();
+        st = studyAllNewCards(fgen, st);
+
+        var i = 0;
+        st.studying = SpacedRepStudying.DueCards;
+        var x = fgen.getNextCard(st);
+        while (x.data !== undefined) {
+            var prevCardsLeft = x.context.cardsLeft;
+            var correct = Math.random() < 0.5;
+            st = fgen.updateState(st, x, correct ? FlashcardResult.Correct : FlashcardResult.Incorrect);
+            x = fgen.getNextCard(st);
+            var currCardsLeft = x.context.cardsLeft;
+            expect(correct).toBe(currCardsLeft < prevCardsLeft);
+        }
+    });
 });
 
