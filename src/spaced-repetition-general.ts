@@ -53,8 +53,10 @@ export function makeSpacedRepCardDict<content, timing>(
 export abstract class AbstractSpacedRepGen<content, timing, settings>
     extends FlashcardGen<SpacedRepState<content, timing, settings>, SpacedRepCardPhysical<content, timing>> {
 
-    // For unit testing
     getDate: () => Date = () => new Date();
+    
+    // For unit testing
+    setDate(newDt: Date) { this.getDate = () => newDt; } 
 
     abstract cardIsDue(card: SpacedRepCard<content, timing>): boolean;
     abstract cardIsNew(card: SpacedRepCard<content, timing>): boolean;

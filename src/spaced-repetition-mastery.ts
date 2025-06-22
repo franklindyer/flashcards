@@ -93,7 +93,7 @@ const defaultMasterSRSettings = {
     filterSettings: defaultTextFilterSettings
 };
 
-const defaultMasterSRState: SpacedRepState<SRMasterContent, SRMasterTiming, SRMasterSettings> = {
+export const defaultMasterSRState: SpacedRepState<SRMasterContent, SRMasterTiming, SRMasterSettings> = {
     cards: makeSpacedRepCardDict([
         { prompt: "the dog", answers: ["le chien"], tags: [] },
         { prompt: "the man", answers: ["l'homme"], tags: [] },
