@@ -4,10 +4,10 @@ import {
     optionsEditor
 } from "./editor"
 
-export const gSynth = window.speechSynthesis;
+export const gSynth = () => { return window.speechSynthesis; };
 
 function getVoice(voiceName: string): SpeechSynthesisVoice {
-    var voices = gSynth.getVoices();
+    var voices = gSynth().getVoices();
     for (var i in voices) {
         var voice = voices[i];
         if (voice.name == voiceName) {
@@ -29,7 +29,7 @@ export function utter(
     utterThis.pitch = pitch;
     utterThis.onend = callback;
     // console.log(`Speaking "${txt}"...`);
-    gSynth.speak(utterThis);
+    gSynth().speak(utterThis);
 }
 
 export type SpeechSettings = {
@@ -39,17 +39,25 @@ export type SpeechSettings = {
 }
 
 export function defaultSpeechSettings() {
-    var voices = gSynth.getVoices();
-    return {
-        voice: voices.length > 0 ? voices[0].name : "",
-        rate: 1.0,
-        pitch: 1.0
-    };
+    try {
+        var voices = gSynth().getVoices();
+        return {
+            voice: voices.length > 0 ? voices[0].name : "",
+            rate: 1.0,
+            pitch: 1.0
+        };
+    } catch (e) {
+        return {
+            voice: "",
+            rate: 1.0,
+            pitch: 1.0
+        }
+    }
 }
 defaultSpeechSettings();
 
 export function speechSettingsEditor(ss: SpeechSettings): StateEditor<SpeechSettings> {
-    var voices = gSynth.getVoices().map((v) => v.name);
+    var voices = gSynth().getVoices().map((v) => v.name);
     var voiceEditor = optionsEditor(ss.voice, voices, (v) => `${getVoice(v).name} (${getVoice(v).lang})`);
     var rateEditor = scrollNumberEditor("Speech rate: ", ss.rate, 0.5, 2.0, 0.05);
     var pitchEditor = scrollNumberEditor("Speech pitch: ", ss.pitch, 0, 2, 0.05);

@@ -44,19 +44,19 @@ import {
     registerDeckType
 } from "./flashcard-deck"
 
-type SRSimpleContent = {
+export type SRSimpleContent = {
     prompt: string,
     answers: string[],
     tags: string[]
 }
 
-type SRSimpleTiming = {
+export type SRSimpleTiming = {
     streak: number,
     intervalMinutes: number,
     due?: Date
 }
 
-type SRSimpleSettings = {
+export type SRSimpleSettings = {
     initialHours: number,
     correctFactor: number,
     incorrectFactor: number,
@@ -66,7 +66,7 @@ type SRSimpleSettings = {
     filterSettings: TextFilterSettings
 }
 
-const defaultSimpleSRSettings = {
+export const defaultSimpleSRSettings = {
     initialHours: 6,
     correctFactor: 1.6,
     incorrectFactor: 0.5,
@@ -76,7 +76,7 @@ const defaultSimpleSRSettings = {
     filterSettings: defaultTextFilterSettings
 };
 
-const defaultSimpleSRState: SpacedRepState<SRSimpleContent, SRSimpleTiming, SRSimpleSettings> = {
+export const defaultSimpleSRState: SpacedRepState<SRSimpleContent, SRSimpleTiming, SRSimpleSettings> = {
     cards: makeSpacedRepCardDict([
         { prompt: "the dog", answers: ["le chien"], tags: [] },
         { prompt: "the man", answers: ["l'homme"], tags: [] },
@@ -89,7 +89,7 @@ const defaultSimpleSRState: SpacedRepState<SRSimpleContent, SRSimpleTiming, SRSi
     settings: defaultSimpleSRSettings
 };
 
-function makeEmptyCard(): SpacedRepCard<SRSimpleContent, SRSimpleTiming> { 
+export function makeEmptyCard(): SpacedRepCard<SRSimpleContent, SRSimpleTiming> { 
     return {
         guid: guidGenerator(),
         content: {
@@ -111,7 +111,7 @@ export class SimpleSpacedRepGen
     getGenName(): string { return "simple-spaced-repetition"; }
 
     cardIsDue(card: SpacedRepCard<SRSimpleContent, SRSimpleTiming>): boolean {
-        return (card.timing.due != undefined) && (new Date(card.timing.due!) < new Date());
+        return (card.timing.due != undefined) && (new Date(card.timing.due!) < this.getDate());
     }
     
     cardIsNew(card: SpacedRepCard<SRSimpleContent, SRSimpleTiming>): boolean {
@@ -133,10 +133,13 @@ export class SimpleSpacedRepGen
             cardData.timing.streak += 1;
             if (isNew && cardData.timing.streak >= 3) {
                 cardData.timing.intervalMinutes = settings.initialHours * 60;
-                cardData.timing.due = new Date();
+                cardData.timing.due = this.getDate();
                 cardData.timing.due!.setHours(cardData.timing.due!.getHours() + cardData.timing.intervalMinutes/60);
             } else if (!isNew) {
                 cardData.timing.intervalMinutes = settings.correctFactor * cardData.timing.intervalMinutes;
+                // Reschedule card if it came due
+                cardData.timing.due = this.getDate();
+                cardData.timing.due!.setHours(cardData.timing.due!.getHours() + cardData.timing.intervalMinutes/60);
             }
         } else if (correct == FlashcardResult.Incorrect) {
             cardData.timing.streak = 0;
@@ -144,12 +147,7 @@ export class SimpleSpacedRepGen
                 cardData.timing.intervalMinutes = settings.incorrectFactor * cardData.timing.intervalMinutes;
             }
         }
-
-        // Reschedule card if it came due
-        if (!isNew) {
-            cardData.timing.due = new Date();
-            cardData.timing.due!.setHours(cardData.timing.due!.getHours() + cardData.timing.intervalMinutes/60);
-        }
+        cardData.timing.intervalMinutes = Math.max(cardData.timing.intervalMinutes, settings.initialHours * 60);
 
         return cardData;
     }

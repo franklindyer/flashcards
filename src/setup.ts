@@ -14,7 +14,7 @@ import "./cloze-template"
 import "./transcript-template"
 
 import "./fs"
-import "./uniform-fgen";
+import "./uniform-key-value";
 import "./spaced-repetition";
 import "./spaced-repetition-simple";
 import "./spaced-repetition-mastery";

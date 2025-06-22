@@ -26,12 +26,12 @@ import {
     multipleEditors
 } from "./editor"
 
-type KVFlashcardState = {
+export type KVFlashcardState = {
     deck: BasicCardData[],
     history: [string, boolean][]
 }
 
-class KVFlashcardGen extends FlashcardGen<KVFlashcardState, BasicCardData> {
+export class KVFlashcardGen extends FlashcardGen<KVFlashcardState, BasicCardData> {
     getGenName() { return "uniform-key-value"; }
 
     getNextCard(state: KVFlashcardState): BasicCardData {
