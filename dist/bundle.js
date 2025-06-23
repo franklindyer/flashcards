@@ -1815,7 +1815,11 @@ function menuSetup(deckSlug) {
         editorOverlay.style.display = "inline-block";
         editorCont.replaceChildren(editor.element);
         var doneBtn = document.getElementById("flashcard-deck-editor-close");
+        window.onbeforeunload = function () {
+            return "Are you sure you want to leave before saving your deck?";
+        };
         doneBtn.onclick = () => {
+            window.onbeforeunload = () => { };
             editorOverlay.style.display = "none";
             deck.state = editor.menuToState();
             exports.gDeckRegistry[deckSlug].state = deck.state;
@@ -2064,28 +2068,28 @@ exports.getDeckJSON = getDeckJSON;
 exports.getDeckSlugs = getDeckSlugs;
 exports.setDeckJSON = setDeckJSON;
 exports.deleteDeck = deleteDeck;
-const opfsRootP = navigator.storage.getDirectory();
-const deckFolderP = opfsRootP.then((r) => r.getDirectoryHandle("decks", { create: true }));
+const opfsRootP = () => navigator.storage.getDirectory();
+const deckFolderP = () => opfsRootP().then((r) => r.getDirectoryHandle("decks", { create: true }));
 function getDeckJSON(deckSlug) {
-    var deckHandleP = deckFolderP.then((f) => f.getFileHandle(deckSlug));
+    var deckHandleP = deckFolderP().then((f) => f.getFileHandle(deckSlug));
     return deckHandleP
         .then((h) => h.getFile()).then((f) => f.text())
         .catch((e) => { console.log(e); return ""; });
 }
 function getDeckSlugs() {
-    var entriesP = deckFolderP.then((h) => Array.fromAsync(h.entries()));
+    var entriesP = deckFolderP().then((h) => Array.fromAsync(h.entries()));
     var namesP = entriesP.then((es) => es.map((entry) => entry[0]));
     return namesP;
 }
 function setDeckJSON(deckSlug, deckBlob) {
-    var deckHandleP = deckFolderP.then((f) => f.getFileHandle(deckSlug, { create: true }));
+    var deckHandleP = deckFolderP().then((f) => f.getFileHandle(deckSlug, { create: true }));
     var deckWriteableP = deckHandleP.then((h) => h.createWritable());
     return deckWriteableP.then((w) => {
         w.write(deckBlob).then(() => w.close());
     }).catch((e) => console.log(`ERROR WRITING DECK: ${e}`));
 }
 function deleteDeck(deckSlug) {
-    deckFolderP.then((h) => h.removeEntry(deckSlug));
+    deckFolderP().then((h) => h.removeEntry(deckSlug));
 }
 
 
@@ -2162,7 +2166,7 @@ __webpack_require__(193);
 __webpack_require__(292);
 __webpack_require__(127);
 __webpack_require__(633);
-__webpack_require__(365);
+__webpack_require__(18);
 __webpack_require__(314);
 __webpack_require__(601);
 __webpack_require__(114);
@@ -2191,16 +2195,45 @@ var SpacedRepStudying;
     SpacedRepStudying[SpacedRepStudying["DueCards"] = 2] = "DueCards";
     SpacedRepStudying[SpacedRepStudying["RandomCards"] = 3] = "RandomCards";
 })(SpacedRepStudying || (exports.SpacedRepStudying = SpacedRepStudying = {}));
-function makeSpacedRepCardDict(cards, defaultTiming) {
+function makeSpacedRepCardDict(cards, defaultAuxData) {
     var cardDict = {};
     for (var i in cards) {
         var c = cards[i];
         var guid = (0, utils_1.guidGenerator)();
-        cardDict[guid] = { guid: guid, content: c, timing: defaultTiming() };
+        cardDict[guid] = { guid: guid, content: c, due: undefined, intervalMinutes: 0, auxdata: defaultAuxData() };
     }
     return cardDict;
 }
 class AbstractSpacedRepGen extends flashcard_generator_1.FlashcardGen {
+    getDate = () => new Date();
+    // For unit testing
+    setDate(newDt) { this.getDate = () => newDt; }
+    cardIsDue(card) {
+        return (card.due !== undefined && card.due < this.getDate());
+    }
+    ;
+    cardIsNew(card) {
+        return (card.due === undefined);
+    }
+    ;
+    updateCard(card, settings, correct) {
+        var cardData = card.data;
+        if (card.context.isPractice) {
+            return cardData;
+        }
+        var isNew = cardData.due === undefined;
+        var newAuxData = this.updateAuxData(card, settings, correct);
+        cardData.auxdata = newAuxData;
+        card.data = cardData;
+        var newInterval = this.updateInterval(card, settings, correct);
+        cardData.intervalMinutes = newInterval;
+        // Interval > 0 implies the card is no longer new
+        if (newInterval > 0) {
+            cardData.due = this.getDate();
+            cardData.due.setHours(cardData.due.getHours() + cardData.intervalMinutes / 60);
+        }
+        return cardData;
+    }
     getNew(st) {
         return Object.keys(st.cards).filter((k) => this.cardIsNew(st.cards[k]));
     }
@@ -2267,7 +2300,7 @@ class AbstractSpacedRepGen extends flashcard_generator_1.FlashcardGen {
         var correct = (result == flashcard_generator_1.FlashcardResult.Correct);
         var cardGuid = cardData.guid;
         var cardState = st.cards[cardGuid];
-        var cardNewState = this.updateCard(st.settings, card, result);
+        var cardNewState = this.updateCard(card, st.settings, result);
         if (st.studying == SpacedRepStudying.NewCards) {
             if (!st.newQueue.includes(cardData.guid)) {
                 st.newQueue.push(cardData.guid);
@@ -2298,7 +2331,7 @@ exports.AbstractSpacedRepGen = AbstractSpacedRepGen;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.MasterSpacedRepGen = void 0;
+exports.MasterSpacedRepGen = exports.defaultMasterSRState = void 0;
 const utils_1 = __webpack_require__(185);
 const flashcard_1 = __webpack_require__(88);
 const flashcard_generator_1 = __webpack_require__(808);
@@ -2321,12 +2354,12 @@ const defaultMasterSRSettings = {
     speechSettings: (0, speech_1.defaultSpeechSettings)(),
     filterSettings: text_filters_1.defaultTextFilterSettings
 };
-const defaultMasterSRState = {
+exports.defaultMasterSRState = {
     cards: (0, spaced_repetition_general_1.makeSpacedRepCardDict)([
         { prompt: "the dog", answers: ["le chien"], tags: [] },
         { prompt: "the man", answers: ["l'homme"], tags: [] },
         { prompt: "the woman", answers: ["la dame"], tags: [] }
-    ], () => { return { streak: 0, intervalMinutes: 0, due: undefined, numCorrect: 0, numIncorrect: 0, mastery: 0.5 }; }),
+    ], () => { return { streak: 0, intervalMinutes: 0, due: undefined, numCorrect: 0, numIncorrect: 0, mastery: 0 }; }),
     newIndex: 0,
     newQueue: [],
     newQueueSize: 10,
@@ -2341,69 +2374,69 @@ function makeEmptyCard() {
             answers: [""],
             tags: []
         },
-        timing: {
+        due: undefined,
+        intervalMinutes: 0,
+        auxdata: {
             streak: 0,
-            intervalMinutes: 0,
             numCorrect: 0,
             numIncorrect: 0,
             mastery: 0.5,
-            due: undefined
         }
     };
 }
 function calculateMasteryCoef(settings, card) {
-    var c = card.timing.numCorrect;
-    var d = card.timing.numIncorrect;
+    var c = card.auxdata.numCorrect;
+    var d = card.auxdata.numIncorrect;
     var k = settings.masteryDeficitHalflife;
     var p = settings.initialMastery;
     var alpha = settings.punishmentExponent;
     return (c + p * k) / (c + Math.pow(d, alpha) + k);
 }
 class MasterSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGen {
-    getGenName() { return "simple-spaced-repetition"; }
-    cardIsDue(card) {
-        return (card.timing.due != undefined) && (new Date(card.timing.due) < new Date());
-    }
-    cardIsNew(card) {
-        return card.timing.due == undefined;
-    }
-    updateCard(settings, card, correct) {
+    getGenName() { return "master-spaced-repetition"; }
+    updateInterval(card, settings, correct) {
         var cardData = card.data;
-        var isNew = cardData.timing.due === undefined;
-        if (card.context.isPractice) {
-            return cardData;
+        var mastery = calculateMasteryCoef(settings, cardData);
+        if (correct === flashcard_generator_1.FlashcardResult.Correct) {
+            if (cardData.auxdata.streak >= 3) {
+                return settings.initialHours * 60;
+            }
+            else if (cardData.due !== undefined) {
+                var factor = settings.correctMinFactor + Math.abs(settings.correctMaxFactor - settings.correctMinFactor) * mastery;
+                return cardData.intervalMinutes * factor;
+            }
+            else {
+                return 0;
+            }
         }
-        var mastery = calculateMasteryCoef(settings, card.data);
-        cardData.timing.mastery = mastery;
+        else if (correct == flashcard_generator_1.FlashcardResult.Incorrect && cardData.due !== undefined) {
+            var factor = settings.incorrectMinFactor + Math.abs(settings.incorrectMaxFactor - settings.incorrectMinFactor) * mastery;
+            return cardData.intervalMinutes * factor;
+        }
+        else {
+            return cardData.intervalMinutes;
+        }
+    }
+    updateAuxData(card, settings, correct) {
+        var cardData = card.data;
         if (correct == flashcard_generator_1.FlashcardResult.Correct) {
-            cardData.timing.streak += 1;
-            cardData.timing.numCorrect += 1;
-            if (isNew && cardData.timing.streak >= 3) {
-                cardData.timing.intervalMinutes = settings.initialHours * 60;
-                cardData.timing.due = new Date();
-                cardData.timing.due.setHours(cardData.timing.due.getHours() + cardData.timing.intervalMinutes / 60);
-            }
-            else if (!isNew) {
-                var factor = settings.correctMinFactor + (settings.correctMaxFactor - settings.correctMinFactor) * mastery;
-                cardData.timing.intervalMinutes = factor * cardData.timing.intervalMinutes;
-            }
+            cardData.auxdata.streak += 1;
+            cardData.auxdata.numCorrect += 1;
         }
         else if (correct == flashcard_generator_1.FlashcardResult.Incorrect) {
-            cardData.timing.streak = 0;
-            cardData.timing.numIncorrect += 1;
-            if (!isNew) {
-                var factor = settings.incorrectMinFactor + (settings.incorrectMaxFactor - settings.correctMinFactor) * mastery;
-                cardData.timing.intervalMinutes = factor * cardData.timing.intervalMinutes;
-            }
+            cardData.auxdata.streak = 0;
+            cardData.auxdata.numIncorrect += 1;
         }
-        // Reschedule card if it came due
-        if (!isNew) {
-            cardData.timing.due = new Date();
-            cardData.timing.due.setHours(cardData.timing.due.getHours() + cardData.timing.intervalMinutes / 60);
-        }
-        return cardData;
+        cardData.auxdata.mastery = calculateMasteryCoef(settings, cardData);
+        return cardData.auxdata;
     }
     repairDeckState(st) {
+        for (var i in Object.keys(st.cards)) {
+            var k = Object.keys(st.cards)[i];
+            var c = st.cards[k];
+            if (c.due === null)
+                st.cards[k].due = undefined;
+        }
         return st;
     }
     generateCard(card) {
@@ -2414,7 +2447,7 @@ class MasterSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGe
         if (card.data !== undefined) {
             prompt = card.data.content.prompt;
             hint = card.data.content.answers[0];
-            var masteryColorParam = Math.floor(50 * card.data.timing.mastery);
+            var masteryColorParam = Math.floor(50 * card.data.auxdata.mastery);
             masteryColor = `rgb(${255 - masteryColorParam},${205 + masteryColorParam},200)`;
         }
         var fontSize = 100.0 / (10.0 * Math.log(10 + prompt.length));
@@ -2458,18 +2491,18 @@ class MasterSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGe
     }
 }
 exports.MasterSpacedRepGen = MasterSpacedRepGen;
-function simpleSRMenu(st) {
+function masterSRMenu(st) {
     var contDiv = document.createElement("div");
     var totP = document.createElement("p");
     totP.textContent = `Total cards: ${Object.keys(st.cards).length}`;
     totP.style.color = "#666666";
     totP.style.fontWeight = "bold";
     var newP = document.createElement("p");
-    newP.textContent = `New cards: ${Object.keys(st.cards).filter((i) => st.cards[i].timing.due == undefined).length}`;
+    newP.textContent = `New cards: ${Object.keys(st.cards).filter((i) => st.cards[i].due == undefined).length}`;
     newP.style.color = "#9999ee";
     newP.style.fontWeight = "bold";
     var dueP = document.createElement("p");
-    dueP.textContent = `Due cards: ${Object.keys(st.cards).filter((i) => st.cards[i].timing.due !== undefined).length}`;
+    dueP.textContent = `Due cards: ${Object.keys(st.cards).filter((i) => st.cards[i].due !== undefined).length}`;
     dueP.style.color = "#ee9999";
     dueP.style.fontWeight = "bold";
     var studyingEditor = (0, editor_1.radioEditor)(st.studying, [spaced_repetition_general_1.SpacedRepStudying.NewCards, spaced_repetition_general_1.SpacedRepStudying.DueCards, spaced_repetition_general_1.SpacedRepStudying.RandomCards], ["Study new cards", "Study due cards", "Practice random cards"]);
@@ -2528,11 +2561,11 @@ function simpleSRMenu(st) {
         cardInfo.style.marginLeft = "10px";
         cardInfo.style.marginRight = "10px";
         cardInfo.style.verticalAlign = "middle";
-        if (c.timing.due === undefined) {
+        if (c.due === undefined) {
             cardInfo.textContent = "not studied";
         }
         else {
-            cardInfo.textContent = `due ${c.timing.due.toLocaleString().split('T')[0]}`;
+            cardInfo.textContent = `due ${c.due.toLocaleString().split('T')[0]}`;
         }
         ed.element.appendChild(cardInfo);
         return {
@@ -2546,7 +2579,9 @@ function simpleSRMenu(st) {
                         answers: tp[0][1].split('|'),
                         tags: tp[1].split(',').filter((t) => t.length > 0)
                     },
-                    timing: c.timing
+                    due: c.due,
+                    intervalMinutes: c.intervalMinutes,
+                    auxdata: c.auxdata
                 };
             }
         };
@@ -2597,7 +2632,7 @@ function simpleSRMenu(st) {
         }
     };
 }
-(0, flashcard_deck_1.registerDeckType)(new MasterSpacedRepGen(), simpleSRMenu, "master--spaced-repetition-deck", "Mastery-based spaced repetition deck", defaultMasterSRState, "#ffffdd");
+(0, flashcard_deck_1.registerDeckType)(new MasterSpacedRepGen(), masterSRMenu, "master-spaced-repetition-deck", "Mastery-based spaced repetition deck", exports.defaultMasterSRState, "#ffffdd");
 
 
 /***/ }),
@@ -2608,7 +2643,8 @@ function simpleSRMenu(st) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.SimpleSpacedRepGen = void 0;
+exports.SimpleSpacedRepGen = exports.defaultSimpleSRState = exports.defaultSimpleSRSettings = void 0;
+exports.makeEmptyCard = makeEmptyCard;
 const utils_1 = __webpack_require__(185);
 const flashcard_1 = __webpack_require__(88);
 const flashcard_generator_1 = __webpack_require__(808);
@@ -2617,7 +2653,7 @@ const speech_1 = __webpack_require__(192);
 const text_filters_1 = __webpack_require__(460);
 const editor_1 = __webpack_require__(43);
 const flashcard_deck_1 = __webpack_require__(836);
-const defaultSimpleSRSettings = {
+exports.defaultSimpleSRSettings = {
     initialHours: 6,
     correctFactor: 1.6,
     incorrectFactor: 0.5,
@@ -2626,7 +2662,7 @@ const defaultSimpleSRSettings = {
     speechSettings: (0, speech_1.defaultSpeechSettings)(),
     filterSettings: text_filters_1.defaultTextFilterSettings
 };
-const defaultSimpleSRState = {
+exports.defaultSimpleSRState = {
     cards: (0, spaced_repetition_general_1.makeSpacedRepCardDict)([
         { prompt: "the dog", answers: ["le chien"], tags: [] },
         { prompt: "the man", answers: ["l'homme"], tags: [] },
@@ -2636,7 +2672,7 @@ const defaultSimpleSRState = {
     newQueue: [],
     newQueueSize: 10,
     studying: spaced_repetition_general_1.SpacedRepStudying.NewCards,
-    settings: defaultSimpleSRSettings
+    settings: exports.defaultSimpleSRSettings
 };
 function makeEmptyCard() {
     return {
@@ -2646,50 +2682,43 @@ function makeEmptyCard() {
             answers: [""],
             tags: []
         },
-        timing: {
-            streak: 0,
-            intervalMinutes: 0,
-            due: undefined
+        due: undefined,
+        intervalMinutes: 0,
+        auxdata: {
+            streak: 0
         }
     };
 }
 class SimpleSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGen {
     getGenName() { return "simple-spaced-repetition"; }
-    cardIsDue(card) {
-        return (card.timing.due != undefined) && (new Date(card.timing.due) < new Date());
-    }
-    cardIsNew(card) {
-        return card.timing.due == undefined;
-    }
-    updateCard(settings, card, correct) {
+    updateInterval(card, settings, correct) {
         var cardData = card.data;
-        var isNew = cardData.timing.due === undefined;
-        if (card.context.isPractice) {
-            return cardData;
-        }
         if (correct == flashcard_generator_1.FlashcardResult.Correct) {
-            cardData.timing.streak += 1;
-            if (isNew && cardData.timing.streak >= 3) {
-                cardData.timing.intervalMinutes = settings.initialHours * 60;
-                cardData.timing.due = new Date();
-                cardData.timing.due.setHours(cardData.timing.due.getHours() + cardData.timing.intervalMinutes / 60);
+            if (cardData.due === undefined && cardData.auxdata.streak >= 3) {
+                return settings.initialHours * 60;
             }
-            else if (!isNew) {
-                cardData.timing.intervalMinutes = settings.correctFactor * cardData.timing.intervalMinutes;
+            else if (cardData.due !== undefined) {
+                return cardData.intervalMinutes * settings.correctFactor;
             }
+            else {
+                return 0;
+            }
+        }
+        else if (correct == flashcard_generator_1.FlashcardResult.Incorrect && cardData.due !== undefined) {
+            return cardData.intervalMinutes * settings.incorrectFactor;
+        }
+        else {
+            return cardData.intervalMinutes;
+        }
+    }
+    updateAuxData(card, settings, correct) {
+        if (correct == flashcard_generator_1.FlashcardResult.Correct) {
+            card.data.auxdata.streak += 1;
         }
         else if (correct == flashcard_generator_1.FlashcardResult.Incorrect) {
-            cardData.timing.streak = 0;
-            if (!isNew) {
-                cardData.timing.intervalMinutes = settings.incorrectFactor * cardData.timing.intervalMinutes;
-            }
+            card.data.auxdata.streak = 0;
         }
-        // Reschedule card if it came due
-        if (!isNew) {
-            cardData.timing.due = new Date();
-            cardData.timing.due.setHours(cardData.timing.due.getHours() + cardData.timing.intervalMinutes / 60);
-        }
-        return cardData;
+        return card.data.auxdata;
     }
     repairDeckState(st) {
         return st;
@@ -2749,11 +2778,11 @@ function simpleSRMenu(st) {
     totP.style.color = "#666666";
     totP.style.fontWeight = "bold";
     var newP = document.createElement("p");
-    newP.textContent = `New cards: ${Object.keys(st.cards).filter((i) => st.cards[i].timing.due == undefined).length}`;
+    newP.textContent = `New cards: ${Object.keys(st.cards).filter((i) => st.cards[i].due == undefined).length}`;
     newP.style.color = "#9999ee";
     newP.style.fontWeight = "bold";
     var dueP = document.createElement("p");
-    dueP.textContent = `Due cards: ${Object.keys(st.cards).filter((i) => st.cards[i].timing.due !== undefined).length}`;
+    dueP.textContent = `Due cards: ${Object.keys(st.cards).filter((i) => st.cards[i].due !== undefined).length}`;
     dueP.style.color = "#ee9999";
     dueP.style.fontWeight = "bold";
     var studyingEditor = (0, editor_1.radioEditor)(st.studying, [spaced_repetition_general_1.SpacedRepStudying.NewCards, spaced_repetition_general_1.SpacedRepStudying.DueCards, spaced_repetition_general_1.SpacedRepStudying.RandomCards], ["Study new cards", "Study due cards", "Practice random cards"]);
@@ -2798,11 +2827,11 @@ function simpleSRMenu(st) {
         cardInfo.style.marginLeft = "10px";
         cardInfo.style.marginRight = "10px";
         cardInfo.style.verticalAlign = "middle";
-        if (c.timing.due === undefined) {
+        if (c.due === undefined) {
             cardInfo.textContent = "not studied";
         }
         else {
-            cardInfo.textContent = `due ${c.timing.due.toLocaleString().split('T')[0]}`;
+            cardInfo.textContent = `due ${c.due.toLocaleString().split('T')[0]}`;
         }
         ed.element.appendChild(cardInfo);
         return {
@@ -2816,7 +2845,9 @@ function simpleSRMenu(st) {
                         answers: tp[0][1].split('|'),
                         tags: tp[1].split(',').filter((t) => t.length > 0)
                     },
-                    timing: c.timing
+                    due: c.due,
+                    intervalMinutes: c.intervalMinutes,
+                    auxdata: c.auxdata
                 };
             }
         };
@@ -2864,7 +2895,7 @@ function simpleSRMenu(st) {
         }
     };
 }
-(0, flashcard_deck_1.registerDeckType)(new SimpleSpacedRepGen(), simpleSRMenu, "simple-spaced-repetition-deck", "Simple spaced repetition deck", defaultSimpleSRState, "#ffffdd");
+(0, flashcard_deck_1.registerDeckType)(new SimpleSpacedRepGen(), simpleSRMenu, "simple-spaced-repetition-deck", "Simple spaced repetition deck", exports.defaultSimpleSRState, "#ffffdd");
 
 
 /***/ }),
@@ -3335,9 +3366,10 @@ exports.utter = utter;
 exports.defaultSpeechSettings = defaultSpeechSettings;
 exports.speechSettingsEditor = speechSettingsEditor;
 const editor_1 = __webpack_require__(43);
-exports.gSynth = window.speechSynthesis;
+const gSynth = () => { return window.speechSynthesis; };
+exports.gSynth = gSynth;
 function getVoice(voiceName) {
-    var voices = exports.gSynth.getVoices();
+    var voices = (0, exports.gSynth)().getVoices();
     for (var i in voices) {
         var voice = voices[i];
         if (voice.name == voiceName) {
@@ -3353,19 +3385,28 @@ function utter(txt, voice, rate = 1, pitch = 1, callback = () => { }) {
     utterThis.pitch = pitch;
     utterThis.onend = callback;
     // console.log(`Speaking "${txt}"...`);
-    exports.gSynth.speak(utterThis);
+    (0, exports.gSynth)().speak(utterThis);
 }
 function defaultSpeechSettings() {
-    var voices = exports.gSynth.getVoices();
-    return {
-        voice: voices.length > 0 ? voices[0].name : "",
-        rate: 1.0,
-        pitch: 1.0
-    };
+    try {
+        var voices = (0, exports.gSynth)().getVoices();
+        return {
+            voice: voices.length > 0 ? voices[0].name : "",
+            rate: 1.0,
+            pitch: 1.0
+        };
+    }
+    catch (e) {
+        return {
+            voice: "",
+            rate: 1.0,
+            pitch: 1.0
+        };
+    }
 }
 defaultSpeechSettings();
 function speechSettingsEditor(ss) {
-    var voices = exports.gSynth.getVoices().map((v) => v.name);
+    var voices = (0, exports.gSynth)().getVoices().map((v) => v.name);
     var voiceEditor = (0, editor_1.optionsEditor)(ss.voice, voices, (v) => `${getVoice(v).name} (${getVoice(v).lang})`);
     var rateEditor = (0, editor_1.scrollNumberEditor)("Speech rate: ", ss.rate, 0.5, 2.0, 0.05);
     var pitchEditor = (0, editor_1.scrollNumberEditor)("Speech pitch: ", ss.pitch, 0, 2, 0.05);
@@ -3675,12 +3716,13 @@ class TranscriptFlashcardTemplate extends flashcard_template_1.FlashcardTemplate
 
 /***/ }),
 
-/***/ 365:
+/***/ 18:
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.KVFlashcardGen = void 0;
 const flashcard_generator_1 = __webpack_require__(808);
 const flashcard_deck_1 = __webpack_require__(836);
 const flashcard_template_1 = __webpack_require__(791);
@@ -3707,6 +3749,7 @@ class KVFlashcardGen extends flashcard_generator_1.FlashcardGen {
     ;
     repairDeckState(st) { return st; }
 }
+exports.KVFlashcardGen = KVFlashcardGen;
 function makeKVEditor(state) {
     var transEd = (0, editor_1.makeTranslationEditor)(state.deck, (x) => true);
     return {

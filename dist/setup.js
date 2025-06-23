@@ -6,7 +6,7 @@ require("./basic-template");
 require("./cloze-template");
 require("./transcript-template");
 require("./fs");
-require("./uniform-fgen");
+require("./uniform-key-value");
 require("./spaced-repetition");
 require("./spaced-repetition-simple");
 require("./spaced-repetition-mastery");

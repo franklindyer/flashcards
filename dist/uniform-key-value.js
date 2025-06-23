@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.KVFlashcardGen = void 0;
 const flashcard_generator_1 = require("./flashcard-generator");
 const flashcard_deck_1 = require("./flashcard-deck");
 const flashcard_template_1 = require("./flashcard-template");
@@ -26,6 +27,7 @@ class KVFlashcardGen extends flashcard_generator_1.FlashcardGen {
     ;
     repairDeckState(st) { return st; }
 }
+exports.KVFlashcardGen = KVFlashcardGen;
 function makeKVEditor(state) {
     var transEd = (0, editor_1.makeTranslationEditor)(state.deck, (x) => true);
     return {

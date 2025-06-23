@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SimpleSpacedRepGen = void 0;
+exports.SimpleSpacedRepGen = exports.defaultSimpleSRState = exports.defaultSimpleSRSettings = void 0;
+exports.makeEmptyCard = makeEmptyCard;
 const utils_1 = require("./utils");
 const flashcard_1 = require("./flashcard");
 const flashcard_generator_1 = require("./flashcard-generator");
@@ -9,7 +10,7 @@ const speech_1 = require("./speech");
 const text_filters_1 = require("./text-filters");
 const editor_1 = require("./editor");
 const flashcard_deck_1 = require("./flashcard-deck");
-const defaultSimpleSRSettings = {
+exports.defaultSimpleSRSettings = {
     initialHours: 6,
     correctFactor: 1.6,
     incorrectFactor: 0.5,
@@ -18,7 +19,7 @@ const defaultSimpleSRSettings = {
     speechSettings: (0, speech_1.defaultSpeechSettings)(),
     filterSettings: text_filters_1.defaultTextFilterSettings
 };
-const defaultSimpleSRState = {
+exports.defaultSimpleSRState = {
     cards: (0, spaced_repetition_general_1.makeSpacedRepCardDict)([
         { prompt: "the dog", answers: ["le chien"], tags: [] },
         { prompt: "the man", answers: ["l'homme"], tags: [] },
@@ -28,7 +29,7 @@ const defaultSimpleSRState = {
     newQueue: [],
     newQueueSize: 10,
     studying: spaced_repetition_general_1.SpacedRepStudying.NewCards,
-    settings: defaultSimpleSRSettings
+    settings: exports.defaultSimpleSRSettings
 };
 function makeEmptyCard() {
     return {
@@ -38,50 +39,43 @@ function makeEmptyCard() {
             answers: [""],
             tags: []
         },
-        timing: {
-            streak: 0,
-            intervalMinutes: 0,
-            due: undefined
+        due: undefined,
+        intervalMinutes: 0,
+        auxdata: {
+            streak: 0
         }
     };
 }
 class SimpleSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGen {
     getGenName() { return "simple-spaced-repetition"; }
-    cardIsDue(card) {
-        return (card.timing.due != undefined) && (new Date(card.timing.due) < new Date());
-    }
-    cardIsNew(card) {
-        return card.timing.due == undefined;
-    }
-    updateCard(settings, card, correct) {
+    updateInterval(card, settings, correct) {
         var cardData = card.data;
-        var isNew = cardData.timing.due === undefined;
-        if (card.context.isPractice) {
-            return cardData;
-        }
         if (correct == flashcard_generator_1.FlashcardResult.Correct) {
-            cardData.timing.streak += 1;
-            if (isNew && cardData.timing.streak >= 3) {
-                cardData.timing.intervalMinutes = settings.initialHours * 60;
-                cardData.timing.due = new Date();
-                cardData.timing.due.setHours(cardData.timing.due.getHours() + cardData.timing.intervalMinutes / 60);
+            if (cardData.due === undefined && cardData.auxdata.streak >= 3) {
+                return settings.initialHours * 60;
             }
-            else if (!isNew) {
-                cardData.timing.intervalMinutes = settings.correctFactor * cardData.timing.intervalMinutes;
+            else if (cardData.due !== undefined) {
+                return cardData.intervalMinutes * settings.correctFactor;
             }
+            else {
+                return 0;
+            }
+        }
+        else if (correct == flashcard_generator_1.FlashcardResult.Incorrect && cardData.due !== undefined) {
+            return cardData.intervalMinutes * settings.incorrectFactor;
+        }
+        else {
+            return cardData.intervalMinutes;
+        }
+    }
+    updateAuxData(card, settings, correct) {
+        if (correct == flashcard_generator_1.FlashcardResult.Correct) {
+            card.data.auxdata.streak += 1;
         }
         else if (correct == flashcard_generator_1.FlashcardResult.Incorrect) {
-            cardData.timing.streak = 0;
-            if (!isNew) {
-                cardData.timing.intervalMinutes = settings.incorrectFactor * cardData.timing.intervalMinutes;
-            }
+            card.data.auxdata.streak = 0;
         }
-        // Reschedule card if it came due
-        if (!isNew) {
-            cardData.timing.due = new Date();
-            cardData.timing.due.setHours(cardData.timing.due.getHours() + cardData.timing.intervalMinutes / 60);
-        }
-        return cardData;
+        return card.data.auxdata;
     }
     repairDeckState(st) {
         return st;
@@ -141,11 +135,11 @@ function simpleSRMenu(st) {
     totP.style.color = "#666666";
     totP.style.fontWeight = "bold";
     var newP = document.createElement("p");
-    newP.textContent = `New cards: ${Object.keys(st.cards).filter((i) => st.cards[i].timing.due == undefined).length}`;
+    newP.textContent = `New cards: ${Object.keys(st.cards).filter((i) => st.cards[i].due == undefined).length}`;
     newP.style.color = "#9999ee";
     newP.style.fontWeight = "bold";
     var dueP = document.createElement("p");
-    dueP.textContent = `Due cards: ${Object.keys(st.cards).filter((i) => st.cards[i].timing.due !== undefined).length}`;
+    dueP.textContent = `Due cards: ${Object.keys(st.cards).filter((i) => st.cards[i].due !== undefined).length}`;
     dueP.style.color = "#ee9999";
     dueP.style.fontWeight = "bold";
     var studyingEditor = (0, editor_1.radioEditor)(st.studying, [spaced_repetition_general_1.SpacedRepStudying.NewCards, spaced_repetition_general_1.SpacedRepStudying.DueCards, spaced_repetition_general_1.SpacedRepStudying.RandomCards], ["Study new cards", "Study due cards", "Practice random cards"]);
@@ -190,11 +184,11 @@ function simpleSRMenu(st) {
         cardInfo.style.marginLeft = "10px";
         cardInfo.style.marginRight = "10px";
         cardInfo.style.verticalAlign = "middle";
-        if (c.timing.due === undefined) {
+        if (c.due === undefined) {
             cardInfo.textContent = "not studied";
         }
         else {
-            cardInfo.textContent = `due ${c.timing.due.toLocaleString().split('T')[0]}`;
+            cardInfo.textContent = `due ${c.due.toLocaleString().split('T')[0]}`;
         }
         ed.element.appendChild(cardInfo);
         return {
@@ -208,7 +202,9 @@ function simpleSRMenu(st) {
                         answers: tp[0][1].split('|'),
                         tags: tp[1].split(',').filter((t) => t.length > 0)
                     },
-                    timing: c.timing
+                    due: c.due,
+                    intervalMinutes: c.intervalMinutes,
+                    auxdata: c.auxdata
                 };
             }
         };
@@ -256,4 +252,4 @@ function simpleSRMenu(st) {
         }
     };
 }
-(0, flashcard_deck_1.registerDeckType)(new SimpleSpacedRepGen(), simpleSRMenu, "simple-spaced-repetition-deck", "Simple spaced repetition deck", defaultSimpleSRState, "#ffffdd");
+(0, flashcard_deck_1.registerDeckType)(new SimpleSpacedRepGen(), simpleSRMenu, "simple-spaced-repetition-deck", "Simple spaced repetition deck", exports.defaultSimpleSRState, "#ffffdd");

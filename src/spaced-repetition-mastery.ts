@@ -182,6 +182,11 @@ export class MasterSpacedRepGen
     }
 
     repairDeckState(st: any): any {
+        for (var i in Object.keys(st.cards)) {
+            var k: string = Object.keys(st.cards)[i];
+            var c = st.cards[k];
+            if (c.due === null) st.cards[k].due = undefined;
+        }
         return st;
     }
 
