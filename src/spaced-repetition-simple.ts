@@ -50,10 +50,8 @@ export type SRSimpleContent = {
     tags: string[]
 }
 
-export type SRSimpleTiming = {
-    streak: number,
-    intervalMinutes: number,
-    due?: Date
+export type SRSimpleAuxData = {
+    streak: number
 }
 
 export type SRSimpleSettings = {
@@ -76,7 +74,7 @@ export const defaultSimpleSRSettings = {
     filterSettings: defaultTextFilterSettings
 };
 
-export const defaultSimpleSRState: SpacedRepState<SRSimpleContent, SRSimpleTiming, SRSimpleSettings> = {
+export const defaultSimpleSRState: SpacedRepState<SRSimpleContent, SRSimpleAuxData, SRSimpleSettings> = {
     cards: makeSpacedRepCardDict([
         { prompt: "the dog", answers: ["le chien"], tags: [] },
         { prompt: "the man", answers: ["l'homme"], tags: [] },
@@ -89,7 +87,7 @@ export const defaultSimpleSRState: SpacedRepState<SRSimpleContent, SRSimpleTimin
     settings: defaultSimpleSRSettings
 };
 
-export function makeEmptyCard(): SpacedRepCard<SRSimpleContent, SRSimpleTiming> { 
+export function makeEmptyCard(): SpacedRepCard<SRSimpleContent, SRSimpleAuxData> { 
     return {
         guid: guidGenerator(),
         content: {
@@ -97,66 +95,58 @@ export function makeEmptyCard(): SpacedRepCard<SRSimpleContent, SRSimpleTiming> 
             answers: [""],
             tags: []
         },
-        timing: {
-            streak: 0,
-            intervalMinutes: 0,
-            due: undefined
+        due: undefined,
+        intervalMinutes: 0,
+        auxdata: {
+            streak: 0
         }
     };
 }
 
 export class SimpleSpacedRepGen
-    extends AbstractSpacedRepGen<SRSimpleContent, SRSimpleTiming, SRSimpleSettings> {
+    extends AbstractSpacedRepGen<SRSimpleContent, SRSimpleAuxData, SRSimpleSettings> {
 
     getGenName(): string { return "simple-spaced-repetition"; }
 
-    cardIsDue(card: SpacedRepCard<SRSimpleContent, SRSimpleTiming>): boolean {
-        return (card.timing.due != undefined) && (new Date(card.timing.due!) < this.getDate());
-    }
-    
-    cardIsNew(card: SpacedRepCard<SRSimpleContent, SRSimpleTiming>): boolean {
-        return card.timing.due == undefined;
-    }
-    
-    updateCard(
+    updateInterval(
+        card: SpacedRepCardPhysical<SRSimpleContent, SRSimpleAuxData>,
         settings: SRSimpleSettings,
-        card: SpacedRepCardPhysical<SRSimpleContent, SRSimpleTiming>,
         correct: FlashcardResult
-    ): SpacedRepCard<SRSimpleContent, SRSimpleTiming> {
+    ): number {
         var cardData = card.data!;
-        var isNew = cardData.timing.due === undefined;
-        if (card.context.isPractice) {
-            return cardData;
-        } 
-
         if (correct == FlashcardResult.Correct) {
-            cardData.timing.streak += 1;
-            if (isNew && cardData.timing.streak >= 3) {
-                cardData.timing.intervalMinutes = settings.initialHours * 60;
-                cardData.timing.due = this.getDate();
-                cardData.timing.due!.setHours(cardData.timing.due!.getHours() + cardData.timing.intervalMinutes/60);
-            } else if (!isNew) {
-                cardData.timing.intervalMinutes = settings.correctFactor * cardData.timing.intervalMinutes;
-                // Reschedule card if it came due
-                cardData.timing.due = this.getDate();
-                cardData.timing.due!.setHours(cardData.timing.due!.getHours() + cardData.timing.intervalMinutes/60);
+            if (cardData.due === undefined && cardData.auxdata.streak >= 3) {
+                return settings.initialHours * 60;
+            } else if (cardData.due !== undefined) {
+                return cardData.intervalMinutes * settings.correctFactor;
+            } else {
+                return 0;
             }
-        } else if (correct == FlashcardResult.Incorrect) {
-            cardData.timing.streak = 0;
-            if (!isNew) {
-                cardData.timing.intervalMinutes = settings.incorrectFactor * cardData.timing.intervalMinutes;
-            }
+        } else if (correct == FlashcardResult.Incorrect && cardData.due !== undefined) {
+            return cardData.intervalMinutes * settings.incorrectFactor;
+        } else {
+            return cardData.intervalMinutes;
         }
-        cardData.timing.intervalMinutes = Math.max(cardData.timing.intervalMinutes, settings.initialHours * 60);
+    }
 
-        return cardData;
+    updateAuxData(
+        card: SpacedRepCardPhysical<SRSimpleContent, SRSimpleAuxData>,
+        settings: SRSimpleSettings,
+        correct: FlashcardResult
+    ): SRSimpleAuxData {
+        if (correct == FlashcardResult.Correct) {
+            card.data!.auxdata.streak += 1;
+        } else if (correct == FlashcardResult.Incorrect) {
+            card.data!.auxdata.streak = 0;
+        }
+        return card.data!.auxdata;
     }
 
     repairDeckState(st: any): any {
         return st;
     }
 
-    generateCard(card: SpacedRepCardPhysical<SRSimpleContent, SRSimpleTiming>): 
+    generateCard(card: SpacedRepCardPhysical<SRSimpleContent, SRSimpleAuxData>): 
         Flashcard {
         var a = document.createElement("a");
         var prompt = "No cards left to study.";
@@ -188,8 +178,8 @@ export class SimpleSpacedRepGen
 
     checkAnswer(
         answer: string, 
-        st: SpacedRepState<SRSimpleContent, SRSimpleTiming, SRSimpleSettings>,
-        card: SpacedRepCardPhysical<SRSimpleContent, SRSimpleTiming>
+        st: SpacedRepState<SRSimpleContent, SRSimpleAuxData, SRSimpleSettings>,
+        card: SpacedRepCardPhysical<SRSimpleContent, SRSimpleAuxData>
     ): boolean {
         if (card.data === undefined) 
             return false;
@@ -199,8 +189,8 @@ export class SimpleSpacedRepGen
     }
 
     correctEffect(
-        st: SpacedRepState<SRSimpleContent, SRSimpleTiming, SRSimpleSettings>,
-        card: SpacedRepCardPhysical<SRSimpleContent, SRSimpleTiming>,
+        st: SpacedRepState<SRSimpleContent, SRSimpleAuxData, SRSimpleSettings>,
+        card: SpacedRepCardPhysical<SRSimpleContent, SRSimpleAuxData>,
         attempt: string,
         resolve: () => void
     ): void {
@@ -219,8 +209,8 @@ export class SimpleSpacedRepGen
 
 }
 
-function simpleSRMenu(st: SpacedRepState<SRSimpleContent, SRSimpleTiming, SRSimpleSettings>): 
-    StateEditor<SpacedRepState<SRSimpleContent, SRSimpleTiming, SRSimpleSettings>> {
+function simpleSRMenu(st: SpacedRepState<SRSimpleContent, SRSimpleAuxData, SRSimpleSettings>): 
+    StateEditor<SpacedRepState<SRSimpleContent, SRSimpleAuxData, SRSimpleSettings>> {
     var contDiv = document.createElement("div");
 
     var totP = document.createElement("p");
@@ -228,11 +218,11 @@ function simpleSRMenu(st: SpacedRepState<SRSimpleContent, SRSimpleTiming, SRSimp
     totP.style.color = "#666666";
     totP.style.fontWeight = "bold";
     var newP = document.createElement("p");
-    newP.textContent = `New cards: ${Object.keys(st.cards).filter((i) => st.cards[i].timing.due == undefined).length}`;    
+    newP.textContent = `New cards: ${Object.keys(st.cards).filter((i) => st.cards[i].due == undefined).length}`;    
     newP.style.color = "#9999ee";
     newP.style.fontWeight = "bold";
     var dueP = document.createElement("p");
-    dueP.textContent = `Due cards: ${Object.keys(st.cards).filter((i) => st.cards[i].timing.due !== undefined).length}`;
+    dueP.textContent = `Due cards: ${Object.keys(st.cards).filter((i) => st.cards[i].due !== undefined).length}`;
     dueP.style.color = "#ee9999";
     dueP.style.fontWeight = "bold"; 
   
@@ -273,8 +263,8 @@ function simpleSRMenu(st: SpacedRepState<SRSimpleContent, SRSimpleTiming, SRSimp
         filterEditor.element
     ].map((el) => el.classList.add("deck-menu-submenu"));
 
-    function makeCardEditor(c: SpacedRepCard<SRSimpleContent, SRSimpleTiming>): 
-        StateEditor<SpacedRepCard<SRSimpleContent, SRSimpleTiming>> {
+    function makeCardEditor(c: SpacedRepCard<SRSimpleContent, SRSimpleAuxData>): 
+        StateEditor<SpacedRepCard<SRSimpleContent, SRSimpleAuxData>> {
         var ed = combineEditors(
             [[c.content.prompt, c.content.answers.join('|')], c.content.tags.join(',')],
             (pr: any) => {
@@ -293,10 +283,10 @@ function simpleSRMenu(st: SpacedRepState<SRSimpleContent, SRSimpleTiming, SRSimp
         cardInfo.style.marginLeft = "10px";
         cardInfo.style.marginRight = "10px";
         cardInfo.style.verticalAlign = "middle";
-        if (c.timing.due === undefined) {
+        if (c.due === undefined) {
             cardInfo.textContent = "not studied";
         } else {
-            cardInfo.textContent = `due ${c.timing.due!.toLocaleString().split('T')[0]}`;
+            cardInfo.textContent = `due ${c.due!.toLocaleString().split('T')[0]}`;
         }
         ed.element.appendChild(cardInfo);
         return {
@@ -310,7 +300,9 @@ function simpleSRMenu(st: SpacedRepState<SRSimpleContent, SRSimpleTiming, SRSimp
                         answers: tp[0][1].split('|'),
                         tags: tp[1].split(',').filter((t) => t.length > 0)
                     },
-                    timing: c.timing
+                    due: c.due,
+                    intervalMinutes: c.intervalMinutes,
+                    auxdata: c.auxdata
                 }
             }
         };

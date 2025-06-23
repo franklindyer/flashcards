@@ -14,22 +14,24 @@ export enum SpacedRepStudying {
     RandomCards
 }
 
-export type SpacedRepCard<content, timing> = {
+export type SpacedRepCard<content, auxdata> = {
     guid: string,
     content: content,
-    timing: timing
+    due?: Date,
+    intervalMinutes: number,
+    auxdata: auxdata
 }
 
-export type SpacedRepCardPhysical<content, timing> = {
-    data?: SpacedRepCard<content, timing>,
+export type SpacedRepCardPhysical<content, auxdata> = {
+    data?: SpacedRepCard<content, auxdata>,
     context: {
         cardsLeft: number,
         isPractice: boolean
     }
 }
 
-export type SpacedRepState<content, timing, settings> = {
-    cards: IDictionary<SpacedRepCard<content, timing>>,
+export type SpacedRepState<content, auxdata, settings> = {
+    cards: IDictionary<SpacedRepCard<content, auxdata>>,
     newIndex: number,
     newQueue: string[],
     newQueueSize: number,
@@ -37,43 +39,83 @@ export type SpacedRepState<content, timing, settings> = {
     settings: settings
 }
 
-export function makeSpacedRepCardDict<content, timing>(
+export function makeSpacedRepCardDict<content, auxdata>(
     cards: content[],
-    defaultTiming: () => timing): 
-    IDictionary<SpacedRepCard<content, timing>> {
-    var cardDict: IDictionary<SpacedRepCard<content, timing>> = {};
+    defaultAuxData: () => auxdata): 
+    IDictionary<SpacedRepCard<content, auxdata>> {
+    var cardDict: IDictionary<SpacedRepCard<content, auxdata>> = {};
     for (var i in cards) {
         var c = cards[i];
         var guid = guidGenerator();
-        cardDict[guid] = { guid: guid, content: c, timing: defaultTiming() };
+        cardDict[guid] = { guid: guid, content: c, due: undefined, intervalMinutes: 0, auxdata: defaultAuxData() };
     }
     return cardDict;
 }
 
-export abstract class AbstractSpacedRepGen<content, timing, settings>
-    extends FlashcardGen<SpacedRepState<content, timing, settings>, SpacedRepCardPhysical<content, timing>> {
+export abstract class AbstractSpacedRepGen<content, auxdata, settings>
+    extends FlashcardGen<SpacedRepState<content, auxdata, settings>, SpacedRepCardPhysical<content, auxdata>> {
 
-    // For unit testing
     getDate: () => Date = () => new Date();
+    
+    // For unit testing
+    setDate(newDt: Date) { this.getDate = () => newDt; } 
 
-    abstract cardIsDue(card: SpacedRepCard<content, timing>): boolean;
-    abstract cardIsNew(card: SpacedRepCard<content, timing>): boolean;
-    abstract updateCard(
-        settings: settings, 
-        cardData: SpacedRepCardPhysical<content, timing>,
+    cardIsDue(card: SpacedRepCard<content, auxdata>): boolean {
+        return (card.due !== undefined && card.due < this.getDate());
+    };
+    
+    cardIsNew(card: SpacedRepCard<content, auxdata>): boolean { 
+        return (card.due === undefined); 
+    };
+
+    // Return interval > 0 if the card should go from new to due
+    abstract updateInterval(
+        cardData: SpacedRepCardPhysical<content, auxdata>,
+        settings: settings,
         correct: FlashcardResult
-    ): SpacedRepCard<content, timing>;
+    ): number;
+    abstract updateAuxData(
+        cardData: SpacedRepCardPhysical<content, auxdata>,
+        settings: settings,
+        correct: FlashcardResult
+    ): auxdata;
 
-    getNew(st: SpacedRepState<content, timing, settings>): string[] {
+    updateCard(
+        card: SpacedRepCardPhysical<content, auxdata>,
+        settings: settings, 
+        correct: FlashcardResult
+    ): SpacedRepCard<content, auxdata> {
+        var cardData = card.data!;
+        if (card.context.isPractice) {
+            return cardData;
+        }
+        var isNew = cardData.due === undefined;
+
+        var newAuxData = this.updateAuxData(card, settings, correct);
+        cardData.auxdata = newAuxData;
+        card.data = cardData;
+        var newInterval = this.updateInterval(card, settings, correct);
+        cardData.intervalMinutes = newInterval;
+
+        // Interval > 0 implies the card is no longer new
+        if (newInterval > 0) {
+            cardData.due = this.getDate();
+            cardData.due.setHours(cardData.due!.getHours() + cardData.intervalMinutes/60);
+        }
+
+        return cardData;
+    }
+
+    getNew(st: SpacedRepState<content, auxdata, settings>): string[] {
         return Object.keys(st.cards).filter((k) => this.cardIsNew(st.cards[k]));
     }
 
-    getDue(st: SpacedRepState<content, timing, settings>): string[] {
+    getDue(st: SpacedRepState<content, auxdata, settings>): string[] {
         return Object.keys(st.cards).filter((k) => this.cardIsDue(st.cards[k]));
     }
 
-    getNextCard(st: SpacedRepState<content, timing, settings>): 
-        SpacedRepCardPhysical<content, timing> {
+    getNextCard(st: SpacedRepState<content, auxdata, settings>): 
+        SpacedRepCardPhysical<content, auxdata> {
         var inds = Object.keys(st.cards);
         var newInds = this.getNew(st);
         var dueInds = this.getDue(st);
@@ -127,10 +169,10 @@ export abstract class AbstractSpacedRepGen<content, timing, settings>
     }
 
     updateState(
-        st: SpacedRepState<content, timing, settings>,
-        card: SpacedRepCardPhysical<content, timing>,
+        st: SpacedRepState<content, auxdata, settings>,
+        card: SpacedRepCardPhysical<content, auxdata>,
         result: FlashcardResult
-    ): SpacedRepState<content, timing, settings> {
+    ): SpacedRepState<content, auxdata, settings> {
         if (result == FlashcardResult.Unanswered || st.studying == SpacedRepStudying.RandomCards)
             return st;
 
@@ -139,7 +181,7 @@ export abstract class AbstractSpacedRepGen<content, timing, settings>
         var cardGuid = cardData.guid;
         var cardState = st.cards[cardGuid];
 
-        var cardNewState = this.updateCard(st.settings, card, result);
+        var cardNewState = this.updateCard(card, st.settings, result);
 
         if (st.studying == SpacedRepStudying.NewCards) {
             if (!st.newQueue.includes(cardData.guid)) {

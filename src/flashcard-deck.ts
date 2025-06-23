@@ -84,7 +84,11 @@ function menuSetup<S, D>(deckSlug: string) {
         editorOverlay.style.display = "inline-block";
         editorCont.replaceChildren(editor.element);
         var doneBtn = document.getElementById("flashcard-deck-editor-close")!;
+        window.onbeforeunload = function() {
+            return "Are you sure you want to leave before saving your deck?";
+        };
         doneBtn.onclick = () => {
+            window.onbeforeunload = () => {};
             editorOverlay.style.display = "none";
             deck.state = editor.menuToState();
             gDeckRegistry[deckSlug].state = deck.state;

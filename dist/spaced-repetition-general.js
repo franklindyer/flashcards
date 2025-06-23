@@ -10,16 +10,45 @@ var SpacedRepStudying;
     SpacedRepStudying[SpacedRepStudying["DueCards"] = 2] = "DueCards";
     SpacedRepStudying[SpacedRepStudying["RandomCards"] = 3] = "RandomCards";
 })(SpacedRepStudying || (exports.SpacedRepStudying = SpacedRepStudying = {}));
-function makeSpacedRepCardDict(cards, defaultTiming) {
+function makeSpacedRepCardDict(cards, defaultAuxData) {
     var cardDict = {};
     for (var i in cards) {
         var c = cards[i];
         var guid = (0, utils_1.guidGenerator)();
-        cardDict[guid] = { guid: guid, content: c, timing: defaultTiming() };
+        cardDict[guid] = { guid: guid, content: c, due: undefined, intervalMinutes: 0, auxdata: defaultAuxData() };
     }
     return cardDict;
 }
 class AbstractSpacedRepGen extends flashcard_generator_1.FlashcardGen {
+    getDate = () => new Date();
+    // For unit testing
+    setDate(newDt) { this.getDate = () => newDt; }
+    cardIsDue(card) {
+        return (card.due !== undefined && card.due < this.getDate());
+    }
+    ;
+    cardIsNew(card) {
+        return (card.due === undefined);
+    }
+    ;
+    updateCard(card, settings, correct) {
+        var cardData = card.data;
+        if (card.context.isPractice) {
+            return cardData;
+        }
+        var isNew = cardData.due === undefined;
+        var newAuxData = this.updateAuxData(card, settings, correct);
+        cardData.auxdata = newAuxData;
+        card.data = cardData;
+        var newInterval = this.updateInterval(card, settings, correct);
+        cardData.intervalMinutes = newInterval;
+        // Interval > 0 implies the card is no longer new
+        if (newInterval > 0) {
+            cardData.due = this.getDate();
+            cardData.due.setHours(cardData.due.getHours() + cardData.intervalMinutes / 60);
+        }
+        return cardData;
+    }
     getNew(st) {
         return Object.keys(st.cards).filter((k) => this.cardIsNew(st.cards[k]));
     }
@@ -86,7 +115,7 @@ class AbstractSpacedRepGen extends flashcard_generator_1.FlashcardGen {
         var correct = (result == flashcard_generator_1.FlashcardResult.Correct);
         var cardGuid = cardData.guid;
         var cardState = st.cards[cardGuid];
-        var cardNewState = this.updateCard(st.settings, card, result);
+        var cardNewState = this.updateCard(card, st.settings, result);
         if (st.studying == SpacedRepStudying.NewCards) {
             if (!st.newQueue.includes(cardData.guid)) {
                 st.newQueue.push(cardData.guid);

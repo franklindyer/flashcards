@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.MasterSpacedRepGen = void 0;
+exports.MasterSpacedRepGen = exports.defaultMasterSRState = void 0;
 const utils_1 = require("./utils");
 const flashcard_1 = require("./flashcard");
 const flashcard_generator_1 = require("./flashcard-generator");
@@ -23,12 +23,12 @@ const defaultMasterSRSettings = {
     speechSettings: (0, speech_1.defaultSpeechSettings)(),
     filterSettings: text_filters_1.defaultTextFilterSettings
 };
-const defaultMasterSRState = {
+exports.defaultMasterSRState = {
     cards: (0, spaced_repetition_general_1.makeSpacedRepCardDict)([
         { prompt: "the dog", answers: ["le chien"], tags: [] },
         { prompt: "the man", answers: ["l'homme"], tags: [] },
         { prompt: "the woman", answers: ["la dame"], tags: [] }
-    ], () => { return { streak: 0, intervalMinutes: 0, due: undefined, numCorrect: 0, numIncorrect: 0, mastery: 0.5 }; }),
+    ], () => { return { streak: 0, intervalMinutes: 0, due: undefined, numCorrect: 0, numIncorrect: 0, mastery: 0 }; }),
     newIndex: 0,
     newQueue: [],
     newQueueSize: 10,
@@ -43,69 +43,69 @@ function makeEmptyCard() {
             answers: [""],
             tags: []
         },
-        timing: {
+        due: undefined,
+        intervalMinutes: 0,
+        auxdata: {
             streak: 0,
-            intervalMinutes: 0,
             numCorrect: 0,
             numIncorrect: 0,
             mastery: 0.5,
-            due: undefined
         }
     };
 }
 function calculateMasteryCoef(settings, card) {
-    var c = card.timing.numCorrect;
-    var d = card.timing.numIncorrect;
+    var c = card.auxdata.numCorrect;
+    var d = card.auxdata.numIncorrect;
     var k = settings.masteryDeficitHalflife;
     var p = settings.initialMastery;
     var alpha = settings.punishmentExponent;
     return (c + p * k) / (c + Math.pow(d, alpha) + k);
 }
 class MasterSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGen {
-    getGenName() { return "simple-spaced-repetition"; }
-    cardIsDue(card) {
-        return (card.timing.due != undefined) && (new Date(card.timing.due) < new Date());
-    }
-    cardIsNew(card) {
-        return card.timing.due == undefined;
-    }
-    updateCard(settings, card, correct) {
+    getGenName() { return "master-spaced-repetition"; }
+    updateInterval(card, settings, correct) {
         var cardData = card.data;
-        var isNew = cardData.timing.due === undefined;
-        if (card.context.isPractice) {
-            return cardData;
+        var mastery = calculateMasteryCoef(settings, cardData);
+        if (correct === flashcard_generator_1.FlashcardResult.Correct) {
+            if (cardData.auxdata.streak >= 3) {
+                return settings.initialHours * 60;
+            }
+            else if (cardData.due !== undefined) {
+                var factor = settings.correctMinFactor + Math.abs(settings.correctMaxFactor - settings.correctMinFactor) * mastery;
+                return cardData.intervalMinutes * factor;
+            }
+            else {
+                return 0;
+            }
         }
-        var mastery = calculateMasteryCoef(settings, card.data);
-        cardData.timing.mastery = mastery;
+        else if (correct == flashcard_generator_1.FlashcardResult.Incorrect && cardData.due !== undefined) {
+            var factor = settings.incorrectMinFactor + Math.abs(settings.incorrectMaxFactor - settings.incorrectMinFactor) * mastery;
+            return cardData.intervalMinutes * factor;
+        }
+        else {
+            return cardData.intervalMinutes;
+        }
+    }
+    updateAuxData(card, settings, correct) {
+        var cardData = card.data;
         if (correct == flashcard_generator_1.FlashcardResult.Correct) {
-            cardData.timing.streak += 1;
-            cardData.timing.numCorrect += 1;
-            if (isNew && cardData.timing.streak >= 3) {
-                cardData.timing.intervalMinutes = settings.initialHours * 60;
-                cardData.timing.due = new Date();
-                cardData.timing.due.setHours(cardData.timing.due.getHours() + cardData.timing.intervalMinutes / 60);
-            }
-            else if (!isNew) {
-                var factor = settings.correctMinFactor + (settings.correctMaxFactor - settings.correctMinFactor) * mastery;
-                cardData.timing.intervalMinutes = factor * cardData.timing.intervalMinutes;
-            }
+            cardData.auxdata.streak += 1;
+            cardData.auxdata.numCorrect += 1;
         }
         else if (correct == flashcard_generator_1.FlashcardResult.Incorrect) {
-            cardData.timing.streak = 0;
-            cardData.timing.numIncorrect += 1;
-            if (!isNew) {
-                var factor = settings.incorrectMinFactor + (settings.incorrectMaxFactor - settings.correctMinFactor) * mastery;
-                cardData.timing.intervalMinutes = factor * cardData.timing.intervalMinutes;
-            }
+            cardData.auxdata.streak = 0;
+            cardData.auxdata.numIncorrect += 1;
         }
-        // Reschedule card if it came due
-        if (!isNew) {
-            cardData.timing.due = new Date();
-            cardData.timing.due.setHours(cardData.timing.due.getHours() + cardData.timing.intervalMinutes / 60);
-        }
-        return cardData;
+        cardData.auxdata.mastery = calculateMasteryCoef(settings, cardData);
+        return cardData.auxdata;
     }
     repairDeckState(st) {
+        for (var i in Object.keys(st.cards)) {
+            var k = Object.keys(st.cards)[i];
+            var c = st.cards[k];
+            if (c.due === null)
+                st.cards[k].due = undefined;
+        }
         return st;
     }
     generateCard(card) {
@@ -116,7 +116,7 @@ class MasterSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGe
         if (card.data !== undefined) {
             prompt = card.data.content.prompt;
             hint = card.data.content.answers[0];
-            var masteryColorParam = Math.floor(50 * card.data.timing.mastery);
+            var masteryColorParam = Math.floor(50 * card.data.auxdata.mastery);
             masteryColor = `rgb(${255 - masteryColorParam},${205 + masteryColorParam},200)`;
         }
         var fontSize = 100.0 / (10.0 * Math.log(10 + prompt.length));
@@ -160,18 +160,18 @@ class MasterSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGe
     }
 }
 exports.MasterSpacedRepGen = MasterSpacedRepGen;
-function simpleSRMenu(st) {
+function masterSRMenu(st) {
     var contDiv = document.createElement("div");
     var totP = document.createElement("p");
     totP.textContent = `Total cards: ${Object.keys(st.cards).length}`;
     totP.style.color = "#666666";
     totP.style.fontWeight = "bold";
     var newP = document.createElement("p");
-    newP.textContent = `New cards: ${Object.keys(st.cards).filter((i) => st.cards[i].timing.due == undefined).length}`;
+    newP.textContent = `New cards: ${Object.keys(st.cards).filter((i) => st.cards[i].due == undefined).length}`;
     newP.style.color = "#9999ee";
     newP.style.fontWeight = "bold";
     var dueP = document.createElement("p");
-    dueP.textContent = `Due cards: ${Object.keys(st.cards).filter((i) => st.cards[i].timing.due !== undefined).length}`;
+    dueP.textContent = `Due cards: ${Object.keys(st.cards).filter((i) => st.cards[i].due !== undefined).length}`;
     dueP.style.color = "#ee9999";
     dueP.style.fontWeight = "bold";
     var studyingEditor = (0, editor_1.radioEditor)(st.studying, [spaced_repetition_general_1.SpacedRepStudying.NewCards, spaced_repetition_general_1.SpacedRepStudying.DueCards, spaced_repetition_general_1.SpacedRepStudying.RandomCards], ["Study new cards", "Study due cards", "Practice random cards"]);
@@ -230,11 +230,11 @@ function simpleSRMenu(st) {
         cardInfo.style.marginLeft = "10px";
         cardInfo.style.marginRight = "10px";
         cardInfo.style.verticalAlign = "middle";
-        if (c.timing.due === undefined) {
+        if (c.due === undefined) {
             cardInfo.textContent = "not studied";
         }
         else {
-            cardInfo.textContent = `due ${c.timing.due.toLocaleString().split('T')[0]}`;
+            cardInfo.textContent = `due ${c.due.toLocaleString().split('T')[0]}`;
         }
         ed.element.appendChild(cardInfo);
         return {
@@ -248,7 +248,9 @@ function simpleSRMenu(st) {
                         answers: tp[0][1].split('|'),
                         tags: tp[1].split(',').filter((t) => t.length > 0)
                     },
-                    timing: c.timing
+                    due: c.due,
+                    intervalMinutes: c.intervalMinutes,
+                    auxdata: c.auxdata
                 };
             }
         };
@@ -299,4 +301,4 @@ function simpleSRMenu(st) {
         }
     };
 }
-(0, flashcard_deck_1.registerDeckType)(new MasterSpacedRepGen(), simpleSRMenu, "master--spaced-repetition-deck", "Mastery-based spaced repetition deck", defaultMasterSRState, "#ffffdd");
+(0, flashcard_deck_1.registerDeckType)(new MasterSpacedRepGen(), masterSRMenu, "master-spaced-repetition-deck", "Mastery-based spaced repetition deck", exports.defaultMasterSRState, "#ffffdd");
