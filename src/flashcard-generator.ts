@@ -18,18 +18,18 @@ export abstract class FlashcardGen<S, D> {
     // Repair the raw JSON associated with the deck, mainly used for update compatibility
     abstract repairDeckState(state: any): any;
     
-    abstract getNextCard(state: S): D;
-    abstract updateState(state: S, cardData: D, correct: FlashcardResult): S;
-    abstract generateCard(data: D): Flashcard;
-    abstract checkAnswer(answer: string, state: S, data: D): boolean;
+    abstract getNextCardAsync(state: S): Promise<D>;
+    abstract updateStateAsync(state: S, cardData: D, correct: FlashcardResult): Promise<S>;
+    abstract generateCardAsync(data: D): Promise<Flashcard>;
+    abstract checkAnswerAsync(answer: string, state: S, data: D): Promise<boolean>;
 
     // Should not attempt to change the deck's state
     abstract correctEffect(state: S, cardData: D, attempt: string, resolve: () => void): void;   
 
-    runOnce(s: S, setState: (s: S) => void, callback: () => void) {
-        var cardData: D = this.getNextCard(s);
-        var card = this.generateCard(cardData);
-        card.check = (ans: string) => this.checkAnswer(ans, s, cardData);
+    async runOnce(s: S, setState: (s: S) => void, callback: () => void) {
+        var cardData: D = await this.getNextCardAsync(s);
+        var card = await this.generateCardAsync(cardData);
+        card.check = async (ans: string) => this.checkAnswerAsync(ans, s, cardData);
 
         var inputBox = <HTMLInputElement>document.getElementById("answer-input");
         var correctCallback = (newState: S) => () => {
@@ -37,13 +37,13 @@ export abstract class FlashcardGen<S, D> {
             setState(newState);
             card.slideOut(callback, true);
         };
-        var inputCallback = (attempt: string) => {
-            var correct: boolean = card.check(attempt);
+        var inputCallback = async (attempt: string) => {
+            var correct: boolean = await card.check(attempt);
             if (correct) {
                 inputBox.onkeydown = (e) => {}; // To prevent multiple submissions by accident
                 var result = card.correctFirst ? FlashcardResult.Correct : FlashcardResult.Incorrect;
-                var newState = this.updateState(s, cardData, result);
-                this.correctEffect(newState, cardData, attempt, correctCallback(newState));
+                var newState = await this.updateStateAsync(s, cardData, result);
+                await this.correctEffect(newState, cardData, attempt, correctCallback(newState));
             } else {
                 card.markWrong();
                 inputBox.oninput = (e) => {
@@ -52,12 +52,12 @@ export abstract class FlashcardGen<S, D> {
                 }
             }
         };
-        inputBox.onkeydown = (e) => {
+        inputBox.onkeydown = async (e) => {
             if (e.key == "Enter") {
                 inputCallback(inputBox.value);
             } else if (e.key == "ArrowUp") {
                 // console.log("UP");
-                var newState = this.updateState(s, cardData, FlashcardResult.Correct);
+                var newState = await this.updateStateAsync(s, cardData, FlashcardResult.Correct);
                 // correctCallback(newState)();
                 this.correctEffect(newState, cardData, "", correctCallback(newState));
                 // inputBox.value = "";
@@ -65,7 +65,7 @@ export abstract class FlashcardGen<S, D> {
                 // card.slideOut(callback, true);
             } else if (e.key == "ArrowDown") {
                 inputBox.value = "";
-                setState(this.updateState(s, cardData, FlashcardResult.Unanswered)); 
+                this.updateStateAsync(s, cardData, FlashcardResult.Unanswered).then(setState); 
                 card.slideOut(callback, false);
             }
         };

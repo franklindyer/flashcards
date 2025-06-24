@@ -10,6 +10,9 @@ import {
     FlashcardGen
 } from "./flashcard-generator"
 import {
+    FlashcardSyncGen
+} from "./flashcard-sync-generator"
+import {
     gDeckTypeRegistry,
     gDeckRegistry,
     registerDeckType
@@ -42,7 +45,7 @@ type TranscriptDeckState = {
     settings: TranscriptDeckSettings
 };
 
-class TranscriptFlashcardGen extends FlashcardGen<TranscriptDeckState, TranscriptCardData> {
+class TranscriptFlashcardGen extends FlashcardSyncGen<TranscriptDeckState, TranscriptCardData> {
     getGenName() { return "transcript-generator"; }
 
     getNextCard(state: TranscriptDeckState): TranscriptCardData {

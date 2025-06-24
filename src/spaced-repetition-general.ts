@@ -7,6 +7,9 @@ import {
     FlashcardGen,
     FlashcardResult
 } from "./flashcard-generator"
+import {
+    FlashcardSyncGen
+} from "./flashcard-sync-generator"
 
 export enum SpacedRepStudying {
     NewCards = 1,
@@ -53,7 +56,7 @@ export function makeSpacedRepCardDict<content, auxdata>(
 }
 
 export abstract class AbstractSpacedRepGen<content, auxdata, settings>
-    extends FlashcardGen<SpacedRepState<content, auxdata, settings>, SpacedRepCardPhysical<content, auxdata>> {
+    extends FlashcardSyncGen<SpacedRepState<content, auxdata, settings>, SpacedRepCardPhysical<content, auxdata>> {
 
     getDate: () => Date = () => new Date();
     

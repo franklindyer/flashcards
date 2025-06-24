@@ -1,10 +1,10 @@
 export class Flashcard {
     el: HTMLElement;
-    check: (answer: string) => boolean;
+    check: (answer: string) => Promise<boolean>;
     hint: string;
     correctFirst: boolean;
 
-    constructor(el: HTMLElement, hint: string, check: (answer: string) => boolean = (_: string) => false) {
+    constructor(el: HTMLElement, hint: string, check: (answer: string) => Promise<boolean> = (_: string) => new Promise((resolve, _) => false)) {
         this.el = el;
         this.check = check;
         this.hint = hint;
