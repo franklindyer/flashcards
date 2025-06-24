@@ -61,7 +61,7 @@ export abstract class AbstractSpacedRepGen<content, auxdata, settings>
     setDate(newDt: Date) { this.getDate = () => newDt; } 
 
     cardIsDue(card: SpacedRepCard<content, auxdata>): boolean {
-        return (card.due !== undefined && card.due < this.getDate());
+        return (card.due !== undefined && new Date(card.due) < this.getDate());
     };
     
     cardIsNew(card: SpacedRepCard<content, auxdata>): boolean { 

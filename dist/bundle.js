@@ -2149,7 +2149,7 @@ class AbstractSpacedRepGen extends flashcard_generator_1.FlashcardGen {
     // For unit testing
     setDate(newDt) { this.getDate = () => newDt; }
     cardIsDue(card) {
-        return (card.due !== undefined && card.due < this.getDate());
+        return (card.due !== undefined && new Date(card.due) < this.getDate());
     }
     ;
     cardIsNew(card) {
