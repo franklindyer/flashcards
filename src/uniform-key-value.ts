@@ -10,6 +10,9 @@ import {
     FlashcardGen
 } from "./flashcard-generator"
 import {
+    FlashcardSyncGen
+} from "./flashcard-sync-generator"
+import {
     gDeckTypeRegistry,
     gDeckRegistry,
     registerDeckType
@@ -31,7 +34,7 @@ export type KVFlashcardState = {
     history: [string, boolean][]
 }
 
-export class KVFlashcardGen extends FlashcardGen<KVFlashcardState, BasicCardData> {
+export class KVFlashcardGen extends FlashcardSyncGen<KVFlashcardState, BasicCardData> {
     getGenName() { return "uniform-key-value"; }
 
     getNextCard(state: KVFlashcardState): BasicCardData {

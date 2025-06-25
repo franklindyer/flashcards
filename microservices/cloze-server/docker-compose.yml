@@ -1,0 +1,7 @@
+services:
+    api:
+        build: .
+        ports:
+            - 5052:8080
+        volumes:
+            - ./db:/db

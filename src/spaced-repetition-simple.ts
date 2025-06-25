@@ -95,7 +95,7 @@ export function makeEmptyCard(): SpacedRepCard<SRSimpleContent, SRSimpleAuxData>
             answers: [""],
             tags: []
         },
-        due: undefined,
+        due: new Date(),
         intervalMinutes: 0,
         auxdata: {
             streak: 0
@@ -115,14 +115,14 @@ export class SimpleSpacedRepGen
     ): number {
         var cardData = card.data!;
         if (correct == FlashcardResult.Correct) {
-            if (cardData.due === undefined && cardData.auxdata.streak >= 3) {
+            if (cardData.intervalMinutes == 0 && cardData.auxdata.streak >= 3) {
                 return settings.initialHours * 60;
-            } else if (cardData.due !== undefined) {
+            } else if (cardData.intervalMinutes != 0) {
                 return cardData.intervalMinutes * settings.correctFactor;
             } else {
                 return 0;
             }
-        } else if (correct == FlashcardResult.Incorrect && cardData.due !== undefined) {
+        } else if (correct == FlashcardResult.Incorrect && cardData.intervalMinutes > 0) {
             return cardData.intervalMinutes * settings.incorrectFactor;
         } else {
             return cardData.intervalMinutes;
@@ -218,11 +218,11 @@ function simpleSRMenu(st: SpacedRepState<SRSimpleContent, SRSimpleAuxData, SRSim
     totP.style.color = "#666666";
     totP.style.fontWeight = "bold";
     var newP = document.createElement("p");
-    newP.textContent = `New cards: ${Object.keys(st.cards).filter((i) => st.cards[i].due == undefined).length}`;    
+    newP.textContent = `New cards: ${Object.keys(st.cards).filter((i) => st.cards[i].intervalMinutes == 0).length}`;    
     newP.style.color = "#9999ee";
     newP.style.fontWeight = "bold";
     var dueP = document.createElement("p");
-    dueP.textContent = `Due cards: ${Object.keys(st.cards).filter((i) => st.cards[i].due !== undefined).length}`;
+    dueP.textContent = `Due cards: ${Object.keys(st.cards).filter((i) => st.cards[i].intervalMinutes > 0 && new Date(st.cards[i].due) < new Date()).length}`;
     dueP.style.color = "#ee9999";
     dueP.style.fontWeight = "bold"; 
   
@@ -283,7 +283,7 @@ function simpleSRMenu(st: SpacedRepState<SRSimpleContent, SRSimpleAuxData, SRSim
         cardInfo.style.marginLeft = "10px";
         cardInfo.style.marginRight = "10px";
         cardInfo.style.verticalAlign = "middle";
-        if (c.due === undefined) {
+        if (c.intervalMinutes == 0) {
             cardInfo.textContent = "not studied";
         } else {
             cardInfo.textContent = `due ${c.due!.toLocaleString().split('T')[0]}`;

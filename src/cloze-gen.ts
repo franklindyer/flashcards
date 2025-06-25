@@ -11,6 +11,9 @@ import {
     FlashcardGen
 } from "./flashcard-generator"
 import {
+    FlashcardSyncGen
+} from "./flashcard-sync-generator"
+import {
     renderCard
 } from "./flashcard-template"
 import {
@@ -47,7 +50,7 @@ type ClozeDeckState = {
     settings: ClozeDeckSettings
 }
 
-class ClozeFlashcardGen extends FlashcardGen<ClozeDeckState, ClozeCardData> {
+class ClozeFlashcardGen extends FlashcardSyncGen<ClozeDeckState, ClozeCardData> {
     getGenName() { return "cloze-puzzles"; }
 
     getNextCard(state: ClozeDeckState): ClozeCardData {
