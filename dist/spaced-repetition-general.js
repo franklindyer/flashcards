@@ -4,6 +4,7 @@ exports.AbstractSpacedRepGen = exports.SpacedRepStudying = void 0;
 exports.makeSpacedRepCardDict = makeSpacedRepCardDict;
 const utils_1 = require("./utils");
 const flashcard_generator_1 = require("./flashcard-generator");
+const flashcard_sync_generator_1 = require("./flashcard-sync-generator");
 var SpacedRepStudying;
 (function (SpacedRepStudying) {
     SpacedRepStudying[SpacedRepStudying["NewCards"] = 1] = "NewCards";
@@ -15,39 +16,38 @@ function makeSpacedRepCardDict(cards, defaultAuxData) {
     for (var i in cards) {
         var c = cards[i];
         var guid = (0, utils_1.guidGenerator)();
-        cardDict[guid] = { guid: guid, content: c, due: undefined, intervalMinutes: 0, auxdata: defaultAuxData() };
+        cardDict[guid] = { guid: guid, content: c, due: new Date(), intervalMinutes: 0, auxdata: defaultAuxData() };
     }
     return cardDict;
 }
-class AbstractSpacedRepGen extends flashcard_generator_1.FlashcardGen {
+class AbstractSpacedRepGen extends flashcard_sync_generator_1.FlashcardSyncGen {
     getDate = () => new Date();
     // For unit testing
     setDate(newDt) { this.getDate = () => newDt; }
     cardIsDue(card) {
-        return (card.due !== undefined && new Date(card.due) < this.getDate());
+        return (card.intervalMinutes > 0 && new Date(card.due).valueOf() < this.getDate().valueOf());
     }
     ;
     cardIsNew(card) {
-        return (card.due === undefined);
+        return (card.intervalMinutes == 0);
     }
     ;
     updateCard(card, settings, correct) {
-        var cardData = card.data;
         if (card.context.isPractice) {
-            return cardData;
+            return card.data;
         }
-        var isNew = cardData.due === undefined;
+        var isNew = card.data.intervalMinutes == 0;
         var newAuxData = this.updateAuxData(card, settings, correct);
-        cardData.auxdata = newAuxData;
-        card.data = cardData;
+        card.data.auxdata = newAuxData;
         var newInterval = this.updateInterval(card, settings, correct);
-        cardData.intervalMinutes = newInterval;
+        card.data.intervalMinutes = newInterval;
         // Interval > 0 implies the card is no longer new
-        if (newInterval > 0) {
-            cardData.due = this.getDate();
-            cardData.due.setHours(cardData.due.getHours() + cardData.intervalMinutes / 60);
+        // Only reschedule the card if it was answered correctly
+        if (correct == flashcard_generator_1.FlashcardResult.Correct && newInterval > 0) {
+            card.data.due = this.getDate();
+            card.data.due.setHours(card.data.due.getHours() + card.data.intervalMinutes / 60);
         }
-        return cardData;
+        return card.data;
     }
     getNew(st) {
         return Object.keys(st.cards).filter((k) => this.cardIsNew(st.cards[k]));

@@ -6,7 +6,7 @@ class Flashcard {
     check;
     hint;
     correctFirst;
-    constructor(el, hint, check = (_) => false) {
+    constructor(el, hint, check = (_) => new Promise((resolve, _) => false)) {
         this.el = el;
         this.check = check;
         this.hint = hint;

@@ -2,10 +2,11 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.KVFlashcardGen = void 0;
 const flashcard_generator_1 = require("./flashcard-generator");
+const flashcard_sync_generator_1 = require("./flashcard-sync-generator");
 const flashcard_deck_1 = require("./flashcard-deck");
 const flashcard_template_1 = require("./flashcard-template");
 const editor_1 = require("./editor");
-class KVFlashcardGen extends flashcard_generator_1.FlashcardGen {
+class KVFlashcardGen extends flashcard_sync_generator_1.FlashcardSyncGen {
     getGenName() { return "uniform-key-value"; }
     getNextCard(state) {
         var dat = state.deck[Math.floor(Math.random() * Object.keys(state.deck).length)];

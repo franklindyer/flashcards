@@ -2,10 +2,11 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const utils_1 = require("./utils");
 const flashcard_generator_1 = require("./flashcard-generator");
+const flashcard_sync_generator_1 = require("./flashcard-sync-generator");
 const flashcard_template_1 = require("./flashcard-template");
 const editor_1 = require("./editor");
 const flashcard_deck_1 = require("./flashcard-deck");
-class ClozeFlashcardGen extends flashcard_generator_1.FlashcardGen {
+class ClozeFlashcardGen extends flashcard_sync_generator_1.FlashcardSyncGen {
     getGenName() { return "cloze-puzzles"; }
     getNextCard(state) {
         var cardIsOk = (c) => !(state.settings.blacklist.includes(c.guid));

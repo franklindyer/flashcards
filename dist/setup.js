@@ -8,7 +8,6 @@ require("./transcript-template");
 require("./fs");
 require("./uniform-key-value");
 require("./spaced-repetition-simple");
-require("./spaced-repetition-mastery");
 require("./cloze-gen");
 require("./transcript-gen");
 require("./speech");

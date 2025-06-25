@@ -13,23 +13,23 @@ class FlashcardGen {
     getGenName() {
         throw new Error("getGenName not implemented!");
     }
-    runOnce(s, setState, callback) {
-        var cardData = this.getNextCard(s);
-        var card = this.generateCard(cardData);
-        card.check = (ans) => this.checkAnswer(ans, s, cardData);
+    async runOnce(s, setState, callback) {
+        var cardData = await this.getNextCardAsync(s);
+        var card = await this.generateCardAsync(cardData);
+        card.check = async (ans) => this.checkAnswerAsync(ans, s, cardData);
         var inputBox = document.getElementById("answer-input");
         var correctCallback = (newState) => () => {
             inputBox.value = "";
             setState(newState);
             card.slideOut(callback, true);
         };
-        var inputCallback = (attempt) => {
-            var correct = card.check(attempt);
+        var inputCallback = async (attempt) => {
+            var correct = await card.check(attempt);
             if (correct) {
                 inputBox.onkeydown = (e) => { }; // To prevent multiple submissions by accident
                 var result = card.correctFirst ? FlashcardResult.Correct : FlashcardResult.Incorrect;
-                var newState = this.updateState(s, cardData, result);
-                this.correctEffect(newState, cardData, attempt, correctCallback(newState));
+                var newState = await this.updateStateAsync(s, cardData, result);
+                await this.correctEffect(newState, cardData, attempt, correctCallback(newState));
             }
             else {
                 card.markWrong();
@@ -39,13 +39,13 @@ class FlashcardGen {
                 };
             }
         };
-        inputBox.onkeydown = (e) => {
+        inputBox.onkeydown = async (e) => {
             if (e.key == "Enter") {
                 inputCallback(inputBox.value);
             }
             else if (e.key == "ArrowUp") {
                 // console.log("UP");
-                var newState = this.updateState(s, cardData, FlashcardResult.Correct);
+                var newState = await this.updateStateAsync(s, cardData, FlashcardResult.Correct);
                 // correctCallback(newState)();
                 this.correctEffect(newState, cardData, "", correctCallback(newState));
                 // inputBox.value = "";
@@ -54,7 +54,7 @@ class FlashcardGen {
             }
             else if (e.key == "ArrowDown") {
                 inputBox.value = "";
-                setState(this.updateState(s, cardData, FlashcardResult.Unanswered));
+                this.updateStateAsync(s, cardData, FlashcardResult.Unanswered).then(setState);
                 card.slideOut(callback, false);
             }
         };

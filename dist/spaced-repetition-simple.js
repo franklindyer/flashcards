@@ -39,7 +39,7 @@ function makeEmptyCard() {
             answers: [""],
             tags: []
         },
-        due: undefined,
+        due: new Date(),
         intervalMinutes: 0,
         auxdata: {
             streak: 0
@@ -51,17 +51,17 @@ class SimpleSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGe
     updateInterval(card, settings, correct) {
         var cardData = card.data;
         if (correct == flashcard_generator_1.FlashcardResult.Correct) {
-            if (cardData.due === undefined && cardData.auxdata.streak >= 3) {
+            if (cardData.intervalMinutes == 0 && cardData.auxdata.streak >= 3) {
                 return settings.initialHours * 60;
             }
-            else if (cardData.due !== undefined) {
+            else if (cardData.intervalMinutes != 0) {
                 return cardData.intervalMinutes * settings.correctFactor;
             }
             else {
                 return 0;
             }
         }
-        else if (correct == flashcard_generator_1.FlashcardResult.Incorrect && cardData.due !== undefined) {
+        else if (correct == flashcard_generator_1.FlashcardResult.Incorrect && cardData.intervalMinutes > 0) {
             return cardData.intervalMinutes * settings.incorrectFactor;
         }
         else {
@@ -135,11 +135,11 @@ function simpleSRMenu(st) {
     totP.style.color = "#666666";
     totP.style.fontWeight = "bold";
     var newP = document.createElement("p");
-    newP.textContent = `New cards: ${Object.keys(st.cards).filter((i) => st.cards[i].due == undefined).length}`;
+    newP.textContent = `New cards: ${Object.keys(st.cards).filter((i) => st.cards[i].intervalMinutes == 0).length}`;
     newP.style.color = "#9999ee";
     newP.style.fontWeight = "bold";
     var dueP = document.createElement("p");
-    dueP.textContent = `Due cards: ${Object.keys(st.cards).filter((i) => st.cards[i].due !== undefined).length}`;
+    dueP.textContent = `Due cards: ${Object.keys(st.cards).filter((i) => st.cards[i].intervalMinutes > 0 && new Date(st.cards[i].due) < new Date()).length}`;
     dueP.style.color = "#ee9999";
     dueP.style.fontWeight = "bold";
     var studyingEditor = (0, editor_1.radioEditor)(st.studying, [spaced_repetition_general_1.SpacedRepStudying.NewCards, spaced_repetition_general_1.SpacedRepStudying.DueCards, spaced_repetition_general_1.SpacedRepStudying.RandomCards], ["Study new cards", "Study due cards", "Practice random cards"]);
@@ -184,7 +184,7 @@ function simpleSRMenu(st) {
         cardInfo.style.marginLeft = "10px";
         cardInfo.style.marginRight = "10px";
         cardInfo.style.verticalAlign = "middle";
-        if (c.due === undefined) {
+        if (c.intervalMinutes == 0) {
             cardInfo.textContent = "not studied";
         }
         else {
