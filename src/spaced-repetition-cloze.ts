@@ -44,67 +44,50 @@ import {
     registerDeckType
 } from "./flashcard-deck"
 
-type SRMasterContent = {
+export type SRSimpleContent = {
     prompt: string,
     answers: string[],
     tags: string[]
 }
 
-type SRMasterAuxData = {
-    streak: number,
-    numCorrect: number,
-    numIncorrect: number,
-    mastery: number,
+export type SRSimpleAuxData = {
+    streak: number
 }
 
-type SRMasterSettings = {
+export type SRSimpleSettings = {
     initialHours: number,
-
-    correctMaxFactor: number,
-    correctMinFactor: number,
-    incorrectMaxFactor: number,
-    incorrectMinFactor: number,
-    punishmentExponent: number,
-    initialMastery: number,
-    masteryDeficitHalflife: number,
-
+    correctFactor: number,
+    incorrectFactor: number,
     inactiveTags: string[],
     readCorrectAnswers: boolean,
     speechSettings: SpeechSettings,
     filterSettings: TextFilterSettings
 }
 
-const defaultMasterSRSettings = {
+export const defaultSimpleSRSettings = {
     initialHours: 6,
-
-    correctMaxFactor: 5.0,
-    correctMinFactor: 1.1,
-    incorrectMaxFactor: 0.5,
-    incorrectMinFactor: 0.1,
-    punishmentExponent: 1.5,
-    initialMastery: 0.5,
-    masteryDeficitHalflife: 3,
-
+    correctFactor: 1.6,
+    incorrectFactor: 0.5,
     inactiveTags: [],
     readCorrectAnswers: false,
     speechSettings: defaultSpeechSettings(),
     filterSettings: defaultTextFilterSettings
 };
 
-export const defaultMasterSRState: SpacedRepState<SRMasterContent, SRMasterAuxData, SRMasterSettings> = {
+export const defaultSimpleSRState: SpacedRepState<SRSimpleContent, SRSimpleAuxData, SRSimpleSettings> = {
     cards: makeSpacedRepCardDict([
         { prompt: "the dog", answers: ["le chien"], tags: [] },
         { prompt: "the man", answers: ["l'homme"], tags: [] },
         { prompt: "the woman", answers: ["la dame"], tags: [] }
-    ], () => { return { streak: 0, intervalMinutes: 0, due: undefined, numCorrect: 0, numIncorrect: 0, mastery: 0 }; }),
+    ], () => { return { streak: 0, intervalMinutes: 0, due: undefined }; }),
     newIndex: 0,
     newQueue: [],
     newQueueSize: 10,
     studying: SpacedRepStudying.NewCards,
-    settings: defaultMasterSRSettings
+    settings: defaultSimpleSRSettings
 };
 
-function makeEmptyCard(): SpacedRepCard<SRMasterContent, SRMasterAuxData> { 
+export function makeEmptyCard(): SpacedRepCard<SRSimpleContent, SRSimpleAuxData> { 
     return {
         guid: guidGenerator(),
         content: {
@@ -112,96 +95,66 @@ function makeEmptyCard(): SpacedRepCard<SRMasterContent, SRMasterAuxData> {
             answers: [""],
             tags: []
         },
-        due: undefined,
+        due: new Date(),
         intervalMinutes: 0,
         auxdata: {
-            streak: 0,
-            numCorrect: 0,
-            numIncorrect: 0,
-            mastery: 0.5,
+            streak: 0
         }
     };
 }
 
-function calculateMasteryCoef(
-    settings: SRMasterSettings, 
-    card: SpacedRepCard<SRMasterContent, SRMasterAuxData>):
-    number {
-    var c = card.auxdata.numCorrect;
-    var d = card.auxdata.numIncorrect;
-    var k = settings.masteryDeficitHalflife;
-    var p = settings.initialMastery;
-    var alpha = settings.punishmentExponent;
-    return (c + p*k)/(c + Math.pow(d, alpha) + k);
-}
+export class SimpleSpacedRepGen
+    extends AbstractSpacedRepGen<SRSimpleContent, SRSimpleAuxData, SRSimpleSettings> {
 
-export class MasterSpacedRepGen
-    extends AbstractSpacedRepGen<SRMasterContent, SRMasterAuxData, SRMasterSettings> {
-
-    getGenName(): string { return "master-spaced-repetition"; }
+    getGenName(): string { return "simple-spaced-repetition"; }
 
     updateInterval(
-        card: SpacedRepCardPhysical<SRMasterContent, SRMasterAuxData>,
-        settings: SRMasterSettings,
+        card: SpacedRepCardPhysical<SRSimpleContent, SRSimpleAuxData>,
+        settings: SRSimpleSettings,
         correct: FlashcardResult
     ): number {
         var cardData = card.data!;
-        var mastery = calculateMasteryCoef(settings, cardData);
-        if (correct === FlashcardResult.Correct) {
-            if (cardData.auxdata.streak >= 3) {
+        if (correct == FlashcardResult.Correct) {
+            if (cardData.intervalMinutes == 0 && cardData.auxdata.streak >= 3) {
                 return settings.initialHours * 60;
-            } else if (cardData.due !== undefined) {
-                var factor = settings.correctMinFactor + Math.abs(settings.correctMaxFactor - settings.correctMinFactor)*mastery;
-                return cardData.intervalMinutes * factor;
+            } else if (cardData.intervalMinutes != 0) {
+                return cardData.intervalMinutes * settings.correctFactor;
             } else {
                 return 0;
             }
-        } else if (correct == FlashcardResult.Incorrect && cardData.due !== undefined) {
-            var factor = settings.incorrectMinFactor + Math.abs(settings.incorrectMaxFactor - settings.incorrectMinFactor)*mastery;
-            return cardData.intervalMinutes * factor;
+        } else if (correct == FlashcardResult.Incorrect && cardData.intervalMinutes > 0) {
+            return cardData.intervalMinutes * settings.incorrectFactor;
         } else {
             return cardData.intervalMinutes;
         }
     }
- 
+
     updateAuxData(
-        card: SpacedRepCardPhysical<SRMasterContent, SRMasterAuxData>,
-        settings: SRMasterSettings,
+        card: SpacedRepCardPhysical<SRSimpleContent, SRSimpleAuxData>,
+        settings: SRSimpleSettings,
         correct: FlashcardResult
-    ): SRMasterAuxData {
-        var cardData = card.data!;
+    ): SRSimpleAuxData {
         if (correct == FlashcardResult.Correct) {
-            cardData.auxdata.streak += 1;
-            cardData.auxdata.numCorrect += 1;
+            card.data!.auxdata.streak += 1;
         } else if (correct == FlashcardResult.Incorrect) {
-            cardData.auxdata.streak = 0;
-            cardData.auxdata.numIncorrect += 1;
+            card.data!.auxdata.streak = 0;
         }
-        cardData.auxdata.mastery = calculateMasteryCoef(settings, cardData);
-        return cardData.auxdata;
+        return card.data!.auxdata;
     }
 
     repairDeckState(st: any): any {
-        for (var i in Object.keys(st.cards)) {
-            var k: string = Object.keys(st.cards)[i];
-            var c = st.cards[k];
-            if (c.due === null) st.cards[k].due = undefined;
-        }
         return st;
     }
 
-    generateCard(card: SpacedRepCardPhysical<SRMasterContent, SRMasterAuxData>): 
+    generateCard(card: SpacedRepCardPhysical<SRSimpleContent, SRSimpleAuxData>): 
         Flashcard {
         var a = document.createElement("a");
         var prompt = "No cards left to study.";
         var hint = "You cannot continue studying until more cards become due."
-        var masteryColor = "white";
 
         if (card.data !== undefined) {
             prompt = card.data!.content.prompt;
             hint = card.data!.content.answers[0];
-            var masteryColorParam = Math.floor(50 * card.data.auxdata.mastery);
-            masteryColor = `rgb(${255-masteryColorParam},${205+masteryColorParam},200)`;
         }
 
         var fontSize = 100.0/(10.0*Math.log(10+prompt.length));
@@ -212,7 +165,6 @@ export class MasterSpacedRepGen
 
         var infoText = document.createElement("span");
         infoText.classList.add("cards-left-span");
-        infoText.style.backgroundColor = masteryColor;
         if (card.context.isPractice) {
             infoText.textContent = "This is a practice card. It will not affect your progress.";
             fl.el.style.backgroundColor = "#ffffee";
@@ -226,8 +178,8 @@ export class MasterSpacedRepGen
 
     checkAnswer(
         answer: string, 
-        st: SpacedRepState<SRMasterContent, SRMasterAuxData, SRMasterSettings>,
-        card: SpacedRepCardPhysical<SRMasterContent, SRMasterAuxData>
+        st: SpacedRepState<SRSimpleContent, SRSimpleAuxData, SRSimpleSettings>,
+        card: SpacedRepCardPhysical<SRSimpleContent, SRSimpleAuxData>
     ): boolean {
         if (card.data === undefined) 
             return false;
@@ -237,8 +189,8 @@ export class MasterSpacedRepGen
     }
 
     correctEffect(
-        st: SpacedRepState<SRMasterContent, SRMasterAuxData, SRMasterSettings>,
-        card: SpacedRepCardPhysical<SRMasterContent, SRMasterAuxData>,
+        st: SpacedRepState<SRSimpleContent, SRSimpleAuxData, SRSimpleSettings>,
+        card: SpacedRepCardPhysical<SRSimpleContent, SRSimpleAuxData>,
         attempt: string,
         resolve: () => void
     ): void {
@@ -257,8 +209,8 @@ export class MasterSpacedRepGen
 
 }
 
-function masterSRMenu(st: SpacedRepState<SRMasterContent, SRMasterAuxData, SRMasterSettings>): 
-    StateEditor<SpacedRepState<SRMasterContent, SRMasterAuxData, SRMasterSettings>> {
+function simpleSRMenu(st: SpacedRepState<SRSimpleContent, SRSimpleAuxData, SRSimpleSettings>): 
+    StateEditor<SpacedRepState<SRSimpleContent, SRSimpleAuxData, SRSimpleSettings>> {
     var contDiv = document.createElement("div");
 
     var totP = document.createElement("p");
@@ -266,11 +218,11 @@ function masterSRMenu(st: SpacedRepState<SRMasterContent, SRMasterAuxData, SRMas
     totP.style.color = "#666666";
     totP.style.fontWeight = "bold";
     var newP = document.createElement("p");
-    newP.textContent = `New cards: ${Object.keys(st.cards).filter((i) => st.cards[i].due == undefined).length}`;    
+    newP.textContent = `New cards: ${Object.keys(st.cards).filter((i) => st.cards[i].intervalMinutes == 0).length}`;    
     newP.style.color = "#9999ee";
     newP.style.fontWeight = "bold";
     var dueP = document.createElement("p");
-    dueP.textContent = `Due cards: ${Object.keys(st.cards).filter((i) => st.cards[i].due !== undefined).length}`;
+    dueP.textContent = `Due cards: ${Object.keys(st.cards).filter((i) => st.cards[i].intervalMinutes > 0 && new Date(st.cards[i].due) < new Date()).length}`;
     dueP.style.color = "#ee9999";
     dueP.style.fontWeight = "bold"; 
   
@@ -283,25 +235,8 @@ function masterSRMenu(st: SpacedRepState<SRMasterContent, SRMasterAuxData, SRMas
     var settings = st.settings;
     var initHoursEditor = scrollNumberEditor("Initial interval (hours): ", settings.initialHours, 1, 240, 1);
     var newQueueSizeEditor = scrollNumberEditor("Max new cards to study at once: ", st.newQueueSize, 1, 100, 1);
-
-    var correctMaxEditor = scrollNumberEditor("Max correct factor: ", settings.correctMaxFactor, 1, 10, 0.1);
-    var correctMinEditor = scrollNumberEditor("Min correct factor: ", settings.correctMinFactor, 1, 10, 0.1);
-    var incorrectMaxEditor = scrollNumberEditor("Max incorrect factor: ", settings.incorrectMaxFactor, 0.1, 0.9, 0.01);
-    var incorrectMinEditor = scrollNumberEditor("Min incorrect factor: ", settings.incorrectMinFactor, 0.1, 0.9, 0.01);
-    var punishmentEditor = scrollNumberEditor("Punishment exponent: ", settings.punishmentExponent, 1.0, 5.0, 0.1);
-    var initialMasteryEditor = scrollNumberEditor("Initial mastery value: ", settings.initialMastery, 0.0, 1.0, 0.01);
-    var halflifeEditor = scrollNumberEditor("Number of correct answers to halve initial mastery deficit: ", settings.masteryDeficitHalflife, 1, 50, 1);
-    var paramsDiv = document.createElement("div");
-    [
-        initHoursEditor,
-        correctMaxEditor,
-        correctMinEditor,
-        incorrectMaxEditor,
-        incorrectMinEditor,
-        punishmentEditor,
-        initialMasteryEditor,
-        halflifeEditor
-    ].map((ed2) => paramsDiv.appendChild(ed2.element));
+    var correctFactor = scrollNumberEditor("Correct factor: ", settings.correctFactor, 1, 10, 0.1);
+    var incorrectFactor = scrollNumberEditor("Incorrect factor: ", settings.incorrectFactor, 0, 1.0, 0.01);
 
     var speechCheckbox = boolEditor("Speak correct answers using text-to-speech?", settings.readCorrectAnswers);
     var speechEditor = speechSettingsEditor(settings.speechSettings);
@@ -319,15 +254,17 @@ function masterSRMenu(st: SpacedRepState<SRMasterContent, SRMasterAuxData, SRMas
 
     [
         studyingEditor.element,
-        paramsDiv,
+        initHoursEditor.element,
+        correctFactor.element,
+        incorrectFactor.element,
         newQueueSizeEditor.element,
         omitTagsCont,
         speechDiv,
         filterEditor.element
     ].map((el) => el.classList.add("deck-menu-submenu"));
 
-    function makeCardEditor(c: SpacedRepCard<SRMasterContent, SRMasterAuxData>): 
-        StateEditor<SpacedRepCard<SRMasterContent, SRMasterAuxData>> {
+    function makeCardEditor(c: SpacedRepCard<SRSimpleContent, SRSimpleAuxData>): 
+        StateEditor<SpacedRepCard<SRSimpleContent, SRSimpleAuxData>> {
         var ed = combineEditors(
             [[c.content.prompt, c.content.answers.join('|')], c.content.tags.join(',')],
             (pr: any) => {
@@ -346,7 +283,7 @@ function masterSRMenu(st: SpacedRepState<SRMasterContent, SRMasterAuxData, SRMas
         cardInfo.style.marginLeft = "10px";
         cardInfo.style.marginRight = "10px";
         cardInfo.style.verticalAlign = "middle";
-        if (c.due === undefined) {
+        if (c.intervalMinutes == 0) {
             cardInfo.textContent = "not studied";
         } else {
             cardInfo.textContent = `due ${c.due!.toLocaleString().split('T')[0]}`;
@@ -387,7 +324,9 @@ function masterSRMenu(st: SpacedRepState<SRMasterContent, SRMasterAuxData, SRMas
         newP,
         dueP,
         studyingEditor.element,
-        paramsDiv,
+        initHoursEditor.element,
+        correctFactor.element,
+        incorrectFactor.element,
         newQueueSizeEditor.element,
         omitTagsCont,
         speechDiv,
@@ -402,15 +341,8 @@ function masterSRMenu(st: SpacedRepState<SRMasterContent, SRMasterAuxData, SRMas
             studying: studyingEditor.menuToState(),
             settings: {
                 initialHours: initHoursEditor.menuToState(),
-
-                correctMaxFactor: correctMaxEditor.menuToState(),
-                correctMinFactor: correctMinEditor.menuToState(),
-                incorrectMaxFactor: incorrectMaxEditor.menuToState(),
-                incorrectMinFactor: incorrectMinEditor.menuToState(),
-                punishmentExponent: punishmentEditor.menuToState(),
-                initialMastery: initialMasteryEditor.menuToState(),
-                masteryDeficitHalflife: halflifeEditor.menuToState(),                
-
+                correctFactor: correctFactor.menuToState(),
+                incorrectFactor: incorrectFactor.menuToState(),
                 readCorrectAnswers: speechCheckbox.menuToState(),
                 speechSettings: speechEditor.menuToState(),
                 filterSettings: filterEditor.menuToState(),
@@ -425,10 +357,10 @@ function masterSRMenu(st: SpacedRepState<SRMasterContent, SRMasterAuxData, SRMas
 }
 
 registerDeckType(
-    new MasterSpacedRepGen(),
-    masterSRMenu,
-    "master-spaced-repetition-deck",
-    "Mastery-based spaced repetition deck",
-    defaultMasterSRState,
+    new SimpleSpacedRepGen(),
+    simpleSRMenu,
+    "simple-spaced-repetition-deck",
+    "Simple spaced repetition deck",
+    defaultSimpleSRState,
     "#ffffdd"
 )

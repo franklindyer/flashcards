@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.MasterSpacedRepGen = exports.defaultMasterSRState = void 0;
+exports.SimpleSpacedRepGen = exports.defaultSimpleSRState = exports.defaultSimpleSRSettings = void 0;
+exports.makeEmptyCard = makeEmptyCard;
 const utils_1 = require("./utils");
 const flashcard_1 = require("./flashcard");
 const flashcard_generator_1 = require("./flashcard-generator");
@@ -9,31 +10,26 @@ const speech_1 = require("./speech");
 const text_filters_1 = require("./text-filters");
 const editor_1 = require("./editor");
 const flashcard_deck_1 = require("./flashcard-deck");
-const defaultMasterSRSettings = {
+exports.defaultSimpleSRSettings = {
     initialHours: 6,
-    correctMaxFactor: 5.0,
-    correctMinFactor: 1.1,
-    incorrectMaxFactor: 0.5,
-    incorrectMinFactor: 0.1,
-    punishmentExponent: 1.5,
-    initialMastery: 0.5,
-    masteryDeficitHalflife: 3,
+    correctFactor: 1.6,
+    incorrectFactor: 0.5,
     inactiveTags: [],
     readCorrectAnswers: false,
     speechSettings: (0, speech_1.defaultSpeechSettings)(),
     filterSettings: text_filters_1.defaultTextFilterSettings
 };
-exports.defaultMasterSRState = {
+exports.defaultSimpleSRState = {
     cards: (0, spaced_repetition_general_1.makeSpacedRepCardDict)([
         { prompt: "the dog", answers: ["le chien"], tags: [] },
         { prompt: "the man", answers: ["l'homme"], tags: [] },
         { prompt: "the woman", answers: ["la dame"], tags: [] }
-    ], () => { return { streak: 0, intervalMinutes: 0, due: undefined, numCorrect: 0, numIncorrect: 0, mastery: 0 }; }),
+    ], () => { return { streak: 0, intervalMinutes: 0, due: undefined }; }),
     newIndex: 0,
     newQueue: [],
     newQueueSize: 10,
     studying: spaced_repetition_general_1.SpacedRepStudying.NewCards,
-    settings: defaultMasterSRSettings
+    settings: exports.defaultSimpleSRSettings
 };
 function makeEmptyCard() {
     return {
@@ -43,81 +39,54 @@ function makeEmptyCard() {
             answers: [""],
             tags: []
         },
-        due: undefined,
+        due: new Date(),
         intervalMinutes: 0,
         auxdata: {
-            streak: 0,
-            numCorrect: 0,
-            numIncorrect: 0,
-            mastery: 0.5,
+            streak: 0
         }
     };
 }
-function calculateMasteryCoef(settings, card) {
-    var c = card.auxdata.numCorrect;
-    var d = card.auxdata.numIncorrect;
-    var k = settings.masteryDeficitHalflife;
-    var p = settings.initialMastery;
-    var alpha = settings.punishmentExponent;
-    return (c + p * k) / (c + Math.pow(d, alpha) + k);
-}
-class MasterSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGen {
-    getGenName() { return "master-spaced-repetition"; }
+class SimpleSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGen {
+    getGenName() { return "simple-spaced-repetition"; }
     updateInterval(card, settings, correct) {
         var cardData = card.data;
-        var mastery = calculateMasteryCoef(settings, cardData);
-        if (correct === flashcard_generator_1.FlashcardResult.Correct) {
-            if (cardData.auxdata.streak >= 3) {
+        if (correct == flashcard_generator_1.FlashcardResult.Correct) {
+            if (cardData.intervalMinutes == 0 && cardData.auxdata.streak >= 3) {
                 return settings.initialHours * 60;
             }
-            else if (cardData.due !== undefined) {
-                var factor = settings.correctMinFactor + Math.abs(settings.correctMaxFactor - settings.correctMinFactor) * mastery;
-                return cardData.intervalMinutes * factor;
+            else if (cardData.intervalMinutes != 0) {
+                return cardData.intervalMinutes * settings.correctFactor;
             }
             else {
                 return 0;
             }
         }
-        else if (correct == flashcard_generator_1.FlashcardResult.Incorrect && cardData.due !== undefined) {
-            var factor = settings.incorrectMinFactor + Math.abs(settings.incorrectMaxFactor - settings.incorrectMinFactor) * mastery;
-            return cardData.intervalMinutes * factor;
+        else if (correct == flashcard_generator_1.FlashcardResult.Incorrect && cardData.intervalMinutes > 0) {
+            return cardData.intervalMinutes * settings.incorrectFactor;
         }
         else {
             return cardData.intervalMinutes;
         }
     }
     updateAuxData(card, settings, correct) {
-        var cardData = card.data;
         if (correct == flashcard_generator_1.FlashcardResult.Correct) {
-            cardData.auxdata.streak += 1;
-            cardData.auxdata.numCorrect += 1;
+            card.data.auxdata.streak += 1;
         }
         else if (correct == flashcard_generator_1.FlashcardResult.Incorrect) {
-            cardData.auxdata.streak = 0;
-            cardData.auxdata.numIncorrect += 1;
+            card.data.auxdata.streak = 0;
         }
-        cardData.auxdata.mastery = calculateMasteryCoef(settings, cardData);
-        return cardData.auxdata;
+        return card.data.auxdata;
     }
     repairDeckState(st) {
-        for (var i in Object.keys(st.cards)) {
-            var k = Object.keys(st.cards)[i];
-            var c = st.cards[k];
-            if (c.due === null)
-                st.cards[k].due = undefined;
-        }
         return st;
     }
     generateCard(card) {
         var a = document.createElement("a");
         var prompt = "No cards left to study.";
         var hint = "You cannot continue studying until more cards become due.";
-        var masteryColor = "white";
         if (card.data !== undefined) {
             prompt = card.data.content.prompt;
             hint = card.data.content.answers[0];
-            var masteryColorParam = Math.floor(50 * card.data.auxdata.mastery);
-            masteryColor = `rgb(${255 - masteryColorParam},${205 + masteryColorParam},200)`;
         }
         var fontSize = 100.0 / (10.0 * Math.log(10 + prompt.length));
         a.style.fontSize = `${fontSize}vw`;
@@ -125,7 +94,6 @@ class MasterSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGe
         var fl = new flashcard_1.Flashcard(a, hint);
         var infoText = document.createElement("span");
         infoText.classList.add("cards-left-span");
-        infoText.style.backgroundColor = masteryColor;
         if (card.context.isPractice) {
             infoText.textContent = "This is a practice card. It will not affect your progress.";
             fl.el.style.backgroundColor = "#ffffee";
@@ -159,43 +127,27 @@ class MasterSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGe
         }
     }
 }
-exports.MasterSpacedRepGen = MasterSpacedRepGen;
-function masterSRMenu(st) {
+exports.SimpleSpacedRepGen = SimpleSpacedRepGen;
+function simpleSRMenu(st) {
     var contDiv = document.createElement("div");
     var totP = document.createElement("p");
     totP.textContent = `Total cards: ${Object.keys(st.cards).length}`;
     totP.style.color = "#666666";
     totP.style.fontWeight = "bold";
     var newP = document.createElement("p");
-    newP.textContent = `New cards: ${Object.keys(st.cards).filter((i) => st.cards[i].due == undefined).length}`;
+    newP.textContent = `New cards: ${Object.keys(st.cards).filter((i) => st.cards[i].intervalMinutes == 0).length}`;
     newP.style.color = "#9999ee";
     newP.style.fontWeight = "bold";
     var dueP = document.createElement("p");
-    dueP.textContent = `Due cards: ${Object.keys(st.cards).filter((i) => st.cards[i].due !== undefined).length}`;
+    dueP.textContent = `Due cards: ${Object.keys(st.cards).filter((i) => st.cards[i].intervalMinutes > 0 && new Date(st.cards[i].due) < new Date()).length}`;
     dueP.style.color = "#ee9999";
     dueP.style.fontWeight = "bold";
     var studyingEditor = (0, editor_1.radioEditor)(st.studying, [spaced_repetition_general_1.SpacedRepStudying.NewCards, spaced_repetition_general_1.SpacedRepStudying.DueCards, spaced_repetition_general_1.SpacedRepStudying.RandomCards], ["Study new cards", "Study due cards", "Practice random cards"]);
     var settings = st.settings;
     var initHoursEditor = (0, editor_1.scrollNumberEditor)("Initial interval (hours): ", settings.initialHours, 1, 240, 1);
     var newQueueSizeEditor = (0, editor_1.scrollNumberEditor)("Max new cards to study at once: ", st.newQueueSize, 1, 100, 1);
-    var correctMaxEditor = (0, editor_1.scrollNumberEditor)("Max correct factor: ", settings.correctMaxFactor, 1, 10, 0.1);
-    var correctMinEditor = (0, editor_1.scrollNumberEditor)("Min correct factor: ", settings.correctMinFactor, 1, 10, 0.1);
-    var incorrectMaxEditor = (0, editor_1.scrollNumberEditor)("Max incorrect factor: ", settings.incorrectMaxFactor, 0.1, 0.9, 0.01);
-    var incorrectMinEditor = (0, editor_1.scrollNumberEditor)("Min incorrect factor: ", settings.incorrectMinFactor, 0.1, 0.9, 0.01);
-    var punishmentEditor = (0, editor_1.scrollNumberEditor)("Punishment exponent: ", settings.punishmentExponent, 1.0, 5.0, 0.1);
-    var initialMasteryEditor = (0, editor_1.scrollNumberEditor)("Initial mastery value: ", settings.initialMastery, 0.0, 1.0, 0.01);
-    var halflifeEditor = (0, editor_1.scrollNumberEditor)("Number of correct answers to halve initial mastery deficit: ", settings.masteryDeficitHalflife, 1, 50, 1);
-    var paramsDiv = document.createElement("div");
-    [
-        initHoursEditor,
-        correctMaxEditor,
-        correctMinEditor,
-        incorrectMaxEditor,
-        incorrectMinEditor,
-        punishmentEditor,
-        initialMasteryEditor,
-        halflifeEditor
-    ].map((ed2) => paramsDiv.appendChild(ed2.element));
+    var correctFactor = (0, editor_1.scrollNumberEditor)("Correct factor: ", settings.correctFactor, 1, 10, 0.1);
+    var incorrectFactor = (0, editor_1.scrollNumberEditor)("Incorrect factor: ", settings.incorrectFactor, 0, 1.0, 0.01);
     var speechCheckbox = (0, editor_1.boolEditor)("Speak correct answers using text-to-speech?", settings.readCorrectAnswers);
     var speechEditor = (0, speech_1.speechSettingsEditor)(settings.speechSettings);
     var speechDiv = document.createElement("div");
@@ -209,7 +161,9 @@ function masterSRMenu(st) {
     var filterEditor = (0, text_filters_1.textFilterSelectionMenu)(settings.filterSettings);
     [
         studyingEditor.element,
-        paramsDiv,
+        initHoursEditor.element,
+        correctFactor.element,
+        incorrectFactor.element,
         newQueueSizeEditor.element,
         omitTagsCont,
         speechDiv,
@@ -230,7 +184,7 @@ function masterSRMenu(st) {
         cardInfo.style.marginLeft = "10px";
         cardInfo.style.marginRight = "10px";
         cardInfo.style.verticalAlign = "middle";
-        if (c.due === undefined) {
+        if (c.intervalMinutes == 0) {
             cardInfo.textContent = "not studied";
         }
         else {
@@ -266,7 +220,9 @@ function masterSRMenu(st) {
         newP,
         dueP,
         studyingEditor.element,
-        paramsDiv,
+        initHoursEditor.element,
+        correctFactor.element,
+        incorrectFactor.element,
         newQueueSizeEditor.element,
         omitTagsCont,
         speechDiv,
@@ -281,13 +237,8 @@ function masterSRMenu(st) {
                 studying: studyingEditor.menuToState(),
                 settings: {
                     initialHours: initHoursEditor.menuToState(),
-                    correctMaxFactor: correctMaxEditor.menuToState(),
-                    correctMinFactor: correctMinEditor.menuToState(),
-                    incorrectMaxFactor: incorrectMaxEditor.menuToState(),
-                    incorrectMinFactor: incorrectMinEditor.menuToState(),
-                    punishmentExponent: punishmentEditor.menuToState(),
-                    initialMastery: initialMasteryEditor.menuToState(),
-                    masteryDeficitHalflife: halflifeEditor.menuToState(),
+                    correctFactor: correctFactor.menuToState(),
+                    incorrectFactor: incorrectFactor.menuToState(),
                     readCorrectAnswers: speechCheckbox.menuToState(),
                     speechSettings: speechEditor.menuToState(),
                     filterSettings: filterEditor.menuToState(),
@@ -301,4 +252,4 @@ function masterSRMenu(st) {
         }
     };
 }
-(0, flashcard_deck_1.registerDeckType)(new MasterSpacedRepGen(), masterSRMenu, "master-spaced-repetition-deck", "Mastery-based spaced repetition deck", exports.defaultMasterSRState, "#ffffdd");
+(0, flashcard_deck_1.registerDeckType)(new SimpleSpacedRepGen(), simpleSRMenu, "simple-spaced-repetition-deck", "Simple spaced repetition deck", exports.defaultSimpleSRState, "#ffffdd");

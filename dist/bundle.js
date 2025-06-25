@@ -1104,10 +1104,11 @@ class BasicFlashcardTemplate extends flashcard_template_1.FlashcardTemplate {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const utils_1 = __webpack_require__(185);
 const flashcard_generator_1 = __webpack_require__(808);
+const flashcard_sync_generator_1 = __webpack_require__(410);
 const flashcard_template_1 = __webpack_require__(791);
 const editor_1 = __webpack_require__(43);
 const flashcard_deck_1 = __webpack_require__(836);
-class ClozeFlashcardGen extends flashcard_generator_1.FlashcardGen {
+class ClozeFlashcardGen extends flashcard_sync_generator_1.FlashcardSyncGen {
     getGenName() { return "cloze-puzzles"; }
     getNextCard(state) {
         var cardIsOk = (c) => !(state.settings.blacklist.includes(c.guid));
@@ -1922,23 +1923,23 @@ class FlashcardGen {
     getGenName() {
         throw new Error("getGenName not implemented!");
     }
-    runOnce(s, setState, callback) {
-        var cardData = this.getNextCard(s);
-        var card = this.generateCard(cardData);
-        card.check = (ans) => this.checkAnswer(ans, s, cardData);
+    async runOnce(s, setState, callback) {
+        var cardData = await this.getNextCardAsync(s);
+        var card = await this.generateCardAsync(cardData);
+        card.check = async (ans) => this.checkAnswerAsync(ans, s, cardData);
         var inputBox = document.getElementById("answer-input");
         var correctCallback = (newState) => () => {
             inputBox.value = "";
             setState(newState);
             card.slideOut(callback, true);
         };
-        var inputCallback = (attempt) => {
-            var correct = card.check(attempt);
+        var inputCallback = async (attempt) => {
+            var correct = await card.check(attempt);
             if (correct) {
                 inputBox.onkeydown = (e) => { }; // To prevent multiple submissions by accident
                 var result = card.correctFirst ? FlashcardResult.Correct : FlashcardResult.Incorrect;
-                var newState = this.updateState(s, cardData, result);
-                this.correctEffect(newState, cardData, attempt, correctCallback(newState));
+                var newState = await this.updateStateAsync(s, cardData, result);
+                await this.correctEffect(newState, cardData, attempt, correctCallback(newState));
             }
             else {
                 card.markWrong();
@@ -1948,13 +1949,13 @@ class FlashcardGen {
                 };
             }
         };
-        inputBox.onkeydown = (e) => {
+        inputBox.onkeydown = async (e) => {
             if (e.key == "Enter") {
                 inputCallback(inputBox.value);
             }
             else if (e.key == "ArrowUp") {
                 // console.log("UP");
-                var newState = this.updateState(s, cardData, FlashcardResult.Correct);
+                var newState = await this.updateStateAsync(s, cardData, FlashcardResult.Correct);
                 // correctCallback(newState)();
                 this.correctEffect(newState, cardData, "", correctCallback(newState));
                 // inputBox.value = "";
@@ -1963,7 +1964,7 @@ class FlashcardGen {
             }
             else if (e.key == "ArrowDown") {
                 inputBox.value = "";
-                setState(this.updateState(s, cardData, FlashcardResult.Unanswered));
+                this.updateStateAsync(s, cardData, FlashcardResult.Unanswered).then(setState);
                 card.slideOut(callback, false);
             }
         };
@@ -1980,6 +1981,38 @@ class FlashcardGen {
     }
 }
 exports.FlashcardGen = FlashcardGen;
+
+
+/***/ }),
+
+/***/ 410:
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.FlashcardSyncGen = void 0;
+const flashcard_generator_1 = __webpack_require__(808);
+class FlashcardSyncGen extends flashcard_generator_1.FlashcardGen {
+    // Type S is the state type for this flashcard deck
+    // Type D is the type of the data involved in the single card
+    getGenName() {
+        throw new Error("getGenName not implemented!");
+    }
+    getNextCardAsync(state) {
+        return new Promise((resolve, _) => { resolve(this.getNextCard(state)); });
+    }
+    updateStateAsync(state, cardData, correct) {
+        return new Promise((resolve, _) => { resolve(this.updateState(state, cardData, correct)); });
+    }
+    generateCardAsync(data) {
+        return new Promise((resolve, _) => { resolve(this.generateCard(data)); });
+    }
+    checkAnswerAsync(answer, state, data) {
+        return new Promise((resolve, _) => { resolve(this.checkAnswer(answer, state, data)); });
+    }
+}
+exports.FlashcardSyncGen = FlashcardSyncGen;
 
 
 /***/ }),
@@ -2022,7 +2055,7 @@ class Flashcard {
     check;
     hint;
     correctFirst;
-    constructor(el, hint, check = (_) => false) {
+    constructor(el, hint, check = (_) => new Promise((resolve, _) => false)) {
         this.el = el;
         this.check = check;
         this.hint = hint;
@@ -2109,7 +2142,6 @@ __webpack_require__(127);
 __webpack_require__(633);
 __webpack_require__(18);
 __webpack_require__(601);
-__webpack_require__(114);
 __webpack_require__(994);
 __webpack_require__(159);
 __webpack_require__(192);
@@ -2129,6 +2161,7 @@ exports.AbstractSpacedRepGen = exports.SpacedRepStudying = void 0;
 exports.makeSpacedRepCardDict = makeSpacedRepCardDict;
 const utils_1 = __webpack_require__(185);
 const flashcard_generator_1 = __webpack_require__(808);
+const flashcard_sync_generator_1 = __webpack_require__(410);
 var SpacedRepStudying;
 (function (SpacedRepStudying) {
     SpacedRepStudying[SpacedRepStudying["NewCards"] = 1] = "NewCards";
@@ -2140,39 +2173,38 @@ function makeSpacedRepCardDict(cards, defaultAuxData) {
     for (var i in cards) {
         var c = cards[i];
         var guid = (0, utils_1.guidGenerator)();
-        cardDict[guid] = { guid: guid, content: c, due: undefined, intervalMinutes: 0, auxdata: defaultAuxData() };
+        cardDict[guid] = { guid: guid, content: c, due: new Date(), intervalMinutes: 0, auxdata: defaultAuxData() };
     }
     return cardDict;
 }
-class AbstractSpacedRepGen extends flashcard_generator_1.FlashcardGen {
+class AbstractSpacedRepGen extends flashcard_sync_generator_1.FlashcardSyncGen {
     getDate = () => new Date();
     // For unit testing
     setDate(newDt) { this.getDate = () => newDt; }
     cardIsDue(card) {
-        return (card.due !== undefined && new Date(card.due) < this.getDate());
+        return (card.intervalMinutes > 0 && new Date(card.due).valueOf() < this.getDate().valueOf());
     }
     ;
     cardIsNew(card) {
-        return (card.due === undefined);
+        return (card.intervalMinutes == 0);
     }
     ;
     updateCard(card, settings, correct) {
-        var cardData = card.data;
         if (card.context.isPractice) {
-            return cardData;
+            return card.data;
         }
-        var isNew = cardData.due === undefined;
+        var isNew = card.data.intervalMinutes == 0;
         var newAuxData = this.updateAuxData(card, settings, correct);
-        cardData.auxdata = newAuxData;
-        card.data = cardData;
+        card.data.auxdata = newAuxData;
         var newInterval = this.updateInterval(card, settings, correct);
-        cardData.intervalMinutes = newInterval;
+        card.data.intervalMinutes = newInterval;
         // Interval > 0 implies the card is no longer new
-        if (newInterval > 0) {
-            cardData.due = this.getDate();
-            cardData.due.setHours(cardData.due.getHours() + cardData.intervalMinutes / 60);
+        // Only reschedule the card if it was answered correctly
+        if (correct == flashcard_generator_1.FlashcardResult.Correct && newInterval > 0) {
+            card.data.due = this.getDate();
+            card.data.due.setHours(card.data.due.getHours() + card.data.intervalMinutes / 60);
         }
-        return cardData;
+        return card.data;
     }
     getNew(st) {
         return Object.keys(st.cards).filter((k) => this.cardIsNew(st.cards[k]));
@@ -2265,318 +2297,6 @@ exports.AbstractSpacedRepGen = AbstractSpacedRepGen;
 
 /***/ }),
 
-/***/ 114:
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.MasterSpacedRepGen = exports.defaultMasterSRState = void 0;
-const utils_1 = __webpack_require__(185);
-const flashcard_1 = __webpack_require__(88);
-const flashcard_generator_1 = __webpack_require__(808);
-const spaced_repetition_general_1 = __webpack_require__(547);
-const speech_1 = __webpack_require__(192);
-const text_filters_1 = __webpack_require__(460);
-const editor_1 = __webpack_require__(43);
-const flashcard_deck_1 = __webpack_require__(836);
-const defaultMasterSRSettings = {
-    initialHours: 6,
-    correctMaxFactor: 5.0,
-    correctMinFactor: 1.1,
-    incorrectMaxFactor: 0.5,
-    incorrectMinFactor: 0.1,
-    punishmentExponent: 1.5,
-    initialMastery: 0.5,
-    masteryDeficitHalflife: 3,
-    inactiveTags: [],
-    readCorrectAnswers: false,
-    speechSettings: (0, speech_1.defaultSpeechSettings)(),
-    filterSettings: text_filters_1.defaultTextFilterSettings
-};
-exports.defaultMasterSRState = {
-    cards: (0, spaced_repetition_general_1.makeSpacedRepCardDict)([
-        { prompt: "the dog", answers: ["le chien"], tags: [] },
-        { prompt: "the man", answers: ["l'homme"], tags: [] },
-        { prompt: "the woman", answers: ["la dame"], tags: [] }
-    ], () => { return { streak: 0, intervalMinutes: 0, due: undefined, numCorrect: 0, numIncorrect: 0, mastery: 0 }; }),
-    newIndex: 0,
-    newQueue: [],
-    newQueueSize: 10,
-    studying: spaced_repetition_general_1.SpacedRepStudying.NewCards,
-    settings: defaultMasterSRSettings
-};
-function makeEmptyCard() {
-    return {
-        guid: (0, utils_1.guidGenerator)(),
-        content: {
-            prompt: "",
-            answers: [""],
-            tags: []
-        },
-        due: undefined,
-        intervalMinutes: 0,
-        auxdata: {
-            streak: 0,
-            numCorrect: 0,
-            numIncorrect: 0,
-            mastery: 0.5,
-        }
-    };
-}
-function calculateMasteryCoef(settings, card) {
-    var c = card.auxdata.numCorrect;
-    var d = card.auxdata.numIncorrect;
-    var k = settings.masteryDeficitHalflife;
-    var p = settings.initialMastery;
-    var alpha = settings.punishmentExponent;
-    return (c + p * k) / (c + Math.pow(d, alpha) + k);
-}
-class MasterSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGen {
-    getGenName() { return "master-spaced-repetition"; }
-    updateInterval(card, settings, correct) {
-        var cardData = card.data;
-        var mastery = calculateMasteryCoef(settings, cardData);
-        if (correct === flashcard_generator_1.FlashcardResult.Correct) {
-            if (cardData.auxdata.streak >= 3) {
-                return settings.initialHours * 60;
-            }
-            else if (cardData.due !== undefined) {
-                var factor = settings.correctMinFactor + Math.abs(settings.correctMaxFactor - settings.correctMinFactor) * mastery;
-                return cardData.intervalMinutes * factor;
-            }
-            else {
-                return 0;
-            }
-        }
-        else if (correct == flashcard_generator_1.FlashcardResult.Incorrect && cardData.due !== undefined) {
-            var factor = settings.incorrectMinFactor + Math.abs(settings.incorrectMaxFactor - settings.incorrectMinFactor) * mastery;
-            return cardData.intervalMinutes * factor;
-        }
-        else {
-            return cardData.intervalMinutes;
-        }
-    }
-    updateAuxData(card, settings, correct) {
-        var cardData = card.data;
-        if (correct == flashcard_generator_1.FlashcardResult.Correct) {
-            cardData.auxdata.streak += 1;
-            cardData.auxdata.numCorrect += 1;
-        }
-        else if (correct == flashcard_generator_1.FlashcardResult.Incorrect) {
-            cardData.auxdata.streak = 0;
-            cardData.auxdata.numIncorrect += 1;
-        }
-        cardData.auxdata.mastery = calculateMasteryCoef(settings, cardData);
-        return cardData.auxdata;
-    }
-    repairDeckState(st) {
-        for (var i in Object.keys(st.cards)) {
-            var k = Object.keys(st.cards)[i];
-            var c = st.cards[k];
-            if (c.due === null)
-                st.cards[k].due = undefined;
-        }
-        return st;
-    }
-    generateCard(card) {
-        var a = document.createElement("a");
-        var prompt = "No cards left to study.";
-        var hint = "You cannot continue studying until more cards become due.";
-        var masteryColor = "white";
-        if (card.data !== undefined) {
-            prompt = card.data.content.prompt;
-            hint = card.data.content.answers[0];
-            var masteryColorParam = Math.floor(50 * card.data.auxdata.mastery);
-            masteryColor = `rgb(${255 - masteryColorParam},${205 + masteryColorParam},200)`;
-        }
-        var fontSize = 100.0 / (10.0 * Math.log(10 + prompt.length));
-        a.style.fontSize = `${fontSize}vw`;
-        a.textContent = prompt;
-        var fl = new flashcard_1.Flashcard(a, hint);
-        var infoText = document.createElement("span");
-        infoText.classList.add("cards-left-span");
-        infoText.style.backgroundColor = masteryColor;
-        if (card.context.isPractice) {
-            infoText.textContent = "This is a practice card. It will not affect your progress.";
-            fl.el.style.backgroundColor = "#ffffee";
-        }
-        else {
-            infoText.textContent = `${card.context.cardsLeft} cards remaining`;
-        }
-        fl.el.appendChild(infoText);
-        return fl;
-    }
-    checkAnswer(answer, st, card) {
-        if (card.data === undefined)
-            return false;
-        var cardData = card.data;
-        var tf = (s) => (0, text_filters_1.applyTextFilter)(s, st.settings.filterSettings);
-        return cardData.content.answers.map(tf).includes(tf(answer));
-    }
-    correctEffect(st, card, attempt, resolve) {
-        var cardData = card.data;
-        if (st.settings.readCorrectAnswers) {
-            var ss = st.settings.speechSettings;
-            if (attempt.length > 0) {
-                (0, speech_1.utter)(attempt, ss.voice, ss.rate, ss.pitch, resolve);
-            }
-            else {
-                (0, speech_1.utter)(cardData.content.answers[0], ss.voice, ss.rate, ss.pitch, resolve);
-            }
-        }
-        else {
-            resolve();
-        }
-    }
-}
-exports.MasterSpacedRepGen = MasterSpacedRepGen;
-function masterSRMenu(st) {
-    var contDiv = document.createElement("div");
-    var totP = document.createElement("p");
-    totP.textContent = `Total cards: ${Object.keys(st.cards).length}`;
-    totP.style.color = "#666666";
-    totP.style.fontWeight = "bold";
-    var newP = document.createElement("p");
-    newP.textContent = `New cards: ${Object.keys(st.cards).filter((i) => st.cards[i].due == undefined).length}`;
-    newP.style.color = "#9999ee";
-    newP.style.fontWeight = "bold";
-    var dueP = document.createElement("p");
-    dueP.textContent = `Due cards: ${Object.keys(st.cards).filter((i) => st.cards[i].due !== undefined).length}`;
-    dueP.style.color = "#ee9999";
-    dueP.style.fontWeight = "bold";
-    var studyingEditor = (0, editor_1.radioEditor)(st.studying, [spaced_repetition_general_1.SpacedRepStudying.NewCards, spaced_repetition_general_1.SpacedRepStudying.DueCards, spaced_repetition_general_1.SpacedRepStudying.RandomCards], ["Study new cards", "Study due cards", "Practice random cards"]);
-    var settings = st.settings;
-    var initHoursEditor = (0, editor_1.scrollNumberEditor)("Initial interval (hours): ", settings.initialHours, 1, 240, 1);
-    var newQueueSizeEditor = (0, editor_1.scrollNumberEditor)("Max new cards to study at once: ", st.newQueueSize, 1, 100, 1);
-    var correctMaxEditor = (0, editor_1.scrollNumberEditor)("Max correct factor: ", settings.correctMaxFactor, 1, 10, 0.1);
-    var correctMinEditor = (0, editor_1.scrollNumberEditor)("Min correct factor: ", settings.correctMinFactor, 1, 10, 0.1);
-    var incorrectMaxEditor = (0, editor_1.scrollNumberEditor)("Max incorrect factor: ", settings.incorrectMaxFactor, 0.1, 0.9, 0.01);
-    var incorrectMinEditor = (0, editor_1.scrollNumberEditor)("Min incorrect factor: ", settings.incorrectMinFactor, 0.1, 0.9, 0.01);
-    var punishmentEditor = (0, editor_1.scrollNumberEditor)("Punishment exponent: ", settings.punishmentExponent, 1.0, 5.0, 0.1);
-    var initialMasteryEditor = (0, editor_1.scrollNumberEditor)("Initial mastery value: ", settings.initialMastery, 0.0, 1.0, 0.01);
-    var halflifeEditor = (0, editor_1.scrollNumberEditor)("Number of correct answers to halve initial mastery deficit: ", settings.masteryDeficitHalflife, 1, 50, 1);
-    var paramsDiv = document.createElement("div");
-    [
-        initHoursEditor,
-        correctMaxEditor,
-        correctMinEditor,
-        incorrectMaxEditor,
-        incorrectMinEditor,
-        punishmentEditor,
-        initialMasteryEditor,
-        halflifeEditor
-    ].map((ed2) => paramsDiv.appendChild(ed2.element));
-    var speechCheckbox = (0, editor_1.boolEditor)("Speak correct answers using text-to-speech?", settings.readCorrectAnswers);
-    var speechEditor = (0, speech_1.speechSettingsEditor)(settings.speechSettings);
-    var speechDiv = document.createElement("div");
-    speechDiv.appendChild(speechCheckbox.element);
-    speechDiv.appendChild(speechEditor.element);
-    var omitTagsEditor = (0, editor_1.singleTextFieldEditor)(settings.inactiveTags.join(','));
-    omitTagsEditor.element.placeholder = "comma-separated tags...";
-    var omitTagsCont = document.createElement("div");
-    omitTagsCont.textContent = "Omit cards with the following tags: ";
-    omitTagsCont.appendChild(omitTagsEditor.element);
-    var filterEditor = (0, text_filters_1.textFilterSelectionMenu)(settings.filterSettings);
-    [
-        studyingEditor.element,
-        paramsDiv,
-        newQueueSizeEditor.element,
-        omitTagsCont,
-        speechDiv,
-        filterEditor.element
-    ].map((el) => el.classList.add("deck-menu-submenu"));
-    function makeCardEditor(c) {
-        var ed = (0, editor_1.combineEditors)([[c.content.prompt, c.content.answers.join('|')], c.content.tags.join(',')], (pr) => {
-            var ed2 = (0, editor_1.swappingTextEditor)(pr);
-            ed2.element.style.display = "inline-block";
-            return ed2;
-        }, (ts) => {
-            var ed2 = (0, editor_1.singleTextFieldEditor)(ts);
-            ed2.element.placeholder = "tags...";
-            return ed2;
-        });
-        var cardInfo = document.createElement("a");
-        cardInfo.style.color = "lightgray";
-        cardInfo.style.marginLeft = "10px";
-        cardInfo.style.marginRight = "10px";
-        cardInfo.style.verticalAlign = "middle";
-        if (c.due === undefined) {
-            cardInfo.textContent = "not studied";
-        }
-        else {
-            cardInfo.textContent = `due ${c.due.toLocaleString().split('T')[0]}`;
-        }
-        ed.element.appendChild(cardInfo);
-        return {
-            element: ed.element,
-            menuToState: () => {
-                let tp = ed.menuToState();
-                return {
-                    guid: c.guid,
-                    content: {
-                        prompt: tp[0][0],
-                        answers: tp[0][1].split('|'),
-                        tags: tp[1].split(',').filter((t) => t.length > 0)
-                    },
-                    due: c.due,
-                    intervalMinutes: c.intervalMinutes,
-                    auxdata: c.auxdata
-                };
-            }
-        };
-    }
-    ;
-    var cardsEditor = (0, editor_1.multipleEditors)(Object.values(st.cards), () => makeEmptyCard(), makeCardEditor, true, (s, cd) => cd.content.prompt.includes(s) || cd.content.answers.some((a) => a.includes(s)));
-    var cardsEditorTitle = document.createElement("h3");
-    cardsEditorTitle.textContent = "Cards";
-    cardsEditor.element.prepend(cardsEditorTitle);
-    cardsEditor.element.classList.add("deck-menu-submenu");
-    var components = [
-        totP,
-        newP,
-        dueP,
-        studyingEditor.element,
-        paramsDiv,
-        newQueueSizeEditor.element,
-        omitTagsCont,
-        speechDiv,
-        filterEditor.element,
-        cardsEditor.element,
-    ];
-    components.map((el) => contDiv.appendChild(el));
-    return {
-        element: contDiv,
-        menuToState: () => {
-            return {
-                studying: studyingEditor.menuToState(),
-                settings: {
-                    initialHours: initHoursEditor.menuToState(),
-                    correctMaxFactor: correctMaxEditor.menuToState(),
-                    correctMinFactor: correctMinEditor.menuToState(),
-                    incorrectMaxFactor: incorrectMaxEditor.menuToState(),
-                    incorrectMinFactor: incorrectMinEditor.menuToState(),
-                    punishmentExponent: punishmentEditor.menuToState(),
-                    initialMastery: initialMasteryEditor.menuToState(),
-                    masteryDeficitHalflife: halflifeEditor.menuToState(),
-                    readCorrectAnswers: speechCheckbox.menuToState(),
-                    speechSettings: speechEditor.menuToState(),
-                    filterSettings: filterEditor.menuToState(),
-                    inactiveTags: omitTagsEditor.menuToState().split(',')
-                },
-                newQueue: st.newQueue,
-                newIndex: st.newIndex,
-                newQueueSize: newQueueSizeEditor.menuToState(),
-                cards: (0, utils_1.makeDict)(cardsEditor.menuToState(), (c) => c.guid),
-            };
-        }
-    };
-}
-(0, flashcard_deck_1.registerDeckType)(new MasterSpacedRepGen(), masterSRMenu, "master-spaced-repetition-deck", "Mastery-based spaced repetition deck", exports.defaultMasterSRState, "#ffffdd");
-
-
-/***/ }),
-
 /***/ 601:
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
@@ -2622,7 +2342,7 @@ function makeEmptyCard() {
             answers: [""],
             tags: []
         },
-        due: undefined,
+        due: new Date(),
         intervalMinutes: 0,
         auxdata: {
             streak: 0
@@ -2634,17 +2354,17 @@ class SimpleSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGe
     updateInterval(card, settings, correct) {
         var cardData = card.data;
         if (correct == flashcard_generator_1.FlashcardResult.Correct) {
-            if (cardData.due === undefined && cardData.auxdata.streak >= 3) {
+            if (cardData.intervalMinutes == 0 && cardData.auxdata.streak >= 3) {
                 return settings.initialHours * 60;
             }
-            else if (cardData.due !== undefined) {
+            else if (cardData.intervalMinutes != 0) {
                 return cardData.intervalMinutes * settings.correctFactor;
             }
             else {
                 return 0;
             }
         }
-        else if (correct == flashcard_generator_1.FlashcardResult.Incorrect && cardData.due !== undefined) {
+        else if (correct == flashcard_generator_1.FlashcardResult.Incorrect && cardData.intervalMinutes > 0) {
             return cardData.intervalMinutes * settings.incorrectFactor;
         }
         else {
@@ -2718,11 +2438,11 @@ function simpleSRMenu(st) {
     totP.style.color = "#666666";
     totP.style.fontWeight = "bold";
     var newP = document.createElement("p");
-    newP.textContent = `New cards: ${Object.keys(st.cards).filter((i) => st.cards[i].due == undefined).length}`;
+    newP.textContent = `New cards: ${Object.keys(st.cards).filter((i) => st.cards[i].intervalMinutes == 0).length}`;
     newP.style.color = "#9999ee";
     newP.style.fontWeight = "bold";
     var dueP = document.createElement("p");
-    dueP.textContent = `Due cards: ${Object.keys(st.cards).filter((i) => st.cards[i].due !== undefined).length}`;
+    dueP.textContent = `Due cards: ${Object.keys(st.cards).filter((i) => st.cards[i].intervalMinutes > 0 && new Date(st.cards[i].due) < new Date()).length}`;
     dueP.style.color = "#ee9999";
     dueP.style.fontWeight = "bold";
     var studyingEditor = (0, editor_1.radioEditor)(st.studying, [spaced_repetition_general_1.SpacedRepStudying.NewCards, spaced_repetition_general_1.SpacedRepStudying.DueCards, spaced_repetition_general_1.SpacedRepStudying.RandomCards], ["Study new cards", "Study due cards", "Practice random cards"]);
@@ -2767,7 +2487,7 @@ function simpleSRMenu(st) {
         cardInfo.style.marginLeft = "10px";
         cardInfo.style.marginRight = "10px";
         cardInfo.style.verticalAlign = "middle";
-        if (c.due === undefined) {
+        if (c.intervalMinutes == 0) {
             cardInfo.textContent = "not studied";
         }
         else {
@@ -3107,12 +2827,12 @@ function textFilterSelectionMenu(tfs) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const flashcard_generator_1 = __webpack_require__(808);
+const flashcard_sync_generator_1 = __webpack_require__(410);
 const flashcard_deck_1 = __webpack_require__(836);
 const flashcard_template_1 = __webpack_require__(791);
 const speech_1 = __webpack_require__(192);
 const editor_1 = __webpack_require__(43);
-class TranscriptFlashcardGen extends flashcard_generator_1.FlashcardGen {
+class TranscriptFlashcardGen extends flashcard_sync_generator_1.FlashcardSyncGen {
     getGenName() { return "transcript-generator"; }
     getNextCard(state) {
         var dat = state.deck[Math.floor(Math.random() * Object.keys(state.deck).length)];
@@ -3209,10 +2929,11 @@ class TranscriptFlashcardTemplate extends flashcard_template_1.FlashcardTemplate
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.KVFlashcardGen = void 0;
 const flashcard_generator_1 = __webpack_require__(808);
+const flashcard_sync_generator_1 = __webpack_require__(410);
 const flashcard_deck_1 = __webpack_require__(836);
 const flashcard_template_1 = __webpack_require__(791);
 const editor_1 = __webpack_require__(43);
-class KVFlashcardGen extends flashcard_generator_1.FlashcardGen {
+class KVFlashcardGen extends flashcard_sync_generator_1.FlashcardSyncGen {
     getGenName() { return "uniform-key-value"; }
     getNextCard(state) {
         var dat = state.deck[Math.floor(Math.random() * Object.keys(state.deck).length)];

@@ -20,7 +20,7 @@ export enum SpacedRepStudying {
 export type SpacedRepCard<content, auxdata> = {
     guid: string,
     content: content,
-    due?: Date,
+    due: Date,
     intervalMinutes: number,
     auxdata: auxdata
 }
@@ -50,7 +50,7 @@ export function makeSpacedRepCardDict<content, auxdata>(
     for (var i in cards) {
         var c = cards[i];
         var guid = guidGenerator();
-        cardDict[guid] = { guid: guid, content: c, due: undefined, intervalMinutes: 0, auxdata: defaultAuxData() };
+        cardDict[guid] = { guid: guid, content: c, due: new Date(), intervalMinutes: 0, auxdata: defaultAuxData() };
     }
     return cardDict;
 }
@@ -64,11 +64,11 @@ export abstract class AbstractSpacedRepGen<content, auxdata, settings>
     setDate(newDt: Date) { this.getDate = () => newDt; } 
 
     cardIsDue(card: SpacedRepCard<content, auxdata>): boolean {
-        return (card.due !== undefined && new Date(card.due) < this.getDate());
+        return (card.intervalMinutes > 0 && new Date(card.due).valueOf() < this.getDate().valueOf());
     };
     
     cardIsNew(card: SpacedRepCard<content, auxdata>): boolean { 
-        return (card.due === undefined); 
+        return (card.intervalMinutes == 0); 
     };
 
     // Return interval > 0 if the card should go from new to due
@@ -88,25 +88,24 @@ export abstract class AbstractSpacedRepGen<content, auxdata, settings>
         settings: settings, 
         correct: FlashcardResult
     ): SpacedRepCard<content, auxdata> {
-        var cardData = card.data!;
         if (card.context.isPractice) {
-            return cardData;
+            return card.data!;
         }
-        var isNew = cardData.due === undefined;
+        var isNew = card.data!.intervalMinutes == 0;
 
         var newAuxData = this.updateAuxData(card, settings, correct);
-        cardData.auxdata = newAuxData;
-        card.data = cardData;
+        card.data!.auxdata = newAuxData;
         var newInterval = this.updateInterval(card, settings, correct);
-        cardData.intervalMinutes = newInterval;
+        card.data!.intervalMinutes = newInterval;
 
         // Interval > 0 implies the card is no longer new
-        if (newInterval > 0) {
-            cardData.due = this.getDate();
-            cardData.due.setHours(cardData.due!.getHours() + cardData.intervalMinutes/60);
+        // Only reschedule the card if it was answered correctly
+        if (correct == FlashcardResult.Correct && newInterval > 0) {
+            card.data!.due = this.getDate();
+            card.data!.due.setHours(card.data!.due!.getHours() + card.data!.intervalMinutes/60);
         }
 
-        return cardData;
+        return card.data!;
     }
 
     getNew(st: SpacedRepState<content, auxdata, settings>): string[] {

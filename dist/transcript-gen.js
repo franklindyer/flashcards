@@ -1,11 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const flashcard_generator_1 = require("./flashcard-generator");
+const flashcard_sync_generator_1 = require("./flashcard-sync-generator");
 const flashcard_deck_1 = require("./flashcard-deck");
 const flashcard_template_1 = require("./flashcard-template");
 const speech_1 = require("./speech");
 const editor_1 = require("./editor");
-class TranscriptFlashcardGen extends flashcard_generator_1.FlashcardGen {
+class TranscriptFlashcardGen extends flashcard_sync_generator_1.FlashcardSyncGen {
     getGenName() { return "transcript-generator"; }
     getNextCard(state) {
         var dat = state.deck[Math.floor(Math.random() * Object.keys(state.deck).length)];
