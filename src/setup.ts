@@ -16,7 +16,6 @@ import "./transcript-template"
 import "./fs"
 import "./uniform-key-value";
 import "./spaced-repetition-simple";
-import "./spaced-repetition-mastery";
 import "./cloze-gen";
 import "./transcript-gen";
 

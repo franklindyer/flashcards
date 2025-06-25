@@ -15,10 +15,6 @@ import {
     SRSimpleSettings,
     defaultSimpleSRState
 } from "../src/spaced-repetition-simple"
-import {
-    MasterSpacedRepGen,
-    defaultMasterSRState
-} from "../src/spaced-repetition-mastery"
 
 function studyAllNewCards<content, timing, settings>(
     fgen: AbstractSpacedRepGen<content, timing, settings>,
@@ -27,12 +23,24 @@ function studyAllNewCards<content, timing, settings>(
     var prevStudying = st.studying;
     st.studying = SpacedRepStudying.NewCards;
     var x = fgen.getNextCard(st);
+    var i = 0;
     while (x.data !== undefined) {
+        i += 1;
         st = fgen.updateState(st, x, FlashcardResult.Correct);
         x = fgen.getNextCard(st);
+        expect(i > 100000).toBe(false);
     }
     st.studying = prevStudying;
     return st; 
+}
+
+function advanceMins<content, timing, settings>(
+    mins: number, 
+    fgen: AbstractSpacedRepGen<content, timing, settings>
+) {
+    var dt: Date = new Date();
+    dt.setTime(fgen.getDate().getTime() + mins*60*1000);
+    fgen.setDate(dt);
 }
 
 const cardPairList: [string, string][] = [
@@ -132,14 +140,21 @@ export function makeSharedSRTests<content, timing, settings> (
 
             var i = 0;
             st.studying = SpacedRepStudying.DueCards;
+            advanceMins(10000 * 60, fgen);
             var x = fgen.getNextCard(st);
             while (x.data !== undefined) {
                 var prevCardsLeft = x.context.cardsLeft;
                 var correct = Math.random() < 0.5;
+                var prevInterval = x.data.intervalMinutes;
                 st = fgen.updateState(st, x, correct ? FlashcardResult.Correct : FlashcardResult.Incorrect);
+                var nextInterval = st.cards[x.data.guid].intervalMinutes;
+                expect(nextInterval == 0).toBe(false);
+                expect(nextInterval >= prevInterval).toBe(correct);
+
                 x = fgen.getNextCard(st);
                 var currCardsLeft = x.context.cardsLeft;
-                expect(correct).toBe(currCardsLeft < prevCardsLeft);
+                expect(currCardsLeft).toBe(prevCardsLeft - (correct ? 1 : 0));
+                expect(correct).toBe(currCardsLeft == prevCardsLeft - 1);
             }
         });
     });
@@ -151,7 +166,7 @@ function makeSimpleSRTestState(pairs: [string, string][]) {
     var st = JSON.parse(JSON.stringify(defaultSimpleSRState));
     st.cards = makeSpacedRepCardDict(
         pairs.map((pr) => { return { prompt: pr[0], answers: [pr[1]], tags: [] }}),
-        () => { return { streak: 0, intervalMinutes: 0, due: undefined }; }
+        () => { return { streak: 0, intervalMinutes: 0, due: new Date() }; }
     );
     return st;
 }
@@ -164,21 +179,5 @@ function makeSimpleSRGenerator(): SimpleSpacedRepGen {
 
 makeSharedSRTests('simple', makeSimpleSRTestState, makeSimpleSRGenerator);
 
-/* Mastery-based SR deck */
+/* Any other SR decks down here? */
 
-function makeMasterySRTestState(pairs: [string, string][]) {
-    var st = JSON.parse(JSON.stringify(defaultMasterSRState));
-    st.cards = makeSpacedRepCardDict(
-        pairs.map((pr) => { return { prompt: pr[0], answers: [pr[1]], tags: [] }}),
-        () => { return { streak: 0, intervalMinutes: 0, due: undefined }; }
-    );
-    return st;
-}
-
-function makeMasterySRGenerator(): MasterSpacedRepGen {
-    var fgen = new MasterSpacedRepGen();
-    fgen.setDate(new Date());
-    return fgen;
-}
-
-makeSharedSRTests('simple', makeMasterySRTestState, makeMasterySRGenerator);
