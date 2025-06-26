@@ -95,6 +95,11 @@ export const defaultSRClozeState: SpacedRepState<SRClozeContent, SRClozeAuxData,
     settings: defaultSRClozeSettings
 };
 
+async function getClozePuzzle(key: string, serverUrl: string) {
+    // return fetch(`${serverUrl}/key`)
+    return null!
+}
+
 export class ClozeSpacedRepGen
     extends AbstractAsyncSpacedRepGen<SRClozeContent, SRClozeAuxData, SRClozeSettings> {
 
@@ -102,6 +107,13 @@ export class ClozeSpacedRepGen
 
     repairDeckState(st: any): any {
         return st;
+    }
+
+    cardIsEnabled(
+        card: SpacedRepCard<SRClozeContent, SRClozeAuxData>,
+        st: SpacedRepState<SRClozeContent, SRClozeAuxData, SRClozeSettings>
+    ): boolean {
+        return true;
     }
 
     correctEffect(
@@ -128,7 +140,20 @@ export class ClozeSpacedRepGen
         settings: SRClozeSettings,
         correct: FlashcardResult
     ): number {
-        return null!;
+        var cardData = card.data!;
+        if (correct == FlashcardResult.Correct) {
+            if (cardData.intervalMinutes == 0 && cardData.auxdata.streak >= 3) {
+                return settings.initialHours * 60;
+            } else if (cardData.intervalMinutes != 0) {
+                return cardData.intervalMinutes * settings.correctFactor;
+            } else {
+                return 0;
+            }
+        } else if (correct == FlashcardResult.Incorrect && cardData.intervalMinutes > 0) {
+            return cardData.intervalMinutes * settings.incorrectFactor;
+        } else {
+            return cardData.intervalMinutes;
+        } 
     }
 
     updateAuxData(
@@ -136,15 +161,24 @@ export class ClozeSpacedRepGen
         settings: SRClozeSettings,
         correct: FlashcardResult
     ): SRClozeAuxData {
-        return null!;
+        if (correct == FlashcardResult.Correct) {
+            card.data!.auxdata.streak += 1;
+        } else if (correct == FlashcardResult.Incorrect) {
+            card.data!.auxdata.streak = 0;
+        }
+        return card.data!.auxdata;
     }
 
     checkAnswerAsync(
         answer: string,
-        state: SpacedRepState<SRClozeContent, SRClozeAuxData, SRClozeSettings>,
-        data: SpacedRepCardPhysical<SRClozeContent, SRClozeAuxData>
+        st: SpacedRepState<SRClozeContent, SRClozeAuxData, SRClozeSettings>,
+        card: SpacedRepCardPhysical<SRClozeContent, SRClozeAuxData>
     ): Promise<boolean> {
-        return null!;
+        if (card.data === undefined || card.data!.auxdata.cloze == undefined) {
+            return trivialPromise(false);
+        }
+        var tf = (s: string) => applyTextFilter(s, st.settings.filterSettings);
+        return trivialPromise(tf(card.data!.auxdata.cloze!.answer) == tf(answer));
     }
 
     generateCardAsync(
@@ -153,3 +187,17 @@ export class ClozeSpacedRepGen
         return null!;
     }
 }
+
+function clozeSRMenu(st: SpacedRepState<SRClozeContent, SRClozeAuxData, SRClozeSettings>):
+    StateEditor<SpacedRepState<SRClozeContent, SRClozeAuxData, SRClozeSettings>> {
+    return null!;
+}
+
+registerDeckType(
+    new ClozeSpacedRepGen(),
+    clozeSRMenu,
+    "cloze-spaced-repetition-deck",
+    "Cloze spaced repetition deck",
+    defaultSRClozeState,
+    "#ffffdd"
+); 

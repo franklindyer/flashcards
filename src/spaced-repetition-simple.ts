@@ -108,6 +108,13 @@ export class SimpleSpacedRepGen
 
     getGenName(): string { return "simple-spaced-repetition"; }
 
+    cardIsEnabled(
+        card: SpacedRepCard<SRSimpleContent, SRSimpleAuxData>,
+        st: SpacedRepState<SRSimpleContent, SRSimpleAuxData, SRSimpleSettings>
+    ) {
+        return !card.content.tags.some((t) => st.settings.inactiveTags.some((s) => t === s)); 
+    }
+
     updateInterval(
         card: SpacedRepCardPhysical<SRSimpleContent, SRSimpleAuxData>,
         settings: SRSimpleSettings,

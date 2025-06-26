@@ -75,6 +75,12 @@ export abstract class AbstractAsyncSpacedRepGen<content, auxdata, settings>
         return (card.intervalMinutes == 0); 
     };
 
+    // Allows for cards to be temporarily disabled
+    abstract cardIsEnabled(
+        card: SpacedRepCard<content, auxdata>,
+        st: SpacedRepState<content, auxdata, settings>
+    ): boolean
+
     // Return interval > 0 if the card should go from new to due
     abstract updateInterval(
         cardData: SpacedRepCardPhysical<content, auxdata>,
@@ -113,11 +119,11 @@ export abstract class AbstractAsyncSpacedRepGen<content, auxdata, settings>
     }
 
     getNew(st: SpacedRepState<content, auxdata, settings>): string[] {
-        return Object.keys(st.cards).filter((k) => this.cardIsNew(st.cards[k]));
+        return Object.keys(st.cards).filter((k) => this.cardIsNew(st.cards[k]) && this.cardIsEnabled(st.cards[k], st));
     }
 
     getDue(st: SpacedRepState<content, auxdata, settings>): string[] {
-        return Object.keys(st.cards).filter((k) => this.cardIsDue(st.cards[k]));
+        return Object.keys(st.cards).filter((k) => this.cardIsDue(st.cards[k]) && this.cardIsEnabled(st.cards[k], st));
     }
 
     getNextCardAsync(st: SpacedRepState<content, auxdata, settings>): 
@@ -125,6 +131,7 @@ export abstract class AbstractAsyncSpacedRepGen<content, auxdata, settings>
         var inds = Object.keys(st.cards);
         var newInds = this.getNew(st);
         var dueInds = this.getDue(st);
+        st.newQueue = st.newQueue.filter((k) => this.cardIsEnabled(st.cards[k], st));
         switch (st.studying) {
             case SpacedRepStudying.NewCards:
                 if (newInds.length == 0 && st.newQueue.length == 0) {
