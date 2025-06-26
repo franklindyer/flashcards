@@ -80,6 +80,10 @@ export abstract class AbstractAsyncSpacedRepGen<content, auxdata, settings>
         card: SpacedRepCard<content, auxdata>,
         st: SpacedRepState<content, auxdata, settings>
     ): boolean
+    abstract nextCardAsyncPreprocessing(
+        card: SpacedRepCardPhysical<content, auxdata>,
+        st: SpacedRepState<content, auxdata, settings>
+    ): Promise<SpacedRepCardPhysical<content, auxdata>>
 
     // Return interval > 0 if the card should go from new to due
     abstract updateInterval(
@@ -135,7 +139,10 @@ export abstract class AbstractAsyncSpacedRepGen<content, auxdata, settings>
         switch (st.studying) {
             case SpacedRepStudying.NewCards:
                 if (newInds.length == 0 && st.newQueue.length == 0) {
-                    return trivialPromise({ data: undefined, context: { cardsLeft: 0, isPractice: false }});
+                    return this.nextCardAsyncPreprocessing({ 
+                        data: undefined, 
+                        context: { cardsLeft: 0, isPractice: false }
+                    }, st);
                 }
                 var newInd;
                 if (st.newIndex < st.newQueue.length) {
@@ -143,42 +150,42 @@ export abstract class AbstractAsyncSpacedRepGen<content, auxdata, settings>
                 } else {
                     newInd = newInds[Math.floor(Math.random() * newInds.length)];
                 }
-                return trivialPromise({
+                return this.nextCardAsyncPreprocessing({
                     data: st.cards[newInd],
                     context: {
                         cardsLeft: newInds.length,
                         isPractice: false
                     }
-                });
+                }, st);
             case SpacedRepStudying.DueCards:
                 if (dueInds.length == 0) {
                     return trivialPromise({ data: undefined, context: { cardsLeft: 0, isPractice: false } });
                 } 
                 var dueInd = dueInds[Math.floor(Math.random() * dueInds.length)];
-                return trivialPromise({
+                return this.nextCardAsyncPreprocessing({
                     data: st.cards[dueInd],
                     context: {
                         cardsLeft: dueInds.length,
                         isPractice: false
                     }
-                });
+                }, st);
             case SpacedRepStudying.RandomCards:
                 var ind = inds[Math.floor(Math.random() * inds.length)];
-                return trivialPromise({
+                return this.nextCardAsyncPreprocessing({
                     data: st.cards[ind],
                     context: {
                         cardsLeft: 0,
                         isPractice: true
                     }
-                });
+                }, st);
         }
-        return trivialPromise({
+        return this.nextCardAsyncPreprocessing({
             data: undefined,
             context: {
                 cardsLeft: 0,
                 isPractice: false
             }
-        });
+        }, st);
     }
 
     updateStateAsync(
@@ -226,6 +233,13 @@ export abstract class AbstractSpacedRepGen<content, auxdata, settings>
         state: SpacedRepState<content, auxdata, settings>,
         data: SpacedRepCardPhysical<content, auxdata>
     ): boolean;
+
+    nextCardAsyncPreprocessing(
+        c: SpacedRepCardPhysical<content, auxdata>,
+        state: SpacedRepState<content, auxdata, settings>
+    ) {
+        return trivialPromise(c);
+    }
 
     generateCardAsync(data: SpacedRepCardPhysical<content, auxdata>): Promise<Flashcard> {
         return new Promise((resolve, _) => { resolve(this.generateCard(data)); });

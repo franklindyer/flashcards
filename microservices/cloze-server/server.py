@@ -4,7 +4,7 @@ import os
 import sqlite3
 from multiprocessing.pool import ThreadPool
 
-from flask import Flask, abort, request
+from flask import Flask, abort, request, jsonify
 from flask_cors import CORS, cross_origin
 
 app = Flask(__name__)
@@ -68,6 +68,8 @@ def get_cloze():
     cloze = get_random_cloze(SQL_CON, src_langs, tgt_lang, lemma)
     if cloze == None:
         abort(404)
-    return cloze
+    response = jsonify(cloze)
+    # response.headers.add('Access-Control-Allow-Origin', '*')
+    return response
 
 app.run(host="0.0.0.0", port=8080)

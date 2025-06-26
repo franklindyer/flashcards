@@ -12,6 +12,7 @@ import {
 import "./basic-template"
 import "./cloze-template"
 import "./transcript-template"
+import "./noanswer-template"
 
 import "./fs"
 import "./uniform-key-value";

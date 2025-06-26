@@ -42,6 +42,9 @@ import {
     multipleEditors
 } from "./editor"
 import {
+    renderCard
+} from "./flashcard-template"
+import {
     registerDeckType
 } from "./flashcard-deck"
 
@@ -62,6 +65,8 @@ export type SRClozeAuxData = {
 
 export type SRClozeSettings = {
     clozeServerUrl: string,
+    sourceLangs: string[],
+    targetLang: string,
     initialHours: number,
     correctFactor: number,
     incorrectFactor: number,
@@ -73,6 +78,8 @@ export type SRClozeSettings = {
 
 export const defaultSRClozeSettings = {
     clozeServerUrl: "",
+    sourceLangs: ["en", "es"],
+    targetLang: "de",
     initialHours: 8,
     correctFactor: 1.5,
     incorrectFactor: 0.5,
@@ -174,22 +181,73 @@ export class ClozeSpacedRepGen
         st: SpacedRepState<SRClozeContent, SRClozeAuxData, SRClozeSettings>,
         card: SpacedRepCardPhysical<SRClozeContent, SRClozeAuxData>
     ): Promise<boolean> {
-        if (card.data === undefined || card.data!.auxdata.cloze == undefined) {
+        console.log("CHECKING ANSWER");
+        if (card.data === undefined || card.data!.auxdata.cloze === undefined) {
             return trivialPromise(false);
         }
         var tf = (s: string) => applyTextFilter(s, st.settings.filterSettings);
-        return trivialPromise(tf(card.data!.auxdata.cloze!.answer) == tf(answer));
+        return trivialPromise(tf(card.data!.auxdata.cloze!.answer) === tf(answer));
+    }
+
+    nextCardAsyncPreprocessing(
+        card: SpacedRepCardPhysical<SRClozeContent, SRClozeAuxData>,
+        st: SpacedRepState<SRClozeContent, SRClozeAuxData, SRClozeSettings>
+    ): Promise<SpacedRepCardPhysical<SRClozeContent, SRClozeAuxData>> {
+        console.log("DOING PREPROCESSING");
+        if (st.settings.clozeServerUrl.length == 0 || card.data === undefined) {
+            // Returns with .cloze attribute undefined, indicating failure
+            return trivialPromise(card);
+        }
+        return fetch(
+            `${st.settings.clozeServerUrl}/cloze?` + new URLSearchParams({
+                "srcs": st.settings.sourceLangs.join(","),
+                "tgt": st.settings.targetLang,
+                "lemma": card.data.content.key
+            }).toString()
+            ).then(
+                (r) => r.json()
+            ).then(
+                (j) => {
+                    card.data!.auxdata.cloze = {
+                        prompt: j["puzzle"],
+                        answer: j["target"],
+                        translation: j["source"]
+                    };
+                    console.log(card);
+                    return card;
+                }
+            ).catch((e) => {
+                console.log(e);
+                return card;
+            });
     }
 
     generateCardAsync(
-        data: SpacedRepCardPhysical<SRClozeContent, SRClozeAuxData>
+        card: SpacedRepCardPhysical<SRClozeContent, SRClozeAuxData>
     ): Promise<Flashcard> {
-        return null!;
+        console.log(card);
+        if (card.data === undefined) {
+            return trivialPromise(renderCard("noanswer-template",
+                "No cards left to study."
+            ));
+        } else if (card.data!.auxdata.cloze === undefined) {
+            return trivialPromise(renderCard("noanswer-template",
+                "Something is wrong with your Cloze puzzle server."
+            ));
+        }
+        return trivialPromise(renderCard("cloze-template", {
+            group: "", 
+            guid: card.data!.guid,
+            upper: card.data!.auxdata.cloze!.prompt,
+            lower: card.data!.auxdata.cloze!.translation
+        }));
     }
 }
 
 function clozeSRMenu(st: SpacedRepState<SRClozeContent, SRClozeAuxData, SRClozeSettings>):
     StateEditor<SpacedRepState<SRClozeContent, SRClozeAuxData, SRClozeSettings>> {
+    var contDiv = document.createElement("div");
+
     return null!;
 }
 
