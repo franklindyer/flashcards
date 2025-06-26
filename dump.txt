@@ -2,238 +2,583 @@
 > web-flashcards@1.0.0 develop
 > webpack-dev-server
 
-assets by status 278 KiB [cached] 1 asset
+assets by status 265 KiB [cached] 1 asset
 runtime modules 27.4 KiB 13 modules
 orphan modules 32.5 KiB [orphan] 4 modules
-cacheable modules 229 KiB
-  modules by path ./src/*.ts 82.3 KiB
-    ./src/index.ts 97 bytes [built] [code generated]
-    ./src/setup.ts 645 bytes [built] [code generated]
-    ./src/flashcard-deck.ts 5.1 KiB [built] [code generated]
-    ./src/fs.ts 1.23 KiB [built] [code generated]
-    + 19 modules
+cacheable modules 216 KiB
+  modules by path ./src/*.ts 69.5 KiB
+    modules with errors 16.7 KiB [errors]
+      ./src/spaced-repetition-simple.ts 10.8 KiB [built] [code generated] [1 error]
+      ./src/spaced-repetition-general.ts 5.89 KiB [built] [code generated] [69 errors]
+    + 20 modules
   modules by path ./node_modules/ 146 KiB
     modules by path ./node_modules/webpack-dev-server/client/ 81.9 KiB 4 modules
     modules by path ./node_modules/webpack/hot/*.js 5.17 KiB 4 modules
-    modules by path ./node_modules/uuid-by-string/src/*.js 5.86 KiB 2 modules
+    modules by path ./node_modules/uuid-by-string/src/*.js 5.86 KiB
+      ./node_modules/uuid-by-string/src/index.js 1.49 KiB [built] [code generated]
+      ./node_modules/uuid-by-string/src/lib.js 4.37 KiB [built] [code generated]
     + 4 modules
 
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts
-21:58-79
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts(21,59)
-      TS1144: '{' or ';' expected.
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts
-21:80-81
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts(21,81)
-      TS1068: Unexpected token. A constructor, method, accessor, or property was expected.
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts
-25:4-9
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts(25,5)
-      TS1434: Unexpected keyword or identifier.
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts
-26:13-14
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts(26,14)
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 161:24-25
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(161,25)
       TS1005: ',' expected.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
 
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts
-27:16-17
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts(27,17)
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 162:27-28
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(162,28)
       TS1005: ',' expected.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
 
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts
-28:15-16
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts(28,16)
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 166:16-17
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(166,17)
       TS1005: ',' expected.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
 
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts
-29:5-6
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts(29,6)
-      TS1005: ';' expected.
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts
-29:7-29
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts(29,8)
-      TS1434: Unexpected keyword or identifier.
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts
-33:4-9
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts(33,5)
-      TS1434: Unexpected keyword or identifier.
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts
-34:11-12
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts(34,12)
-      TS1005: ',' expected.
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts
-35:13-14
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts(35,14)
-      TS1005: ',' expected.
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts
-36:16-17
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts(36,17)
-      TS1005: ',' expected.
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts
-37:5-6
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts(37,6)
-      TS1005: ';' expected.
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts
-37:8-15
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts(37,9)
-      TS1434: Unexpected keyword or identifier.
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts
-41:4-9
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts(41,5)
-      TS1434: Unexpected keyword or identifier.
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts
-41:32-33
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts(41,33)
-      TS1005: ',' expected.
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts
-41:56-57
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts(41,57)
-      TS1005: ';' expected.
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts
-41:58-67
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts(41,59)
-      TS1434: Unexpected keyword or identifier.
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts
-44:0-1
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts(44,1)
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 166:17-18
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(166,18)
       TS1128: Declaration or statement expected.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
 
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts
-18:13-33
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts(18,14)
-      TS2654: Non-abstract class 'ExternalFlashcardGen' is missing implementations for the following members of 'FlashcardGen<ExternalFlashcardState, ExternalFlashcardData>': 'repairDeckState', 'updateStateAsync', 'generateCardAsync', 'checkAnswerAsync', 'correctEffect'.
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 168:8-14
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(168,9)
+      TS1068: Unexpected token. A constructor, method, accessor, or property was expected.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
 
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts
-21:10-26
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts(21,11)
-      TS7010: 'getNextCardAsync', which lacks return-type annotation, implicitly has an 'any' return type.
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 175:4-5
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(175,5)
+      TS1128: Declaration or statement expected.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
 
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts
-21:58-79
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts(21,59)
-      TS7008: Member 'ExternalFlashcardData' implicitly has an 'any' type.
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 178:10-11
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(178,11)
+      TS1005: ',' expected.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
 
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts
-25:4-9
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts(25,5)
-      TS2304: Cannot find name 'async'.
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 179:12-13
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(179,13)
+      TS1005: ',' expected.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
 
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts
-25:10-26
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts(25,11)
-      TS2304: Cannot find name 'updateStateAsync'.
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 180:14-15
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(180,15)
+      TS1005: ',' expected.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
 
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts
-26:8-13
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts(26,9)
-      TS2304: Cannot find name 'state'.
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 181:5-6
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(181,6)
+      TS1005: ';' expected.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
 
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts
-26:15-37
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts(26,16)
-      TS2693: 'ExternalFlashcardState' only refers to a type, but is being used as a value here.
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 182:19-21
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(182,20)
+      TS1005: ',' expected.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
 
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts
-27:8-16
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts(27,9)
-      TS2304: Cannot find name 'cardData'.
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 182:96-97
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(182,97)
+      TS1005: ';' expected.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
 
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts
-27:18-39
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts(27,19)
-      TS2693: 'ExternalFlashcardData' only refers to a type, but is being used as a value here.
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 210:4-5
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(210,5)
+      TS1128: Declaration or statement expected.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
 
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts
-28:8-15
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts(28,9)
-      TS2304: Cannot find name 'correct'.
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 212:0-1
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(212,1)
+      TS1128: Declaration or statement expected.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
 
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts
-29:7-29
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts(29,8)
-      TS2693: 'ExternalFlashcardState' only refers to a type, but is being used as a value here.
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 131:29-33
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(131,30)
+      TS2353: Object literal may only specify known properties, and 'data' does not exist in type 'Promise<SpacedRepCardPhysical<content, auxdata>>'.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
 
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts
-33:4-9
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts(33,5)
-      TS2304: Cannot find name 'async'.
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 140:20-24
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(140,21)
+      TS2353: Object literal may only specify known properties, and 'data' does not exist in type 'Promise<SpacedRepCardPhysical<content, auxdata>>'.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
 
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts
-33:10-26
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts(33,11)
-      TS2304: Cannot find name 'checkAnswerAsync'.
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 148:29-33
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(148,30)
+      TS2353: Object literal may only specify known properties, and 'data' does not exist in type 'Promise<SpacedRepCardPhysical<content, auxdata>>'.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
 
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts
-34:8-11
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts(34,9)
-      TS2304: Cannot find name 'ans'.
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 152:20-24
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(152,21)
+      TS2353: Object literal may only specify known properties, and 'data' does not exist in type 'Promise<SpacedRepCardPhysical<content, auxdata>>'.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
 
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts
-34:13-19
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts(34,14)
-      TS2693: 'string' only refers to a type, but is being used as a value here.
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts
-35:8-13
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts(35,9)
-      TS2304: Cannot find name 'state'.
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts
-35:15-37
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts(35,16)
-      TS2693: 'ExternalFlashcardState' only refers to a type, but is being used as a value here.
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts
-36:8-16
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts(36,9)
-      TS2304: Cannot find name 'cardData'.
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts
-36:18-39
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts(36,19)
-      TS2693: 'ExternalFlashcardData' only refers to a type, but is being used as a value here.
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts
-37:8-15
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts(37,9)
-      TS2693: 'boolean' only refers to a type, but is being used as a value here.
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts
-41:4-9
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts(41,5)
-      TS2304: Cannot find name 'async'.
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts
-41:10-27
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts(41,11)
-      TS2304: Cannot find name 'generateCardAsync'.
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts
-41:28-32
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts(41,29)
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 161:20-24
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(161,21)
       TS2304: Cannot find name 'data'.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
 
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts
-41:34-55
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/external-generator.ts(41,35)
-      TS2693: 'ExternalFlashcardData' only refers to a type, but is being used as a value here.
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 161:26-165:21
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(161,27)
+      TS2554: Expected 1 arguments, but got 4.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
 
-43 errors have detailed information that is not shown.
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 162:20-27
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(162,21)
+      TS2304: Cannot find name 'context'.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 177:4-20
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(177,5)
+      TS2304: Cannot find name 'updateStateAsync'.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 178:8-10
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(178,9)
+      TS2304: Cannot find name 'st'.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 178:12-26
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(178,13)
+      TS2693: 'SpacedRepState' only refers to a type, but is being used as a value here.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 178:27-34
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(178,28)
+      TS2304: Cannot find name 'content'.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 178:36-43
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(178,37)
+      TS2304: Cannot find name 'auxdata'.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 178:45-53
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(178,46)
+      TS2304: Cannot find name 'settings'.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 179:8-12
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(179,9)
+      TS2304: Cannot find name 'card'.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 179:14-35
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(179,15)
+      TS2693: 'SpacedRepCardPhysical' only refers to a type, but is being used as a value here.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 179:36-43
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(179,37)
+      TS2304: Cannot find name 'content'.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 179:45-52
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(179,46)
+      TS2304: Cannot find name 'auxdata'.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 180:8-14
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(180,9)
+      TS2304: Cannot find name 'result'.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 181:7-37
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(181,8)
+      TS2695: Left side of comma operator is unused and has no side effects.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 181:7-46
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(181,8)
+      TS2695: Left side of comma operator is unused and has no side effects.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 181:15-29
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(181,16)
+      TS2693: 'SpacedRepState' only refers to a type, but is being used as a value here.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 181:30-37
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(181,31)
+      TS2304: Cannot find name 'content'.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 181:39-46
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(181,40)
+      TS2304: Cannot find name 'auxdata'.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 181:48-56
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(181,49)
+      TS2304: Cannot find name 'settings'.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 181:59-182:18
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(181,60)
+      TS2363: The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 182:12-18
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(182,13)
+      TS7006: Parameter 'result' implicitly has an 'any' type.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 182:52-54
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(182,53)
+      TS2304: Cannot find name 'st'.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 185:23-27
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(185,24)
+      TS2304: Cannot find name 'card'.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 186:23-29
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(186,24)
+      TS2304: Cannot find name 'result'.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 188:24-26
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(188,25)
+      TS2304: Cannot find name 'st'.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 190:27-31
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(190,28)
+      TS2532: Object is possibly 'undefined'.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 190:43-47
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(190,44)
+      TS2304: Cannot find name 'card'.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 190:49-51
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(190,50)
+      TS2304: Cannot find name 'st'.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 190:62-68
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(190,63)
+      TS2304: Cannot find name 'result'.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 192:12-14
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(192,13)
+      TS2304: Cannot find name 'st'.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 193:17-19
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(193,18)
+      TS2304: Cannot find name 'st'.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 194:16-18
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(194,17)
+      TS2304: Cannot find name 'st'.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 196:17-21
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(196,18)
+      TS2532: Object is possibly 'undefined'.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 197:16-18
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(197,17)
+      TS2304: Cannot find name 'st'.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 197:30-32
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(197,31)
+      TS2304: Cannot find name 'st'.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 197:50-51
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(197,51)
+      TS7006: Parameter 'i' implicitly has an 'any' type.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 199:43-45
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(199,44)
+      TS2304: Cannot find name 'st'.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 199:60-64
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(199,61)
+      TS2532: Object is possibly 'undefined'.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 199:72-74
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(199,73)
+      TS2304: Cannot find name 'st'.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 200:12-14
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(200,13)
+      TS2304: Cannot find name 'st'.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 200:26-28
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(200,27)
+      TS2304: Cannot find name 'st'.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 200:47-49
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(200,48)
+      TS2304: Cannot find name 'st'.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 201:12-14
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(201,13)
+      TS2304: Cannot find name 'st'.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 202:16-18
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(202,17)
+      TS2304: Cannot find name 'st'.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 203:16-18
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(203,17)
+      TS2304: Cannot find name 'st'.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 204:16-18
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(204,17)
+      TS2304: Cannot find name 'st'.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 204:30-32
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(204,31)
+      TS2304: Cannot find name 'st'.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 204:48-49
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(204,49)
+      TS7006: Parameter 'a' implicitly has an 'any' type.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 204:51-52
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(204,52)
+      TS7006: Parameter 'b' implicitly has an 'any' type.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts
+./src/spaced-repetition-general.ts 208:8-10
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-general.ts(208,9)
+      TS2304: Cannot find name 'st'.
+ @ ./src/spaced-repetition-simple.ts 8:36-74
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-simple.ts
+./src/spaced-repetition-simple.ts 106:13-31
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/spaced-repetition-simple.ts(106,14)
+      TS2515: Non-abstract class 'SimpleSpacedRepGen' does not implement inherited abstract member updateStateAsync from class 'AbstractSpacedRepGen<SRSimpleContent, SRSimpleAuxData, SRSimpleSettings>'.
+ @ ./src/setup.ts 10:0-37
+ @ ./src/index.ts 3:0-18
+
+70 errors have detailed information that is not shown.
 Use 'stats.errorDetails: true' resp. '--stats-error-details' to show it.
 
-webpack 5.97.1 compiled with 43 errors in 959 ms
+webpack 5.97.1 compiled with 70 errors in 1019 ms

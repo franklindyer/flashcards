@@ -1,8 +1,12 @@
 import {
     IDictionary,
     guidGenerator,
-    makeDict
+    makeDict,
+    trivialPromise
 } from "./utils"
+import {
+    Flashcard
+} from "./flashcard"
 import {
     FlashcardGen,
     FlashcardResult
@@ -55,8 +59,8 @@ export function makeSpacedRepCardDict<content, auxdata>(
     return cardDict;
 }
 
-export abstract class AbstractSpacedRepGen<content, auxdata, settings>
-    extends FlashcardSyncGen<SpacedRepState<content, auxdata, settings>, SpacedRepCardPhysical<content, auxdata>> {
+export abstract class AbstractAsyncSpacedRepGen<content, auxdata, settings>
+    extends FlashcardGen<SpacedRepState<content, auxdata, settings>, SpacedRepCardPhysical<content, auxdata>> {
 
     getDate: () => Date = () => new Date();
     
@@ -116,15 +120,15 @@ export abstract class AbstractSpacedRepGen<content, auxdata, settings>
         return Object.keys(st.cards).filter((k) => this.cardIsDue(st.cards[k]));
     }
 
-    getNextCard(st: SpacedRepState<content, auxdata, settings>): 
-        SpacedRepCardPhysical<content, auxdata> {
+    getNextCardAsync(st: SpacedRepState<content, auxdata, settings>): 
+        Promise<SpacedRepCardPhysical<content, auxdata>> {
         var inds = Object.keys(st.cards);
         var newInds = this.getNew(st);
         var dueInds = this.getDue(st);
         switch (st.studying) {
             case SpacedRepStudying.NewCards:
                 if (newInds.length == 0 && st.newQueue.length == 0) {
-                    return { data: undefined, context: { cardsLeft: 0, isPractice: false }};
+                    return trivialPromise({ data: undefined, context: { cardsLeft: 0, isPractice: false }});
                 }
                 var newInd;
                 if (st.newIndex < st.newQueue.length) {
@@ -132,51 +136,51 @@ export abstract class AbstractSpacedRepGen<content, auxdata, settings>
                 } else {
                     newInd = newInds[Math.floor(Math.random() * newInds.length)];
                 }
-                return {
+                return trivialPromise({
                     data: st.cards[newInd],
                     context: {
                         cardsLeft: newInds.length,
                         isPractice: false
                     }
-                };
+                });
             case SpacedRepStudying.DueCards:
                 if (dueInds.length == 0) {
-                    return { data: undefined, context: { cardsLeft: 0, isPractice: false } };
+                    return trivialPromise({ data: undefined, context: { cardsLeft: 0, isPractice: false } });
                 } 
                 var dueInd = dueInds[Math.floor(Math.random() * dueInds.length)];
-                return {
+                return trivialPromise({
                     data: st.cards[dueInd],
                     context: {
                         cardsLeft: dueInds.length,
                         isPractice: false
                     }
-                };
+                });
             case SpacedRepStudying.RandomCards:
                 var ind = inds[Math.floor(Math.random() * inds.length)];
-                return {
+                return trivialPromise({
                     data: st.cards[ind],
                     context: {
                         cardsLeft: 0,
                         isPractice: true
                     }
-                };
+                });
         }
-        return {
+        return trivialPromise({
             data: undefined,
             context: {
                 cardsLeft: 0,
                 isPractice: false
             }
-        };
+        });
     }
 
-    updateState(
+    updateStateAsync(
         st: SpacedRepState<content, auxdata, settings>,
         card: SpacedRepCardPhysical<content, auxdata>,
         result: FlashcardResult
-    ): SpacedRepState<content, auxdata, settings> {
+    ): Promise<SpacedRepState<content, auxdata, settings>> {
         if (result == FlashcardResult.Unanswered || st.studying == SpacedRepStudying.RandomCards)
-            return st;
+            return trivialPromise(st); 
 
         var cardData = card.data!;
         var correct = (result == FlashcardResult.Correct);
@@ -202,7 +206,29 @@ export abstract class AbstractSpacedRepGen<content, auxdata, settings>
         } 
 
         st.cards[cardGuid] = cardNewState;    
-        return st;
+        return trivialPromise(st);
     }
 
+}
+
+export abstract class AbstractSpacedRepGen<content, auxdata, settings>
+    extends AbstractAsyncSpacedRepGen<content, auxdata, settings> {
+    abstract generateCard(data: SpacedRepCardPhysical<content, auxdata>): Flashcard;
+    abstract checkAnswer(
+        answer: string,
+        state: SpacedRepState<content, auxdata, settings>,
+        data: SpacedRepCardPhysical<content, auxdata>
+    ): boolean;
+
+    generateCardAsync(data: SpacedRepCardPhysical<content, auxdata>): Promise<Flashcard> {
+        return new Promise((resolve, _) => { resolve(this.generateCard(data)); });
+    }
+
+    checkAnswerAsync(
+        answer: string,
+        state: SpacedRepState<content, auxdata, settings>,
+        data: SpacedRepCardPhysical<content, auxdata>
+    ): Promise<boolean> {
+        return new Promise((resolve, _) => { resolve(this.checkAnswer(answer, state, data)); });
+    }
 }
