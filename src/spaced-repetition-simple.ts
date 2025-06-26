@@ -41,6 +41,10 @@ import {
     multipleEditors
 } from "./editor"
 import {
+    infoWidgetSR,
+    studyingEditorSR
+} from "./shared-sr-menu-components"
+import {
     registerDeckType
 } from "./flashcard-deck"
 
@@ -220,24 +224,9 @@ function simpleSRMenu(st: SpacedRepState<SRSimpleContent, SRSimpleAuxData, SRSim
     StateEditor<SpacedRepState<SRSimpleContent, SRSimpleAuxData, SRSimpleSettings>> {
     var contDiv = document.createElement("div");
 
-    var totP = document.createElement("p");
-    totP.textContent = `Total cards: ${Object.keys(st.cards).length}`;
-    totP.style.color = "#666666";
-    totP.style.fontWeight = "bold";
-    var newP = document.createElement("p");
-    newP.textContent = `New cards: ${Object.keys(st.cards).filter((i) => st.cards[i].intervalMinutes == 0).length}`;    
-    newP.style.color = "#9999ee";
-    newP.style.fontWeight = "bold";
-    var dueP = document.createElement("p");
-    dueP.textContent = `Due cards: ${Object.keys(st.cards).filter((i) => st.cards[i].intervalMinutes > 0 && new Date(st.cards[i].due) < new Date()).length}`;
-    dueP.style.color = "#ee9999";
-    dueP.style.fontWeight = "bold"; 
+    var infoWidget = infoWidgetSR(st);
   
-    var studyingEditor = radioEditor(
-        st.studying,
-        [SpacedRepStudying.NewCards, SpacedRepStudying.DueCards, SpacedRepStudying.RandomCards],
-        ["Study new cards", "Study due cards", "Practice random cards"]
-    );
+    var studyingEditor = studyingEditorSR(st); 
 
     var settings = st.settings;
     var initHoursEditor = scrollNumberEditor("Initial interval (hours): ", settings.initialHours, 1, 240, 1);
@@ -327,9 +316,7 @@ function simpleSRMenu(st: SpacedRepState<SRSimpleContent, SRSimpleAuxData, SRSim
     cardsEditor.element.classList.add("deck-menu-submenu");
 
     var components = [
-        totP,
-        newP,
-        dueP,
+        infoWidget,
         studyingEditor.element,
         initHoursEditor.element,
         correctFactor.element,
