@@ -12,8 +12,8 @@ const flashcard_template_1 = require("./flashcard-template");
 const flashcard_deck_1 = require("./flashcard-deck");
 exports.defaultSRClozeSettings = {
     clozeServerUrl: "",
-    sourceLangs: ["en", "es"],
-    targetLang: "de",
+    sourceLangs: ["eng", "spa"],
+    targetLang: "deu",
     initialHours: 8,
     correctFactor: 1.5,
     incorrectFactor: 0.5,
@@ -49,15 +49,13 @@ function makeEmptyCard() {
         }
     };
 }
-async function getClozePuzzle(key, serverUrl) {
-    // return fetch(`${serverUrl}/key`)
-    return null;
-}
 class ClozeSpacedRepGen extends spaced_repetition_general_1.AbstractAsyncSpacedRepGen {
     getGenName() { return "cloze-spaced-repetition"; }
     repairDeckState(st) {
+        this.preFetchClozes(st);
         return st;
     }
+    clozeCache = {};
     cardIsEnabled(card, st) {
         return !card.auxdata.invalid;
     }
@@ -120,11 +118,26 @@ class ClozeSpacedRepGen extends spaced_repetition_general_1.AbstractAsyncSpacedR
         return (0, utils_1.trivialPromise)(tf(card.data.auxdata.cloze.answer) === tf(answer));
     }
     fetchCloze(lemma, st) {
-        return fetch(`${st.settings.clozeServerUrl}/cloze?` + new URLSearchParams({
+        var puzzlePromise = () => fetch(`${st.settings.clozeServerUrl}/cloze?` + new URLSearchParams({
             "srcs": st.settings.sourceLangs.join(","),
             "tgt": st.settings.targetLang,
             "lemma": lemma
         }).toString());
+        if (this.clozeCache[lemma] !== undefined) {
+            console.log(`FOUND ${lemma} IN CACHE`);
+            var puzzle = this.clozeCache[lemma];
+            puzzlePromise().then((r) => { this.clozeCache[lemma] = r; });
+            return (0, utils_1.trivialPromise)(puzzle);
+        }
+        else {
+            console.log(`DID NOT FIND ${lemma} IN CACHE`);
+            puzzlePromise().then((r) => { this.clozeCache[lemma] = r; });
+            return puzzlePromise();
+        }
+    }
+    preFetchClozes(st) {
+        this.getNew(st).map((k) => this.fetchCloze(st.cards[k].content.key, st));
+        this.getDue(st).map((k) => this.fetchCloze(st.cards[k].content.key, st));
     }
     nextCardAsyncPreprocessing(card, st) {
         console.log("DOING PREPROCESSING");
