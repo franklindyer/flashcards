@@ -82,8 +82,8 @@ export type SRClozeSettings = {
 
 export const defaultSRClozeSettings = {
     clozeServerUrl: "",
-    sourceLangs: ["en", "es"],
-    targetLang: "de",
+    sourceLangs: ["eng", "spa"],
+    targetLang: "deu",
     initialHours: 8,
     correctFactor: 1.5,
     incorrectFactor: 0.5,
