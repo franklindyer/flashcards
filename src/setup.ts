@@ -12,10 +12,12 @@ import {
 import "./basic-template"
 import "./cloze-template"
 import "./transcript-template"
+import "./noanswer-template"
 
 import "./fs"
 import "./uniform-key-value";
 import "./spaced-repetition-simple";
+import "./spaced-repetition-cloze";
 import "./cloze-gen";
 import "./transcript-gen";
 

@@ -32,3 +32,7 @@ export function downloadText(filename: string, text: string) {
 }
 
 export const getUuid = require("uuid-by-string");
+
+export function trivialPromise<a>(x: a): Promise<a> {
+    return new Promise((resolve, _) => { resolve(x); });
+}

@@ -4,7 +4,7 @@ import os
 import sqlite3
 from multiprocessing.pool import ThreadPool
 
-from flask import Flask, abort, request
+from flask import Flask, abort, request, jsonify
 from flask_cors import CORS, cross_origin
 
 app = Flask(__name__)
@@ -25,17 +25,18 @@ def pool_query(con, q, args=()):
 
 SQL_CON = sqlite3.connect("/db/cloze.db", check_same_thread=False)
 
-def get_random_cloze(con, src_lang, tgt_lang, lemma):
-    res = pool_query(con, """
+def get_random_cloze(con, src_langs, tgt_lang, lemma):
+    lang_params = ','.join(["?"] * len(src_langs))
+    res = pool_query(con, f"""
         SELECT puzzles.id, puzzles.text, sents_src.text, sents_tgt.text
         FROM puzzles
         INNER JOIN words ON puzzles.base_word=words.id
         INNER JOIN sents AS sents_src ON puzzles.nat_snt=sents_src.id
         INNER JOIN sents AS sents_tgt ON puzzles.base_snt=sents_tgt.id
-        WHERE words.lemma=? AND sents_src.iso_lang=? AND sents_tgt.iso_lang=?
+        WHERE words.lemma=? AND sents_tgt.iso_lang=? AND sents_src.iso_lang IN ({lang_params})
         ORDER BY RANDOM()
         LIMIT 1
-    """, (lemma, src_lang, tgt_lang,))
+    """, (lemma, tgt_lang,) + tuple(src_langs))
     if len(res) == 0:
         return None
     res = res[0]
@@ -58,12 +59,17 @@ def get_status():
     # j = request.json
     return {}
 
-@app.route("/cloze/<src>/<tgt>/<lem>")
+@app.route("/cloze")
 @cross_origin()
-def get_cloze(src, tgt, lem):
-    cloze = get_random_cloze(SQL_CON, src, tgt, lem)
+def get_cloze():
+    src_langs = request.args.get("srcs").split(',')
+    tgt_lang = request.args.get("tgt")
+    lemma = request.args.get("lemma")
+    cloze = get_random_cloze(SQL_CON, src_langs, tgt_lang, lemma)
     if cloze == None:
         abort(404)
-    return cloze
+    response = jsonify(cloze)
+    # response.headers.add('Access-Control-Allow-Origin', '*')
+    return response
 
 app.run(host="0.0.0.0", port=8080)

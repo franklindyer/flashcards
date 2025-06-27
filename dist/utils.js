@@ -5,6 +5,7 @@ exports.guidGenerator = guidGenerator;
 exports.arrayReindex = arrayReindex;
 exports.makeDict = makeDict;
 exports.downloadText = downloadText;
+exports.trivialPromise = trivialPromise;
 // https://stackoverflow.com/questions/6860853/generate-random-string-for-div-id
 function guidGenerator() {
     var S4 = function () {
@@ -31,3 +32,6 @@ function downloadText(filename, text) {
     document.body.removeChild(element);
 }
 exports.getUuid = require("uuid-by-string");
+function trivialPromise(x) {
+    return new Promise((resolve, _) => { resolve(x); });
+}

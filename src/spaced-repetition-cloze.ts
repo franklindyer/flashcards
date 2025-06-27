@@ -1,7 +1,8 @@
 import {
     IDictionary,
     guidGenerator,
-    makeDict
+    makeDict,
+    trivialPromise
 } from "./utils"
 import {
     Flashcard
@@ -11,7 +12,7 @@ import {
     FlashcardResult
 } from "./flashcard-generator"
 import {
-    AbstractSpacedRepGen,
+    AbstractAsyncSpacedRepGen,
     SpacedRepState,
     SpacedRepCard,
     SpacedRepCardPhysical,
@@ -41,20 +42,35 @@ import {
     multipleEditors
 } from "./editor"
 import {
+    infoWidgetSR,
+    studyingEditorSR
+} from "./shared-sr-menu-components"
+import {
+    renderCard
+} from "./flashcard-template"
+import {
     registerDeckType
 } from "./flashcard-deck"
 
-export type SRSimpleContent = {
-    prompt: string,
-    answers: string[],
+export type SRClozeContent = {
+    key: string,
     tags: string[]
 }
 
-export type SRSimpleAuxData = {
-    streak: number
+export type SRClozeAuxData = {
+    streak: number,
+    invalid: boolean,
+    cloze?: {
+        prompt: string,
+        answer: string,
+        translation: string 
+    }
 }
 
-export type SRSimpleSettings = {
+export type SRClozeSettings = {
+    clozeServerUrl: string,
+    sourceLangs: string[],
+    targetLang: string,
     initialHours: number,
     correctFactor: number,
     incorrectFactor: number,
@@ -64,53 +80,89 @@ export type SRSimpleSettings = {
     filterSettings: TextFilterSettings
 }
 
-export const defaultSimpleSRSettings = {
-    initialHours: 6,
-    correctFactor: 1.6,
+export const defaultSRClozeSettings = {
+    clozeServerUrl: "",
+    sourceLangs: ["eng", "spa"],
+    targetLang: "deu",
+    initialHours: 8,
+    correctFactor: 1.5,
     incorrectFactor: 0.5,
     inactiveTags: [],
     readCorrectAnswers: false,
     speechSettings: defaultSpeechSettings(),
     filterSettings: defaultTextFilterSettings
-};
+}
 
-export const defaultSimpleSRState: SpacedRepState<SRSimpleContent, SRSimpleAuxData, SRSimpleSettings> = {
+export const defaultSRClozeState: SpacedRepState<SRClozeContent, SRClozeAuxData, SRClozeSettings> = {
     cards: makeSpacedRepCardDict([
-        { prompt: "the dog", answers: ["le chien"], tags: [] },
-        { prompt: "the man", answers: ["l'homme"], tags: [] },
-        { prompt: "the woman", answers: ["la dame"], tags: [] }
-    ], () => { return { streak: 0, intervalMinutes: 0, due: undefined }; }),
+        { key: "Hund", tags: [] },
+        { key: "Katze", tags: [] },
+        { key: "Mensch", tags: [] }
+    ], () => { return { streak: 0, invalid: false }; }),
     newIndex: 0,
     newQueue: [],
     newQueueSize: 10,
     studying: SpacedRepStudying.NewCards,
-    settings: defaultSimpleSRSettings
+    settings: defaultSRClozeSettings
 };
 
-export function makeEmptyCard(): SpacedRepCard<SRSimpleContent, SRSimpleAuxData> { 
+function makeEmptyCard(): SpacedRepCard<SRClozeContent, SRClozeAuxData> {
     return {
         guid: guidGenerator(),
         content: {
-            prompt: "",
-            answers: [""],
+            key: "",
             tags: []
         },
         due: new Date(),
         intervalMinutes: 0,
         auxdata: {
-            streak: 0
+            streak: 0,
+            invalid: false
         }
-    };
+    }
 }
 
-export class SimpleSpacedRepGen
-    extends AbstractSpacedRepGen<SRSimpleContent, SRSimpleAuxData, SRSimpleSettings> {
+export class ClozeSpacedRepGen
+    extends AbstractAsyncSpacedRepGen<SRClozeContent, SRClozeAuxData, SRClozeSettings> {
 
-    getGenName(): string { return "simple-spaced-repetition"; }
+    getGenName(): string { return "cloze-spaced-repetition"; }
+
+    repairDeckState(st: any): any {
+        this.preFetchClozes(st);
+        return st;
+    }
+
+    clozeCache: IDictionary<any> = {};
+
+    cardIsEnabled(
+        card: SpacedRepCard<SRClozeContent, SRClozeAuxData>,
+        st: SpacedRepState<SRClozeContent, SRClozeAuxData, SRClozeSettings>
+    ): boolean {
+        return !card.auxdata.invalid;
+    }
+
+    correctEffect(
+        st: SpacedRepState<SRClozeContent, SRClozeAuxData, SRClozeSettings>,
+        card: SpacedRepCardPhysical<SRClozeContent, SRClozeAuxData>,
+        attempt: string,
+        resolve: () => void
+    ): void {
+        var cardData = card.data!;
+        if (st.settings.readCorrectAnswers && card.data!.auxdata.cloze !== undefined) {
+            var ss = st.settings.speechSettings;
+            if (attempt.length > 0) { 
+                utter(attempt, ss.voice, ss.rate, ss.pitch, resolve);
+            } else {
+                utter(cardData.auxdata.cloze!.answer, ss.voice, ss.rate, ss.pitch, resolve);
+            }
+        } else {
+            resolve();
+        }
+    }
 
     updateInterval(
-        card: SpacedRepCardPhysical<SRSimpleContent, SRSimpleAuxData>,
-        settings: SRSimpleSettings,
+        card: SpacedRepCardPhysical<SRClozeContent, SRClozeAuxData>,
+        settings: SRClozeSettings,
         correct: FlashcardResult
     ): number {
         var cardData = card.data!;
@@ -126,158 +178,181 @@ export class SimpleSpacedRepGen
             return cardData.intervalMinutes * settings.incorrectFactor;
         } else {
             return cardData.intervalMinutes;
-        }
+        } 
     }
 
     updateAuxData(
-        card: SpacedRepCardPhysical<SRSimpleContent, SRSimpleAuxData>,
-        settings: SRSimpleSettings,
+        card: SpacedRepCardPhysical<SRClozeContent, SRClozeAuxData>,
+        settings: SRClozeSettings,
         correct: FlashcardResult
-    ): SRSimpleAuxData {
+    ): SRClozeAuxData {
         if (correct == FlashcardResult.Correct) {
-            card.data!.auxdata.streak += 1;
+            if (card.data!.auxdata.cloze == undefined) {
+                // When a card with invalid cloze is overridden, mark it as invalid
+                card.data!.auxdata.invalid = true;
+            } else {
+                card.data!.auxdata.streak += 1;
+            }
         } else if (correct == FlashcardResult.Incorrect) {
             card.data!.auxdata.streak = 0;
-        }
+        } 
         return card.data!.auxdata;
     }
 
-    repairDeckState(st: any): any {
-        return st;
-    }
-
-    generateCard(card: SpacedRepCardPhysical<SRSimpleContent, SRSimpleAuxData>): 
-        Flashcard {
-        var a = document.createElement("a");
-        var prompt = "No cards left to study.";
-        var hint = "You cannot continue studying until more cards become due."
-
-        if (card.data !== undefined) {
-            prompt = card.data!.content.prompt;
-            hint = card.data!.content.answers[0];
+    checkAnswerAsync(
+        answer: string,
+        st: SpacedRepState<SRClozeContent, SRClozeAuxData, SRClozeSettings>,
+        card: SpacedRepCardPhysical<SRClozeContent, SRClozeAuxData>
+    ): Promise<boolean> {
+        console.log("CHECKING ANSWER");
+        if (card.data === undefined || card.data!.auxdata.cloze === undefined) {
+            return trivialPromise(false);
         }
-
-        var fontSize = 100.0/(10.0*Math.log(10+prompt.length));
-        a.style.fontSize = `${fontSize}vw`;
-        a.textContent = prompt;
-
-        var fl = new Flashcard(a, hint);
-
-        var infoText = document.createElement("span");
-        infoText.classList.add("cards-left-span");
-        if (card.context.isPractice) {
-            infoText.textContent = "This is a practice card. It will not affect your progress.";
-            fl.el.style.backgroundColor = "#ffffee";
-        } else {
-            infoText.textContent = `${card.context.cardsLeft} cards remaining`;
-        }
-        fl.el.appendChild(infoText);
-
-        return fl; 
-    }
-
-    checkAnswer(
-        answer: string, 
-        st: SpacedRepState<SRSimpleContent, SRSimpleAuxData, SRSimpleSettings>,
-        card: SpacedRepCardPhysical<SRSimpleContent, SRSimpleAuxData>
-    ): boolean {
-        if (card.data === undefined) 
-            return false;
-        var cardData = card.data!;
         var tf = (s: string) => applyTextFilter(s, st.settings.filterSettings);
-        return cardData.content.answers.map(tf).includes(tf(answer));
+        return trivialPromise(tf(card.data!.auxdata.cloze!.answer) === tf(answer));
     }
 
-    correctEffect(
-        st: SpacedRepState<SRSimpleContent, SRSimpleAuxData, SRSimpleSettings>,
-        card: SpacedRepCardPhysical<SRSimpleContent, SRSimpleAuxData>,
-        attempt: string,
-        resolve: () => void
-    ): void {
-        var cardData = card.data!;
-        if (st.settings.readCorrectAnswers) {
-            var ss = st.settings.speechSettings;
-            if (attempt.length > 0) { 
-                utter(attempt, ss.voice, ss.rate, ss.pitch, resolve);
-            } else {
-                utter(cardData.content!.answers[0], ss.voice, ss.rate, ss.pitch, resolve);
-            }
+    fetchCloze(
+        lemma: string, 
+        st: SpacedRepState<SRClozeContent, SRClozeAuxData, SRClozeSettings>
+    ): Promise<Response> {
+        var puzzlePromise = () => fetch(
+            `${st.settings.clozeServerUrl}/cloze?` + new URLSearchParams({ 
+                "srcs": st.settings.sourceLangs.join(","),
+                "tgt": st.settings.targetLang,
+                "lemma": lemma
+            }).toString()
+        );
+        if (this.clozeCache[lemma] !== undefined) {
+            console.log(`FOUND ${lemma} IN CACHE`);
+            var puzzle = this.clozeCache[lemma];
+            puzzlePromise().then((r) => { this.clozeCache[lemma] = r; });
+            return trivialPromise(puzzle);
         } else {
-            resolve();
+            console.log(`DID NOT FIND ${lemma} IN CACHE`);
+            puzzlePromise().then((r) => { this.clozeCache[lemma] = r; })
+            return puzzlePromise();
         }
     }
 
+    preFetchClozes(
+        st: SpacedRepState<SRClozeContent, SRClozeAuxData, SRClozeSettings>
+    ): void {
+        this.getNew(st).map((k) => this.fetchCloze(st.cards[k].content.key, st));
+        this.getDue(st).map((k) => this.fetchCloze(st.cards[k].content.key, st));
+    }
+
+    nextCardAsyncPreprocessing(
+        card: SpacedRepCardPhysical<SRClozeContent, SRClozeAuxData>,
+        st: SpacedRepState<SRClozeContent, SRClozeAuxData, SRClozeSettings>
+    ): Promise<SpacedRepCardPhysical<SRClozeContent, SRClozeAuxData>> {
+        console.log("DOING PREPROCESSING");
+        if (st.settings.clozeServerUrl.length == 0 || card.data === undefined) {
+            // Returns with .cloze attribute undefined, indicating failure
+            return trivialPromise(card);
+        }
+        return this.fetchCloze(
+                card.data.content.key,
+                st
+            ).then(
+                (r) => r.json()
+            ).then(
+                (j) => {
+                    card.data!.auxdata.cloze = {
+                        prompt: j["puzzle"],
+                        answer: j["target"],
+                        translation: j["source"]
+                    };
+                    console.log(card);
+                    return card;
+                }
+            ).catch((e) => {
+                console.log(e);
+                return card;
+            });
+    }
+
+    generateCardAsync(
+        card: SpacedRepCardPhysical<SRClozeContent, SRClozeAuxData>
+    ): Promise<Flashcard> {
+        console.log(card);
+        if (card.data === undefined) {
+            return trivialPromise(renderCard("noanswer-template",
+                "No cards left to study."
+            ));
+        } else if (card.data!.auxdata.cloze === undefined) {
+            return trivialPromise(renderCard("noanswer-template",
+                `Could not get puzzle for card "${card.data!.content.key}".`
+            ));
+        }
+        return trivialPromise(renderCard("cloze-template", {
+            group: "", 
+            guid: card.data!.guid,
+            upper: card.data!.auxdata.cloze!.prompt,
+            lower: card.data!.auxdata.cloze!.translation
+        }));
+    }
 }
 
-function simpleSRMenu(st: SpacedRepState<SRSimpleContent, SRSimpleAuxData, SRSimpleSettings>): 
-    StateEditor<SpacedRepState<SRSimpleContent, SRSimpleAuxData, SRSimpleSettings>> {
+function clozeSRMenu(st: SpacedRepState<SRClozeContent, SRClozeAuxData, SRClozeSettings>):
+    StateEditor<SpacedRepState<SRClozeContent, SRClozeAuxData, SRClozeSettings>> {
     var contDiv = document.createElement("div");
 
-    var totP = document.createElement("p");
-    totP.textContent = `Total cards: ${Object.keys(st.cards).length}`;
-    totP.style.color = "#666666";
-    totP.style.fontWeight = "bold";
-    var newP = document.createElement("p");
-    newP.textContent = `New cards: ${Object.keys(st.cards).filter((i) => st.cards[i].intervalMinutes == 0).length}`;    
-    newP.style.color = "#9999ee";
-    newP.style.fontWeight = "bold";
-    var dueP = document.createElement("p");
-    dueP.textContent = `Due cards: ${Object.keys(st.cards).filter((i) => st.cards[i].intervalMinutes > 0 && new Date(st.cards[i].due) < new Date()).length}`;
-    dueP.style.color = "#ee9999";
-    dueP.style.fontWeight = "bold"; 
-  
-    var studyingEditor = radioEditor(
-        st.studying,
-        [SpacedRepStudying.NewCards, SpacedRepStudying.DueCards, SpacedRepStudying.RandomCards],
-        ["Study new cards", "Study due cards", "Practice random cards"]
-    );
-
-    var settings = st.settings;
-    var initHoursEditor = scrollNumberEditor("Initial interval (hours): ", settings.initialHours, 1, 240, 1);
+    var infoWidget = infoWidgetSR(st);
+    var studyingEditor = studyingEditorSR(st);
     var newQueueSizeEditor = scrollNumberEditor("Max new cards to study at once: ", st.newQueueSize, 1, 100, 1);
-    var correctFactor = scrollNumberEditor("Correct factor: ", settings.correctFactor, 1, 10, 0.1);
-    var incorrectFactor = scrollNumberEditor("Incorrect factor: ", settings.incorrectFactor, 0, 1.0, 0.01);
 
-    var speechCheckbox = boolEditor("Speak correct answers using text-to-speech?", settings.readCorrectAnswers);
-    var speechEditor = speechSettingsEditor(settings.speechSettings);
-    var speechDiv = document.createElement("div");
-    speechDiv.appendChild(speechCheckbox.element);
-    speechDiv.appendChild(speechEditor.element);
+    var clozeServerDiv = document.createElement("div");
+    clozeServerDiv.classList.add("deck-menu-submenu");
+    var clozeServerUrlEditor = singleTextFieldEditor(st.settings.clozeServerUrl)
+    var clozeSourceLangEditor = singleTextFieldEditor(st.settings.sourceLangs.join(','));
+    var clozeTargetLangEditor = singleTextFieldEditor(st.settings.targetLang);
+    clozeServerDiv.appendChild(clozeServerUrlEditor.element);
+    clozeServerDiv.appendChild(clozeSourceLangEditor.element);
+    clozeServerDiv.appendChild(clozeTargetLangEditor.element);
 
-    var omitTagsEditor = singleTextFieldEditor(settings.inactiveTags.join(','));
+    var initHoursEditor = scrollNumberEditor("Initial interval (hours): ", st.settings.initialHours, 1, 240, 1);
+    var correctFactor = scrollNumberEditor("Correct factor: ", st.settings.correctFactor, 1, 10, 0.1);
+    var incorrectFactor = scrollNumberEditor("Incorrect factor: ", st.settings.incorrectFactor, 0, 1.0, 0.01);
+
+    var omitTagsEditor = singleTextFieldEditor(st.settings.inactiveTags.join(','));
     (<HTMLInputElement>omitTagsEditor.element).placeholder = "comma-separated tags...";
     var omitTagsCont = document.createElement("div");
     omitTagsCont.textContent = "Omit cards with the following tags: "
     omitTagsCont.appendChild(omitTagsEditor.element);
 
-    var filterEditor = textFilterSelectionMenu(settings.filterSettings);
+    var speechCheckbox = boolEditor("Speak correct answers using text-to-speech?", st.settings.readCorrectAnswers);
+    var speechEditor = speechSettingsEditor(st.settings.speechSettings);
+    var speechDiv = document.createElement("div");
+    speechDiv.appendChild(speechCheckbox.element);
+    speechDiv.appendChild(speechEditor.element);
 
-    [
-        studyingEditor.element,
-        initHoursEditor.element,
-        correctFactor.element,
-        incorrectFactor.element,
-        newQueueSizeEditor.element,
-        omitTagsCont,
-        speechDiv,
-        filterEditor.element
-    ].map((el) => el.classList.add("deck-menu-submenu"));
+    var omitTagsEditor = singleTextFieldEditor(st.settings.inactiveTags.join(','));
+    (<HTMLInputElement>omitTagsEditor.element).placeholder = "comma-separated tags...";
+    var omitTagsCont = document.createElement("div");
+    omitTagsCont.textContent = "Omit cards with the following tags: "
+    omitTagsCont.appendChild(omitTagsEditor.element); 
 
-    function makeCardEditor(c: SpacedRepCard<SRSimpleContent, SRSimpleAuxData>): 
-        StateEditor<SpacedRepCard<SRSimpleContent, SRSimpleAuxData>> {
+    var filterEditor = textFilterSelectionMenu(st.settings.filterSettings);
+
+    function makeCardEditor(c: SpacedRepCard<SRClozeContent, SRClozeAuxData>):
+        StateEditor<SpacedRepCard<SRClozeContent, SRClozeAuxData>> {
         var ed = combineEditors(
-            [[c.content.prompt, c.content.answers.join('|')], c.content.tags.join(',')],
-            (pr: any) => {
-                var ed2 = swappingTextEditor(pr);
+            [c.content.key, c.content.tags.join(',')],
+            (k) => {
+                var ed2 = singleTextFieldEditor(k);
                 ed2.element.style.display = "inline-block";
                 return ed2;
             },
-            (ts: string) => {
+            (ts) => {
                 var ed2 = singleTextFieldEditor(ts);
                 (<HTMLInputElement>ed2.element).placeholder = "tags...";
                 return ed2;
             }
         );
+        var tf1 = ed.element.children[0];
+        if (c.auxdata.invalid)
+            (<HTMLElement>tf1).style.backgroundColor = "#ffeeee";
         var cardInfo = document.createElement("a");
         cardInfo.style.color = "lightgray";
         cardInfo.style.marginLeft = "10px";
@@ -293,74 +368,66 @@ function simpleSRMenu(st: SpacedRepState<SRSimpleContent, SRSimpleAuxData, SRSim
             element: ed.element,
             menuToState: () => {
                 let tp = ed.menuToState();
-                return {
-                    guid: c.guid,
-                    content: {
-                        prompt: tp[0][0],
-                        answers: tp[0][1].split('|'),
-                        tags: tp[1].split(',').filter((t) => t.length > 0)
-                    },
-                    due: c.due,
-                    intervalMinutes: c.intervalMinutes,
-                    auxdata: c.auxdata
-                }
+                c.content.key = tp[0];
+                c.content.tags = tp[1].split(",");
+                return c;
             }
-        };
-    };
+        }
+    }
     var cardsEditor = multipleEditors(
         Object.values(st.cards),
         () => makeEmptyCard(),
         makeCardEditor,
         true,
-        (s, cd) => cd.content.prompt.includes(s) || cd.content.answers.some((a) => a.includes(s))
+        (s, cd) => cd.content.key.includes(s)
     );
-    var cardsEditorTitle = document.createElement("h3");
-    cardsEditorTitle.textContent = "Cards";
-    cardsEditor.element.prepend(cardsEditorTitle);
-    cardsEditor.element.classList.add("deck-menu-submenu");
 
-    var components = [
-        totP,
-        newP,
-        dueP,
+    [
+        infoWidget,
         studyingEditor.element,
+        clozeServerDiv,
         initHoursEditor.element,
+        newQueueSizeEditor.element,
         correctFactor.element,
         incorrectFactor.element,
-        newQueueSizeEditor.element,
         omitTagsCont,
         speechDiv,
         filterEditor.element,
-        cardsEditor.element,
-    ];
-    components.map((el) => contDiv.appendChild(el));
+        cardsEditor.element
+    ].map((el) => {
+        el.classList.add("deck-menu-submenu");
+        contDiv.appendChild(el);
+    });
 
     return {
         element: contDiv,
         menuToState: () => { return {
             studying: studyingEditor.menuToState(),
             settings: {
+                clozeServerUrl: clozeServerUrlEditor.menuToState(),
+                sourceLangs: clozeSourceLangEditor.menuToState().split(","),
+                targetLang: clozeTargetLangEditor.menuToState(),
                 initialHours: initHoursEditor.menuToState(),
                 correctFactor: correctFactor.menuToState(),
                 incorrectFactor: incorrectFactor.menuToState(),
                 readCorrectAnswers: speechCheckbox.menuToState(),
                 speechSettings: speechEditor.menuToState(),
                 filterSettings: filterEditor.menuToState(),
-                inactiveTags: omitTagsEditor.menuToState().split(',')
+                inactiveTags: omitTagsEditor.menuToState().split(",")
             },
             newQueue: st.newQueue,
             newIndex: st.newIndex,
             newQueueSize: newQueueSizeEditor.menuToState(),
             cards: makeDict(cardsEditor.menuToState(), (c) => c.guid),
         }}
-    } 
+    };
 }
 
 registerDeckType(
-    new SimpleSpacedRepGen(),
-    simpleSRMenu,
-    "simple-spaced-repetition-deck",
-    "Simple spaced repetition deck",
-    defaultSimpleSRState,
+    new ClozeSpacedRepGen(),
+    clozeSRMenu,
+    "cloze-spaced-repetition-deck",
+    "Cloze spaced repetition deck",
+    defaultSRClozeState,
     "#ffffdd"
-)
+); 
