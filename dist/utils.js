@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getUuid = void 0;
 exports.guidGenerator = guidGenerator;
 exports.arrayReindex = arrayReindex;
+exports.shuffleArr = shuffleArr;
 exports.makeDict = makeDict;
 exports.downloadText = downloadText;
 exports.trivialPromise = trivialPromise;
@@ -15,6 +16,12 @@ function guidGenerator() {
 }
 function arrayReindex(ls) {
     return ls.filter((_) => true);
+}
+function shuffleArr(ls) {
+    return ls
+        .map((v) => ({ val: v, key: Math.random() }))
+        .sort((x, y) => x.key - y.key)
+        .map((v) => v.val);
 }
 function makeDict(items, key) {
     var d = {};

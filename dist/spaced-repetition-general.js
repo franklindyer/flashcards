@@ -4,6 +4,7 @@ exports.AbstractSpacedRepGen = exports.AbstractAsyncSpacedRepGen = exports.Space
 exports.makeSpacedRepCardDict = makeSpacedRepCardDict;
 const utils_1 = require("./utils");
 const flashcard_generator_1 = require("./flashcard-generator");
+const spaced_repetition_newqueue_1 = require("./spaced-repetition-newqueue");
 var SpacedRepStudying;
 (function (SpacedRepStudying) {
     SpacedRepStudying[SpacedRepStudying["NewCards"] = 1] = "NewCards";
@@ -58,24 +59,17 @@ class AbstractAsyncSpacedRepGen extends flashcard_generator_1.FlashcardGen {
         var inds = Object.keys(st.cards);
         var newInds = this.getNew(st);
         var dueInds = this.getDue(st);
-        st.newQueue = st.newQueue.filter((k) => this.cardIsEnabled(st.cards[k], st));
         switch (st.studying) {
             case SpacedRepStudying.NewCards:
-                if (newInds.length == 0 && st.newQueue.length == 0) {
+                var newGuid = (0, spaced_repetition_newqueue_1.chooseNext)(st.newQ, newInds);
+                if (newGuid === undefined) {
                     return this.nextCardAsyncPreprocessing({
                         data: undefined,
                         context: { cardsLeft: 0, isPractice: false }
                     }, st);
                 }
-                var newInd;
-                if (st.newIndex < st.newQueue.length) {
-                    newInd = st.newQueue[st.newIndex];
-                }
-                else {
-                    newInd = newInds[Math.floor(Math.random() * newInds.length)];
-                }
                 return this.nextCardAsyncPreprocessing({
-                    data: st.cards[newInd],
+                    data: st.cards[newGuid],
                     context: {
                         cardsLeft: newInds.length,
                         isPractice: false
@@ -119,21 +113,9 @@ class AbstractAsyncSpacedRepGen extends flashcard_generator_1.FlashcardGen {
         var cardGuid = cardData.guid;
         var cardState = st.cards[cardGuid];
         var cardNewState = this.updateCard(card, st.settings, result);
+        // If card is still new, stick it back in the queue
         if (st.studying == SpacedRepStudying.NewCards) {
-            if (!st.newQueue.includes(cardData.guid)) {
-                st.newQueue.push(cardData.guid);
-            }
-            if (!this.cardIsNew(cardNewState)) {
-                st.newQueue = st.newQueue.filter((i) => i != cardData.guid);
-            }
-            var maxNewQueueSize = Math.min(st.newQueueSize, this.getNew(st).length);
-            st.newQueue = st.newQueue.slice(0, st.newQueueSize);
-            st.newQueue = st.newQueue.filter((k) => this.cardIsEnabled(st.cards[k], st));
-            st.newIndex += 1;
-            if (st.newIndex >= maxNewQueueSize) {
-                st.newIndex = 0;
-                st.newQueue = st.newQueue.sort((a, b) => 0.5 - Math.random());
-            }
+            st.newQ = (0, spaced_repetition_newqueue_1.incorporateLast)(st.newQ, cardGuid, this.cardIsNew(cardNewState));
         }
         st.cards[cardGuid] = cardNewState;
         return (0, utils_1.trivialPromise)(st);

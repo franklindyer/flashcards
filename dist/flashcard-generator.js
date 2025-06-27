@@ -13,10 +13,13 @@ class FlashcardGen {
     getGenName() {
         throw new Error("getGenName not implemented!");
     }
-    async runOnce(s, setState, callback) {
+    soonestRun = new Date();
+    async runOnce(s, setState, callback, runTime) {
         var cardData = await this.getNextCardAsync(s);
         var card = await this.generateCardAsync(cardData);
         card.check = async (ans) => this.checkAnswerAsync(ans, s, cardData);
+        if (runTime.getTime() !== this.soonestRun.getTime())
+            return;
         var inputBox = document.getElementById("answer-input");
         var correctCallback = (newState) => () => {
             inputBox.value = "";
@@ -44,13 +47,8 @@ class FlashcardGen {
                 inputCallback(inputBox.value);
             }
             else if (e.key == "ArrowUp") {
-                // console.log("UP");
                 var newState = await this.updateStateAsync(s, cardData, FlashcardResult.Correct);
-                // correctCallback(newState)();
                 this.correctEffect(newState, cardData, "", correctCallback(newState));
-                // inputBox.value = "";
-                // setState(this.updateState(s, cardData, FlashcardResult.Correct)); 
-                // card.slideOut(callback, true);
             }
             else if (e.key == "ArrowDown") {
                 inputBox.value = "";
@@ -62,10 +60,12 @@ class FlashcardGen {
     }
     runLoop(getState, setState, callback) {
         var looper = () => {
+            var soonestRun = new Date();
+            this.soonestRun = soonestRun;
             this.runOnce(getState(), setState, () => {
                 callback();
                 looper();
-            });
+            }, soonestRun);
         };
         looper();
     }

@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ClozeSpacedRepGen = exports.defaultSRClozeState = exports.defaultSRClozeSettings = void 0;
 const utils_1 = require("./utils");
+const generic_preloader_1 = require("./generic-preloader");
 const flashcard_generator_1 = require("./flashcard-generator");
 const spaced_repetition_general_1 = require("./spaced-repetition-general");
 const speech_1 = require("./speech");
@@ -10,6 +11,7 @@ const editor_1 = require("./editor");
 const shared_sr_menu_components_1 = require("./shared-sr-menu-components");
 const flashcard_template_1 = require("./flashcard-template");
 const flashcard_deck_1 = require("./flashcard-deck");
+const spaced_repetition_newqueue_1 = require("./spaced-repetition-newqueue");
 exports.defaultSRClozeSettings = {
     clozeServerUrl: "",
     sourceLangs: ["eng", "spa"],
@@ -28,9 +30,7 @@ exports.defaultSRClozeState = {
         { key: "Katze", tags: [] },
         { key: "Mensch", tags: [] }
     ], () => { return { streak: 0, invalid: false }; }),
-    newIndex: 0,
-    newQueue: [],
-    newQueueSize: 10,
+    newQ: (0, spaced_repetition_newqueue_1.emptySRQueue)(10),
     studying: spaced_repetition_general_1.SpacedRepStudying.NewCards,
     settings: exports.defaultSRClozeSettings
 };
@@ -53,9 +53,12 @@ class ClozeSpacedRepGen extends spaced_repetition_general_1.AbstractAsyncSpacedR
     getGenName() { return "cloze-spaced-repetition"; }
     repairDeckState(st) {
         this.preFetchClozes(st);
+        if (st.newQ === undefined) {
+            st.newQ = (0, spaced_repetition_newqueue_1.emptySRQueue)(10);
+        }
         return st;
     }
-    clozeCache = {};
+    cache = new generic_preloader_1.Preloader(10);
     cardIsEnabled(card, st) {
         return !card.auxdata.invalid;
     }
@@ -110,34 +113,28 @@ class ClozeSpacedRepGen extends spaced_repetition_general_1.AbstractAsyncSpacedR
         return card.data.auxdata;
     }
     checkAnswerAsync(answer, st, card) {
-        console.log("CHECKING ANSWER");
         if (card.data === undefined || card.data.auxdata.cloze === undefined) {
             return (0, utils_1.trivialPromise)(false);
         }
         var tf = (s) => (0, text_filters_1.applyTextFilter)(s, st.settings.filterSettings);
         return (0, utils_1.trivialPromise)(tf(card.data.auxdata.cloze.answer) === tf(answer));
     }
-    fetchCloze(lemma, st) {
-        var puzzlePromise = () => fetch(`${st.settings.clozeServerUrl}/cloze?` + new URLSearchParams({
-            "srcs": st.settings.sourceLangs.join(","),
-            "tgt": st.settings.targetLang,
+    fetchCloze(lemma, settings) {
+        return fetch(`${settings.clozeServerUrl}/cloze?` + new URLSearchParams({
+            "srcs": settings.sourceLangs.join(","),
+            "tgt": settings.targetLang,
             "lemma": lemma
-        }).toString());
-        if (this.clozeCache[lemma] !== undefined) {
-            console.log(`FOUND ${lemma} IN CACHE`);
-            var puzzle = this.clozeCache[lemma];
-            puzzlePromise().then((r) => { this.clozeCache[lemma] = r; });
-            return (0, utils_1.trivialPromise)(puzzle);
-        }
-        else {
-            console.log(`DID NOT FIND ${lemma} IN CACHE`);
-            puzzlePromise().then((r) => { this.clozeCache[lemma] = r; });
-            return puzzlePromise();
-        }
+        }).toString()).then((r) => r.json()).catch((e) => undefined);
     }
     preFetchClozes(st) {
-        this.getNew(st).map((k) => this.fetchCloze(st.cards[k].content.key, st));
-        this.getDue(st).map((k) => this.fetchCloze(st.cards[k].content.key, st));
+        this.getNew(st).map((k) => {
+            var key = st.cards[k].content.key;
+            this.cache.addKey(key, (k) => this.fetchCloze(k, st.settings));
+        });
+        this.getDue(st).map((k) => {
+            var key = st.cards[k].content.key;
+            this.cache.addKey(key, (k) => this.fetchCloze(k, st.settings));
+        });
     }
     nextCardAsyncPreprocessing(card, st) {
         console.log("DOING PREPROCESSING");
@@ -145,7 +142,10 @@ class ClozeSpacedRepGen extends spaced_repetition_general_1.AbstractAsyncSpacedR
             // Returns with .cloze attribute undefined, indicating failure
             return (0, utils_1.trivialPromise)(card);
         }
-        return this.fetchCloze(card.data.content.key, st).then((r) => r.json()).then((j) => {
+        return this.cache.getKey(card.data.content.key, (k) => this.fetchCloze(k, st.settings)).then((j) => {
+            if (j === undefined) {
+                return card;
+            }
             card.data.auxdata.cloze = {
                 prompt: j["puzzle"],
                 answer: j["target"],
@@ -155,6 +155,7 @@ class ClozeSpacedRepGen extends spaced_repetition_general_1.AbstractAsyncSpacedR
             return card;
         }).catch((e) => {
             console.log(e);
+            console.log(card);
             return card;
         });
     }
@@ -179,7 +180,7 @@ function clozeSRMenu(st) {
     var contDiv = document.createElement("div");
     var infoWidget = (0, shared_sr_menu_components_1.infoWidgetSR)(st);
     var studyingEditor = (0, shared_sr_menu_components_1.studyingEditorSR)(st);
-    var newQueueSizeEditor = (0, editor_1.scrollNumberEditor)("Max new cards to study at once: ", st.newQueueSize, 1, 100, 1);
+    var newQueueSizeEditor = (0, editor_1.scrollNumberEditor)("Max new cards to study at once: ", st.newQ.maxNewCards, 1, 100, 1);
     var clozeServerDiv = document.createElement("div");
     clozeServerDiv.classList.add("deck-menu-submenu");
     var clozeServerUrlEditor = (0, editor_1.singleTextFieldEditor)(st.settings.clozeServerUrl);
@@ -276,9 +277,7 @@ function clozeSRMenu(st) {
                     filterSettings: filterEditor.menuToState(),
                     inactiveTags: omitTagsEditor.menuToState().split(",")
                 },
-                newQueue: st.newQueue,
-                newIndex: st.newIndex,
-                newQueueSize: newQueueSizeEditor.menuToState(),
+                newQ: (0, spaced_repetition_newqueue_1.emptySRQueue)(newQueueSizeEditor.menuToState()),
                 cards: (0, utils_1.makeDict)(cardsEditor.menuToState(), (c) => c.guid),
             };
         }
