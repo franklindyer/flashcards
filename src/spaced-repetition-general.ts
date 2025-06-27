@@ -14,6 +14,11 @@ import {
 import {
     FlashcardSyncGen
 } from "./flashcard-sync-generator"
+import {
+    SRNewQueue,
+    chooseNext,
+    incorporateLast
+} from "./spaced-repetition-newqueue"
 
 export enum SpacedRepStudying {
     NewCards = 1,
@@ -23,12 +28,14 @@ export enum SpacedRepStudying {
 
 export type SpacedRepCard<content, auxdata> = {
     guid: string,
-    content: content,
+    content: content,   // A card's content can only be edited by the user
     due: Date,
     intervalMinutes: number,
-    auxdata: auxdata
+    auxdata: auxdata    // A card's auxdata may contain stats that get updated each time it is answered
 }
 
+// Type encapsulating all of the data needed to render a card / determine its appearance
+// May include both the card's content, and contextual info to be displayed on the card
 export type SpacedRepCardPhysical<content, auxdata> = {
     data?: SpacedRepCard<content, auxdata>,
     context: {

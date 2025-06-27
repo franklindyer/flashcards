@@ -43,6 +43,10 @@ async function advanceMins<content, timing, settings>(
     fgen.setDate(dt);
 }
 
+function elementsAreDistinct(xs: string[]) {
+    return xs.length === [...new Set(xs)].length;
+}
+
 const cardPairList: [string, string][] = [
     ["a", "a"],
     ["b", "b"],
@@ -65,7 +69,7 @@ export function makeSharedSRTests<content, timing, settings> (
             for (i = 0; i < 10; i++) {
                 var x = await fgen.getNextCardAsync(st);
                 expect(x.data).toBeDefined();
-                await fgen.updateStateAsync(st, x, FlashcardResult.Correct);
+                st = await fgen.updateStateAsync(st, x, FlashcardResult.Correct);
             }
         });
 
@@ -77,7 +81,7 @@ export function makeSharedSRTests<content, timing, settings> (
             for (i = 0; i < 12; i++) {
                 var x = await fgen.getNextCardAsync(st);
                 expect(x.data).toBeDefined();
-                await fgen.updateStateAsync(st, x, FlashcardResult.Correct);
+                st = await fgen.updateStateAsync(st, x, FlashcardResult.Correct);
             }
             var x = await fgen.getNextCardAsync(st);
             expect(x.data).toBeUndefined();
@@ -131,6 +135,24 @@ export function makeSharedSRTests<content, timing, settings> (
                 dt.setTime(fgen.getDate().getTime() + 24*60*60*1000);
                 fgen.setDate(dt);
             }
+        });
+
+        test('there are no duplicated new cards in each run of new cards', async () => {
+            var st = mkState(Array.from(Array(10).keys()).map((x) => [''+x, ''+x]));
+            var fgen = mkGen();
+            st.newQueueSize = 10;
+            st.studying = SpacedRepStudying.NewCards;
+            
+            var i = 0;
+            var hist = [];
+            for (i = 0; i < 30; i++) {
+                var x = await fgen.getNextCardAsync(st);
+                expect(x.data).toBeDefined();
+                hist.push(x.data!.guid);
+                st = await fgen.updateStateAsync(st, x, FlashcardResult.Correct);
+            }
+            console.log(hist);
+            expect(elementsAreDistinct(hist.slice(0, 10))).toBe(true);
         });
 
         test('number of due cards decreases by 1 precisely when card is marked correct', async () => {

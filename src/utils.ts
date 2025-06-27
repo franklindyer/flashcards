@@ -14,6 +14,13 @@ export function arrayReindex<a>(ls: a[]): a[] {
     return ls.filter((_) => true);
 }
 
+export function shuffleArr<a>(ls: a[]): a[] {
+    return ls
+        .map((v) => ({ val: v, key: Math.random() }))
+        .sort((x, y) => x.key - y.key )
+        .map((v) => v.val);
+}
+
 export function makeDict<a>(items: a[], key: (x: a) => string) {
     var d: IDictionary<a> = {};
     items.map((x) => { d[key(x)] = x; });
