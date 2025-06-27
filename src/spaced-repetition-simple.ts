@@ -156,6 +156,9 @@ export class SimpleSpacedRepGen
     }
 
     repairDeckState(st: any): any {
+        if (st.newQ === undefined) {
+            st.newQ = emptySRQueue(10);
+        }
         return st;
     }
 

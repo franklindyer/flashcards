@@ -134,6 +134,9 @@ export class ClozeSpacedRepGen
 
     repairDeckState(st: any): any {
         this.preFetchClozes(st);
+        if (st.newQ === undefined) {
+            st.newQ = emptySRQueue(10);
+        }
         return st;
     }
 

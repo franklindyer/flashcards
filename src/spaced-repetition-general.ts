@@ -203,7 +203,6 @@ export abstract class AbstractAsyncSpacedRepGen<content, auxdata, settings>
         var cardNewState = this.updateCard(card, st.settings, result);
 
         // If card is still new, stick it back in the queue
-        console.log(st.newQ);
         if (st.studying == SpacedRepStudying.NewCards) {
             st.newQ = incorporateLast(st.newQ, cardGuid, this.cardIsNew(cardNewState));
         } 

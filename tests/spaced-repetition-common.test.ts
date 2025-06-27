@@ -151,7 +151,6 @@ export function makeSharedSRTests<content, timing, settings> (
                 hist.push(x.data!.guid);
                 st = await fgen.updateStateAsync(st, x, FlashcardResult.Correct);
             }
-            console.log(hist);
             expect(elementsAreDistinct(hist.slice(0, 10))).toBe(true);
         });
 
