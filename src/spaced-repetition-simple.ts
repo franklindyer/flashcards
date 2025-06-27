@@ -47,6 +47,10 @@ import {
 import {
     registerDeckType
 } from "./flashcard-deck"
+import {
+    emptySRQueue,
+    SRNewQueue
+} from "./spaced-repetition-newqueue"
 
 export type SRSimpleContent = {
     prompt: string,
@@ -84,9 +88,7 @@ export const defaultSimpleSRState: SpacedRepState<SRSimpleContent, SRSimpleAuxDa
         { prompt: "the man", answers: ["l'homme"], tags: [] },
         { prompt: "the woman", answers: ["la dame"], tags: [] }
     ], () => { return { streak: 0, intervalMinutes: 0, due: undefined }; }),
-    newIndex: 0,
-    newQueue: [],
-    newQueueSize: 10,
+    newQ: emptySRQueue(10),
     studying: SpacedRepStudying.NewCards,
     settings: defaultSimpleSRSettings
 };
@@ -230,7 +232,7 @@ function simpleSRMenu(st: SpacedRepState<SRSimpleContent, SRSimpleAuxData, SRSim
 
     var settings = st.settings;
     var initHoursEditor = scrollNumberEditor("Initial interval (hours): ", settings.initialHours, 1, 240, 1);
-    var newQueueSizeEditor = scrollNumberEditor("Max new cards to study at once: ", st.newQueueSize, 1, 100, 1);
+    var newQueueSizeEditor = scrollNumberEditor("Max new cards to study at once: ", st.newQ.maxNewCards, 1, 100, 1);
     var correctFactor = scrollNumberEditor("Correct factor: ", settings.correctFactor, 1, 10, 0.1);
     var incorrectFactor = scrollNumberEditor("Incorrect factor: ", settings.incorrectFactor, 0, 1.0, 0.01);
 
@@ -342,9 +344,7 @@ function simpleSRMenu(st: SpacedRepState<SRSimpleContent, SRSimpleAuxData, SRSim
                 filterSettings: filterEditor.menuToState(),
                 inactiveTags: omitTagsEditor.menuToState().split(',')
             },
-            newQueue: st.newQueue,
-            newIndex: st.newIndex,
-            newQueueSize: newQueueSizeEditor.menuToState(),
+            newQ: emptySRQueue(newQueueSizeEditor.menuToState()),
             cards: makeDict(cardsEditor.menuToState(), (c) => c.guid),
         }}
     } 

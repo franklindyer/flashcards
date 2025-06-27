@@ -140,7 +140,7 @@ export function makeSharedSRTests<content, timing, settings> (
         test('there are no duplicated new cards in each run of new cards', async () => {
             var st = mkState(Array.from(Array(10).keys()).map((x) => [''+x, ''+x]));
             var fgen = mkGen();
-            st.newQueueSize = 10;
+            st.newQ.maxNewCards = 10;
             st.studying = SpacedRepStudying.NewCards;
             
             var i = 0;

@@ -54,6 +54,10 @@ import {
 import {
     registerDeckType
 } from "./flashcard-deck"
+import {
+    emptySRQueue,
+    SRNewQueue
+} from "./spaced-repetition-newqueue"
 
 export type SRClozeContent = {
     key: string,
@@ -102,9 +106,7 @@ export const defaultSRClozeState: SpacedRepState<SRClozeContent, SRClozeAuxData,
         { key: "Katze", tags: [] },
         { key: "Mensch", tags: [] }
     ], () => { return { streak: 0, invalid: false }; }),
-    newIndex: 0,
-    newQueue: [],
-    newQueueSize: 10,
+    newQ: emptySRQueue(10),
     studying: SpacedRepStudying.NewCards,
     settings: defaultSRClozeSettings
 };
@@ -300,7 +302,7 @@ function clozeSRMenu(st: SpacedRepState<SRClozeContent, SRClozeAuxData, SRClozeS
 
     var infoWidget = infoWidgetSR(st);
     var studyingEditor = studyingEditorSR(st);
-    var newQueueSizeEditor = scrollNumberEditor("Max new cards to study at once: ", st.newQueueSize, 1, 100, 1);
+    var newQueueSizeEditor = scrollNumberEditor("Max new cards to study at once: ", st.newQ.maxNewCards, 1, 100, 1);
 
     var clozeServerDiv = document.createElement("div");
     clozeServerDiv.classList.add("deck-menu-submenu");
@@ -415,9 +417,7 @@ function clozeSRMenu(st: SpacedRepState<SRClozeContent, SRClozeAuxData, SRClozeS
                 filterSettings: filterEditor.menuToState(),
                 inactiveTags: omitTagsEditor.menuToState().split(",")
             },
-            newQueue: st.newQueue,
-            newIndex: st.newIndex,
-            newQueueSize: newQueueSizeEditor.menuToState(),
+            newQ: emptySRQueue(newQueueSizeEditor.menuToState()),
             cards: makeDict(cardsEditor.menuToState(), (c) => c.guid),
         }}
     };
