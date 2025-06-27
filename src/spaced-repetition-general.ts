@@ -14,6 +14,11 @@ import {
 import {
     FlashcardSyncGen
 } from "./flashcard-sync-generator"
+import {
+    SRNewQueue,
+    chooseNext,
+    incorporateLast
+} from "./spaced-repetition-newqueue"
 
 export enum SpacedRepStudying {
     NewCards = 1,
@@ -23,12 +28,14 @@ export enum SpacedRepStudying {
 
 export type SpacedRepCard<content, auxdata> = {
     guid: string,
-    content: content,
+    content: content,   // A card's content can only be edited by the user
     due: Date,
     intervalMinutes: number,
-    auxdata: auxdata
+    auxdata: auxdata    // A card's auxdata may contain stats that get updated each time it is answered
 }
 
+// Type encapsulating all of the data needed to render a card / determine its appearance
+// May include both the card's content, and contextual info to be displayed on the card
 export type SpacedRepCardPhysical<content, auxdata> = {
     data?: SpacedRepCard<content, auxdata>,
     context: {
@@ -39,9 +46,7 @@ export type SpacedRepCardPhysical<content, auxdata> = {
 
 export type SpacedRepState<content, auxdata, settings> = {
     cards: IDictionary<SpacedRepCard<content, auxdata>>,
-    newIndex: number,
-    newQueue: string[],
-    newQueueSize: number,
+    newQ: SRNewQueue,
     studying: SpacedRepStudying,
     settings: settings
 }
@@ -135,23 +140,17 @@ export abstract class AbstractAsyncSpacedRepGen<content, auxdata, settings>
         var inds = Object.keys(st.cards);
         var newInds = this.getNew(st);
         var dueInds = this.getDue(st);
-        st.newQueue = st.newQueue.filter((k) => this.cardIsEnabled(st.cards[k], st));
         switch (st.studying) {
             case SpacedRepStudying.NewCards:
-                if (newInds.length == 0 && st.newQueue.length == 0) {
+                var newGuid = chooseNext(st.newQ, newInds);
+                if (newGuid === undefined) {
                     return this.nextCardAsyncPreprocessing({ 
                         data: undefined, 
                         context: { cardsLeft: 0, isPractice: false }
                     }, st);
                 }
-                var newInd;
-                if (st.newIndex < st.newQueue.length) {
-                    newInd = st.newQueue[st.newIndex];
-                } else {
-                    newInd = newInds[Math.floor(Math.random() * newInds.length)];
-                }
                 return this.nextCardAsyncPreprocessing({
-                    data: st.cards[newInd],
+                    data: st.cards[newGuid],
                     context: {
                         cardsLeft: newInds.length,
                         isPractice: false
@@ -203,21 +202,9 @@ export abstract class AbstractAsyncSpacedRepGen<content, auxdata, settings>
 
         var cardNewState = this.updateCard(card, st.settings, result);
 
+        // If card is still new, stick it back in the queue
         if (st.studying == SpacedRepStudying.NewCards) {
-            if (!st.newQueue.includes(cardData.guid)) {
-                st.newQueue.push(cardData.guid);
-            }
-            if (!this.cardIsNew(cardNewState)) {
-                st.newQueue = st.newQueue.filter((i) => i != cardData.guid);
-            }
-            var maxNewQueueSize = Math.min(st.newQueueSize, this.getNew(st).length);
-            st.newQueue = st.newQueue.slice(0, st.newQueueSize);
-            st.newQueue = st.newQueue.filter((k) => this.cardIsEnabled(st.cards[k], st));
-            st.newIndex += 1;
-            if (st.newIndex >= maxNewQueueSize) {
-                st.newIndex = 0;
-                st.newQueue = st.newQueue.sort((a, b) => 0.5 - Math.random());
-            }
+            st.newQ = incorporateLast(st.newQ, cardGuid, this.cardIsNew(cardNewState));
         } 
 
         st.cards[cardGuid] = cardNewState;    

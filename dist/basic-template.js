@@ -5,7 +5,7 @@ const flashcard_template_1 = require("./flashcard-template");
 class BasicFlashcardTemplate extends flashcard_template_1.FlashcardTemplate {
     getName() { return "basic-template"; }
     render(data) {
-        var a = document.createElement("a");
+        var a = document.createElement("div");
         a.textContent = data[0];
         var fontSize = 100.0 / (10.0 * Math.log(10 + data[0].length));
         var fl = new flashcard_1.Flashcard(a, data[1]);

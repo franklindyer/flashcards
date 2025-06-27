@@ -11,6 +11,7 @@ const text_filters_1 = require("./text-filters");
 const editor_1 = require("./editor");
 const shared_sr_menu_components_1 = require("./shared-sr-menu-components");
 const flashcard_deck_1 = require("./flashcard-deck");
+const spaced_repetition_newqueue_1 = require("./spaced-repetition-newqueue");
 exports.defaultSimpleSRSettings = {
     initialHours: 6,
     correctFactor: 1.6,
@@ -26,9 +27,7 @@ exports.defaultSimpleSRState = {
         { prompt: "the man", answers: ["l'homme"], tags: [] },
         { prompt: "the woman", answers: ["la dame"], tags: [] }
     ], () => { return { streak: 0, intervalMinutes: 0, due: undefined }; }),
-    newIndex: 0,
-    newQueue: [],
-    newQueueSize: 10,
+    newQ: (0, spaced_repetition_newqueue_1.emptySRQueue)(10),
     studying: spaced_repetition_general_1.SpacedRepStudying.NewCards,
     settings: exports.defaultSimpleSRSettings
 };
@@ -82,6 +81,9 @@ class SimpleSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGe
         return card.data.auxdata;
     }
     repairDeckState(st) {
+        if (st.newQ === undefined) {
+            st.newQ = (0, spaced_repetition_newqueue_1.emptySRQueue)(10);
+        }
         return st;
     }
     generateCard(card) {
@@ -138,7 +140,7 @@ function simpleSRMenu(st) {
     var studyingEditor = (0, shared_sr_menu_components_1.studyingEditorSR)(st);
     var settings = st.settings;
     var initHoursEditor = (0, editor_1.scrollNumberEditor)("Initial interval (hours): ", settings.initialHours, 1, 240, 1);
-    var newQueueSizeEditor = (0, editor_1.scrollNumberEditor)("Max new cards to study at once: ", st.newQueueSize, 1, 100, 1);
+    var newQueueSizeEditor = (0, editor_1.scrollNumberEditor)("Max new cards to study at once: ", st.newQ.maxNewCards, 1, 100, 1);
     var correctFactor = (0, editor_1.scrollNumberEditor)("Correct factor: ", settings.correctFactor, 1, 10, 0.1);
     var incorrectFactor = (0, editor_1.scrollNumberEditor)("Incorrect factor: ", settings.incorrectFactor, 0, 1.0, 0.01);
     var speechCheckbox = (0, editor_1.boolEditor)("Speak correct answers using text-to-speech?", settings.readCorrectAnswers);
@@ -235,9 +237,7 @@ function simpleSRMenu(st) {
                     filterSettings: filterEditor.menuToState(),
                     inactiveTags: omitTagsEditor.menuToState().split(',')
                 },
-                newQueue: st.newQueue,
-                newIndex: st.newIndex,
-                newQueueSize: newQueueSizeEditor.menuToState(),
+                newQ: (0, spaced_repetition_newqueue_1.emptySRQueue)(newQueueSizeEditor.menuToState()),
                 cards: (0, utils_1.makeDict)(cardsEditor.menuToState(), (c) => c.guid),
             };
         }

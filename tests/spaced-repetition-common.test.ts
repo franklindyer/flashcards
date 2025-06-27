@@ -16,31 +16,35 @@ import {
     defaultSimpleSRState
 } from "../src/spaced-repetition-simple"
 
-function studyAllNewCards<content, timing, settings>(
+async function studyAllNewCards<content, timing, settings>(
     fgen: AbstractSpacedRepGen<content, timing, settings>,
     st: SpacedRepState<content, timing, settings>):
-    SpacedRepState<content, timing, settings> {
+    Promise<SpacedRepState<content, timing, settings>> {
     var prevStudying = st.studying;
     st.studying = SpacedRepStudying.NewCards;
-    var x = fgen.getNextCard(st);
+    var x = await fgen.getNextCardAsync(st);
     var i = 0;
     while (x.data !== undefined) {
         i += 1;
-        st = fgen.updateState(st, x, FlashcardResult.Correct);
-        x = fgen.getNextCard(st);
+        st = await fgen.updateStateAsync(st, x, FlashcardResult.Correct);
+        x = await fgen.getNextCardAsync(st);
         expect(i > 100000).toBe(false);
     }
     st.studying = prevStudying;
     return st; 
 }
 
-function advanceMins<content, timing, settings>(
+async function advanceMins<content, timing, settings>(
     mins: number, 
     fgen: AbstractSpacedRepGen<content, timing, settings>
 ) {
     var dt: Date = new Date();
     dt.setTime(fgen.getDate().getTime() + mins*60*1000);
     fgen.setDate(dt);
+}
+
+function elementsAreDistinct(xs: string[]) {
+    return xs.length === [...new Set(xs)].length;
 }
 
 const cardPairList: [string, string][] = [
@@ -57,33 +61,33 @@ export function makeSharedSRTests<content, timing, settings> (
 ) {
     describe(`${genName} spaced repetition generator common unit tests`, () => {
 
-        test('can generate cards', () => {
+        test('can generate cards', async () => {
             var st = mkState(cardPairList); 
             st.studying = SpacedRepStudying.NewCards; 
             var fgen = mkGen(); 
             var i = 0;
             for (i = 0; i < 10; i++) {
-                var x = fgen.getNextCard(st);
+                var x = await fgen.getNextCardAsync(st);
                 expect(x.data).toBeDefined();
-                fgen.updateState(st, x, FlashcardResult.Correct);
+                st = await fgen.updateStateAsync(st, x, FlashcardResult.Correct);
             }
         });
 
-        test('cannot generate new cards indefinitely', () => {
+        test('cannot generate new cards indefinitely', async () => {
             var st = mkState(cardPairList);
             st.studying = SpacedRepStudying.NewCards; 
             var fgen = mkGen(); 
             var i = 0;
             for (i = 0; i < 12; i++) {
-                var x = fgen.getNextCard(st);
+                var x = await fgen.getNextCardAsync(st);
                 expect(x.data).toBeDefined();
-                fgen.updateState(st, x, FlashcardResult.Correct);
+                st = await fgen.updateStateAsync(st, x, FlashcardResult.Correct);
             }
-            var x = fgen.getNextCard(st);
+            var x = await fgen.getNextCardAsync(st);
             expect(x.data).toBeUndefined();
         });
 
-        test('date getter and setter on test class works', () => {
+        test('date getter and setter on test class works', async () => {
             var fgen = mkGen();
             var dt = new Date();
             dt.setHours(10);
@@ -91,41 +95,41 @@ export function makeSharedSRTests<content, timing, settings> (
             expect(fgen.getDate()).toBe(dt);
         });
 
-        test('there are not initially any due cards', () => {
+        test('there are not initially any due cards', async () => {
             var st = mkState(cardPairList);
             st.studying = SpacedRepStudying.DueCards; 
             var fgen = mkGen(); 
-            var x = fgen.getNextCard(st);
+            var x = await fgen.getNextCardAsync(st);
             expect(x.data).toBeUndefined();
         });
 
-        test('new cards come due after enough hours', () => {
+        test('new cards come due after enough hours', async () => {
             var st = mkState(cardPairList);
             st.studying = SpacedRepStudying.NewCards; 
             var fgen = mkGen(); 
-            st = studyAllNewCards(fgen, st);
+            st = await studyAllNewCards(fgen, st);
 
             st.studying = SpacedRepStudying.DueCards;
             var dt = new Date();
             dt.setTime(fgen.getDate().getTime() + 10000 * 60*60*1000);
             fgen.setDate(dt);
-            var x = fgen.getNextCard(st);
+            var x = await fgen.getNextCardAsync(st);
             expect(x.data).toBeDefined();
         });
 
-        test('due cards can be studied each day for many days', () => {
+        test('due cards can be studied each day for many days', async () => {
             var st = mkState(cardPairList);
             st.studying = SpacedRepStudying.NewCards;
             var fgen = mkGen();
-            st = studyAllNewCards(fgen, st);
+            st = await studyAllNewCards(fgen, st);
            
             var i = 0; 
             st.studying = SpacedRepStudying.DueCards;
             for (i = 0; i < 100; i++) {
-                var x = fgen.getNextCard(st);
+                var x = await fgen.getNextCardAsync(st);
                 while (x.data !== undefined) {
-                    st = fgen.updateState(st, x, FlashcardResult.Correct);
-                    x = fgen.getNextCard(st);
+                    st = await fgen.updateStateAsync(st, x, FlashcardResult.Correct);
+                    x = await fgen.getNextCardAsync(st);
                 }
                 var dt = new Date();
                 dt.setTime(fgen.getDate().getTime() + 24*60*60*1000);
@@ -133,25 +137,42 @@ export function makeSharedSRTests<content, timing, settings> (
             }
         });
 
-        test('number of due cards decreases by 1 precisely when card is marked correct', () => {
+        test('there are no duplicated new cards in each run of new cards', async () => {
+            var st = mkState(Array.from(Array(10).keys()).map((x) => [''+x, ''+x]));
+            var fgen = mkGen();
+            st.newQ.maxNewCards = 10;
+            st.studying = SpacedRepStudying.NewCards;
+            
+            var i = 0;
+            var hist = [];
+            for (i = 0; i < 30; i++) {
+                var x = await fgen.getNextCardAsync(st);
+                expect(x.data).toBeDefined();
+                hist.push(x.data!.guid);
+                st = await fgen.updateStateAsync(st, x, FlashcardResult.Correct);
+            }
+            expect(elementsAreDistinct(hist.slice(0, 10))).toBe(true);
+        });
+
+        test('number of due cards decreases by 1 precisely when card is marked correct', async () => {
             var st = mkState(Array.from(Array(100).keys()).map((x) => [''+x, ''+x]));
             var fgen = mkGen();
-            st = studyAllNewCards(fgen, st);
+            st = await studyAllNewCards(fgen, st);
 
             var i = 0;
             st.studying = SpacedRepStudying.DueCards;
             advanceMins(10000 * 60, fgen);
-            var x = fgen.getNextCard(st);
+            var x = await fgen.getNextCardAsync(st);
             while (x.data !== undefined) {
                 var prevCardsLeft = x.context.cardsLeft;
                 var correct = Math.random() < 0.5;
                 var prevInterval = x.data.intervalMinutes;
-                st = fgen.updateState(st, x, correct ? FlashcardResult.Correct : FlashcardResult.Incorrect);
+                st = await fgen.updateStateAsync(st, x, correct ? FlashcardResult.Correct : FlashcardResult.Incorrect);
                 var nextInterval = st.cards[x.data.guid].intervalMinutes;
                 expect(nextInterval == 0).toBe(false);
                 expect(nextInterval >= prevInterval).toBe(correct);
 
-                x = fgen.getNextCard(st);
+                x = await fgen.getNextCardAsync(st);
                 var currCardsLeft = x.context.cardsLeft;
                 expect(currCardsLeft).toBe(prevCardsLeft - (correct ? 1 : 0));
                 expect(correct).toBe(currCardsLeft == prevCardsLeft - 1);

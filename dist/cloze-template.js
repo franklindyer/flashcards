@@ -22,9 +22,9 @@ class ClozeFlashcardTemplate extends flashcard_template_1.FlashcardTemplate {
         });
         var answer = targetWords.join(", ");
         aLower.textContent = data.lower;
-        var fontSize = 100.0 / (10.0 * Math.log(10 + aUpper.textContent.length));
-        aUpper.style.fontSize = `${fontSize}vw`;
-        aLower.style.fontSize = `${0.7 * fontSize}vw`;
+        var fontSize = 800.0 / (10.0 * Math.log(10 + aUpper.textContent.length));
+        aUpper.style.fontSize = `${fontSize}px`;
+        aLower.style.fontSize = `${0.7 * fontSize}px`;
         var fl = new flashcard_1.Flashcard(el, answer);
         return fl;
     }
