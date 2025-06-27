@@ -122,19 +122,17 @@ function makeEmptyCard(): SpacedRepCard<SRClozeContent, SRClozeAuxData> {
     }
 }
 
-async function getClozePuzzle(key: string, serverUrl: string) {
-    // return fetch(`${serverUrl}/key`)
-    return null!
-}
-
 export class ClozeSpacedRepGen
     extends AbstractAsyncSpacedRepGen<SRClozeContent, SRClozeAuxData, SRClozeSettings> {
 
     getGenName(): string { return "cloze-spaced-repetition"; }
 
     repairDeckState(st: any): any {
+        this.preFetchClozes(st);
         return st;
     }
+
+    clozeCache: IDictionary<any> = {};
 
     cardIsEnabled(
         card: SpacedRepCard<SRClozeContent, SRClozeAuxData>,
@@ -218,13 +216,30 @@ export class ClozeSpacedRepGen
         lemma: string, 
         st: SpacedRepState<SRClozeContent, SRClozeAuxData, SRClozeSettings>
     ): Promise<Response> {
-        return fetch(
+        var puzzlePromise = () => fetch(
             `${st.settings.clozeServerUrl}/cloze?` + new URLSearchParams({ 
                 "srcs": st.settings.sourceLangs.join(","),
                 "tgt": st.settings.targetLang,
                 "lemma": lemma
             }).toString()
         );
+        if (this.clozeCache[lemma] !== undefined) {
+            console.log(`FOUND ${lemma} IN CACHE`);
+            var puzzle = this.clozeCache[lemma];
+            puzzlePromise().then((r) => { this.clozeCache[lemma] = r; });
+            return trivialPromise(puzzle);
+        } else {
+            console.log(`DID NOT FIND ${lemma} IN CACHE`);
+            puzzlePromise().then((r) => { this.clozeCache[lemma] = r; })
+            return puzzlePromise();
+        }
+    }
+
+    preFetchClozes(
+        st: SpacedRepState<SRClozeContent, SRClozeAuxData, SRClozeSettings>
+    ): void {
+        this.getNew(st).map((k) => this.fetchCloze(st.cards[k].content.key, st));
+        this.getDue(st).map((k) => this.fetchCloze(st.cards[k].content.key, st));
     }
 
     nextCardAsyncPreprocessing(
