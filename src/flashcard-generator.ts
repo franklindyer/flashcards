@@ -1,4 +1,7 @@
 import {
+    guidGenerator
+} from "./utils"
+import {
     Flashcard
 } from "./flashcard"
 
@@ -15,6 +18,8 @@ export abstract class FlashcardGen<S, D> {
         throw new Error("getGenName not implemented!");
     }
 
+    soonestRun: Date = new Date();
+
     // Repair the raw JSON associated with the deck, mainly used for update compatibility
     abstract repairDeckState(state: any): any;
     
@@ -26,10 +31,12 @@ export abstract class FlashcardGen<S, D> {
     // Should not attempt to change the deck's state
     abstract correctEffect(state: S, cardData: D, attempt: string, resolve: () => void): void;   
 
-    async runOnce(s: S, setState: (s: S) => void, callback: () => void) {
+    async runOnce(s: S, setState: (s: S) => void, callback: () => void, runTime: Date) {
         var cardData: D = await this.getNextCardAsync(s);
         var card = await this.generateCardAsync(cardData);
         card.check = async (ans: string) => this.checkAnswerAsync(ans, s, cardData);
+
+        if (runTime.getTime() !== this.soonestRun.getTime()) return;
 
         var inputBox = <HTMLInputElement>document.getElementById("answer-input");
         var correctCallback = (newState: S) => () => {
@@ -56,13 +63,8 @@ export abstract class FlashcardGen<S, D> {
             if (e.key == "Enter") {
                 inputCallback(inputBox.value);
             } else if (e.key == "ArrowUp") {
-                // console.log("UP");
                 var newState = await this.updateStateAsync(s, cardData, FlashcardResult.Correct);
-                // correctCallback(newState)();
                 this.correctEffect(newState, cardData, "", correctCallback(newState));
-                // inputBox.value = "";
-                // setState(this.updateState(s, cardData, FlashcardResult.Correct)); 
-                // card.slideOut(callback, true);
             } else if (e.key == "ArrowDown") {
                 inputBox.value = "";
                 this.updateStateAsync(s, cardData, FlashcardResult.Unanswered).then(setState); 
@@ -70,15 +72,17 @@ export abstract class FlashcardGen<S, D> {
             }
         };
 
-        card.slideIn(); 
+        card.slideIn();
     }
 
     runLoop(getState: () => S, setState: (s: S) => void, callback: () => void) {
         var looper = () => {
+            var soonestRun = new Date();
+            this.soonestRun = soonestRun;
             this.runOnce(getState(), setState, () => {
                 callback();
                 looper();
-            });
+            }, soonestRun);
         };
         looper();
     }

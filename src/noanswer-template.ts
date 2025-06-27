@@ -16,7 +16,7 @@ class NoAnswerFlashcardTemplate extends FlashcardTemplate<NoAnswerCardData> {
     getName(): string { return "noanswer-template"; }
    
     render(data: NoAnswerCardData): Flashcard {
-        var a = document.createElement("a");
+        var a = document.createElement("div");
         a.textContent = data;
         var fontSize = 100.0/(10.0*Math.log(10+data[0].length));
         var fl = new Flashcard(a, "", (_) => trivialPromise(false));

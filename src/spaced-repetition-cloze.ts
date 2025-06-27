@@ -5,6 +5,9 @@ import {
     trivialPromise
 } from "./utils"
 import {
+    Preloader
+} from "./generic-preloader"
+import {
     Flashcard
 } from "./flashcard"
 import {
@@ -132,7 +135,7 @@ export class ClozeSpacedRepGen
         return st;
     }
 
-    clozeCache: IDictionary<any> = {};
+    cache: Preloader<any> = new Preloader(10);
 
     cardIsEnabled(
         card: SpacedRepCard<SRClozeContent, SRClozeAuxData>,
@@ -204,7 +207,6 @@ export class ClozeSpacedRepGen
         st: SpacedRepState<SRClozeContent, SRClozeAuxData, SRClozeSettings>,
         card: SpacedRepCardPhysical<SRClozeContent, SRClozeAuxData>
     ): Promise<boolean> {
-        console.log("CHECKING ANSWER");
         if (card.data === undefined || card.data!.auxdata.cloze === undefined) {
             return trivialPromise(false);
         }
@@ -214,32 +216,28 @@ export class ClozeSpacedRepGen
 
     fetchCloze(
         lemma: string, 
-        st: SpacedRepState<SRClozeContent, SRClozeAuxData, SRClozeSettings>
-    ): Promise<Response> {
-        var puzzlePromise = () => fetch(
-            `${st.settings.clozeServerUrl}/cloze?` + new URLSearchParams({ 
-                "srcs": st.settings.sourceLangs.join(","),
-                "tgt": st.settings.targetLang,
+        settings: SRClozeSettings 
+    ): Promise<any> {
+        return fetch(
+            `${settings.clozeServerUrl}/cloze?` + new URLSearchParams({ 
+                "srcs": settings.sourceLangs.join(","),
+                "tgt": settings.targetLang,
                 "lemma": lemma
             }).toString()
-        );
-        if (this.clozeCache[lemma] !== undefined) {
-            console.log(`FOUND ${lemma} IN CACHE`);
-            var puzzle = this.clozeCache[lemma];
-            puzzlePromise().then((r) => { this.clozeCache[lemma] = r; });
-            return trivialPromise(puzzle);
-        } else {
-            console.log(`DID NOT FIND ${lemma} IN CACHE`);
-            puzzlePromise().then((r) => { this.clozeCache[lemma] = r; })
-            return puzzlePromise();
-        }
+        ).then((r) => r.json()).catch((e) => undefined);
     }
 
     preFetchClozes(
         st: SpacedRepState<SRClozeContent, SRClozeAuxData, SRClozeSettings>
     ): void {
-        this.getNew(st).map((k) => this.fetchCloze(st.cards[k].content.key, st));
-        this.getDue(st).map((k) => this.fetchCloze(st.cards[k].content.key, st));
+        this.getNew(st).map((k) => {
+            var key = st.cards[k].content.key;
+            this.cache.addKey(key, (k: string) => this.fetchCloze(k, st.settings));
+        });
+        this.getDue(st).map((k) => {
+            var key = st.cards[k].content.key;
+            this.cache.addKey(key, (k: string) => this.fetchCloze(k, st.settings));
+        });
     }
 
     nextCardAsyncPreprocessing(
@@ -251,13 +249,14 @@ export class ClozeSpacedRepGen
             // Returns with .cloze attribute undefined, indicating failure
             return trivialPromise(card);
         }
-        return this.fetchCloze(
+        return this.cache.getKey(
                 card.data.content.key,
-                st
-            ).then(
-                (r) => r.json()
+                (k: string) => this.fetchCloze(k, st.settings)
             ).then(
                 (j) => {
+                    if (j === undefined) {
+                        return card;
+                    }
                     card.data!.auxdata.cloze = {
                         prompt: j["puzzle"],
                         answer: j["target"],
@@ -268,6 +267,7 @@ export class ClozeSpacedRepGen
                 }
             ).catch((e) => {
                 console.log(e);
+                console.log(card);
                 return card;
             });
     }
