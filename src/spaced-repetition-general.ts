@@ -212,6 +212,7 @@ export abstract class AbstractAsyncSpacedRepGen<content, auxdata, settings>
             }
             var maxNewQueueSize = Math.min(st.newQueueSize, this.getNew(st).length);
             st.newQueue = st.newQueue.slice(0, st.newQueueSize);
+            st.newQueue = st.newQueue.filter((k) => this.cardIsEnabled(st.cards[k], st));
             st.newIndex += 1;
             if (st.newIndex >= maxNewQueueSize) {
                 st.newIndex = 0;

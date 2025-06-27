@@ -54,12 +54,12 @@ import {
 
 export type SRClozeContent = {
     key: string,
-    tags: string[],
-    verified: boolean
+    tags: string[]
 }
 
 export type SRClozeAuxData = {
     streak: number,
+    invalid: boolean,
     cloze?: {
         prompt: string,
         answer: string,
@@ -95,10 +95,10 @@ export const defaultSRClozeSettings = {
 
 export const defaultSRClozeState: SpacedRepState<SRClozeContent, SRClozeAuxData, SRClozeSettings> = {
     cards: makeSpacedRepCardDict([
-        { key: "Hund", tags: [], verified: false },
-        { key: "Katze", tags: [], verified: false },
-        { key: "Mensch", tags: [], verified: false }
-    ], () => { return { streak: 0 }; }),
+        { key: "Hund", tags: [] },
+        { key: "Katze", tags: [] },
+        { key: "Mensch", tags: [] }
+    ], () => { return { streak: 0, invalid: false }; }),
     newIndex: 0,
     newQueue: [],
     newQueueSize: 10,
@@ -111,13 +111,13 @@ function makeEmptyCard(): SpacedRepCard<SRClozeContent, SRClozeAuxData> {
         guid: guidGenerator(),
         content: {
             key: "",
-            tags: [],
-            verified: false
+            tags: []
         },
         due: new Date(),
         intervalMinutes: 0,
         auxdata: {
-            streak: 0
+            streak: 0,
+            invalid: false
         }
     }
 }
@@ -140,7 +140,7 @@ export class ClozeSpacedRepGen
         card: SpacedRepCard<SRClozeContent, SRClozeAuxData>,
         st: SpacedRepState<SRClozeContent, SRClozeAuxData, SRClozeSettings>
     ): boolean {
-        return true;
+        return !card.auxdata.invalid;
     }
 
     correctEffect(
@@ -150,7 +150,7 @@ export class ClozeSpacedRepGen
         resolve: () => void
     ): void {
         var cardData = card.data!;
-        if (st.settings.readCorrectAnswers) {
+        if (st.settings.readCorrectAnswers && card.data!.auxdata.cloze !== undefined) {
             var ss = st.settings.speechSettings;
             if (attempt.length > 0) { 
                 utter(attempt, ss.voice, ss.rate, ss.pitch, resolve);
@@ -189,10 +189,15 @@ export class ClozeSpacedRepGen
         correct: FlashcardResult
     ): SRClozeAuxData {
         if (correct == FlashcardResult.Correct) {
-            card.data!.auxdata.streak += 1;
+            if (card.data!.auxdata.cloze == undefined) {
+                // When a card with invalid cloze is overridden, mark it as invalid
+                card.data!.auxdata.invalid = true;
+            } else {
+                card.data!.auxdata.streak += 1;
+            }
         } else if (correct == FlashcardResult.Incorrect) {
             card.data!.auxdata.streak = 0;
-        }
+        } 
         return card.data!.auxdata;
     }
 
@@ -209,6 +214,19 @@ export class ClozeSpacedRepGen
         return trivialPromise(tf(card.data!.auxdata.cloze!.answer) === tf(answer));
     }
 
+    fetchCloze(
+        lemma: string, 
+        st: SpacedRepState<SRClozeContent, SRClozeAuxData, SRClozeSettings>
+    ): Promise<Response> {
+        return fetch(
+            `${st.settings.clozeServerUrl}/cloze?` + new URLSearchParams({ 
+                "srcs": st.settings.sourceLangs.join(","),
+                "tgt": st.settings.targetLang,
+                "lemma": lemma
+            }).toString()
+        );
+    }
+
     nextCardAsyncPreprocessing(
         card: SpacedRepCardPhysical<SRClozeContent, SRClozeAuxData>,
         st: SpacedRepState<SRClozeContent, SRClozeAuxData, SRClozeSettings>
@@ -218,12 +236,9 @@ export class ClozeSpacedRepGen
             // Returns with .cloze attribute undefined, indicating failure
             return trivialPromise(card);
         }
-        return fetch(
-            `${st.settings.clozeServerUrl}/cloze?` + new URLSearchParams({
-                "srcs": st.settings.sourceLangs.join(","),
-                "tgt": st.settings.targetLang,
-                "lemma": card.data.content.key
-            }).toString()
+        return this.fetchCloze(
+                card.data.content.key,
+                st
             ).then(
                 (r) => r.json()
             ).then(
@@ -252,7 +267,7 @@ export class ClozeSpacedRepGen
             ));
         } else if (card.data!.auxdata.cloze === undefined) {
             return trivialPromise(renderCard("noanswer-template",
-                "Something is wrong with your Cloze puzzle server."
+                `Could not get puzzle for card "${card.data!.content.key}".`
             ));
         }
         return trivialPromise(renderCard("cloze-template", {
@@ -320,6 +335,9 @@ function clozeSRMenu(st: SpacedRepState<SRClozeContent, SRClozeAuxData, SRClozeS
                 return ed2;
             }
         );
+        var tf1 = ed.element.children[0];
+        if (c.auxdata.invalid)
+            (<HTMLElement>tf1).style.backgroundColor = "#ffeeee";
         var cardInfo = document.createElement("a");
         cardInfo.style.color = "lightgray";
         cardInfo.style.marginLeft = "10px";

@@ -1,10 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AbstractSpacedRepGen = exports.SpacedRepStudying = void 0;
+exports.AbstractSpacedRepGen = exports.AbstractAsyncSpacedRepGen = exports.SpacedRepStudying = void 0;
 exports.makeSpacedRepCardDict = makeSpacedRepCardDict;
 const utils_1 = require("./utils");
 const flashcard_generator_1 = require("./flashcard-generator");
-const flashcard_sync_generator_1 = require("./flashcard-sync-generator");
 var SpacedRepStudying;
 (function (SpacedRepStudying) {
     SpacedRepStudying[SpacedRepStudying["NewCards"] = 1] = "NewCards";
@@ -20,7 +19,7 @@ function makeSpacedRepCardDict(cards, defaultAuxData) {
     }
     return cardDict;
 }
-class AbstractSpacedRepGen extends flashcard_sync_generator_1.FlashcardSyncGen {
+class AbstractAsyncSpacedRepGen extends flashcard_generator_1.FlashcardGen {
     getDate = () => new Date();
     // For unit testing
     setDate(newDt) { this.getDate = () => newDt; }
@@ -50,19 +49,23 @@ class AbstractSpacedRepGen extends flashcard_sync_generator_1.FlashcardSyncGen {
         return card.data;
     }
     getNew(st) {
-        return Object.keys(st.cards).filter((k) => this.cardIsNew(st.cards[k]));
+        return Object.keys(st.cards).filter((k) => this.cardIsNew(st.cards[k]) && this.cardIsEnabled(st.cards[k], st));
     }
     getDue(st) {
-        return Object.keys(st.cards).filter((k) => this.cardIsDue(st.cards[k]));
+        return Object.keys(st.cards).filter((k) => this.cardIsDue(st.cards[k]) && this.cardIsEnabled(st.cards[k], st));
     }
-    getNextCard(st) {
+    getNextCardAsync(st) {
         var inds = Object.keys(st.cards);
         var newInds = this.getNew(st);
         var dueInds = this.getDue(st);
+        st.newQueue = st.newQueue.filter((k) => this.cardIsEnabled(st.cards[k], st));
         switch (st.studying) {
             case SpacedRepStudying.NewCards:
                 if (newInds.length == 0 && st.newQueue.length == 0) {
-                    return { data: undefined, context: { cardsLeft: 0, isPractice: false } };
+                    return this.nextCardAsyncPreprocessing({
+                        data: undefined,
+                        context: { cardsLeft: 0, isPractice: false }
+                    }, st);
                 }
                 var newInd;
                 if (st.newIndex < st.newQueue.length) {
@@ -71,46 +74,46 @@ class AbstractSpacedRepGen extends flashcard_sync_generator_1.FlashcardSyncGen {
                 else {
                     newInd = newInds[Math.floor(Math.random() * newInds.length)];
                 }
-                return {
+                return this.nextCardAsyncPreprocessing({
                     data: st.cards[newInd],
                     context: {
                         cardsLeft: newInds.length,
                         isPractice: false
                     }
-                };
+                }, st);
             case SpacedRepStudying.DueCards:
                 if (dueInds.length == 0) {
-                    return { data: undefined, context: { cardsLeft: 0, isPractice: false } };
+                    return (0, utils_1.trivialPromise)({ data: undefined, context: { cardsLeft: 0, isPractice: false } });
                 }
                 var dueInd = dueInds[Math.floor(Math.random() * dueInds.length)];
-                return {
+                return this.nextCardAsyncPreprocessing({
                     data: st.cards[dueInd],
                     context: {
                         cardsLeft: dueInds.length,
                         isPractice: false
                     }
-                };
+                }, st);
             case SpacedRepStudying.RandomCards:
                 var ind = inds[Math.floor(Math.random() * inds.length)];
-                return {
+                return this.nextCardAsyncPreprocessing({
                     data: st.cards[ind],
                     context: {
                         cardsLeft: 0,
                         isPractice: true
                     }
-                };
+                }, st);
         }
-        return {
+        return this.nextCardAsyncPreprocessing({
             data: undefined,
             context: {
                 cardsLeft: 0,
                 isPractice: false
             }
-        };
+        }, st);
     }
-    updateState(st, card, result) {
+    updateStateAsync(st, card, result) {
         if (result == flashcard_generator_1.FlashcardResult.Unanswered || st.studying == SpacedRepStudying.RandomCards)
-            return st;
+            return (0, utils_1.trivialPromise)(st);
         var cardData = card.data;
         var correct = (result == flashcard_generator_1.FlashcardResult.Correct);
         var cardGuid = cardData.guid;
@@ -125,6 +128,7 @@ class AbstractSpacedRepGen extends flashcard_sync_generator_1.FlashcardSyncGen {
             }
             var maxNewQueueSize = Math.min(st.newQueueSize, this.getNew(st).length);
             st.newQueue = st.newQueue.slice(0, st.newQueueSize);
+            st.newQueue = st.newQueue.filter((k) => this.cardIsEnabled(st.cards[k], st));
             st.newIndex += 1;
             if (st.newIndex >= maxNewQueueSize) {
                 st.newIndex = 0;
@@ -132,7 +136,19 @@ class AbstractSpacedRepGen extends flashcard_sync_generator_1.FlashcardSyncGen {
             }
         }
         st.cards[cardGuid] = cardNewState;
-        return st;
+        return (0, utils_1.trivialPromise)(st);
+    }
+}
+exports.AbstractAsyncSpacedRepGen = AbstractAsyncSpacedRepGen;
+class AbstractSpacedRepGen extends AbstractAsyncSpacedRepGen {
+    nextCardAsyncPreprocessing(c, state) {
+        return (0, utils_1.trivialPromise)(c);
+    }
+    generateCardAsync(data) {
+        return new Promise((resolve, _) => { resolve(this.generateCard(data)); });
+    }
+    checkAnswerAsync(answer, state, data) {
+        return new Promise((resolve, _) => { resolve(this.checkAnswer(answer, state, data)); });
     }
 }
 exports.AbstractSpacedRepGen = AbstractSpacedRepGen;

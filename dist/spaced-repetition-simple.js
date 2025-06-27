@@ -9,6 +9,7 @@ const spaced_repetition_general_1 = require("./spaced-repetition-general");
 const speech_1 = require("./speech");
 const text_filters_1 = require("./text-filters");
 const editor_1 = require("./editor");
+const shared_sr_menu_components_1 = require("./shared-sr-menu-components");
 const flashcard_deck_1 = require("./flashcard-deck");
 exports.defaultSimpleSRSettings = {
     initialHours: 6,
@@ -48,6 +49,9 @@ function makeEmptyCard() {
 }
 class SimpleSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGen {
     getGenName() { return "simple-spaced-repetition"; }
+    cardIsEnabled(card, st) {
+        return !card.content.tags.some((t) => st.settings.inactiveTags.some((s) => t === s));
+    }
     updateInterval(card, settings, correct) {
         var cardData = card.data;
         if (correct == flashcard_generator_1.FlashcardResult.Correct) {
@@ -130,19 +134,8 @@ class SimpleSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGe
 exports.SimpleSpacedRepGen = SimpleSpacedRepGen;
 function simpleSRMenu(st) {
     var contDiv = document.createElement("div");
-    var totP = document.createElement("p");
-    totP.textContent = `Total cards: ${Object.keys(st.cards).length}`;
-    totP.style.color = "#666666";
-    totP.style.fontWeight = "bold";
-    var newP = document.createElement("p");
-    newP.textContent = `New cards: ${Object.keys(st.cards).filter((i) => st.cards[i].intervalMinutes == 0).length}`;
-    newP.style.color = "#9999ee";
-    newP.style.fontWeight = "bold";
-    var dueP = document.createElement("p");
-    dueP.textContent = `Due cards: ${Object.keys(st.cards).filter((i) => st.cards[i].intervalMinutes > 0 && new Date(st.cards[i].due) < new Date()).length}`;
-    dueP.style.color = "#ee9999";
-    dueP.style.fontWeight = "bold";
-    var studyingEditor = (0, editor_1.radioEditor)(st.studying, [spaced_repetition_general_1.SpacedRepStudying.NewCards, spaced_repetition_general_1.SpacedRepStudying.DueCards, spaced_repetition_general_1.SpacedRepStudying.RandomCards], ["Study new cards", "Study due cards", "Practice random cards"]);
+    var infoWidget = (0, shared_sr_menu_components_1.infoWidgetSR)(st);
+    var studyingEditor = (0, shared_sr_menu_components_1.studyingEditorSR)(st);
     var settings = st.settings;
     var initHoursEditor = (0, editor_1.scrollNumberEditor)("Initial interval (hours): ", settings.initialHours, 1, 240, 1);
     var newQueueSizeEditor = (0, editor_1.scrollNumberEditor)("Max new cards to study at once: ", st.newQueueSize, 1, 100, 1);
@@ -216,9 +209,7 @@ function simpleSRMenu(st) {
     cardsEditor.element.prepend(cardsEditorTitle);
     cardsEditor.element.classList.add("deck-menu-submenu");
     var components = [
-        totP,
-        newP,
-        dueP,
+        infoWidget,
         studyingEditor.element,
         initHoursEditor.element,
         correctFactor.element,
