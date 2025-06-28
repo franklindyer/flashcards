@@ -230,7 +230,7 @@ function clozeSRMenu(st) {
             cardInfo.textContent = "not studied";
         }
         else {
-            cardInfo.textContent = `due ${c.due.toLocaleString().split('T')[0]}`;
+            cardInfo.textContent = `due ${(0, utils_1.getSRFutureDateInfo)(c.due)}`;
         }
         ed.element.appendChild(cardInfo);
         return {

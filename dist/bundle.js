@@ -1299,7 +1299,7 @@ class ClozeFlashcardTemplate extends flashcard_template_1.FlashcardTemplate {
         });
         var answer = targetWords.join(", ");
         aLower.textContent = data.lower;
-        var fontSize = 800.0 / (10.0 * Math.log(10 + aUpper.textContent.length));
+        var fontSize = 900.0 / (10.0 * Math.log(10 + aUpper.textContent.length));
         aUpper.style.fontSize = `${fontSize}px`;
         aLower.style.fontSize = `${0.7 * fontSize}px`;
         var fl = new flashcard_1.Flashcard(el, answer);
@@ -1392,7 +1392,7 @@ function generateDecklistMenu(decklist, onfinish) {
         })(slug);
         var deckEditBtn = document.createElement("button");
         deckEditBtn.title = "Edit deck";
-        deckEditBtn.innerHTML = "<img src='/edit.png'/>";
+        deckEditBtn.innerHTML = "<img src='edit.png'/>";
         deckEditBtn.classList.add("deck-editor-button");
         deckEditBtn.onclick = ((dk, deckDiv) => (e) => {
             var ed = generateDeckNameEditor(dk);
@@ -1411,7 +1411,7 @@ function generateDecklistMenu(decklist, onfinish) {
         var deckDeleteBtn = document.createElement("button");
         deckDeleteBtn.title = "Delete deck";
         deckDeleteBtn.classList.add("deck-editor-button");
-        deckDeleteBtn.innerHTML = "<img src='/trash.png'/>";
+        deckDeleteBtn.innerHTML = "<img src='trash.png'/>";
         deckDeleteBtn.onclick = ((dk) => (e) => {
             var confirmation = confirm(`Are you sure you want to delete "${dk.name}"?`);
             if (confirmation) {
@@ -1425,7 +1425,7 @@ function generateDecklistMenu(decklist, onfinish) {
         var deckCloneBtn = document.createElement("button");
         deckCloneBtn.title = "Clone deck";
         deckCloneBtn.classList.add("deck-editor-button");
-        deckCloneBtn.innerHTML = "<img src='/copy.png'/>";
+        deckCloneBtn.innerHTML = "<img src='copy.png'/>";
         deckCloneBtn.onclick = ((dk) => (e) => {
             var guid = (0, utils_1.guidGenerator)();
             var deckClone = JSON.parse(JSON.stringify(dk));
@@ -1439,7 +1439,7 @@ function generateDecklistMenu(decklist, onfinish) {
         var deckUploadBtn = document.createElement("button");
         deckUploadBtn.title = "Upload deck to server";
         deckUploadBtn.classList.add("deck-editor-button");
-        deckUploadBtn.innerHTML = "<img src='/upcloud.png'/>";
+        deckUploadBtn.innerHTML = "<img src='upcloud.png'/>";
         deckUploadBtn.onclick = ((dk) => (e) => {
             (0, synchronization_1.syncUploadDeck)(dk);
             e.cancelBubble = true;
@@ -1449,7 +1449,7 @@ function generateDecklistMenu(decklist, onfinish) {
         var deckDownloadBtn = document.createElement("button");
         deckDownloadBtn.title = "Download deck from server";
         deckDownloadBtn.classList.add("deck-editor-button");
-        deckDownloadBtn.innerHTML = "<img src='/downcloud.png'/>";
+        deckDownloadBtn.innerHTML = "<img src='downcloud.png'/>";
         deckDownloadBtn.onclick = ((k) => (e) => {
             (0, synchronization_1.syncDownloadDeck)(k, (s) => { (0, flashcard_deck_1.setDeck)(k, s, () => { }); });
             e.cancelBubble = true;
@@ -2192,7 +2192,7 @@ class NoAnswerFlashcardTemplate extends flashcard_template_1.FlashcardTemplate {
     render(data) {
         var a = document.createElement("div");
         a.textContent = data;
-        var fontSize = 100.0 / (10.0 * Math.log(10 + data[0].length));
+        var fontSize = 90.0 / (10.0 * Math.log(10 + data[0].length));
         var fl = new flashcard_1.Flashcard(a, "", (_) => (0, utils_1.trivialPromise)(false));
         fl.el.style.fontSize = `${fontSize}vw`;
         return fl;
@@ -2501,7 +2501,7 @@ function clozeSRMenu(st) {
             cardInfo.textContent = "not studied";
         }
         else {
-            cardInfo.textContent = `due ${c.due.toLocaleString().split('T')[0]}`;
+            cardInfo.textContent = `due ${(0, utils_1.getSRFutureDateInfo)(c.due)}`;
         }
         ed.element.appendChild(cardInfo);
         return {
@@ -2935,7 +2935,7 @@ function simpleSRMenu(st) {
             cardInfo.textContent = "not studied";
         }
         else {
-            cardInfo.textContent = `due ${c.due.toLocaleString().split('T')[0]}`;
+            cardInfo.textContent = `due ${(0, utils_1.getSRFutureDateInfo)(c.due)}`;
         }
         ed.element.appendChild(cardInfo);
         return {
@@ -3345,7 +3345,7 @@ class TranscriptFlashcardTemplate extends flashcard_template_1.FlashcardTemplate
     render(data) {
         var container = document.createElement("div");
         var playBtn = document.createElement("img");
-        playBtn.src = "/speaker.png";
+        playBtn.src = "/static/images/speaker.png";
         playBtn.classList.add("transcription-audio-button");
         playBtn.onclick = (e) => {
             var ss = data.speechSettings;
@@ -3435,6 +3435,7 @@ exports.shuffleArr = shuffleArr;
 exports.makeDict = makeDict;
 exports.downloadText = downloadText;
 exports.trivialPromise = trivialPromise;
+exports.getSRFutureDateInfo = getSRFutureDateInfo;
 // https://stackoverflow.com/questions/6860853/generate-random-string-for-div-id
 function guidGenerator() {
     var S4 = function () {
@@ -3469,6 +3470,25 @@ function downloadText(filename, text) {
 exports.getUuid = __webpack_require__(571);
 function trivialPromise(x) {
     return new Promise((resolve, _) => { resolve(x); });
+}
+function getSRFutureDateInfo(d) {
+    var dateNow = new Date();
+    var seconds = Math.floor((new Date(d).getTime() - dateNow.getTime()) / 1000);
+    var minutes = Math.floor(seconds / 60);
+    var hours = Math.floor(minutes / 60);
+    var days = Math.floor(hours / 24);
+    if (seconds < 0)
+        return "now";
+    else if (hours == 0)
+        return "in under an hour";
+    else if (hours == 1)
+        return "in an hour";
+    else if (hours < 24)
+        return `in ${hours} hours`;
+    else if (days == 1)
+        return "in a day";
+    else
+        return `in ${days} days`;
 }
 
 
