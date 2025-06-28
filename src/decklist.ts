@@ -99,7 +99,7 @@ export function generateDecklistMenu(
 
         var deckEditBtn = document.createElement("button");
         deckEditBtn.title = "Edit deck";
-        deckEditBtn.innerHTML = "<img src='/static/images/edit.png'/>";
+        deckEditBtn.innerHTML = "<img src='edit.png'/>";
         deckEditBtn.classList.add("deck-editor-button");
         deckEditBtn.onclick = ((dk, deckDiv) => (e) => {
             var ed = generateDeckNameEditor(dk);
@@ -118,7 +118,7 @@ export function generateDecklistMenu(
         var deckDeleteBtn = document.createElement("button");
         deckDeleteBtn.title = "Delete deck";
         deckDeleteBtn.classList.add("deck-editor-button");
-        deckDeleteBtn.innerHTML = "<img src='/static/images/trash.png'/>";
+        deckDeleteBtn.innerHTML = "<img src='trash.png'/>";
         deckDeleteBtn.onclick = ((dk) => (e) => {
             var confirmation = confirm(`Are you sure you want to delete "${dk.name}"?`);
             if (confirmation) {
@@ -132,7 +132,7 @@ export function generateDecklistMenu(
         var deckCloneBtn = document.createElement("button");
         deckCloneBtn.title = "Clone deck";
         deckCloneBtn.classList.add("deck-editor-button");
-        deckCloneBtn.innerHTML = "<img src='/static/images/copy.png'/>";
+        deckCloneBtn.innerHTML = "<img src='copy.png'/>";
         deckCloneBtn.onclick = ((dk) => (e) => {
             var guid = guidGenerator();
             var deckClone = <FlashcardDeck<any>>JSON.parse(JSON.stringify(dk));
@@ -146,7 +146,7 @@ export function generateDecklistMenu(
         var deckUploadBtn = document.createElement("button");
         deckUploadBtn.title = "Upload deck to server";
         deckUploadBtn.classList.add("deck-editor-button");
-        deckUploadBtn.innerHTML = "<img src='/static/images/upcloud.png'/>";
+        deckUploadBtn.innerHTML = "<img src='upcloud.png'/>";
         deckUploadBtn.onclick = ((dk) => (e) => {
             syncUploadDeck(dk);
             e.cancelBubble = true;
@@ -156,7 +156,7 @@ export function generateDecklistMenu(
         var deckDownloadBtn = document.createElement("button");
         deckDownloadBtn.title = "Download deck from server";
         deckDownloadBtn.classList.add("deck-editor-button");
-        deckDownloadBtn.innerHTML = "<img src='/static/images/downcloud.png'/>";
+            deckDownloadBtn.innerHTML = "<img src='downcloud.png'/>";
         deckDownloadBtn.onclick = ((k) => (e) => {
             syncDownloadDeck(k, (s: string) => { setDeck(k, s, () => {}); });
             e.cancelBubble = true;
