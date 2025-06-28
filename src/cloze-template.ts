@@ -41,7 +41,7 @@ class ClozeFlashcardTemplate extends FlashcardTemplate<ClozeCardData> {
         var answer = targetWords.join(", ");
         aLower.textContent = data.lower;
 
-        var fontSize = 800.0/(10.0*Math.log(10+aUpper.textContent.length));
+        var fontSize = 900.0/(10.0*Math.log(10+aUpper.textContent.length));
         aUpper.style.fontSize = `${fontSize}px`;
         aLower.style.fontSize = `${0.7*fontSize}px`; 
    

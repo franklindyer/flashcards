@@ -43,3 +43,17 @@ export const getUuid = require("uuid-by-string");
 export function trivialPromise<a>(x: a): Promise<a> {
     return new Promise((resolve, _) => { resolve(x); });
 }
+
+export function getSRFutureDateInfo(d: Date): string {
+    var dateNow = new Date();
+    var seconds: number = Math.floor((new Date(d).getTime() - dateNow.getTime())/1000);
+    var minutes: number = Math.floor(seconds/60);
+    var hours: number = Math.floor(minutes/60);
+    var days: number = Math.floor(hours/24);
+    if (seconds < 0) return "now";
+    else if (hours == 0) return "in under an hour";
+    else if (hours == 1) return "in an hour";
+    else if (hours < 24) return `in ${hours} hours`;
+    else if (days == 1) return "in a day";
+    else return `in ${days} days`;
+}

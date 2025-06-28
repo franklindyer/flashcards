@@ -2,7 +2,8 @@ import {
     IDictionary,
     guidGenerator,
     makeDict,
-    trivialPromise
+    trivialPromise,
+    getSRFutureDateInfo
 } from "./utils"
 import {
     Preloader
@@ -366,7 +367,7 @@ function clozeSRMenu(st: SpacedRepState<SRClozeContent, SRClozeAuxData, SRClozeS
         if (c.intervalMinutes == 0) {
             cardInfo.textContent = "not studied";
         } else {
-            cardInfo.textContent = `due ${c.due!.toLocaleString().split('T')[0]}`;
+            cardInfo.textContent = `due ${getSRFutureDateInfo(c.due!)}`;
         }
         ed.element.appendChild(cardInfo);
         return {
