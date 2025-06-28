@@ -1,0 +1,3 @@
+typescript
+nodejs
+pandoc
