@@ -7,6 +7,7 @@ exports.shuffleArr = shuffleArr;
 exports.makeDict = makeDict;
 exports.downloadText = downloadText;
 exports.trivialPromise = trivialPromise;
+exports.getSRFutureDateInfo = getSRFutureDateInfo;
 // https://stackoverflow.com/questions/6860853/generate-random-string-for-div-id
 function guidGenerator() {
     var S4 = function () {
@@ -41,4 +42,23 @@ function downloadText(filename, text) {
 exports.getUuid = require("uuid-by-string");
 function trivialPromise(x) {
     return new Promise((resolve, _) => { resolve(x); });
+}
+function getSRFutureDateInfo(d) {
+    var dateNow = new Date();
+    var seconds = Math.floor((new Date(d).getTime() - dateNow.getTime()) / 1000);
+    var minutes = Math.floor(seconds / 60);
+    var hours = Math.floor(minutes / 60);
+    var days = Math.floor(hours / 24);
+    if (seconds < 0)
+        return "now";
+    else if (hours == 0)
+        return "in under an hour";
+    else if (hours == 1)
+        return "in an hour";
+    else if (hours < 24)
+        return `in ${hours} hours`;
+    else if (days == 1)
+        return "in a day";
+    else
+        return `in ${days} days`;
 }
