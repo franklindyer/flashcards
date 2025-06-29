@@ -2,7 +2,8 @@ import {
     IDictionary,
     guidGenerator,
     makeDict,
-    getSRFutureDateInfo
+    getSRFutureDateInfo,
+    iconButton
 } from "./utils"
 import {
     Flashcard
@@ -280,7 +281,16 @@ function simpleSRMenu(st: SpacedRepState<SRSimpleContent, SRSimpleAuxData, SRSim
                 return ed2;
             }
         );
+
+        var listenBtn = ((ed) => iconButton("speaker.png", () => {
+            var ss = speechEditor.menuToState();
+            var tgtText = ed.menuToState()[0][1];
+            utter(tgtText, ss.voice, ss.rate, ss.pitch, () => {}); 
+        }))(ed);
+        ed.element.appendChild(listenBtn);
+
         var cardInfo = document.createElement("a");
+        cardInfo.classList.add("sr-card-due-date");
         cardInfo.style.color = "lightgray";
         cardInfo.style.marginLeft = "10px";
         cardInfo.style.marginRight = "10px";
@@ -291,6 +301,7 @@ function simpleSRMenu(st: SpacedRepState<SRSimpleContent, SRSimpleAuxData, SRSim
             cardInfo.textContent = `due ${getSRFutureDateInfo(c.due!)}`;
         }
         ed.element.appendChild(cardInfo);
+
         return {
             element: ed.element,
             menuToState: () => {

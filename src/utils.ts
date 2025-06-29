@@ -57,3 +57,31 @@ export function getSRFutureDateInfo(d: Date): string {
     else if (days == 1) return "in a day";
     else return `in ${days} days`;
 }
+
+export function showLoadingIcon() {
+    var cont = document.getElementById("flashcard-container")!;
+    var loadingAnim = document.createElement("div");
+    [...new Array(12)].map((x) => {
+        var subDiv = document.createElement("div");
+        loadingAnim.appendChild(subDiv);
+    });
+    loadingAnim.id = "card-loading-spinner";
+    loadingAnim.classList.add("lds-spinner");
+    cont.appendChild(loadingAnim);
+}
+
+export function hideLoadingIcon() {
+    var loadingAnim = document.getElementById("card-loading-spinner");
+    if (loadingAnim != null)
+        loadingAnim.remove();
+}
+
+export function iconButton(imgUrl: string, effect: () => void): HTMLElement {
+    var btn = document.createElement("button");
+    var icon = document.createElement("img");
+    btn.appendChild(icon);
+    btn.classList.add("deck-editor-button");
+    icon.src = imgUrl;
+    btn.onclick = effect;
+    return btn;
+}
