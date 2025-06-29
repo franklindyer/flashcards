@@ -1,5 +1,7 @@
 import {
-    guidGenerator
+    guidGenerator,
+    showLoadingIcon,
+    hideLoadingIcon
 } from "./utils"
 import {
     Flashcard
@@ -19,6 +21,7 @@ export abstract class FlashcardGen<S, D> {
     }
 
     soonestRun: Date = new Date();
+    showLoading: boolean = false;
 
     // Repair the raw JSON associated with the deck, mainly used for update compatibility
     abstract repairDeckState(state: any): any;
@@ -32,9 +35,19 @@ export abstract class FlashcardGen<S, D> {
     abstract correctEffect(state: S, cardData: D, attempt: string, resolve: () => void): void;   
 
     async runOnce(s: S, setState: (s: S) => void, callback: () => void, runTime: Date) {
+        this.showLoading = true;
+        setTimeout(() => {
+            if (this.showLoading) {
+                showLoadingIcon();
+            } 
+        }, 500)
+
         var cardData: D = await this.getNextCardAsync(s);
         var card = await this.generateCardAsync(cardData);
         card.check = async (ans: string) => this.checkAnswerAsync(ans, s, cardData);
+        
+        hideLoadingIcon();
+        this.showLoading = false;
 
         if (runTime.getTime() !== this.soonestRun.getTime()) return;
 
