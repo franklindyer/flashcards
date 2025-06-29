@@ -75,3 +75,13 @@ export function hideLoadingIcon() {
     if (loadingAnim != null)
         loadingAnim.remove();
 }
+
+export function iconButton(imgUrl: string, effect: () => void): HTMLElement {
+    var btn = document.createElement("button");
+    var icon = document.createElement("img");
+    btn.appendChild(icon);
+    btn.classList.add("deck-editor-button");
+    icon.src = imgUrl;
+    btn.onclick = effect;
+    return btn;
+}

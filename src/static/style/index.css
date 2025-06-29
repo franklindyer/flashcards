@@ -239,6 +239,10 @@ hr {
     border: 3px solid #eeeeff;
 }
 
+.menu-remove-card-button {
+    float: right;
+}
+
 // Animation for loading icon
 
 .lds-spinner,

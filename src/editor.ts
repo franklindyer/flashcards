@@ -277,6 +277,7 @@ export function multipleEditors<a>(
         statePartDiv.appendChild(newEditor.element);
         newEditor.element.style.display = "inline-block";
         var delBtn = document.createElement("button");
+        delBtn.classList.add("menu-remove-card-button");
         delBtn.textContent = "remove";
         delBtn.onclick = (e) => {
             delete children[ind];
