@@ -240,7 +240,9 @@ hr {
 }
 
 .menu-remove-card-button {
-    float: right;
+    right: 2px;
+    display: inline-block;
+    padding: 1px;
 }
 
 // Animation for loading icon
