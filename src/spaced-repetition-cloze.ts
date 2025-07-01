@@ -250,7 +250,6 @@ export class ClozeSpacedRepGen
         card: SpacedRepCardPhysical<SRClozeContent, SRClozeAuxData>,
         st: SpacedRepState<SRClozeContent, SRClozeAuxData, SRClozeSettings>
     ): Promise<SpacedRepCardPhysical<SRClozeContent, SRClozeAuxData>> {
-        console.log("DOING PREPROCESSING");
         if (st.settings.clozeServerUrl.length == 0 || card.data === undefined) {
             // Returns with .cloze attribute undefined, indicating failure
             return trivialPromise(card);
@@ -268,12 +267,9 @@ export class ClozeSpacedRepGen
                         answer: j["target"],
                         translation: j["source"]
                     };
-                    console.log(card);
                     return card;
                 }
             ).catch((e) => {
-                console.log(e);
-                console.log(card);
                 return card;
             });
     }
@@ -282,7 +278,6 @@ export class ClozeSpacedRepGen
         st: SpacedRepState<SRClozeContent, SRClozeAuxData, SRClozeSettings>,
         card: SpacedRepCardPhysical<SRClozeContent, SRClozeAuxData>
     ): Promise<Flashcard> {
-        console.log(card);
         if (card.data === undefined) {
             return trivialPromise(renderCard("noanswer-template",
                 "No cards left to study."

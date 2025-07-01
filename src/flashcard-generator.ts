@@ -74,7 +74,6 @@ export abstract class FlashcardGen<S, D> {
         };
         inputBox.onkeydown = async (e) => {
             if (e.key == "Enter") {
-                console.log("Enter key pressed!");
                 inputCallback(inputBox.value);
             } else if (e.key == "ArrowUp") {
                 var newState = await this.updateStateAsync(s, cardData, FlashcardResult.Correct);
