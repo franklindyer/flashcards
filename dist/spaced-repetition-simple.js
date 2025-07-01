@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.SimpleSpacedRepGen = exports.defaultSimpleSRState = exports.defaultSimpleSRSettings = void 0;
 exports.makeEmptyCard = makeEmptyCard;
 const utils_1 = require("./utils");
+const random_templating_1 = require("./random-templating");
 const flashcard_1 = require("./flashcard");
 const flashcard_generator_1 = require("./flashcard-generator");
 const spaced_repetition_general_1 = require("./spaced-repetition-general");
@@ -86,11 +87,20 @@ class SimpleSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGe
         }
         return st;
     }
+    applyCardTemplating(card) {
+        // Random substitution card templating
+        var res = (0, random_templating_1.randomizeStringSub)(card.data.content.prompt, {});
+        card.data.content.prompt = res[0];
+        card.data.content.answers = card.data.content.answers.map((a) => (0, random_templating_1.randomizeStringSub)(a, res[1])[0]);
+        return card;
+    }
     generateCard(card) {
         var a = document.createElement("a");
         var prompt = "No cards left to study.";
         var hint = "You cannot continue studying until more cards become due.";
         if (card.data !== undefined) {
+            // Apply randomized templating
+            card = this.applyCardTemplating(card);
             prompt = card.data.content.prompt;
             hint = card.data.content.answers[0];
         }

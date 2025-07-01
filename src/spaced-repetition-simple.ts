@@ -3,8 +3,12 @@ import {
     guidGenerator,
     makeDict,
     getSRFutureDateInfo,
-    iconButton
+    iconButton,
+    trivialPromise
 } from "./utils"
+import {
+    randomizeStringSub
+} from "./random-templating"
 import {
     Flashcard
 } from "./flashcard"
@@ -164,14 +168,35 @@ export class SimpleSpacedRepGen
         return st;
     }
 
+    applyCardTemplating(card: SpacedRepCardPhysical<SRSimpleContent, SRSimpleAuxData>):
+        SpacedRepCardPhysical<SRSimpleContent, SRSimpleAuxData> {
+        // Random substitution card templating
+        var res = randomizeStringSub(card.data!.content.prompt, {});
+        card.data!.content.prompt = res[0];
+        card.data!.content.answers = card.data!.content.answers.map((a) => randomizeStringSub(a, res[1])[0]);
+        return card;
+    }
+
+    nextCardPreprocessing(card: SpacedRepCardPhysical<SRSimpleContent, SRSimpleAuxData>)
+        : SpacedRepCardPhysical<SRSimpleContent, SRSimpleAuxData> {
+        // Clone the card so we don't mess with its state in the deck
+        var card = <SpacedRepCardPhysical<SRSimpleContent, SRSimpleAuxData>>JSON.parse(JSON.stringify(card));
+        if (card.data !== undefined) {
+            card = this.applyCardTemplating(card);
+        }
+        return card;
+    }
+
     generateCard(card: SpacedRepCardPhysical<SRSimpleContent, SRSimpleAuxData>): 
         Flashcard {
         var a = document.createElement("a");
         var prompt = "No cards left to study.";
+        var answers: string[] = [];
         var hint = "You cannot continue studying until more cards become due."
 
         if (card.data !== undefined) {
             prompt = card.data!.content.prompt;
+            answers = card.data!.content.answers;
             hint = card.data!.content.answers[0];
         }
 
@@ -179,7 +204,7 @@ export class SimpleSpacedRepGen
         a.style.fontSize = `${fontSize}vw`;
         a.textContent = prompt;
 
-        var fl = new Flashcard(a, hint);
+        var fl = new Flashcard(a, hint, (ans: string) => trivialPromise(answers.includes(ans)));
 
         var infoText = document.createElement("span");
         infoText.classList.add("cards-left-span");

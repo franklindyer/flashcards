@@ -44,7 +44,6 @@ export abstract class FlashcardGen<S, D> {
 
         var cardData: D = await this.getNextCardAsync(s);
         var card = await this.generateCardAsync(cardData);
-        card.check = async (ans: string) => this.checkAnswerAsync(ans, s, cardData);
         
         hideLoadingIcon();
         this.showLoading = false;

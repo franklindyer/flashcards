@@ -104,27 +104,29 @@ export abstract class AbstractAsyncSpacedRepGen<content, auxdata, settings>
 
     updateCard(
         card: SpacedRepCardPhysical<content, auxdata>,
-        settings: settings, 
+        st: SpacedRepState<content, auxdata, settings>, 
         correct: FlashcardResult
     ): SpacedRepCard<content, auxdata> {
+        // Physical card data could be modified by templating, so must get card data by guid from deck
+        var cardData = st.cards[card.data!.guid];
         if (card.context.isPractice) {
-            return card.data!;
+            return cardData;
         }
-        var isNew = card.data!.intervalMinutes == 0;
+        var isNew = cardData.intervalMinutes == 0;
 
-        var newAuxData = this.updateAuxData(card, settings, correct);
-        card.data!.auxdata = newAuxData;
-        var newInterval = this.updateInterval(card, settings, correct);
-        card.data!.intervalMinutes = newInterval;
+        var newAuxData = this.updateAuxData(card, st.settings, correct);
+        cardData.auxdata = newAuxData;
+        var newInterval = this.updateInterval(card, st.settings, correct);
+        cardData.intervalMinutes = newInterval;
 
         // Interval > 0 implies the card is no longer new
         // Only reschedule the card if it was answered correctly
         if (correct == FlashcardResult.Correct && newInterval > 0) {
-            card.data!.due = this.getDate();
-            card.data!.due.setHours(card.data!.due!.getHours() + card.data!.intervalMinutes/60);
+            cardData.due = this.getDate();
+            cardData.due.setHours(cardData.due!.getHours() + cardData.intervalMinutes/60);
         }
 
-        return card.data!;
+        return cardData;
     }
 
     getNew(st: SpacedRepState<content, auxdata, settings>): string[] {
@@ -200,7 +202,7 @@ export abstract class AbstractAsyncSpacedRepGen<content, auxdata, settings>
         var cardGuid = cardData.guid;
         var cardState = st.cards[cardGuid];
 
-        var cardNewState = this.updateCard(card, st.settings, result);
+        var cardNewState = this.updateCard(card, st, result);
 
         // If card is still new, stick it back in the queue
         if (st.studying == SpacedRepStudying.NewCards) {
@@ -216,6 +218,9 @@ export abstract class AbstractAsyncSpacedRepGen<content, auxdata, settings>
 export abstract class AbstractSpacedRepGen<content, auxdata, settings>
     extends AbstractAsyncSpacedRepGen<content, auxdata, settings> {
     abstract generateCard(data: SpacedRepCardPhysical<content, auxdata>): Flashcard;
+    abstract nextCardPreprocessing(
+        data: SpacedRepCardPhysical<content, auxdata>
+    ): SpacedRepCardPhysical<content, auxdata>
     abstract checkAnswer(
         answer: string,
         state: SpacedRepState<content, auxdata, settings>,
@@ -226,7 +231,7 @@ export abstract class AbstractSpacedRepGen<content, auxdata, settings>
         c: SpacedRepCardPhysical<content, auxdata>,
         state: SpacedRepState<content, auxdata, settings>
     ) {
-        return trivialPromise(c);
+        return trivialPromise(this.nextCardPreprocessing(c));
     }
 
     generateCardAsync(data: SpacedRepCardPhysical<content, auxdata>): Promise<Flashcard> {

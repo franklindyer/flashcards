@@ -52,8 +52,3 @@ export function randomizeStringSub(subString: string, rands: IDictionary<number>
     }
     return [outString, rands];
 }
-
-// for (var i in [0,1,2,3,4,5,6,7,8,9]) {
-//     var test = randomizeStringSub("{r0|I,you,he,she} {r0|want,want,wants,wants}");
-//     console.log(test);
-// }
