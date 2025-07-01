@@ -217,7 +217,10 @@ export abstract class AbstractAsyncSpacedRepGen<content, auxdata, settings>
 
 export abstract class AbstractSpacedRepGen<content, auxdata, settings>
     extends AbstractAsyncSpacedRepGen<content, auxdata, settings> {
-    abstract generateCard(data: SpacedRepCardPhysical<content, auxdata>): Flashcard;
+    abstract generateCard(
+        state: SpacedRepState<content, auxdata, settings>,
+        data: SpacedRepCardPhysical<content, auxdata>
+    ): Flashcard;
     abstract nextCardPreprocessing(
         data: SpacedRepCardPhysical<content, auxdata>
     ): SpacedRepCardPhysical<content, auxdata>
@@ -234,8 +237,11 @@ export abstract class AbstractSpacedRepGen<content, auxdata, settings>
         return trivialPromise(this.nextCardPreprocessing(c));
     }
 
-    generateCardAsync(data: SpacedRepCardPhysical<content, auxdata>): Promise<Flashcard> {
-        return new Promise((resolve, _) => { resolve(this.generateCard(data)); });
+    generateCardAsync(
+        st: SpacedRepState<content, auxdata, settings>,
+        data: SpacedRepCardPhysical<content, auxdata>): 
+        Promise<Flashcard> {
+        return new Promise((resolve, _) => { resolve(this.generateCard(st, data)); });
     }
 
     checkAnswerAsync(

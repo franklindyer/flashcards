@@ -279,6 +279,7 @@ export class ClozeSpacedRepGen
     }
 
     generateCardAsync(
+        st: SpacedRepState<SRClozeContent, SRClozeAuxData, SRClozeSettings>,
         card: SpacedRepCardPhysical<SRClozeContent, SRClozeAuxData>
     ): Promise<Flashcard> {
         console.log(card);
@@ -291,12 +292,13 @@ export class ClozeSpacedRepGen
                 `Could not get puzzle for card "${card.data!.content.key}".`
             ));
         }
-        return trivialPromise(renderCard("cloze-template", {
+        var fl = renderCard("cloze-template", {
             group: "", 
             guid: card.data!.guid,
             upper: card.data!.auxdata.cloze!.prompt,
             lower: card.data!.auxdata.cloze!.translation
-        }));
+        });
+        return trivialPromise(fl);
     }
 }
 

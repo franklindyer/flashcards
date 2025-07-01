@@ -187,8 +187,10 @@ export class SimpleSpacedRepGen
         return card;
     }
 
-    generateCard(card: SpacedRepCardPhysical<SRSimpleContent, SRSimpleAuxData>): 
-        Flashcard {
+    generateCard(
+        st: SpacedRepState<SRSimpleContent, SRSimpleAuxData, SRSimpleSettings>,
+        card: SpacedRepCardPhysical<SRSimpleContent, SRSimpleAuxData>
+        ): Flashcard {
         var a = document.createElement("a");
         var prompt = "No cards left to study.";
         var answers: string[] = [];
@@ -204,7 +206,7 @@ export class SimpleSpacedRepGen
         a.style.fontSize = `${fontSize}vw`;
         a.textContent = prompt;
 
-        var fl = new Flashcard(a, hint, (ans: string) => trivialPromise(answers.includes(ans)));
+        var fl = new Flashcard(a, hint);
 
         var infoText = document.createElement("span");
         infoText.classList.add("cards-left-span");

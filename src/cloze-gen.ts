@@ -85,7 +85,7 @@ class ClozeFlashcardGen extends FlashcardSyncGen<ClozeDeckState, ClozeCardData> 
         return (ans == correctAns);
     }
 
-    generateCard(data: ClozeCardData): Flashcard {
+    generateCard(st: ClozeDeckState, data: ClozeCardData): Flashcard {
         return renderCard("cloze-template", data);
     }
 

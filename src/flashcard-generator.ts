@@ -28,7 +28,7 @@ export abstract class FlashcardGen<S, D> {
     
     abstract getNextCardAsync(state: S): Promise<D>;
     abstract updateStateAsync(state: S, cardData: D, correct: FlashcardResult): Promise<S>;
-    abstract generateCardAsync(data: D): Promise<Flashcard>;
+    abstract generateCardAsync(state: S, data: D): Promise<Flashcard>;
     abstract checkAnswerAsync(answer: string, state: S, data: D): Promise<boolean>;
 
     // Should not attempt to change the deck's state
@@ -43,7 +43,8 @@ export abstract class FlashcardGen<S, D> {
         }, 500)
 
         var cardData: D = await this.getNextCardAsync(s);
-        var card = await this.generateCardAsync(cardData);
+        var card = await this.generateCardAsync(s, cardData);
+        card.check = (ans: string) => this.checkAnswerAsync(ans, s, cardData);
         
         hideLoadingIcon();
         this.showLoading = false;
@@ -73,6 +74,7 @@ export abstract class FlashcardGen<S, D> {
         };
         inputBox.onkeydown = async (e) => {
             if (e.key == "Enter") {
+                console.log("Enter key pressed!");
                 inputCallback(inputBox.value);
             } else if (e.key == "ArrowUp") {
                 var newState = await this.updateStateAsync(s, cardData, FlashcardResult.Correct);

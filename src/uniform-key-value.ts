@@ -53,7 +53,7 @@ export class KVFlashcardGen extends FlashcardSyncGen<KVFlashcardState, BasicCard
         return (ans == cardData[1]);
     }
     
-    generateCard(data: BasicCardData): Flashcard {
+    generateCard(_: KVFlashcardState, data: BasicCardData): Flashcard {
         return renderCard("basic-template", data);
     }
 
