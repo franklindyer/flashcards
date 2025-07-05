@@ -21,7 +21,8 @@ import {
     SpacedRepCard,
     SpacedRepCardPhysical,
     SpacedRepStudying,
-    makeSpacedRepCardDict
+    makeSpacedRepCardDict,
+    makeCardsLeftSpan
 } from "./spaced-repetition-general"
 import {
     utter,
@@ -293,6 +294,7 @@ export class ClozeSpacedRepGen
             upper: card.data!.auxdata.cloze!.prompt,
             lower: card.data!.auxdata.cloze!.translation
         });
+        fl.el.appendChild(makeCardsLeftSpan(card));
         return trivialPromise(fl);
     }
 }

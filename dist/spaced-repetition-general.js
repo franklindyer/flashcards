@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AbstractSpacedRepGen = exports.AbstractAsyncSpacedRepGen = exports.SpacedRepStudying = void 0;
 exports.makeSpacedRepCardDict = makeSpacedRepCardDict;
+exports.makeCardsLeftSpan = makeCardsLeftSpan;
 const utils_1 = require("./utils");
 const flashcard_generator_1 = require("./flashcard-generator");
 const spaced_repetition_newqueue_1 = require("./spaced-repetition-newqueue");
@@ -32,22 +33,24 @@ class AbstractAsyncSpacedRepGen extends flashcard_generator_1.FlashcardGen {
         return (card.intervalMinutes == 0);
     }
     ;
-    updateCard(card, settings, correct) {
+    updateCard(card, st, correct) {
+        // Physical card data could be modified by templating, so must get card data by guid from deck
+        var cardData = st.cards[card.data.guid];
         if (card.context.isPractice) {
-            return card.data;
+            return cardData;
         }
-        var isNew = card.data.intervalMinutes == 0;
-        var newAuxData = this.updateAuxData(card, settings, correct);
-        card.data.auxdata = newAuxData;
-        var newInterval = this.updateInterval(card, settings, correct);
-        card.data.intervalMinutes = newInterval;
+        var isNew = cardData.intervalMinutes == 0;
+        var newAuxData = this.updateAuxData(card, st.settings, correct);
+        cardData.auxdata = newAuxData;
+        var newInterval = this.updateInterval(card, st.settings, correct);
+        cardData.intervalMinutes = newInterval;
         // Interval > 0 implies the card is no longer new
         // Only reschedule the card if it was answered correctly
         if (correct == flashcard_generator_1.FlashcardResult.Correct && newInterval > 0) {
-            card.data.due = this.getDate();
-            card.data.due.setHours(card.data.due.getHours() + card.data.intervalMinutes / 60);
+            cardData.due = this.getDate();
+            cardData.due.setHours(cardData.due.getHours() + cardData.intervalMinutes / 60);
         }
-        return card.data;
+        return cardData;
     }
     getNew(st) {
         return Object.keys(st.cards).filter((k) => this.cardIsNew(st.cards[k]) && this.cardIsEnabled(st.cards[k], st));
@@ -112,11 +115,12 @@ class AbstractAsyncSpacedRepGen extends flashcard_generator_1.FlashcardGen {
         var correct = (result == flashcard_generator_1.FlashcardResult.Correct);
         var cardGuid = cardData.guid;
         var cardState = st.cards[cardGuid];
-        var cardNewState = this.updateCard(card, st.settings, result);
+        var cardNewState = this.updateCard(card, st, result);
         // If card is still new, stick it back in the queue
         if (st.studying == SpacedRepStudying.NewCards) {
             st.newQ = (0, spaced_repetition_newqueue_1.incorporateLast)(st.newQ, cardGuid, this.cardIsNew(cardNewState));
         }
+        st.newQ = (0, spaced_repetition_newqueue_1.filterNewQueue)(st.newQ, (id) => this.cardIsEnabled(st.cards[id], st));
         st.cards[cardGuid] = cardNewState;
         return (0, utils_1.trivialPromise)(st);
     }
@@ -124,13 +128,25 @@ class AbstractAsyncSpacedRepGen extends flashcard_generator_1.FlashcardGen {
 exports.AbstractAsyncSpacedRepGen = AbstractAsyncSpacedRepGen;
 class AbstractSpacedRepGen extends AbstractAsyncSpacedRepGen {
     nextCardAsyncPreprocessing(c, state) {
-        return (0, utils_1.trivialPromise)(c);
+        return (0, utils_1.trivialPromise)(this.nextCardPreprocessing(c));
     }
-    generateCardAsync(data) {
-        return new Promise((resolve, _) => { resolve(this.generateCard(data)); });
+    generateCardAsync(st, data) {
+        return new Promise((resolve, _) => { resolve(this.generateCard(st, data)); });
     }
     checkAnswerAsync(answer, state, data) {
         return new Promise((resolve, _) => { resolve(this.checkAnswer(answer, state, data)); });
     }
 }
 exports.AbstractSpacedRepGen = AbstractSpacedRepGen;
+// Some helpful utilities that might be shared between SR decks
+function makeCardsLeftSpan(card) {
+    var infoText = document.createElement("span");
+    infoText.classList.add("cards-left-span");
+    if (card.context.isPractice) {
+        infoText.textContent = "This is a practice card. It will not affect your progress.";
+    }
+    else {
+        infoText.textContent = `${card.context.cardsLeft} cards remaining`;
+    }
+    return infoText;
+}

@@ -24,8 +24,8 @@ class FlashcardGen {
             }
         }, 500);
         var cardData = await this.getNextCardAsync(s);
-        var card = await this.generateCardAsync(cardData);
-        card.check = async (ans) => this.checkAnswerAsync(ans, s, cardData);
+        var card = await this.generateCardAsync(s, cardData);
+        card.check = (ans) => this.checkAnswerAsync(ans, s, cardData);
         (0, utils_1.hideLoadingIcon)();
         this.showLoading = false;
         if (runTime.getTime() !== this.soonestRun.getTime())

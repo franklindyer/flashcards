@@ -39,7 +39,7 @@ class ClozeFlashcardGen extends flashcard_sync_generator_1.FlashcardSyncGen {
         var correctAns = targetWords.join(", ");
         return (ans == correctAns);
     }
-    generateCard(data) {
+    generateCard(st, data) {
         return (0, flashcard_template_1.renderCard)("cloze-template", data);
     }
     correctEffect(_, __, ___, resolve) { resolve(); }

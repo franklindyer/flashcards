@@ -22,7 +22,8 @@ import {
     SpacedRepCard,
     SpacedRepCardPhysical,
     SpacedRepStudying,
-    makeSpacedRepCardDict
+    makeSpacedRepCardDict,
+    makeCardsLeftSpan
 } from "./spaced-repetition-general"
 import {
     utter,
@@ -208,15 +209,10 @@ export class SimpleSpacedRepGen
 
         var fl = new Flashcard(a, hint);
 
-        var infoText = document.createElement("span");
-        infoText.classList.add("cards-left-span");
         if (card.context.isPractice) {
-            infoText.textContent = "This is a practice card. It will not affect your progress.";
             fl.el.style.backgroundColor = "#ffffee";
-        } else {
-            infoText.textContent = `${card.context.cardsLeft} cards remaining`;
-        }
-        fl.el.appendChild(infoText);
+        } 
+        fl.el.appendChild(makeCardsLeftSpan(card));
 
         return fl; 
     }

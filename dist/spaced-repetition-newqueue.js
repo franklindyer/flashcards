@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.emptySRQueue = emptySRQueue;
 exports.chooseNext = chooseNext;
 exports.incorporateLast = incorporateLast;
+exports.filterNewQueue = filterNewQueue;
 function emptySRQueue(maxNewCards) {
     return {
         maxNewCards: maxNewCards,
@@ -31,5 +32,9 @@ function incorporateLast(q, c, isStillNew) {
     if (isStillNew) {
         q.newQueue.push(c);
     }
+    return q;
+}
+function filterNewQueue(q, fxn) {
+    q.newQueue = q.newQueue.filter(fxn);
     return q;
 }

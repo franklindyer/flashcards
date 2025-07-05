@@ -223,8 +223,10 @@ hr {
     display: block;
     border-radius: 3px;
     padding: 3px;
-    margin-left: 5px;
-    margin-right: 5px;
+    /* margin-left: 5px;
+       margin-right: 5px; */
+    margin-left: auto;
+    margin-right: auto;
     margin-top: 3px;
     margin-bottom: 3px;
 }

@@ -137,7 +137,6 @@ class ClozeSpacedRepGen extends spaced_repetition_general_1.AbstractAsyncSpacedR
         });
     }
     nextCardAsyncPreprocessing(card, st) {
-        console.log("DOING PREPROCESSING");
         if (st.settings.clozeServerUrl.length == 0 || card.data === undefined) {
             // Returns with .cloze attribute undefined, indicating failure
             return (0, utils_1.trivialPromise)(card);
@@ -151,28 +150,26 @@ class ClozeSpacedRepGen extends spaced_repetition_general_1.AbstractAsyncSpacedR
                 answer: j["target"],
                 translation: j["source"]
             };
-            console.log(card);
             return card;
         }).catch((e) => {
-            console.log(e);
-            console.log(card);
             return card;
         });
     }
-    generateCardAsync(card) {
-        console.log(card);
+    generateCardAsync(st, card) {
         if (card.data === undefined) {
             return (0, utils_1.trivialPromise)((0, flashcard_template_1.renderCard)("noanswer-template", "No cards left to study."));
         }
         else if (card.data.auxdata.cloze === undefined) {
             return (0, utils_1.trivialPromise)((0, flashcard_template_1.renderCard)("noanswer-template", `Could not get puzzle for card "${card.data.content.key}".`));
         }
-        return (0, utils_1.trivialPromise)((0, flashcard_template_1.renderCard)("cloze-template", {
+        var fl = (0, flashcard_template_1.renderCard)("cloze-template", {
             group: "",
             guid: card.data.guid,
             upper: card.data.auxdata.cloze.prompt,
             lower: card.data.auxdata.cloze.translation
-        }));
+        });
+        fl.el.appendChild((0, spaced_repetition_general_1.makeCardsLeftSpan)(card));
+        return (0, utils_1.trivialPromise)(fl);
     }
 }
 exports.ClozeSpacedRepGen = ClozeSpacedRepGen;

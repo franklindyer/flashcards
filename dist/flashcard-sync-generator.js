@@ -14,8 +14,8 @@ class FlashcardSyncGen extends flashcard_generator_1.FlashcardGen {
     updateStateAsync(state, cardData, correct) {
         return new Promise((resolve, _) => { resolve(this.updateState(state, cardData, correct)); });
     }
-    generateCardAsync(data) {
-        return new Promise((resolve, _) => { resolve(this.generateCard(data)); });
+    generateCardAsync(state, data) {
+        return new Promise((resolve, _) => { resolve(this.generateCard(state, data)); });
     }
     checkAnswerAsync(answer, state, data) {
         return new Promise((resolve, _) => { resolve(this.checkAnswer(answer, state, data)); });

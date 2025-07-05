@@ -20,7 +20,7 @@ class TranscriptFlashcardGen extends flashcard_sync_generator_1.FlashcardSyncGen
     checkAnswer(ans, st, data) {
         return (ans == data.text);
     }
-    generateCard(data) {
+    generateCard(st, data) {
         return (0, flashcard_template_1.renderCard)("transcript-template", data);
     }
     correctEffect(_, __, ___, resolve) { resolve(); }

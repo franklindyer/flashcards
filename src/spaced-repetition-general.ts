@@ -17,7 +17,8 @@ import {
 import {
     SRNewQueue,
     chooseNext,
-    incorporateLast
+    incorporateLast,
+    filterNewQueue
 } from "./spaced-repetition-newqueue"
 
 export enum SpacedRepStudying {
@@ -208,6 +209,7 @@ export abstract class AbstractAsyncSpacedRepGen<content, auxdata, settings>
         if (st.studying == SpacedRepStudying.NewCards) {
             st.newQ = incorporateLast(st.newQ, cardGuid, this.cardIsNew(cardNewState));
         } 
+        st.newQ = filterNewQueue(st.newQ, (id: string) => this.cardIsEnabled(st.cards[id], st));
 
         st.cards[cardGuid] = cardNewState;    
         return trivialPromise(st);
@@ -251,4 +253,17 @@ export abstract class AbstractSpacedRepGen<content, auxdata, settings>
     ): Promise<boolean> {
         return new Promise((resolve, _) => { resolve(this.checkAnswer(answer, state, data)); });
     }
+}
+
+// Some helpful utilities that might be shared between SR decks
+
+export function makeCardsLeftSpan<content, auxdata>(card: SpacedRepCardPhysical<content, auxdata>) {
+    var infoText = document.createElement("span");
+    infoText.classList.add("cards-left-span");
+    if (card.context.isPractice) { 
+        infoText.textContent = "This is a practice card. It will not affect your progress.";
+    } else {
+        infoText.textContent = `${card.context.cardsLeft} cards remaining`;
+    }
+    return infoText;
 }

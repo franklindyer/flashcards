@@ -21,7 +21,7 @@ class KVFlashcardGen extends flashcard_sync_generator_1.FlashcardSyncGen {
     checkAnswer(ans, state, cardData) {
         return (ans == cardData[1]);
     }
-    generateCard(data) {
+    generateCard(_, data) {
         return (0, flashcard_template_1.renderCard)("basic-template", data);
     }
     correctEffect(_, __, ___, resolve) { resolve(); }

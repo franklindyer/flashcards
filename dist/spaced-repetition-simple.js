@@ -94,30 +94,32 @@ class SimpleSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGe
         card.data.content.answers = card.data.content.answers.map((a) => (0, random_templating_1.randomizeStringSub)(a, res[1])[0]);
         return card;
     }
-    generateCard(card) {
+    nextCardPreprocessing(card) {
+        // Clone the card so we don't mess with its state in the deck
+        var card = JSON.parse(JSON.stringify(card));
+        if (card.data !== undefined) {
+            card = this.applyCardTemplating(card);
+        }
+        return card;
+    }
+    generateCard(st, card) {
         var a = document.createElement("a");
         var prompt = "No cards left to study.";
+        var answers = [];
         var hint = "You cannot continue studying until more cards become due.";
         if (card.data !== undefined) {
-            // Apply randomized templating
-            card = this.applyCardTemplating(card);
             prompt = card.data.content.prompt;
+            answers = card.data.content.answers;
             hint = card.data.content.answers[0];
         }
         var fontSize = 100.0 / (10.0 * Math.log(10 + prompt.length));
         a.style.fontSize = `${fontSize}vw`;
         a.textContent = prompt;
         var fl = new flashcard_1.Flashcard(a, hint);
-        var infoText = document.createElement("span");
-        infoText.classList.add("cards-left-span");
         if (card.context.isPractice) {
-            infoText.textContent = "This is a practice card. It will not affect your progress.";
             fl.el.style.backgroundColor = "#ffffee";
         }
-        else {
-            infoText.textContent = `${card.context.cardsLeft} cards remaining`;
-        }
-        fl.el.appendChild(infoText);
+        fl.el.appendChild((0, spaced_repetition_general_1.makeCardsLeftSpan)(card));
         return fl;
     }
     checkAnswer(answer, st, card) {

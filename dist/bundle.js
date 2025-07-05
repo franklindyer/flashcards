@@ -1141,7 +1141,7 @@ class ClozeFlashcardGen extends flashcard_sync_generator_1.FlashcardSyncGen {
         var correctAns = targetWords.join(", ");
         return (ans == correctAns);
     }
-    generateCard(data) {
+    generateCard(st, data) {
         return (0, flashcard_template_1.renderCard)("cloze-template", data);
     }
     correctEffect(_, __, ___, resolve) { resolve(); }
@@ -1935,8 +1935,8 @@ class FlashcardGen {
             }
         }, 500);
         var cardData = await this.getNextCardAsync(s);
-        var card = await this.generateCardAsync(cardData);
-        card.check = async (ans) => this.checkAnswerAsync(ans, s, cardData);
+        var card = await this.generateCardAsync(s, cardData);
+        card.check = (ans) => this.checkAnswerAsync(ans, s, cardData);
         (0, utils_1.hideLoadingIcon)();
         this.showLoading = false;
         if (runTime.getTime() !== this.soonestRun.getTime())
@@ -2016,8 +2016,8 @@ class FlashcardSyncGen extends flashcard_generator_1.FlashcardGen {
     updateStateAsync(state, cardData, correct) {
         return new Promise((resolve, _) => { resolve(this.updateState(state, cardData, correct)); });
     }
-    generateCardAsync(data) {
-        return new Promise((resolve, _) => { resolve(this.generateCard(data)); });
+    generateCardAsync(state, data) {
+        return new Promise((resolve, _) => { resolve(this.generateCard(state, data)); });
     }
     checkAnswerAsync(answer, state, data) {
         return new Promise((resolve, _) => { resolve(this.checkAnswer(answer, state, data)); });
@@ -2474,7 +2474,6 @@ class ClozeSpacedRepGen extends spaced_repetition_general_1.AbstractAsyncSpacedR
         });
     }
     nextCardAsyncPreprocessing(card, st) {
-        console.log("DOING PREPROCESSING");
         if (st.settings.clozeServerUrl.length == 0 || card.data === undefined) {
             // Returns with .cloze attribute undefined, indicating failure
             return (0, utils_1.trivialPromise)(card);
@@ -2488,28 +2487,26 @@ class ClozeSpacedRepGen extends spaced_repetition_general_1.AbstractAsyncSpacedR
                 answer: j["target"],
                 translation: j["source"]
             };
-            console.log(card);
             return card;
         }).catch((e) => {
-            console.log(e);
-            console.log(card);
             return card;
         });
     }
-    generateCardAsync(card) {
-        console.log(card);
+    generateCardAsync(st, card) {
         if (card.data === undefined) {
             return (0, utils_1.trivialPromise)((0, flashcard_template_1.renderCard)("noanswer-template", "No cards left to study."));
         }
         else if (card.data.auxdata.cloze === undefined) {
             return (0, utils_1.trivialPromise)((0, flashcard_template_1.renderCard)("noanswer-template", `Could not get puzzle for card "${card.data.content.key}".`));
         }
-        return (0, utils_1.trivialPromise)((0, flashcard_template_1.renderCard)("cloze-template", {
+        var fl = (0, flashcard_template_1.renderCard)("cloze-template", {
             group: "",
             guid: card.data.guid,
             upper: card.data.auxdata.cloze.prompt,
             lower: card.data.auxdata.cloze.translation
-        }));
+        });
+        fl.el.appendChild((0, spaced_repetition_general_1.makeCardsLeftSpan)(card));
+        return (0, utils_1.trivialPromise)(fl);
     }
 }
 exports.ClozeSpacedRepGen = ClozeSpacedRepGen;
@@ -2633,6 +2630,7 @@ function clozeSRMenu(st) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AbstractSpacedRepGen = exports.AbstractAsyncSpacedRepGen = exports.SpacedRepStudying = void 0;
 exports.makeSpacedRepCardDict = makeSpacedRepCardDict;
+exports.makeCardsLeftSpan = makeCardsLeftSpan;
 const utils_1 = __webpack_require__(185);
 const flashcard_generator_1 = __webpack_require__(808);
 const spaced_repetition_newqueue_1 = __webpack_require__(338);
@@ -2663,22 +2661,24 @@ class AbstractAsyncSpacedRepGen extends flashcard_generator_1.FlashcardGen {
         return (card.intervalMinutes == 0);
     }
     ;
-    updateCard(card, settings, correct) {
+    updateCard(card, st, correct) {
+        // Physical card data could be modified by templating, so must get card data by guid from deck
+        var cardData = st.cards[card.data.guid];
         if (card.context.isPractice) {
-            return card.data;
+            return cardData;
         }
-        var isNew = card.data.intervalMinutes == 0;
-        var newAuxData = this.updateAuxData(card, settings, correct);
-        card.data.auxdata = newAuxData;
-        var newInterval = this.updateInterval(card, settings, correct);
-        card.data.intervalMinutes = newInterval;
+        var isNew = cardData.intervalMinutes == 0;
+        var newAuxData = this.updateAuxData(card, st.settings, correct);
+        cardData.auxdata = newAuxData;
+        var newInterval = this.updateInterval(card, st.settings, correct);
+        cardData.intervalMinutes = newInterval;
         // Interval > 0 implies the card is no longer new
         // Only reschedule the card if it was answered correctly
         if (correct == flashcard_generator_1.FlashcardResult.Correct && newInterval > 0) {
-            card.data.due = this.getDate();
-            card.data.due.setHours(card.data.due.getHours() + card.data.intervalMinutes / 60);
+            cardData.due = this.getDate();
+            cardData.due.setHours(cardData.due.getHours() + cardData.intervalMinutes / 60);
         }
-        return card.data;
+        return cardData;
     }
     getNew(st) {
         return Object.keys(st.cards).filter((k) => this.cardIsNew(st.cards[k]) && this.cardIsEnabled(st.cards[k], st));
@@ -2743,11 +2743,12 @@ class AbstractAsyncSpacedRepGen extends flashcard_generator_1.FlashcardGen {
         var correct = (result == flashcard_generator_1.FlashcardResult.Correct);
         var cardGuid = cardData.guid;
         var cardState = st.cards[cardGuid];
-        var cardNewState = this.updateCard(card, st.settings, result);
+        var cardNewState = this.updateCard(card, st, result);
         // If card is still new, stick it back in the queue
         if (st.studying == SpacedRepStudying.NewCards) {
             st.newQ = (0, spaced_repetition_newqueue_1.incorporateLast)(st.newQ, cardGuid, this.cardIsNew(cardNewState));
         }
+        st.newQ = (0, spaced_repetition_newqueue_1.filterNewQueue)(st.newQ, (id) => this.cardIsEnabled(st.cards[id], st));
         st.cards[cardGuid] = cardNewState;
         return (0, utils_1.trivialPromise)(st);
     }
@@ -2755,16 +2756,28 @@ class AbstractAsyncSpacedRepGen extends flashcard_generator_1.FlashcardGen {
 exports.AbstractAsyncSpacedRepGen = AbstractAsyncSpacedRepGen;
 class AbstractSpacedRepGen extends AbstractAsyncSpacedRepGen {
     nextCardAsyncPreprocessing(c, state) {
-        return (0, utils_1.trivialPromise)(c);
+        return (0, utils_1.trivialPromise)(this.nextCardPreprocessing(c));
     }
-    generateCardAsync(data) {
-        return new Promise((resolve, _) => { resolve(this.generateCard(data)); });
+    generateCardAsync(st, data) {
+        return new Promise((resolve, _) => { resolve(this.generateCard(st, data)); });
     }
     checkAnswerAsync(answer, state, data) {
         return new Promise((resolve, _) => { resolve(this.checkAnswer(answer, state, data)); });
     }
 }
 exports.AbstractSpacedRepGen = AbstractSpacedRepGen;
+// Some helpful utilities that might be shared between SR decks
+function makeCardsLeftSpan(card) {
+    var infoText = document.createElement("span");
+    infoText.classList.add("cards-left-span");
+    if (card.context.isPractice) {
+        infoText.textContent = "This is a practice card. It will not affect your progress.";
+    }
+    else {
+        infoText.textContent = `${card.context.cardsLeft} cards remaining`;
+    }
+    return infoText;
+}
 
 
 /***/ }),
@@ -2778,6 +2791,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.emptySRQueue = emptySRQueue;
 exports.chooseNext = chooseNext;
 exports.incorporateLast = incorporateLast;
+exports.filterNewQueue = filterNewQueue;
 function emptySRQueue(maxNewCards) {
     return {
         maxNewCards: maxNewCards,
@@ -2806,6 +2820,10 @@ function incorporateLast(q, c, isStillNew) {
     if (isStillNew) {
         q.newQueue.push(c);
     }
+    return q;
+}
+function filterNewQueue(q, fxn) {
+    q.newQueue = q.newQueue.filter(fxn);
     return q;
 }
 
@@ -2912,30 +2930,32 @@ class SimpleSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGe
         card.data.content.answers = card.data.content.answers.map((a) => (0, random_templating_1.randomizeStringSub)(a, res[1])[0]);
         return card;
     }
-    generateCard(card) {
+    nextCardPreprocessing(card) {
+        // Clone the card so we don't mess with its state in the deck
+        var card = JSON.parse(JSON.stringify(card));
+        if (card.data !== undefined) {
+            card = this.applyCardTemplating(card);
+        }
+        return card;
+    }
+    generateCard(st, card) {
         var a = document.createElement("a");
         var prompt = "No cards left to study.";
+        var answers = [];
         var hint = "You cannot continue studying until more cards become due.";
         if (card.data !== undefined) {
-            // Apply randomized templating
-            card = this.applyCardTemplating(card);
             prompt = card.data.content.prompt;
+            answers = card.data.content.answers;
             hint = card.data.content.answers[0];
         }
         var fontSize = 100.0 / (10.0 * Math.log(10 + prompt.length));
         a.style.fontSize = `${fontSize}vw`;
         a.textContent = prompt;
         var fl = new flashcard_1.Flashcard(a, hint);
-        var infoText = document.createElement("span");
-        infoText.classList.add("cards-left-span");
         if (card.context.isPractice) {
-            infoText.textContent = "This is a practice card. It will not affect your progress.";
             fl.el.style.backgroundColor = "#ffffee";
         }
-        else {
-            infoText.textContent = `${card.context.cardsLeft} cards remaining`;
-        }
-        fl.el.appendChild(infoText);
+        fl.el.appendChild((0, spaced_repetition_general_1.makeCardsLeftSpan)(card));
         return fl;
     }
     checkAnswer(answer, st, card) {
@@ -3370,7 +3390,7 @@ class TranscriptFlashcardGen extends flashcard_sync_generator_1.FlashcardSyncGen
     checkAnswer(ans, st, data) {
         return (ans == data.text);
     }
-    generateCard(data) {
+    generateCard(st, data) {
         return (0, flashcard_template_1.renderCard)("transcript-template", data);
     }
     correctEffect(_, __, ___, resolve) { resolve(); }
@@ -3471,7 +3491,7 @@ class KVFlashcardGen extends flashcard_sync_generator_1.FlashcardSyncGen {
     checkAnswer(ans, state, cardData) {
         return (ans == cardData[1]);
     }
-    generateCard(data) {
+    generateCard(_, data) {
         return (0, flashcard_template_1.renderCard)("basic-template", data);
     }
     correctEffect(_, __, ___, resolve) { resolve(); }
