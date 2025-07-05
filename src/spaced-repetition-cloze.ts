@@ -148,7 +148,8 @@ export class ClozeSpacedRepGen
         card: SpacedRepCard<SRClozeContent, SRClozeAuxData>,
         st: SpacedRepState<SRClozeContent, SRClozeAuxData, SRClozeSettings>
     ): boolean {
-        return !card.auxdata.invalid;
+        return (!card.auxdata.invalid)
+                && !card.content.tags.some((t) => st.settings.inactiveTags.includes(t));
     }
 
     correctEffect(
