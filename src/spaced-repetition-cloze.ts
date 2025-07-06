@@ -21,7 +21,8 @@ import {
     SpacedRepCard,
     SpacedRepCardPhysical,
     SpacedRepStudying,
-    makeSpacedRepCardDict
+    makeSpacedRepCardDict,
+    makeCardsLeftSpan
 } from "./spaced-repetition-general"
 import {
     utter,
@@ -147,7 +148,8 @@ export class ClozeSpacedRepGen
         card: SpacedRepCard<SRClozeContent, SRClozeAuxData>,
         st: SpacedRepState<SRClozeContent, SRClozeAuxData, SRClozeSettings>
     ): boolean {
-        return !card.auxdata.invalid;
+        return (!card.auxdata.invalid)
+                && !card.content.tags.some((t) => st.settings.inactiveTags.includes(t));
     }
 
     correctEffect(
@@ -228,7 +230,8 @@ export class ClozeSpacedRepGen
             `${settings.clozeServerUrl}/cloze?` + new URLSearchParams({ 
                 "srcs": settings.sourceLangs.join(","),
                 "tgt": settings.targetLang,
-                "lemma": lemma
+                "lemma": lemma,
+                "n": this.cache.numPreload.toString()
             }).toString()
         ).then((r) => r.json()).catch((e) => undefined);
     }
@@ -250,7 +253,6 @@ export class ClozeSpacedRepGen
         card: SpacedRepCardPhysical<SRClozeContent, SRClozeAuxData>,
         st: SpacedRepState<SRClozeContent, SRClozeAuxData, SRClozeSettings>
     ): Promise<SpacedRepCardPhysical<SRClozeContent, SRClozeAuxData>> {
-        console.log("DOING PREPROCESSING");
         if (st.settings.clozeServerUrl.length == 0 || card.data === undefined) {
             // Returns with .cloze attribute undefined, indicating failure
             return trivialPromise(card);
@@ -268,20 +270,17 @@ export class ClozeSpacedRepGen
                         answer: j["target"],
                         translation: j["source"]
                     };
-                    console.log(card);
                     return card;
                 }
             ).catch((e) => {
-                console.log(e);
-                console.log(card);
                 return card;
             });
     }
 
     generateCardAsync(
+        st: SpacedRepState<SRClozeContent, SRClozeAuxData, SRClozeSettings>,
         card: SpacedRepCardPhysical<SRClozeContent, SRClozeAuxData>
     ): Promise<Flashcard> {
-        console.log(card);
         if (card.data === undefined) {
             return trivialPromise(renderCard("noanswer-template",
                 "No cards left to study."
@@ -291,12 +290,14 @@ export class ClozeSpacedRepGen
                 `Could not get puzzle for card "${card.data!.content.key}".`
             ));
         }
-        return trivialPromise(renderCard("cloze-template", {
+        var fl = renderCard("cloze-template", {
             group: "", 
             guid: card.data!.guid,
             upper: card.data!.auxdata.cloze!.prompt,
             lower: card.data!.auxdata.cloze!.translation
-        }));
+        });
+        fl.el.appendChild(makeCardsLeftSpan(card));
+        return trivialPromise(fl);
     }
 }
 

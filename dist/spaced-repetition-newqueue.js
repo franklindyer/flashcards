@@ -1,37 +1,28 @@
-import {
-    IDictionary,
-    shuffleArr
-} from "./utils"
-
-export type SRNewQueue = {
-    maxNewCards: number,
-    newQueue: string[],
-}
-
-export function emptySRQueue(maxNewCards: number) {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.emptySRQueue = emptySRQueue;
+exports.chooseNext = chooseNext;
+exports.incorporateLast = incorporateLast;
+exports.filterNewQueue = filterNewQueue;
+function emptySRQueue(maxNewCards) {
     return {
         maxNewCards: maxNewCards,
         newQueue: []
     };
 }
-
-export function chooseNext(q: SRNewQueue, allOpts: string[]): string | undefined {
+function chooseNext(q, allOpts) {
     var newOpts = allOpts.filter((k) => !q.newQueue.includes(k));
-    
     if (q.newQueue.length < q.maxNewCards && newOpts.length > 0) {
         return newOpts[Math.floor(Math.random() * newOpts.length)];
-    } else if (q.newQueue.length > 0) {
+    }
+    else if (q.newQueue.length > 0) {
         return q.newQueue[0];
-    } else {
+    }
+    else {
         return undefined;
     }
 }
-
-export function incorporateLast(
-    q: SRNewQueue, 
-    c: string | undefined,
-    isStillNew: boolean): 
-    SRNewQueue {
+function incorporateLast(q, c, isStillNew) {
     if (c === undefined) {
         return q;
     }
@@ -43,8 +34,7 @@ export function incorporateLast(
     }
     return q;
 }
-
-export function filterNewQueue(q: SRNewQueue, fxn: (id: string) => boolean) {
+function filterNewQueue(q, fxn) {
     q.newQueue = q.newQueue.filter(fxn);
     return q;
 }

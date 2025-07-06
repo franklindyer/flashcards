@@ -1,44 +1,37 @@
-import {
-    IDictionary
-} from "./utils"
-
-
-export type RandomSub = {
-    index: number,
-    group: number,
-    options: string[]
-}
-
-export function preprocessStringSub(subString: string): [string, IDictionary<RandomSub>] {
-    var subs: IDictionary<RandomSub> = {};
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.preprocessStringSub = preprocessStringSub;
+exports.validateStringSub = validateStringSub;
+exports.randomizeStringSub = randomizeStringSub;
+function preprocessStringSub(subString) {
+    var subs = {};
     var i = 0;
-    const tplString = subString.replaceAll(/\{r([0-9]):([^\}]*)\}/g, function(m, g1, g2) {
+    const tplString = subString.replaceAll(/\{r([0-9]):([^\}]*)\}/g, function (m, g1, g2) {
         subs[i] = { index: i, group: +g1, options: g2.split(',') };
         var sub = `{${i}}`;
         i += 1;
         return sub;
     });
-    return [tplString, subs]; 
+    return [tplString, subs];
 }
-
-export function validateStringSub(subString: string): boolean {
+function validateStringSub(subString) {
     var preproc = preprocessStringSub(subString);
     var subs = preproc[1];
-    var counts: IDictionary<number> = {};
+    var counts = {};
     for (var k in Object.keys(subs)) {
         var sub = subs[k];
         if (sub.group in Object.keys(counts)) {
             if (sub.options.length != counts[sub.group]) {
-                return false
+                return false;
             }
-        } else {
+        }
+        else {
             counts[sub.group] = sub.options.length;
         }
     }
     return true;
 }
-
-export function randomizeStringSub(subString: string, rands: IDictionary<number> = {}): [string, IDictionary<number>] {
+function randomizeStringSub(subString, rands = {}) {
     var preproc = preprocessStringSub(subString);
     var outString = preproc[0];
     var subs = preproc[1];

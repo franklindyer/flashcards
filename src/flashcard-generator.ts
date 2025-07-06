@@ -13,6 +13,8 @@ export enum FlashcardResult {
     Unanswered
 }
 
+var SOONEST_RUN: Date = null!;
+
 export abstract class FlashcardGen<S, D> {
     // Type S is the state type for this flashcard deck
     // Type D is the type of the data involved in the single card
@@ -20,7 +22,6 @@ export abstract class FlashcardGen<S, D> {
         throw new Error("getGenName not implemented!");
     }
 
-    soonestRun: Date = new Date();
     showLoading: boolean = false;
 
     // Repair the raw JSON associated with the deck, mainly used for update compatibility
@@ -28,13 +29,13 @@ export abstract class FlashcardGen<S, D> {
     
     abstract getNextCardAsync(state: S): Promise<D>;
     abstract updateStateAsync(state: S, cardData: D, correct: FlashcardResult): Promise<S>;
-    abstract generateCardAsync(data: D): Promise<Flashcard>;
+    abstract generateCardAsync(state: S, data: D): Promise<Flashcard>;
     abstract checkAnswerAsync(answer: string, state: S, data: D): Promise<boolean>;
 
     // Should not attempt to change the deck's state
     abstract correctEffect(state: S, cardData: D, attempt: string, resolve: () => void): void;   
 
-    async runOnce(s: S, setState: (s: S) => void, callback: () => void, runTime: Date) {
+    async runOnce(s: S, setState: (s: S) => void, callback: () => void) {
         this.showLoading = true;
         setTimeout(() => {
             if (this.showLoading) {
@@ -42,14 +43,21 @@ export abstract class FlashcardGen<S, D> {
             } 
         }, 500)
 
+        var thisRunTime = new Date();
+        console.log(thisRunTime);
+        SOONEST_RUN = thisRunTime;
+
         var cardData: D = await this.getNextCardAsync(s);
-        var card = await this.generateCardAsync(cardData);
-        card.check = async (ans: string) => this.checkAnswerAsync(ans, s, cardData);
+        var card = await this.generateCardAsync(s, cardData);
+        card.check = (ans: string) => this.checkAnswerAsync(ans, s, cardData);
+
+        if (thisRunTime.getTime() !== SOONEST_RUN.getTime()) {
+            console.log(`Canceling run for ${thisRunTime} as it is not the most recent`);
+            return;
+        }
         
         hideLoadingIcon();
         this.showLoading = false;
-
-        if (runTime.getTime() !== this.soonestRun.getTime()) return;
 
         var inputBox = <HTMLInputElement>document.getElementById("answer-input");
         var correctCallback = (newState: S) => () => {
@@ -90,12 +98,10 @@ export abstract class FlashcardGen<S, D> {
 
     runLoop(getState: () => S, setState: (s: S) => void, callback: () => void) {
         var looper = () => {
-            var soonestRun = new Date();
-            this.soonestRun = soonestRun;
             this.runOnce(getState(), setState, () => {
                 callback();
                 looper();
-            }, soonestRun);
+            });
         };
         looper();
     }

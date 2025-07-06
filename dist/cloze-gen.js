@@ -1,82 +1,37 @@
-import {
-    IDictionary,
-    guidGenerator,
-    getUuid
-} from "./utils"
-import {
-    Flashcard
-} from "./flashcard"
-import {
-    FlashcardResult,
-    FlashcardGen
-} from "./flashcard-generator"
-import {
-    FlashcardSyncGen
-} from "./flashcard-sync-generator"
-import {
-    renderCard
-} from "./flashcard-template"
-import {
-    StateEditor,
-    boolEditor,
-    fileUploadEditor
-} from "./editor"
-import {
-    registerDeckType
-} from "./flashcard-deck"
-
-type ClozeCardData = {
-    group: string,
-    guid: string,    
-    upper: string,
-    lower: string
-}
-
-type ClozeCardGroup = {
-    key: string,
-    cards: ClozeCardData[],
-    correct: number,
-    incorrect: number,
-    skipped: number
-}
-
-type ClozeDeckSettings = {
-    blacklist: string[],
-    blacklistSkipped: boolean
-}
-
-type ClozeDeckState = {
-    cards: IDictionary<ClozeCardGroup>,
-    settings: ClozeDeckSettings
-}
-
-class ClozeFlashcardGen extends FlashcardSyncGen<ClozeDeckState, ClozeCardData> {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const utils_1 = require("./utils");
+const flashcard_generator_1 = require("./flashcard-generator");
+const flashcard_sync_generator_1 = require("./flashcard-sync-generator");
+const flashcard_template_1 = require("./flashcard-template");
+const editor_1 = require("./editor");
+const flashcard_deck_1 = require("./flashcard-deck");
+class ClozeFlashcardGen extends flashcard_sync_generator_1.FlashcardSyncGen {
     getGenName() { return "cloze-puzzles"; }
-
-    getNextCard(state: ClozeDeckState): ClozeCardData {
-        var cardIsOk = (c: ClozeCardData) => !(state.settings.blacklist.includes(c.guid));
+    getNextCard(state) {
+        var cardIsOk = (c) => !(state.settings.blacklist.includes(c.guid));
         var validKeys = Object.keys(state.cards).filter((k) => state.cards[k].cards.some(cardIsOk));
         var key = validKeys[Math.floor(Math.random() * validKeys.length)];
         var group = state.cards[key].cards.filter(cardIsOk);
         return group[Math.floor(Math.random() * group.length)];
     }
-
-    updateState(state: ClozeDeckState, cardData: ClozeCardData, result: FlashcardResult): ClozeDeckState {
-        if (result == FlashcardResult.Correct) {
+    updateState(state, cardData, result) {
+        if (result == flashcard_generator_1.FlashcardResult.Correct) {
             state.cards[cardData.group].correct += 1;
-        } else if (result == FlashcardResult.Incorrect) {
+        }
+        else if (result == flashcard_generator_1.FlashcardResult.Incorrect) {
             state.cards[cardData.group].incorrect += 1;
-        } else {
+        }
+        else {
             state.cards[cardData.group].skipped += 1;
             if (state.settings.blacklistSkipped) {
                 state.settings.blacklist.push(cardData.guid);
             }
         }
         return state;
-    } 
-    
-    checkAnswer(ans: string, st: ClozeDeckState, cardData: ClozeCardData) {
-        var targetWords: string[] = [];
+    }
+    checkAnswer(ans, st, cardData) {
+        var targetWords = [];
         cardData.upper.replaceAll(/\{\{([^\{\}]+)\}\}/g, (match, p1) => {
             targetWords.push(p1);
             return match;
@@ -84,48 +39,43 @@ class ClozeFlashcardGen extends FlashcardSyncGen<ClozeDeckState, ClozeCardData> 
         var correctAns = targetWords.join(", ");
         return (ans == correctAns);
     }
-
-    generateCard(st: ClozeDeckState, data: ClozeCardData): Flashcard {
-        return renderCard("cloze-template", data);
+    generateCard(st, data) {
+        return (0, flashcard_template_1.renderCard)("cloze-template", data);
     }
-
-    correctEffect(_: ClozeDeckState, __: ClozeCardData, ___: string, resolve: () => void) { resolve(); }
-    repairDeckState(st: any) { return st; } 
+    correctEffect(_, __, ___, resolve) { resolve(); }
+    repairDeckState(st) { return st; }
 }
-
-function makeClozeCard(group: string, top: string, bottom: string): ClozeCardData {
+function makeClozeCard(group, top, bottom) {
     return {
         group: group,
-        guid: getUuid(`${top} | ${bottom}`, 5),
+        guid: (0, utils_1.getUuid)(`${top} | ${bottom}`, 5),
         upper: top,
         lower: bottom
     };
 }
-
-function makeClozeEditor(state: ClozeDeckState): StateEditor<ClozeDeckState> {
+function makeClozeEditor(state) {
     var container = document.createElement("div");
-
-    var blacklistEditor = boolEditor("Permanently remove skipped cards?", state.settings.blacklistSkipped);
+    var blacklistEditor = (0, editor_1.boolEditor)("Permanently remove skipped cards?", state.settings.blacklistSkipped);
     blacklistEditor.element.classList.add("deck-menu-submenu");
-
     var summaryContainer = document.createElement("div");
     summaryContainer.classList.add("deck-menu-submenu");
-
-    var loadCards = (s: string) => {
-         if (s.length > 0) {
-            var newCardDict: IDictionary<ClozeCardGroup> = {};
-            var infoList = <any>JSON.parse(s);
+    var loadCards = (s) => {
+        if (s.length > 0) {
+            var newCardDict = {};
+            var infoList = JSON.parse(s);
             console.log(infoList);
             for (var i in Object.keys(infoList)) {
                 var k = Object.keys(infoList)[i];
                 newCardDict[k] = {
                     key: k,
-                    cards: infoList[k].map((c: any) => { return {
-                        upper: c["prompt"],
-                        lower: c["translation"],
-                        guid: guidGenerator(),
-                        group: k
-                    }; }),
+                    cards: infoList[k].map((c) => {
+                        return {
+                            upper: c["prompt"],
+                            lower: c["translation"],
+                            guid: (0, utils_1.guidGenerator)(),
+                            group: k
+                        };
+                    }),
                     correct: Object.keys(state.cards).includes(k) ? state.cards[k].correct : 0,
                     incorrect: Object.keys(state.cards).includes(k) ? state.cards[k].incorrect : 0,
                     skipped: Object.keys(state.cards).includes(k) ? state.cards[k].skipped : 0
@@ -133,8 +83,7 @@ function makeClozeEditor(state: ClozeDeckState): StateEditor<ClozeDeckState> {
             }
             state.cards = newCardDict;
         }
-    }
-
+    };
     var deckSummary = document.createElement("div");
     var makeDeckSummary = () => {
         deckSummary.innerHTML = "";
@@ -154,29 +103,27 @@ function makeClozeEditor(state: ClozeDeckState): StateEditor<ClozeDeckState> {
         }
     };
     makeDeckSummary();
-    var fileEd = fileUploadEditor("Upload cloze puzzles", (s) => {
+    var fileEd = (0, editor_1.fileUploadEditor)("Upload cloze puzzles", (s) => {
         loadCards(s);
         makeDeckSummary();
     });
     summaryContainer.appendChild(fileEd.element);
     summaryContainer.appendChild(deckSummary);
-
     container.appendChild(blacklistEditor.element);
     container.appendChild(summaryContainer);
-
     return {
         element: container,
         menuToState: () => {
             var deckStr = fileEd.menuToState();
             if (deckStr.length > 0) {
-                var newCardDict: IDictionary<ClozeCardGroup> = {};
-                var infoList = <any>JSON.parse(deckStr);
+                var newCardDict = {};
+                var infoList = JSON.parse(deckStr);
                 console.log(infoList);
                 for (var i in Object.keys(infoList)) {
                     var k = Object.keys(infoList)[i];
                     newCardDict[k] = {
                         key: k,
-                        cards: infoList[k].map((c: any) => makeClozeCard(k, c["prompt"], c["translation"])),
+                        cards: infoList[k].map((c) => makeClozeCard(k, c["prompt"], c["translation"])),
                         correct: Object.keys(state.cards).includes(k) ? state.cards[k].correct : 0,
                         incorrect: Object.keys(state.cards).includes(k) ? state.cards[k].incorrect : 0,
                         skipped: Object.keys(state.cards).includes(k) ? state.cards[k].skipped : 0
@@ -184,13 +131,12 @@ function makeClozeEditor(state: ClozeDeckState): StateEditor<ClozeDeckState> {
                 }
                 state.cards = newCardDict;
             }
-            state.settings.blacklistSkipped  = blacklistEditor.menuToState();
+            state.settings.blacklistSkipped = blacklistEditor.menuToState();
             return state;
         }
     };
 }
-
-var clozeDefaultState: ClozeDeckState = {
+var clozeDefaultState = {
     cards: {
         "gehen": {
             key: "gehen",
@@ -218,12 +164,4 @@ var clozeDefaultState: ClozeDeckState = {
         blacklistSkipped: true
     }
 };
-
-registerDeckType(
-    new ClozeFlashcardGen(),
-    makeClozeEditor,
-    "cloze-quizzer",
-    "Simple German cloze quizzer",
-    clozeDefaultState,
-    "#ffddbb"
-);
+(0, flashcard_deck_1.registerDeckType)(new ClozeFlashcardGen(), makeClozeEditor, "cloze-quizzer", "Simple German cloze quizzer", clozeDefaultState, "#ffddbb");

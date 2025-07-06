@@ -15,7 +15,7 @@ export abstract class FlashcardSyncGen<S, D> extends FlashcardGen<S, D> {
 
     abstract getNextCard(state: S): D;
     abstract updateState(state: S, cardData: D, correct: FlashcardResult): S;
-    abstract generateCard(data: D): Flashcard;
+    abstract generateCard(state: S, data: D): Flashcard;
     abstract checkAnswer(answer: string, state: S, data: D): boolean;
 
     getNextCardAsync(state: S): Promise<D> {
@@ -26,8 +26,8 @@ export abstract class FlashcardSyncGen<S, D> extends FlashcardGen<S, D> {
         return new Promise((resolve, _) => { resolve(this.updateState(state, cardData, correct)); });
     }
 
-    generateCardAsync(data: D): Promise<Flashcard> {
-        return new Promise((resolve, _) => { resolve(this.generateCard(data)); });
+    generateCardAsync(state: S, data: D): Promise<Flashcard> {
+        return new Promise((resolve, _) => { resolve(this.generateCard(state, data)); });
     }
 
     checkAnswerAsync(answer: string, state: S, data: D): Promise<boolean> {
