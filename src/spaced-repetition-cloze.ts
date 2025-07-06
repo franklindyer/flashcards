@@ -230,7 +230,8 @@ export class ClozeSpacedRepGen
             `${settings.clozeServerUrl}/cloze?` + new URLSearchParams({ 
                 "srcs": settings.sourceLangs.join(","),
                 "tgt": settings.targetLang,
-                "lemma": lemma
+                "lemma": lemma,
+                "n": this.cache.numPreload.toString()
             }).toString()
         ).then((r) => r.json()).catch((e) => undefined);
     }
