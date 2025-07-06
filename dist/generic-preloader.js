@@ -13,9 +13,7 @@ class Preloader {
         var valuesNeeded = this.numPreload - this.valueCounts[k];
         this.valueCounts[k] = this.numPreload;
         var i = 0;
-        for (i = 0; i < valuesNeeded; i++) {
-            fetcher(k).then((x) => this.values[k].push(x));
-        }
+        fetcher(k).then((xs) => xs.map((x) => this.values[k].push(x))).catch((e) => { console.log(e); });
     }
     addKey(k, fetcher) {
         if (this.values[k] === undefined) {

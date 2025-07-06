@@ -8,28 +8,33 @@ var FlashcardResult;
     FlashcardResult[FlashcardResult["Incorrect"] = 1] = "Incorrect";
     FlashcardResult[FlashcardResult["Unanswered"] = 2] = "Unanswered";
 })(FlashcardResult || (exports.FlashcardResult = FlashcardResult = {}));
+var SOONEST_RUN = null;
 class FlashcardGen {
     // Type S is the state type for this flashcard deck
     // Type D is the type of the data involved in the single card
     getGenName() {
         throw new Error("getGenName not implemented!");
     }
-    soonestRun = new Date();
     showLoading = false;
-    async runOnce(s, setState, callback, runTime) {
+    async runOnce(s, setState, callback) {
         this.showLoading = true;
         setTimeout(() => {
             if (this.showLoading) {
                 (0, utils_1.showLoadingIcon)();
             }
         }, 500);
+        var thisRunTime = new Date();
+        console.log(thisRunTime);
+        SOONEST_RUN = thisRunTime;
         var cardData = await this.getNextCardAsync(s);
         var card = await this.generateCardAsync(s, cardData);
         card.check = (ans) => this.checkAnswerAsync(ans, s, cardData);
+        if (thisRunTime.getTime() !== SOONEST_RUN.getTime()) {
+            console.log(`Canceling run for ${thisRunTime} as it is not the most recent`);
+            return;
+        }
         (0, utils_1.hideLoadingIcon)();
         this.showLoading = false;
-        if (runTime.getTime() !== this.soonestRun.getTime())
-            return;
         var inputBox = document.getElementById("answer-input");
         var correctCallback = (newState) => () => {
             inputBox.value = "";
@@ -70,12 +75,10 @@ class FlashcardGen {
     }
     runLoop(getState, setState, callback) {
         var looper = () => {
-            var soonestRun = new Date();
-            this.soonestRun = soonestRun;
             this.runOnce(getState(), setState, () => {
                 callback();
                 looper();
-            }, soonestRun);
+            });
         };
         looper();
     }
