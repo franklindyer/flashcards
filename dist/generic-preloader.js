@@ -5,25 +5,30 @@ class Preloader {
     values = {};
     valueCounts = {};
     numPreload;
-    delaySeconds = 0.1;
+    delaySeconds = 1.0;
     constructor(numPreload) {
         this.numPreload = numPreload;
     }
     fillCacheForKey(k, fetcher) {
         var valuesNeeded = this.numPreload - this.valueCounts[k];
-        this.valueCounts[k] = this.numPreload;
-        var i = 0;
-        fetcher(k).then((xs) => xs.map((x) => this.values[k].push(x))).catch((e) => { console.log(e); });
+        return fetcher(k).then((xs) => {
+            if (xs === null || xs === undefined)
+                return;
+            xs.map((x) => this.values[k].push(x));
+            this.valueCounts[k] = this.values[k].length;
+        }).catch((e) => { console.log(e); });
     }
     addKey(k, fetcher) {
         if (this.values[k] === undefined) {
             this.values[k] = [];
             this.valueCounts[k] = 0;
         }
-        this.fillCacheForKey(k, fetcher);
+        return this.fillCacheForKey(k, fetcher);
     }
-    getKey(k, fetcher) {
-        this.addKey(k, fetcher);
+    getKey(k, fetcher, maxAttempts = 3) {
+        if (maxAttempts == 0)
+            return new Promise((resolve, _) => resolve(undefined));
+        var keyAddedPromise = this.addKey(k, fetcher);
         if (this.values[k].length > 0) {
             return new Promise((resolve, _) => {
                 this.valueCounts[k] += -1;
@@ -33,7 +38,7 @@ class Preloader {
             });
         }
         else {
-            return new Promise((resolve, _) => setTimeout(() => resolve(this.getKey(k, fetcher)), 1000 * this.delaySeconds));
+            return keyAddedPromise.then((_) => this.getKey(k, fetcher, maxAttempts - 1));
         }
     }
 }
