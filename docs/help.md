@@ -4,6 +4,7 @@ title: Flashcards help
 
 # Flashcards controls
 
+- Type your guess at the answer in the text box. 
 - Press `Enter` to submit your answer.
 - Press `Up Arrow` to mark a card as correct, overriding a previous incorrect answer.
 - Press `Down Arrow` to skip a card and receive a new one, ignoring any previous answer.
@@ -18,7 +19,7 @@ In the spaced repetition deck:
 
 Each card in the deck has a prompt and a correct answer. Cards are chosen and displayed uniformly at random from the deck.
 
-## Spaced repetition quiz deck
+## Spaced repetition deck
 
 This deck uses the *spaced repetition* algorithm to help you study cards long-term.
 
@@ -35,18 +36,6 @@ The configurable parameters for the deck are as follows:
 - Incorrect factor: the factor $\alpha^-$ by which a card's interval increases when answered incorrectly
 - Probability of review cards: when studying due cards, the probability that each card is taken from review cards
 
-## Cloze puzzle deck
+## Cloze spaced repetition deck
 
-A *cloze puzzle* is a puzzle in which one or more words from a sentence are obscured, and the subject is asked to guess the correct word for each blank. They're great ways of practicing your vocabulary!
-
-You may only upload cloze puzzles to a cloze deck in the form of `json` files. The `json` data should consist of a dictionary whose keys are unique user-friendly ID strings, and whose values are values with the following shape:
-
-```
-"tarjeta": {
-    "prompt": "Así debe ser el formato de las {{tarjetas}}.",
-    "translation": "The format of the cards should be like this."
-}
-```
-
-Each of the words in the card prompt that should be substituted with a blank should be surrounded in double curly-braces `{{}}`.
-
+TODO.
