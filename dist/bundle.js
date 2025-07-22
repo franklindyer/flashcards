@@ -1703,9 +1703,10 @@ function fixedNumEditors(ls, ed) {
 }
 function multipleEditors(ls, empty, ed, includeSearch = false, searchFxn = (s, x) => true) {
     var children = [];
+    var includedInds = [];
     var editor = {
         element: document.createElement("div"),
-        menuToState: () => (0, utils_1.arrayReindex)(children.map((c) => c.menuToState()))
+        menuToState: () => (0, utils_1.arrayReindex)(includedInds.map((i) => children[i].menuToState()))
     };
     var addBtn = document.createElement("button");
     addBtn.classList.add("add-new-field-button");
@@ -1716,20 +1717,33 @@ function multipleEditors(ls, empty, ed, includeSearch = false, searchFxn = (s, x
         var newEditor = ed(statePart);
         children.push(newEditor);
         var ind = children.length - 1;
+        includedInds.push(ind);
         var statePartDiv = document.createElement("div");
         statePartDiv.appendChild(newEditor.element);
         newEditor.element.style.display = "inline-block";
         var delBtn = document.createElement("button");
+        var undelBtn = document.createElement("button");
+        statePartDiv.appendChild(delBtn);
+        statePartDiv.appendChild(undelBtn);
+        listDiv.prepend(statePartDiv);
+        statePartDivs.push(statePartDiv);
         delBtn.classList.add("menu-remove-card-button");
         delBtn.textContent = "remove";
         delBtn.onclick = (e) => {
-            delete children[ind];
-            delete statePartDivs[ind];
-            listDiv.removeChild(statePartDiv);
+            delBtn.style.display = "none";
+            undelBtn.style.display = "inline-block";
+            statePartDiv.style.backgroundColor = "#ffdddd";
+            includedInds = includedInds.filter((i) => i !== ind);
         };
-        statePartDiv.appendChild(delBtn);
-        listDiv.prepend(statePartDiv);
-        statePartDivs.push(statePartDiv);
+        undelBtn.style.display = "none";
+        undelBtn.classList.add("menu-remove-card-button");
+        undelBtn.textContent = "restore";
+        undelBtn.onclick = (e) => {
+            undelBtn.style.display = "none";
+            delBtn.style.display = "inline-block";
+            statePartDiv.style.backgroundColor = window.getComputedStyle(statePartDiv.parentElement).backgroundColor;
+            includedInds.push(ind);
+        };
     };
     addBtn.onclick = (e) => { statePartEditorFactory(empty()); };
     editor.element.appendChild(addBtn);
@@ -1919,28 +1933,33 @@ var FlashcardResult;
     FlashcardResult[FlashcardResult["Incorrect"] = 1] = "Incorrect";
     FlashcardResult[FlashcardResult["Unanswered"] = 2] = "Unanswered";
 })(FlashcardResult || (exports.FlashcardResult = FlashcardResult = {}));
+var SOONEST_RUN = null;
 class FlashcardGen {
     // Type S is the state type for this flashcard deck
     // Type D is the type of the data involved in the single card
     getGenName() {
         throw new Error("getGenName not implemented!");
     }
-    soonestRun = new Date();
     showLoading = false;
-    async runOnce(s, setState, callback, runTime) {
+    async runOnce(s, setState, callback) {
         this.showLoading = true;
         setTimeout(() => {
             if (this.showLoading) {
                 (0, utils_1.showLoadingIcon)();
             }
         }, 500);
+        var thisRunTime = new Date();
+        console.log(thisRunTime);
+        SOONEST_RUN = thisRunTime;
         var cardData = await this.getNextCardAsync(s);
         var card = await this.generateCardAsync(s, cardData);
         card.check = (ans) => this.checkAnswerAsync(ans, s, cardData);
+        if (thisRunTime.getTime() !== SOONEST_RUN.getTime()) {
+            console.log(`Canceling run for ${thisRunTime} as it is not the most recent`);
+            return;
+        }
         (0, utils_1.hideLoadingIcon)();
         this.showLoading = false;
-        if (runTime.getTime() !== this.soonestRun.getTime())
-            return;
         var inputBox = document.getElementById("answer-input");
         var correctCallback = (newState) => () => {
             inputBox.value = "";
@@ -1981,12 +2000,10 @@ class FlashcardGen {
     }
     runLoop(getState, setState, callback) {
         var looper = () => {
-            var soonestRun = new Date();
-            this.soonestRun = soonestRun;
             this.runOnce(getState(), setState, () => {
                 callback();
                 looper();
-            }, soonestRun);
+            });
         };
         looper();
     }
@@ -2150,27 +2167,30 @@ class Preloader {
     values = {};
     valueCounts = {};
     numPreload;
-    delaySeconds = 0.1;
+    delaySeconds = 1.0;
     constructor(numPreload) {
         this.numPreload = numPreload;
     }
     fillCacheForKey(k, fetcher) {
         var valuesNeeded = this.numPreload - this.valueCounts[k];
-        this.valueCounts[k] = this.numPreload;
-        var i = 0;
-        for (i = 0; i < valuesNeeded; i++) {
-            fetcher(k).then((x) => this.values[k].push(x));
-        }
+        return fetcher(k).then((xs) => {
+            if (xs === null || xs === undefined)
+                return;
+            xs.map((x) => this.values[k].push(x));
+            this.valueCounts[k] = this.values[k].length;
+        }).catch((e) => { console.log(e); });
     }
     addKey(k, fetcher) {
         if (this.values[k] === undefined) {
             this.values[k] = [];
             this.valueCounts[k] = 0;
         }
-        this.fillCacheForKey(k, fetcher);
+        return this.fillCacheForKey(k, fetcher);
     }
-    getKey(k, fetcher) {
-        this.addKey(k, fetcher);
+    getKey(k, fetcher, maxAttempts = 3) {
+        if (maxAttempts == 0)
+            return new Promise((resolve, _) => resolve(undefined));
+        var keyAddedPromise = this.addKey(k, fetcher);
         if (this.values[k].length > 0) {
             return new Promise((resolve, _) => {
                 this.valueCounts[k] += -1;
@@ -2180,7 +2200,7 @@ class Preloader {
             });
         }
         else {
-            return new Promise((resolve, _) => setTimeout(() => resolve(this.getKey(k, fetcher)), 1000 * this.delaySeconds));
+            return keyAddedPromise.then((_) => this.getKey(k, fetcher, maxAttempts - 1));
         }
     }
 }
@@ -2397,7 +2417,8 @@ class ClozeSpacedRepGen extends spaced_repetition_general_1.AbstractAsyncSpacedR
     }
     cache = new generic_preloader_1.Preloader(10);
     cardIsEnabled(card, st) {
-        return !card.auxdata.invalid;
+        return (!card.auxdata.invalid)
+            && !card.content.tags.some((t) => st.settings.inactiveTags.includes(t));
     }
     correctEffect(st, card, attempt, resolve) {
         var cardData = card.data;
@@ -2460,7 +2481,8 @@ class ClozeSpacedRepGen extends spaced_repetition_general_1.AbstractAsyncSpacedR
         return fetch(`${settings.clozeServerUrl}/cloze?` + new URLSearchParams({
             "srcs": settings.sourceLangs.join(","),
             "tgt": settings.targetLang,
-            "lemma": lemma
+            "lemma": lemma,
+            "n": this.cache.numPreload.toString()
         }).toString()).then((r) => r.json()).catch((e) => undefined);
     }
     preFetchClozes(st) {
@@ -3303,9 +3325,12 @@ exports.applyTextFilter = applyTextFilter;
 exports.textFilterSelectionMenu = textFilterSelectionMenu;
 const editor_1 = __webpack_require__(43);
 exports.defaultTextFilterSettings = {
+    removeParenDelimited: false,
+    removeSqDelimited: false,
     noPunctuation: false,
     smartQuotes: false,
     doubleSpaces: false,
+    trimSpaces: false,
     nfc: false
 };
 function filterSmartQuotes(str) {
@@ -3314,13 +3339,37 @@ function filterSmartQuotes(str) {
 function filterDoubleSpaces(str) {
     return str.replaceAll(/\s+/g, " ");
 }
+function filterHintParens(str) {
+    return str.replaceAll(/\([^\)]*\)/g, "");
+}
+function filterHintSqs(str) {
+    return str.replaceAll(/\[[^\]]*\]/g, "");
+}
+function filterEndSpaces(str) {
+    return str.trim();
+}
 function filterNFC(str) {
     return str.normalize("NFC");
 }
 function filterPunctuation(str) {
     return str.replaceAll(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "");
 }
+// Replace missing settings in the case of updates
+function repairTextFilterSettings(tfs) {
+    for (var i in Object.keys(exports.defaultTextFilterSettings)) {
+        var k = Object.keys(exports.defaultTextFilterSettings)[i];
+        if (!(k in tfs)) {
+            tfs[k] = false;
+        }
+    }
+    return tfs;
+}
 function applyTextFilter(str, tfs) {
+    tfs = repairTextFilterSettings(tfs);
+    if (tfs.removeParenDelimited)
+        str = filterHintParens(str);
+    if (tfs.removeSqDelimited)
+        str = filterHintSqs(str);
     if (tfs.noPunctuation)
         str = filterPunctuation(str);
     if (tfs.smartQuotes)
@@ -3329,9 +3378,12 @@ function applyTextFilter(str, tfs) {
         str = filterDoubleSpaces(str);
     if (tfs.nfc)
         str = filterNFC(str);
+    if (tfs.trimSpaces)
+        str = filterEndSpaces(str);
     return str;
 }
 function textFilterSelectionMenu(tfs) {
+    tfs = repairTextFilterSettings(tfs);
     var container = document.createElement("div");
     var accordion = document.createElement("details");
     var accordionSummary = document.createElement("summary");
@@ -3341,20 +3393,29 @@ function textFilterSelectionMenu(tfs) {
     var noPunctuationEd = (0, editor_1.boolEditor)("Ignore punctuation", tfs.noPunctuation);
     var smartQuotesEd = (0, editor_1.boolEditor)("Ignore smart quotes", tfs.smartQuotes);
     var doubleSpacesEd = (0, editor_1.boolEditor)("Ignore multiple spaces", tfs.doubleSpaces);
+    var trimSpacesEd = (0, editor_1.boolEditor)("Ignore leading and trailing spaces", tfs.trimSpaces);
     var nfcEd = (0, editor_1.boolEditor)("NFC-normalize unicode text", tfs.nfc);
+    var removeParenEd = (0, editor_1.boolEditor)("Ignore substrings enclosed in (parentheses)", tfs.removeParenDelimited);
+    var removeSqEd = (0, editor_1.boolEditor)("Ignore substrings enclosed in [square brackets]", tfs.removeSqDelimited);
     [
         noPunctuationEd.element,
         smartQuotesEd.element,
         doubleSpacesEd.element,
-        nfcEd.element
+        trimSpacesEd.element,
+        nfcEd.element,
+        removeParenEd.element,
+        removeSqEd.element
     ].map((el) => accordion.appendChild(el));
     return {
         element: container,
         menuToState: () => {
             return {
+                removeParenDelimited: removeParenEd.menuToState(),
+                removeSqDelimited: removeSqEd.menuToState(),
                 noPunctuation: noPunctuationEd.menuToState(),
                 smartQuotes: smartQuotesEd.menuToState(),
                 doubleSpaces: doubleSpacesEd.menuToState(),
+                trimSpaces: trimSpacesEd.menuToState(),
                 nfc: nfcEd.menuToState()
             };
         }

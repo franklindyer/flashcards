@@ -60,7 +60,8 @@ class ClozeSpacedRepGen extends spaced_repetition_general_1.AbstractAsyncSpacedR
     }
     cache = new generic_preloader_1.Preloader(10);
     cardIsEnabled(card, st) {
-        return !card.auxdata.invalid;
+        return (!card.auxdata.invalid)
+            && !card.content.tags.some((t) => st.settings.inactiveTags.includes(t));
     }
     correctEffect(st, card, attempt, resolve) {
         var cardData = card.data;
@@ -123,7 +124,8 @@ class ClozeSpacedRepGen extends spaced_repetition_general_1.AbstractAsyncSpacedR
         return fetch(`${settings.clozeServerUrl}/cloze?` + new URLSearchParams({
             "srcs": settings.sourceLangs.join(","),
             "tgt": settings.targetLang,
-            "lemma": lemma
+            "lemma": lemma,
+            "n": this.cache.numPreload.toString()
         }).toString()).then((r) => r.json()).catch((e) => undefined);
     }
     preFetchClozes(st) {

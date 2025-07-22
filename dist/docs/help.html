@@ -22,6 +22,7 @@
         <div id="content-div">
             <h1 id="flashcards-controls">Flashcards controls</h1>
             <ul>
+            <li>Type your guess at the answer in the text box.</li>
             <li>Press <code>Enter</code> to submit your answer.</li>
             <li>Press <code>Up Arrow</code> to mark a card as correct,
             overriding a previous incorrect answer.</li>
@@ -38,8 +39,7 @@
             <p>Each card in the deck has a prompt and a correct answer.
             Cards are chosen and displayed uniformly at random from the
             deck.</p>
-            <h2 id="spaced-repetition-quiz-deck">Spaced repetition quiz
-            deck</h2>
+            <h2 id="spaced-repetition-deck">Spaced repetition deck</h2>
             <p>This deck uses the <em>spaced repetition</em> algorithm
             to help you study cards long-term.</p>
             <p>Each time you answer a card correctly, it is removed from
@@ -86,23 +86,9 @@
             the probability that each card is taken from review
             cards</li>
             </ul>
-            <h2 id="cloze-puzzle-deck">Cloze puzzle deck</h2>
-            <p>A <em>cloze puzzle</em> is a puzzle in which one or more
-            words from a sentence are obscured, and the subject is asked
-            to guess the correct word for each blank. They’re great ways
-            of practicing your vocabulary!</p>
-            <p>You may only upload cloze puzzles to a cloze deck in the
-            form of <code>json</code> files. The <code>json</code> data
-            should consist of a dictionary whose keys are unique
-            user-friendly ID strings, and whose values are values with
-            the following shape:</p>
-            <pre><code>&quot;tarjeta&quot;: {
-    &quot;prompt&quot;: &quot;Así debe ser el formato de las {{tarjetas}}.&quot;,
-    &quot;translation&quot;: &quot;The format of the cards should be like this.&quot;
-}</code></pre>
-            <p>Each of the words in the card prompt that should be
-            substituted with a blank should be surrounded in double
-            curly-braces <code>{{}}</code>.</p>
+            <h2 id="cloze-spaced-repetition-deck">Cloze spaced
+            repetition deck</h2>
+            <p>TODO.</p>
         </div>
     </body>
 </html>

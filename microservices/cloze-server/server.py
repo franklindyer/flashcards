@@ -28,12 +28,14 @@ SQL_CON = sqlite3.connect("/db/cloze.db", check_same_thread=False)
 def get_random_cloze(con, src_langs, tgt_lang, lemma, n=1):
     lang_params = ','.join(["?"] * len(src_langs))
     ress = pool_query(con, f"""
-        SELECT puzzles.id, puzzles.text, sents_src.text, sents_tgt.text
-        FROM puzzles
-        INNER JOIN words ON puzzles.base_word=words.id
-        INNER JOIN sents AS sents_src ON puzzles.nat_snt=sents_src.id
-        INNER JOIN sents AS sents_tgt ON puzzles.base_snt=sents_tgt.id
-        WHERE words.lemma=? AND sents_tgt.iso_lang=? AND sents_src.iso_lang IN ({lang_params})
+        SELECT pid, blanks, src_txt, tgt_txt FROM (
+            SELECT puzzles.id AS pid, puzzles.blanks AS blanks, sents_src.text AS src_txt, sents_tgt.text AS tgt_txt
+            FROM puzzles
+            INNER JOIN words ON puzzles.base_word=words.id
+            INNER JOIN sents AS sents_src ON puzzles.nat_snt=sents_src.id
+            INNER JOIN sents AS sents_tgt ON puzzles.base_snt=sents_tgt.id
+            WHERE words.lemma=? AND sents_tgt.iso_lang=? AND sents_src.iso_lang IN ({lang_params})
+        )
         ORDER BY RANDOM()
         LIMIT ?
     """, (lemma, tgt_lang,) + tuple(src_langs) + (n,))
@@ -42,10 +44,19 @@ def get_random_cloze(con, src_langs, tgt_lang, lemma, n=1):
     return [{
         "id": res[0],
         "word": lemma,
-        "puzzle": res[1],
+        "blanks": res[1],
         "source": res[2],
         "target": res[3]
     } for res in ress]
+
+def add_blanks(puz):
+    bls = [bl.split('-') for bl in puz['blanks'].split(",")]
+    bls = [(int(bl[0]), int(bl[1])) for bl in bls][::-1]
+    pt = puz['target']
+    for bl in bls:
+        pt = pt[:bl[0]] + "{{" + pt[bl[0]:(bl[1]+1)] + "}}" + pt[(bl[1]+1):]
+    puz['puzzle'] = pt
+    return puz
 
 @app.route("/")
 @cross_origin()
@@ -68,6 +79,7 @@ def get_cloze():
     cloze = get_random_cloze(SQL_CON, src_langs, tgt_lang, lemma, n=n_results)
     if cloze == None:
         abort(404)
+    cloze = [add_blanks(puz) for puz in cloze]
     response = jsonify(cloze)
     # response.headers.add('Access-Control-Allow-Origin', '*')
     return response
