@@ -221,9 +221,10 @@ function fixedNumEditors(ls, ed) {
 }
 function multipleEditors(ls, empty, ed, includeSearch = false, searchFxn = (s, x) => true) {
     var children = [];
+    var includedInds = [];
     var editor = {
         element: document.createElement("div"),
-        menuToState: () => (0, utils_1.arrayReindex)(children.map((c) => c.menuToState()))
+        menuToState: () => (0, utils_1.arrayReindex)(includedInds.map((i) => children[i].menuToState()))
     };
     var addBtn = document.createElement("button");
     addBtn.classList.add("add-new-field-button");
@@ -234,20 +235,33 @@ function multipleEditors(ls, empty, ed, includeSearch = false, searchFxn = (s, x
         var newEditor = ed(statePart);
         children.push(newEditor);
         var ind = children.length - 1;
+        includedInds.push(ind);
         var statePartDiv = document.createElement("div");
         statePartDiv.appendChild(newEditor.element);
         newEditor.element.style.display = "inline-block";
         var delBtn = document.createElement("button");
+        var undelBtn = document.createElement("button");
+        statePartDiv.appendChild(delBtn);
+        statePartDiv.appendChild(undelBtn);
+        listDiv.prepend(statePartDiv);
+        statePartDivs.push(statePartDiv);
         delBtn.classList.add("menu-remove-card-button");
         delBtn.textContent = "remove";
         delBtn.onclick = (e) => {
-            delete children[ind];
-            delete statePartDivs[ind];
-            listDiv.removeChild(statePartDiv);
+            delBtn.style.display = "none";
+            undelBtn.style.display = "inline-block";
+            statePartDiv.style.backgroundColor = "#ffdddd";
+            includedInds = includedInds.filter((i) => i !== ind);
         };
-        statePartDiv.appendChild(delBtn);
-        listDiv.prepend(statePartDiv);
-        statePartDivs.push(statePartDiv);
+        undelBtn.style.display = "none";
+        undelBtn.classList.add("menu-remove-card-button");
+        undelBtn.textContent = "restore";
+        undelBtn.onclick = (e) => {
+            undelBtn.style.display = "none";
+            delBtn.style.display = "inline-block";
+            statePartDiv.style.backgroundColor = window.getComputedStyle(statePartDiv.parentElement).backgroundColor;
+            includedInds.push(ind);
+        };
     };
     addBtn.onclick = (e) => { statePartEditorFactory(empty()); };
     editor.element.appendChild(addBtn);
