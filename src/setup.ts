@@ -15,6 +15,8 @@ import "./transcript-template"
 import "./noanswer-template"
 
 import "./fs"
+
+import "./times-tables-gen";
 import "./uniform-key-value";
 import "./spaced-repetition-simple";
 import "./spaced-repetition-cloze";

@@ -7,6 +7,7 @@ require("./cloze-template");
 require("./transcript-template");
 require("./noanswer-template");
 require("./fs");
+require("./times-tables-gen");
 require("./uniform-key-value");
 require("./spaced-repetition-simple");
 require("./spaced-repetition-cloze");
