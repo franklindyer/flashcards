@@ -291,26 +291,19 @@ function simpleSRMenu(st: SpacedRepState<SRSimpleContent, SRSimpleAuxData, SRSim
 
     function makeCardEditor(c: SpacedRepCard<SRSimpleContent, SRSimpleAuxData>): 
         StateEditor<SpacedRepCard<SRSimpleContent, SRSimpleAuxData>> {
-        var ed = combineEditors(
-            [[c.content.prompt, c.content.answers.join('|')], c.content.tags.join(',')],
-            (pr: any) => {
-                var ed2 = swappingTextEditor(pr);
-                ed2.element.style.display = "inline-block";
-                return ed2;
-            },
-            (ts: string) => {
-                var ed2 = singleTextFieldEditor(ts);
-                (<HTMLInputElement>ed2.element).placeholder = "tags...";
-                return ed2;
-            }
-        );
+        var edDetails = document.createElement("details");
+        var edSummary = document.createElement("summary");
+        edDetails.style.display = "inline-block";
+        edDetails.appendChild(edSummary);
+        edDetails.classList.add("cardlist-accordion");
 
-        var listenBtn = ((ed) => iconButton("speaker.png", () => {
-            var ss = speechEditor.menuToState();
-            var tgtText = ed.menuToState()[0][1];
-            utter(tgtText, ss.voice, ss.rate, ss.pitch, () => {}); 
-        }))(ed);
-        ed.element.appendChild(listenBtn);
+        var edMain = swappingTextEditor([c.content.prompt, c.content.answers.join('|')]);
+        edMain.element.style.display = "inline-block";
+        edSummary.appendChild(edMain.element);
+
+        var tagsEd = singleTextFieldEditor(c.content.tags.join(','));
+        (<HTMLInputElement>tagsEd.element).placeholder = "tags...";
+        edDetails.appendChild(tagsEd.element);
 
         var cardInfo = document.createElement("a");
         cardInfo.classList.add("sr-card-due-date");
@@ -323,18 +316,30 @@ function simpleSRMenu(st: SpacedRepState<SRSimpleContent, SRSimpleAuxData, SRSim
         } else {
             cardInfo.textContent = `due ${getSRFutureDateInfo(c.due!)}`;
         }
-        ed.element.appendChild(cardInfo);
+        cardInfo.style.display = "block";
+        edDetails.appendChild(cardInfo);
+
+        var listenBtn = ((ed) => iconButton("speaker.png", () => {
+            var ss = speechEditor.menuToState();
+            var tgtText = ed.menuToState()[1];
+            utter(tgtText, ss.voice, ss.rate, ss.pitch, () => {}); 
+        }))(edMain);
+        listenBtn.style.float = "";
+        var listenDiv = document.createElement("div");
+        listenDiv.style.overflowY = "visible";
+        listenDiv.appendChild(listenBtn);
+        edDetails.appendChild(listenDiv);
 
         return {
-            element: ed.element,
+            element: edDetails,
             menuToState: () => {
-                let tp = ed.menuToState();
+                let tp = edMain.menuToState();
                 return {
                     guid: c.guid,
                     content: {
-                        prompt: tp[0][0],
-                        answers: tp[0][1].split('|'),
-                        tags: tp[1].split(',').filter((t) => t.length > 0)
+                        prompt: tp[0],
+                        answers: tp[1].split('|'),
+                        tags: tagsEd.menuToState().split(',').filter((t) => t.length > 0)
                     },
                     due: c.due,
                     intervalMinutes: c.intervalMinutes,
