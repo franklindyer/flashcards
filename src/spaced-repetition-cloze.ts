@@ -384,7 +384,7 @@ function clozeSRMenu(st: SpacedRepState<SRClozeContent, SRClozeAuxData, SRClozeS
             menuToState: () => {
                 let tp = ed.menuToState();
                 c.content.key = tp[0];
-                c.content.tags = tp[1].split(",");
+                c.content.tags = tp[1].length == 0 ? [] : tp[1].split(",");
                 return c;
             }
         }
