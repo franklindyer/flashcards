@@ -62,7 +62,9 @@ import {
 export type SRSimpleContent = {
     prompt: string,
     answers: string[],
-    tags: string[]
+    tags: string[],
+    twoSided: boolean,
+    reversed?: boolean // This variable is only set during preprocessing
 }
 
 export type SRSimpleAuxData = {
@@ -91,9 +93,9 @@ export const defaultSimpleSRSettings = {
 
 export const defaultSimpleSRState: SpacedRepState<SRSimpleContent, SRSimpleAuxData, SRSimpleSettings> = {
     cards: makeSpacedRepCardDict([
-        { prompt: "the dog", answers: ["le chien"], tags: [] },
-        { prompt: "the man", answers: ["l'homme"], tags: [] },
-        { prompt: "the woman", answers: ["la dame"], tags: [] }
+        { prompt: "the dog", answers: ["le chien"], tags: [], twoSided: false },
+        { prompt: "the man", answers: ["l'homme"], tags: [], twoSided: false },
+        { prompt: "the woman", answers: ["la dame"], tags: [], twoSided: false }
     ], () => { return { streak: 0, intervalMinutes: 0, due: undefined }; }),
     newQ: emptySRQueue(10),
     studying: SpacedRepStudying.NewCards,
@@ -106,7 +108,8 @@ export function makeEmptyCard(): SpacedRepCard<SRSimpleContent, SRSimpleAuxData>
         content: {
             prompt: "",
             answers: [""],
-            tags: []
+            tags: [],
+            twoSided: false
         },
         due: new Date(),
         intervalMinutes: 0,
@@ -166,6 +169,12 @@ export class SimpleSpacedRepGen
         if (st.newQ === undefined) {
             st.newQ = emptySRQueue(10);
         }
+        for (var i in Object.keys(st.cards)) {
+            var k = Object.keys(st.cards)[i]; 
+            if (!("twoSided" in st.cards[k])) {
+                st.cards[k]["twoSided"] = false;
+            }
+        }
         return st;
     }
 
@@ -184,6 +193,9 @@ export class SimpleSpacedRepGen
         var card = <SpacedRepCardPhysical<SRSimpleContent, SRSimpleAuxData>>JSON.parse(JSON.stringify(card));
         if (card.data !== undefined) {
             card = this.applyCardTemplating(card);
+            if (card.data!.content.twoSided) {
+                card.data!.content.reversed = (Math.random() < 0.5);
+            }
         }
         return card;
     }
@@ -198,9 +210,15 @@ export class SimpleSpacedRepGen
         var hint = "You cannot continue studying until more cards become due."
 
         if (card.data !== undefined) {
-            prompt = card.data!.content.prompt;
-            answers = card.data!.content.answers;
-            hint = card.data!.content.answers[0];
+            if (card.data!.content.reversed) {
+                prompt = card.data!.content.answers[0];
+                answers = [card.data!.content.prompt];
+                hint = card.data!.content.prompt;
+            } else {
+                prompt = card.data!.content.prompt;
+                answers = card.data!.content.answers;
+                hint = card.data!.content.answers[0];
+            }
         }
 
         var fontSize = 100.0/(10.0*Math.log(10+prompt.length));
@@ -226,7 +244,12 @@ export class SimpleSpacedRepGen
             return false;
         var cardData = card.data!;
         var tf = (s: string) => applyTextFilter(s, st.settings.filterSettings);
-        return cardData.content.answers.map(tf).includes(tf(answer));
+
+        // When verifying the answer, check if the card has been reversed
+        if (cardData.content.twoSided && cardData.content.reversed)
+            return tf(cardData.content.prompt) == tf(answer);
+        else
+            return cardData.content.answers.map(tf).includes(tf(answer));
     }
 
     correctEffect(
@@ -238,7 +261,7 @@ export class SimpleSpacedRepGen
         var cardData = card.data!;
         if (st.settings.readCorrectAnswers) {
             var ss = st.settings.speechSettings;
-            if (attempt.length > 0) { 
+            if (attempt.length > 0 && !(cardData.content.reversed)) { 
                 utter(attempt, ss.voice, ss.rate, ss.pitch, resolve);
             } else {
                 utter(cardData.content!.answers[0], ss.voice, ss.rate, ss.pitch, resolve);
@@ -312,6 +335,9 @@ function simpleSRMenu(st: SpacedRepState<SRSimpleContent, SRSimpleAuxData, SRSim
         (<HTMLInputElement>tagsEd.element).placeholder = "tags...";
         edDetails.appendChild(tagsEd.element);
 
+        var twoSideEd = boolEditor("Double-sided card?", c.content.twoSided);
+        edDetails.appendChild(twoSideEd.element);
+
         var cardInfo = document.createElement("a");
         cardInfo.classList.add("sr-card-due-date");
         cardInfo.style.color = "lightgray";
@@ -346,7 +372,8 @@ function simpleSRMenu(st: SpacedRepState<SRSimpleContent, SRSimpleAuxData, SRSim
                     content: {
                         prompt: tp[0],
                         answers: tp[1].split('|'),
-                        tags: tagsEd.menuToState().split(',').filter((t) => t.length > 0)
+                        tags: tagsEd.menuToState().split(',').filter((t) => t.length > 0),
+                        twoSided: twoSideEd.menuToState()
                     },
                     due: c.due,
                     intervalMinutes: c.intervalMinutes,
