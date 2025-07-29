@@ -150,7 +150,8 @@ class ClozeSpacedRepGen extends spaced_repetition_general_1.AbstractAsyncSpacedR
             card.data.auxdata.cloze = {
                 prompt: j["puzzle"],
                 answer: j["target"],
-                translation: j["source"]
+                translation: j["source"],
+                group: j["group"]
             };
             return card;
         }).catch((e) => {
@@ -170,6 +171,10 @@ class ClozeSpacedRepGen extends spaced_repetition_general_1.AbstractAsyncSpacedR
             upper: card.data.auxdata.cloze.prompt,
             lower: card.data.auxdata.cloze.translation
         });
+        var puzzleSourceSpan = document.createElement("span");
+        puzzleSourceSpan.textContent = card.data.auxdata.cloze.group;
+        puzzleSourceSpan.classList.add("cloze-puzzle-attribution");
+        fl.el.appendChild(puzzleSourceSpan);
         fl.el.appendChild((0, spaced_repetition_general_1.makeCardsLeftSpan)(card));
         return (0, utils_1.trivialPromise)(fl);
     }

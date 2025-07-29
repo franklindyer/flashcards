@@ -246,6 +246,17 @@ hr {
     margin-bottom: 3px;
 }
 
+.cloze-puzzle-attribution {
+    font-size: 14px;
+    display: block;
+    margin: 4px;
+    padding: 4px;
+    color: gray;
+    position: absolute;
+    bottom: 0;
+    right: 0;
+}
+
 .transcription-audio-button {
     aspect-ratio: 1;
     width: 100px;

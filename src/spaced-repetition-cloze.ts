@@ -72,7 +72,8 @@ export type SRClozeAuxData = {
     cloze?: {
         prompt: string,
         answer: string,
-        translation: string 
+        translation: string,
+        group: string
     }
 }
 
@@ -268,7 +269,8 @@ export class ClozeSpacedRepGen
                     card.data!.auxdata.cloze = {
                         prompt: j["puzzle"],
                         answer: j["target"],
-                        translation: j["source"]
+                        translation: j["source"],
+                        group: j["group"]
                     };
                     return card;
                 }
@@ -296,6 +298,12 @@ export class ClozeSpacedRepGen
             upper: card.data!.auxdata.cloze!.prompt,
             lower: card.data!.auxdata.cloze!.translation
         });
+
+        var puzzleSourceSpan = document.createElement("span");
+        puzzleSourceSpan.textContent = card.data!.auxdata.cloze!.group;
+        puzzleSourceSpan.classList.add("cloze-puzzle-attribution");
+
+        fl.el.appendChild(puzzleSourceSpan);
         fl.el.appendChild(makeCardsLeftSpan(card));
         return trivialPromise(fl);
     }

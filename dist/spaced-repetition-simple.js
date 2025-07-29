@@ -182,6 +182,13 @@ function simpleSRMenu(st) {
         edDetails.style.display = "inline-block";
         edDetails.appendChild(edSummary);
         edDetails.classList.add("cardlist-accordion");
+        edDetails.onkeyup = function (e) {
+            // The default behavior for SPACE in a <details> element is to toggle its openness.
+            // We need to disable this since the user may be typing in an <input> inside this element.
+            if (e.keyCode == 32) {
+                e.preventDefault();
+            }
+        };
         var edMain = (0, editor_1.swappingTextEditor)([c.content.prompt, c.content.answers.join('|')]);
         edMain.element.style.display = "inline-block";
         edSummary.appendChild(edMain.element);
