@@ -81,6 +81,7 @@ export type SRClozeSettings = {
     clozeServerUrl: string,
     sourceLangs: string[],
     targetLang: string,
+    clozeGroups: string[],
     initialHours: number,
     correctFactor: number,
     incorrectFactor: number,
@@ -94,6 +95,7 @@ export const defaultSRClozeSettings = {
     clozeServerUrl: "",
     sourceLangs: ["eng", "spa"],
     targetLang: "deu",
+    clozeGroups: [],
     initialHours: 8,
     correctFactor: 1.5,
     incorrectFactor: 0.5,
@@ -136,10 +138,13 @@ export class ClozeSpacedRepGen
     getGenName(): string { return "cloze-spaced-repetition"; }
 
     repairDeckState(st: any): any {
-        this.preFetchClozes(st);
         if (st.newQ === undefined) {
             st.newQ = emptySRQueue(10);
         }
+        if (st.settings.clozeGroups === undefined) {
+            st.settings.clozeGroups = [];
+        }
+        this.preFetchClozes(st);
         return st;
     }
 
@@ -227,9 +232,11 @@ export class ClozeSpacedRepGen
         lemma: string, 
         settings: SRClozeSettings 
     ): Promise<any> {
+        console.log(settings);
         return fetch(
             `${settings.clozeServerUrl}/cloze?` + new URLSearchParams({ 
                 "srcs": settings.sourceLangs.join(","),
+                "groups": settings.clozeGroups.join(","),
                 "tgt": settings.targetLang,
                 "lemma": lemma,
                 "n": this.cache.numPreload.toString()
@@ -322,9 +329,12 @@ function clozeSRMenu(st: SpacedRepState<SRClozeContent, SRClozeAuxData, SRClozeS
     var clozeServerUrlEditor = singleTextFieldEditor(st.settings.clozeServerUrl)
     var clozeSourceLangEditor = singleTextFieldEditor(st.settings.sourceLangs.join(','));
     var clozeTargetLangEditor = singleTextFieldEditor(st.settings.targetLang);
+    var clozeGroupsEditor = singleTextFieldEditor(st.settings.clozeGroups.join(','));
+    (<HTMLInputElement>clozeGroupsEditor.element).placeholder = "allowed groups...";
     clozeServerDiv.appendChild(clozeServerUrlEditor.element);
     clozeServerDiv.appendChild(clozeSourceLangEditor.element);
     clozeServerDiv.appendChild(clozeTargetLangEditor.element);
+    clozeServerDiv.appendChild(clozeGroupsEditor.element);
 
     var initHoursEditor = scrollNumberEditor("Initial interval (hours): ", st.settings.initialHours, 1, 240, 1);
     var correctFactor = scrollNumberEditor("Correct factor: ", st.settings.correctFactor, 1, 10, 0.1);
@@ -422,6 +432,7 @@ function clozeSRMenu(st: SpacedRepState<SRClozeContent, SRClozeAuxData, SRClozeS
                 clozeServerUrl: clozeServerUrlEditor.menuToState(),
                 sourceLangs: clozeSourceLangEditor.menuToState().split(","),
                 targetLang: clozeTargetLangEditor.menuToState(),
+                clozeGroups: clozeGroupsEditor.menuToState().split(","),
                 initialHours: initHoursEditor.menuToState(),
                 correctFactor: correctFactor.menuToState(),
                 incorrectFactor: incorrectFactor.menuToState(),
