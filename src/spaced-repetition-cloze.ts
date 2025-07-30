@@ -72,7 +72,8 @@ export type SRClozeAuxData = {
     cloze?: {
         prompt: string,
         answer: string,
-        translation: string 
+        translation: string,
+        group: string
     }
 }
 
@@ -80,6 +81,7 @@ export type SRClozeSettings = {
     clozeServerUrl: string,
     sourceLangs: string[],
     targetLang: string,
+    clozeGroups: string[],
     initialHours: number,
     correctFactor: number,
     incorrectFactor: number,
@@ -93,6 +95,7 @@ export const defaultSRClozeSettings = {
     clozeServerUrl: "",
     sourceLangs: ["eng", "spa"],
     targetLang: "deu",
+    clozeGroups: [],
     initialHours: 8,
     correctFactor: 1.5,
     incorrectFactor: 0.5,
@@ -135,10 +138,13 @@ export class ClozeSpacedRepGen
     getGenName(): string { return "cloze-spaced-repetition"; }
 
     repairDeckState(st: any): any {
-        this.preFetchClozes(st);
         if (st.newQ === undefined) {
             st.newQ = emptySRQueue(10);
         }
+        if (st.settings.clozeGroups === undefined) {
+            st.settings.clozeGroups = [];
+        }
+        this.preFetchClozes(st);
         return st;
     }
 
@@ -226,9 +232,11 @@ export class ClozeSpacedRepGen
         lemma: string, 
         settings: SRClozeSettings 
     ): Promise<any> {
+        console.log(settings);
         return fetch(
             `${settings.clozeServerUrl}/cloze?` + new URLSearchParams({ 
                 "srcs": settings.sourceLangs.join(","),
+                "groups": settings.clozeGroups.join(","),
                 "tgt": settings.targetLang,
                 "lemma": lemma,
                 "n": this.cache.numPreload.toString()
@@ -268,7 +276,8 @@ export class ClozeSpacedRepGen
                     card.data!.auxdata.cloze = {
                         prompt: j["puzzle"],
                         answer: j["target"],
-                        translation: j["source"]
+                        translation: j["source"],
+                        group: j["group"]
                     };
                     return card;
                 }
@@ -296,6 +305,12 @@ export class ClozeSpacedRepGen
             upper: card.data!.auxdata.cloze!.prompt,
             lower: card.data!.auxdata.cloze!.translation
         });
+
+        var puzzleSourceSpan = document.createElement("span");
+        puzzleSourceSpan.textContent = card.data!.auxdata.cloze!.group;
+        puzzleSourceSpan.classList.add("cloze-puzzle-attribution");
+
+        fl.el.appendChild(puzzleSourceSpan);
         fl.el.appendChild(makeCardsLeftSpan(card));
         return trivialPromise(fl);
     }
@@ -314,9 +329,12 @@ function clozeSRMenu(st: SpacedRepState<SRClozeContent, SRClozeAuxData, SRClozeS
     var clozeServerUrlEditor = singleTextFieldEditor(st.settings.clozeServerUrl)
     var clozeSourceLangEditor = singleTextFieldEditor(st.settings.sourceLangs.join(','));
     var clozeTargetLangEditor = singleTextFieldEditor(st.settings.targetLang);
+    var clozeGroupsEditor = singleTextFieldEditor(st.settings.clozeGroups.join(','));
+    (<HTMLInputElement>clozeGroupsEditor.element).placeholder = "allowed groups...";
     clozeServerDiv.appendChild(clozeServerUrlEditor.element);
     clozeServerDiv.appendChild(clozeSourceLangEditor.element);
     clozeServerDiv.appendChild(clozeTargetLangEditor.element);
+    clozeServerDiv.appendChild(clozeGroupsEditor.element);
 
     var initHoursEditor = scrollNumberEditor("Initial interval (hours): ", st.settings.initialHours, 1, 240, 1);
     var correctFactor = scrollNumberEditor("Correct factor: ", st.settings.correctFactor, 1, 10, 0.1);
@@ -376,7 +394,7 @@ function clozeSRMenu(st: SpacedRepState<SRClozeContent, SRClozeAuxData, SRClozeS
             menuToState: () => {
                 let tp = ed.menuToState();
                 c.content.key = tp[0];
-                c.content.tags = tp[1].split(",");
+                c.content.tags = tp[1].length == 0 ? [] : tp[1].split(",");
                 return c;
             }
         }
@@ -414,6 +432,7 @@ function clozeSRMenu(st: SpacedRepState<SRClozeContent, SRClozeAuxData, SRClozeS
                 clozeServerUrl: clozeServerUrlEditor.menuToState(),
                 sourceLangs: clozeSourceLangEditor.menuToState().split(","),
                 targetLang: clozeTargetLangEditor.menuToState(),
+                clozeGroups: clozeGroupsEditor.menuToState().split(","),
                 initialHours: initHoursEditor.menuToState(),
                 correctFactor: correctFactor.menuToState(),
                 incorrectFactor: incorrectFactor.menuToState(),
