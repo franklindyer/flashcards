@@ -60,7 +60,7 @@ import {
 } from "./spaced-repetition-newqueue"
 
 export type SRSimpleContent = {
-    prompt: string,
+    prompt: string[],
     answers: string[],
     tags: string[],
     twoSided: boolean,
@@ -93,9 +93,9 @@ export const defaultSimpleSRSettings = {
 
 export const defaultSimpleSRState: SpacedRepState<SRSimpleContent, SRSimpleAuxData, SRSimpleSettings> = {
     cards: makeSpacedRepCardDict([
-        { prompt: "the dog", answers: ["le chien"], tags: [], twoSided: false },
-        { prompt: "the man", answers: ["l'homme"], tags: [], twoSided: false },
-        { prompt: "the woman", answers: ["la dame"], tags: [], twoSided: false }
+        { prompt: ["the dog"], answers: ["le chien"], tags: [], twoSided: false },
+        { prompt: ["the man"], answers: ["l'homme"], tags: [], twoSided: false },
+        { prompt: ["the woman"], answers: ["la dame"], tags: [], twoSided: false }
     ], () => { return { streak: 0, intervalMinutes: 0, due: undefined }; }),
     newQ: emptySRQueue(10),
     studying: SpacedRepStudying.NewCards,
@@ -106,7 +106,7 @@ export function makeEmptyCard(): SpacedRepCard<SRSimpleContent, SRSimpleAuxData>
     return {
         guid: guidGenerator(),
         content: {
-            prompt: "",
+            prompt: [""],
             answers: [""],
             tags: [],
             twoSided: false
@@ -170,7 +170,10 @@ export class SimpleSpacedRepGen
             st.newQ = emptySRQueue(10);
         }
         for (var i in Object.keys(st.cards)) {
-            var k = Object.keys(st.cards)[i]; 
+            var k = Object.keys(st.cards)[i];
+            if (!Object.prototype.toString.call(st.cards[k].content.prompt).includes("Array")) {
+                st.cards[k].content.prompt = [st.cards[k].content.prompt];
+            }
             if (!("twoSided" in st.cards[k])) {
                 st.cards[k]["twoSided"] = false;
             }
@@ -181,9 +184,21 @@ export class SimpleSpacedRepGen
     applyCardTemplating(card: SpacedRepCardPhysical<SRSimpleContent, SRSimpleAuxData>):
         SpacedRepCardPhysical<SRSimpleContent, SRSimpleAuxData> {
         // Random substitution card templating
-        var res = randomizeStringSub(card.data!.content.prompt, {});
-        card.data!.content.prompt = res[0];
-        card.data!.content.answers = card.data!.content.answers.map((a) => randomizeStringSub(a, res[1])[0]);
+        var new_prompt = [];
+        var new_answers = [];
+        var ctx = {};
+        for (var i in Object.keys(card.data!.content.prompt)) {
+            var res = randomizeStringSub(card.data!.content.prompt[i], ctx);
+            ctx = res[1];
+            new_prompt.push(res[0]);
+        }
+        for (var i in Object.keys(card.data!.content.answers)) {
+            var res = randomizeStringSub(card.data!.content.answers[i], ctx);
+            ctx = res[1];
+            new_answers.push(res[0]);
+        }
+        card.data!.content.prompt = new_prompt; 
+        card.data!.content.answers = new_answers;
         return card;
     }
 
@@ -212,10 +227,10 @@ export class SimpleSpacedRepGen
         if (card.data !== undefined) {
             if (card.data!.content.reversed) {
                 prompt = card.data!.content.answers[0];
-                answers = [card.data!.content.prompt];
-                hint = card.data!.content.prompt;
+                answers = card.data!.content.prompt;
+                hint = card.data!.content.prompt[0];
             } else {
-                prompt = card.data!.content.prompt;
+                prompt = card.data!.content.prompt[0];
                 answers = card.data!.content.answers;
                 hint = card.data!.content.answers[0];
             }
@@ -247,7 +262,7 @@ export class SimpleSpacedRepGen
 
         // When verifying the answer, check if the card has been reversed
         if (cardData.content.twoSided && cardData.content.reversed)
-            return tf(cardData.content.prompt) == tf(answer);
+            return cardData.content.prompt.map(tf).includes(tf(answer));  
         else
             return cardData.content.answers.map(tf).includes(tf(answer));
     }
@@ -327,7 +342,7 @@ function simpleSRMenu(st: SpacedRepState<SRSimpleContent, SRSimpleAuxData, SRSim
             }
         };
 
-        var edMain = swappingTextEditor([c.content.prompt, c.content.answers.join('|')]);
+        var edMain = swappingTextEditor([c.content.prompt.join('|'), c.content.answers.join('|')]);
         edMain.element.style.display = "inline-block";
         edSummary.appendChild(edMain.element);
 
@@ -370,7 +385,7 @@ function simpleSRMenu(st: SpacedRepState<SRSimpleContent, SRSimpleAuxData, SRSim
                 return {
                     guid: c.guid,
                     content: {
-                        prompt: tp[0],
+                        prompt: tp[0].split('|'),
                         answers: tp[1].split('|'),
                         tags: tagsEd.menuToState().split(',').filter((t) => t.length > 0),
                         twoSided: twoSideEd.menuToState()
