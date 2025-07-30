@@ -224,7 +224,8 @@ export abstract class AbstractSpacedRepGen<content, auxdata, settings>
         data: SpacedRepCardPhysical<content, auxdata>
     ): Flashcard;
     abstract nextCardPreprocessing(
-        data: SpacedRepCardPhysical<content, auxdata>
+        data: SpacedRepCardPhysical<content, auxdata>,
+        state: SpacedRepState<content, auxdata, settings>
     ): SpacedRepCardPhysical<content, auxdata>
     abstract checkAnswer(
         answer: string,
@@ -236,7 +237,7 @@ export abstract class AbstractSpacedRepGen<content, auxdata, settings>
         c: SpacedRepCardPhysical<content, auxdata>,
         state: SpacedRepState<content, auxdata, settings>
     ) {
-        return trivialPromise(this.nextCardPreprocessing(c));
+        return trivialPromise(this.nextCardPreprocessing(c, state));
     }
 
     generateCardAsync(

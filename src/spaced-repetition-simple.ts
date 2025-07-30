@@ -76,6 +76,7 @@ export type SRSimpleSettings = {
     correctFactor: number,
     incorrectFactor: number,
     inactiveTags: string[],
+    doTwoSided: boolean,
     readCorrectAnswers: boolean,
     speechSettings: SpeechSettings,
     filterSettings: TextFilterSettings
@@ -86,6 +87,7 @@ export const defaultSimpleSRSettings = {
     correctFactor: 1.6,
     incorrectFactor: 0.5,
     inactiveTags: [],
+    doTwoSided: true,
     readCorrectAnswers: false,
     speechSettings: defaultSpeechSettings(),
     filterSettings: defaultTextFilterSettings
@@ -169,6 +171,9 @@ export class SimpleSpacedRepGen
         if (st.newQ === undefined) {
             st.newQ = emptySRQueue(10);
         }
+        if (st.settings.doTwoSided === undefined) {
+            st.settings.doTwoSided = true;
+        }
         for (var i in Object.keys(st.cards)) {
             var k = Object.keys(st.cards)[i];
             if (!Object.prototype.toString.call(st.cards[k].content.prompt).includes("Array")) {
@@ -202,13 +207,15 @@ export class SimpleSpacedRepGen
         return card;
     }
 
-    nextCardPreprocessing(card: SpacedRepCardPhysical<SRSimpleContent, SRSimpleAuxData>)
-        : SpacedRepCardPhysical<SRSimpleContent, SRSimpleAuxData> {
+    nextCardPreprocessing(
+        card: SpacedRepCardPhysical<SRSimpleContent, SRSimpleAuxData>,
+        st: SpacedRepState<SRSimpleContent, SRSimpleAuxData, SRSimpleSettings>
+        ) : SpacedRepCardPhysical<SRSimpleContent, SRSimpleAuxData> {
         // Clone the card so we don't mess with its state in the deck
         var card = <SpacedRepCardPhysical<SRSimpleContent, SRSimpleAuxData>>JSON.parse(JSON.stringify(card));
         if (card.data !== undefined) {
             card = this.applyCardTemplating(card);
-            if (card.data!.content.twoSided) {
+            if (card.data!.content.twoSided && st.settings.doTwoSided) {
                 card.data!.content.reversed = (Math.random() < 0.5);
             }
         }
@@ -314,6 +321,10 @@ function simpleSRMenu(st: SpacedRepState<SRSimpleContent, SRSimpleAuxData, SRSim
     omitTagsCont.textContent = "Omit cards with the following tags: "
     omitTagsCont.appendChild(omitTagsEditor.element);
 
+    var twoSidedEditor = boolEditor("Study both sides of two-sided cards?", settings.doTwoSided);
+    var twoSidedCont = document.createElement("div");
+    twoSidedCont.appendChild(twoSidedEditor.element);
+
     var filterEditor = textFilterSelectionMenu(settings.filterSettings);
 
     [
@@ -323,6 +334,7 @@ function simpleSRMenu(st: SpacedRepState<SRSimpleContent, SRSimpleAuxData, SRSim
         incorrectFactor.element,
         newQueueSizeEditor.element,
         omitTagsCont,
+        twoSidedCont,
         speechDiv,
         filterEditor.element
     ].map((el) => el.classList.add("deck-menu-submenu"));
@@ -417,6 +429,7 @@ function simpleSRMenu(st: SpacedRepState<SRSimpleContent, SRSimpleAuxData, SRSim
         incorrectFactor.element,
         newQueueSizeEditor.element,
         omitTagsCont,
+        twoSidedCont,
         speechDiv,
         filterEditor.element,
         cardsEditor.element,
@@ -434,7 +447,8 @@ function simpleSRMenu(st: SpacedRepState<SRSimpleContent, SRSimpleAuxData, SRSim
                 readCorrectAnswers: speechCheckbox.menuToState(),
                 speechSettings: speechEditor.menuToState(),
                 filterSettings: filterEditor.menuToState(),
-                inactiveTags: omitTagsEditor.menuToState().split(',')
+                inactiveTags: omitTagsEditor.menuToState().split(','),
+                doTwoSided: twoSidedEditor.menuToState()
             },
             newQ: emptySRQueue(newQueueSizeEditor.menuToState()),
             cards: makeDict(cardsEditor.menuToState(), (c) => c.guid),
