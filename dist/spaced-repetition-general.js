@@ -128,7 +128,7 @@ class AbstractAsyncSpacedRepGen extends flashcard_generator_1.FlashcardGen {
 exports.AbstractAsyncSpacedRepGen = AbstractAsyncSpacedRepGen;
 class AbstractSpacedRepGen extends AbstractAsyncSpacedRepGen {
     nextCardAsyncPreprocessing(c, state) {
-        return (0, utils_1.trivialPromise)(this.nextCardPreprocessing(c));
+        return (0, utils_1.trivialPromise)(this.nextCardPreprocessing(c, state));
     }
     generateCardAsync(st, data) {
         return new Promise((resolve, _) => { resolve(this.generateCard(st, data)); });

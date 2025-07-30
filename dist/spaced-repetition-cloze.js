@@ -16,6 +16,7 @@ exports.defaultSRClozeSettings = {
     clozeServerUrl: "",
     sourceLangs: ["eng", "spa"],
     targetLang: "deu",
+    clozeGroups: [],
     initialHours: 8,
     correctFactor: 1.5,
     incorrectFactor: 0.5,
@@ -52,10 +53,13 @@ function makeEmptyCard() {
 class ClozeSpacedRepGen extends spaced_repetition_general_1.AbstractAsyncSpacedRepGen {
     getGenName() { return "cloze-spaced-repetition"; }
     repairDeckState(st) {
-        this.preFetchClozes(st);
         if (st.newQ === undefined) {
             st.newQ = (0, spaced_repetition_newqueue_1.emptySRQueue)(10);
         }
+        if (st.settings.clozeGroups === undefined) {
+            st.settings.clozeGroups = [];
+        }
+        this.preFetchClozes(st);
         return st;
     }
     cache = new generic_preloader_1.Preloader(10);
@@ -121,8 +125,10 @@ class ClozeSpacedRepGen extends spaced_repetition_general_1.AbstractAsyncSpacedR
         return (0, utils_1.trivialPromise)(tf(card.data.auxdata.cloze.answer) === tf(answer));
     }
     fetchCloze(lemma, settings) {
+        console.log(settings);
         return fetch(`${settings.clozeServerUrl}/cloze?` + new URLSearchParams({
             "srcs": settings.sourceLangs.join(","),
+            "groups": settings.clozeGroups.join(","),
             "tgt": settings.targetLang,
             "lemma": lemma,
             "n": this.cache.numPreload.toString()
@@ -190,9 +196,12 @@ function clozeSRMenu(st) {
     var clozeServerUrlEditor = (0, editor_1.singleTextFieldEditor)(st.settings.clozeServerUrl);
     var clozeSourceLangEditor = (0, editor_1.singleTextFieldEditor)(st.settings.sourceLangs.join(','));
     var clozeTargetLangEditor = (0, editor_1.singleTextFieldEditor)(st.settings.targetLang);
+    var clozeGroupsEditor = (0, editor_1.singleTextFieldEditor)(st.settings.clozeGroups.join(','));
+    clozeGroupsEditor.element.placeholder = "allowed groups...";
     clozeServerDiv.appendChild(clozeServerUrlEditor.element);
     clozeServerDiv.appendChild(clozeSourceLangEditor.element);
     clozeServerDiv.appendChild(clozeTargetLangEditor.element);
+    clozeServerDiv.appendChild(clozeGroupsEditor.element);
     var initHoursEditor = (0, editor_1.scrollNumberEditor)("Initial interval (hours): ", st.settings.initialHours, 1, 240, 1);
     var correctFactor = (0, editor_1.scrollNumberEditor)("Correct factor: ", st.settings.correctFactor, 1, 10, 0.1);
     var incorrectFactor = (0, editor_1.scrollNumberEditor)("Incorrect factor: ", st.settings.incorrectFactor, 0, 1.0, 0.01);
@@ -242,7 +251,7 @@ function clozeSRMenu(st) {
             menuToState: () => {
                 let tp = ed.menuToState();
                 c.content.key = tp[0];
-                c.content.tags = tp[1].split(",");
+                c.content.tags = tp[1].length == 0 ? [] : tp[1].split(",");
                 return c;
             }
         };
@@ -273,6 +282,7 @@ function clozeSRMenu(st) {
                     clozeServerUrl: clozeServerUrlEditor.menuToState(),
                     sourceLangs: clozeSourceLangEditor.menuToState().split(","),
                     targetLang: clozeTargetLangEditor.menuToState(),
+                    clozeGroups: clozeGroupsEditor.menuToState().split(","),
                     initialHours: initHoursEditor.menuToState(),
                     correctFactor: correctFactor.menuToState(),
                     incorrectFactor: incorrectFactor.menuToState(),
