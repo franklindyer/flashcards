@@ -261,6 +261,7 @@ export class ClozeSpacedRepGen
         card: SpacedRepCardPhysical<SRClozeContent, SRClozeAuxData>,
         st: SpacedRepState<SRClozeContent, SRClozeAuxData, SRClozeSettings>
     ): Promise<SpacedRepCardPhysical<SRClozeContent, SRClozeAuxData>> {
+        card.data!.auxdata.cloze = undefined;
         if (st.settings.clozeServerUrl.length == 0 || card.data === undefined) {
             // Returns with .cloze attribute undefined, indicating failure
             return trivialPromise(card);
