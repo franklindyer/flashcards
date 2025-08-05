@@ -36,6 +36,7 @@ export type FlashcardDeck<S> = {
 
 export const gDeckTypeRegistry: IDictionary<FlashcardDeckType<any, any>> = {};
 export const gDeckRegistry: IDictionary<FlashcardDeck<any>> = {};
+export const gDeckDefaultRegistry: IDictionary<FlashcardDeck<any>> = {};
 
 export function setDeck(deckSlug: string, deckString: string, callback: () => void) {
     var deck = <FlashcardDeck<any>>JSON.parse(deckString);
@@ -175,7 +176,7 @@ export function registerDeckType<S, D>(
         gen: gen,
         editor: mkEd
     };
-    gDeckRegistry[defaultSlug] = {
+    gDeckDefaultRegistry[gen.getGenName()] = {
         name: defaultName,
         slug: defaultSlug,
         type: gen.getGenName(),
