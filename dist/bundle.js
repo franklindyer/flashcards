@@ -2374,6 +2374,7 @@ exports.defaultSRClozeSettings = {
     clozeServerUrl: "",
     sourceLangs: ["eng", "spa"],
     targetLang: "deu",
+    clozeGroups: [],
     initialHours: 8,
     correctFactor: 1.5,
     incorrectFactor: 0.5,
@@ -2410,10 +2411,13 @@ function makeEmptyCard() {
 class ClozeSpacedRepGen extends spaced_repetition_general_1.AbstractAsyncSpacedRepGen {
     getGenName() { return "cloze-spaced-repetition"; }
     repairDeckState(st) {
-        this.preFetchClozes(st);
         if (st.newQ === undefined) {
             st.newQ = (0, spaced_repetition_newqueue_1.emptySRQueue)(10);
         }
+        if (st.settings.clozeGroups === undefined) {
+            st.settings.clozeGroups = [];
+        }
+        this.preFetchClozes(st);
         return st;
     }
     cache = new generic_preloader_1.Preloader(10);
@@ -2479,8 +2483,10 @@ class ClozeSpacedRepGen extends spaced_repetition_general_1.AbstractAsyncSpacedR
         return (0, utils_1.trivialPromise)(tf(card.data.auxdata.cloze.answer) === tf(answer));
     }
     fetchCloze(lemma, settings) {
+        console.log(settings);
         return fetch(`${settings.clozeServerUrl}/cloze?` + new URLSearchParams({
             "srcs": settings.sourceLangs.join(","),
+            "groups": settings.clozeGroups.join(","),
             "tgt": settings.targetLang,
             "lemma": lemma,
             "n": this.cache.numPreload.toString()
@@ -2548,9 +2554,12 @@ function clozeSRMenu(st) {
     var clozeServerUrlEditor = (0, editor_1.singleTextFieldEditor)(st.settings.clozeServerUrl);
     var clozeSourceLangEditor = (0, editor_1.singleTextFieldEditor)(st.settings.sourceLangs.join(','));
     var clozeTargetLangEditor = (0, editor_1.singleTextFieldEditor)(st.settings.targetLang);
+    var clozeGroupsEditor = (0, editor_1.singleTextFieldEditor)(st.settings.clozeGroups.join(','));
+    clozeGroupsEditor.element.placeholder = "allowed groups...";
     clozeServerDiv.appendChild(clozeServerUrlEditor.element);
     clozeServerDiv.appendChild(clozeSourceLangEditor.element);
     clozeServerDiv.appendChild(clozeTargetLangEditor.element);
+    clozeServerDiv.appendChild(clozeGroupsEditor.element);
     var initHoursEditor = (0, editor_1.scrollNumberEditor)("Initial interval (hours): ", st.settings.initialHours, 1, 240, 1);
     var correctFactor = (0, editor_1.scrollNumberEditor)("Correct factor: ", st.settings.correctFactor, 1, 10, 0.1);
     var incorrectFactor = (0, editor_1.scrollNumberEditor)("Incorrect factor: ", st.settings.incorrectFactor, 0, 1.0, 0.01);
@@ -2600,7 +2609,7 @@ function clozeSRMenu(st) {
             menuToState: () => {
                 let tp = ed.menuToState();
                 c.content.key = tp[0];
-                c.content.tags = tp[1].split(",");
+                c.content.tags = tp[1].length == 0 ? [] : tp[1].split(",");
                 return c;
             }
         };
@@ -2631,6 +2640,7 @@ function clozeSRMenu(st) {
                     clozeServerUrl: clozeServerUrlEditor.menuToState(),
                     sourceLangs: clozeSourceLangEditor.menuToState().split(","),
                     targetLang: clozeTargetLangEditor.menuToState(),
+                    clozeGroups: clozeGroupsEditor.menuToState().split(","),
                     initialHours: initHoursEditor.menuToState(),
                     correctFactor: correctFactor.menuToState(),
                     incorrectFactor: incorrectFactor.menuToState(),
@@ -2784,7 +2794,7 @@ class AbstractAsyncSpacedRepGen extends flashcard_generator_1.FlashcardGen {
 exports.AbstractAsyncSpacedRepGen = AbstractAsyncSpacedRepGen;
 class AbstractSpacedRepGen extends AbstractAsyncSpacedRepGen {
     nextCardAsyncPreprocessing(c, state) {
-        return (0, utils_1.trivialPromise)(this.nextCardPreprocessing(c));
+        return (0, utils_1.trivialPromise)(this.nextCardPreprocessing(c, state));
     }
     generateCardAsync(st, data) {
         return new Promise((resolve, _) => { resolve(this.generateCard(st, data)); });
@@ -2882,15 +2892,16 @@ exports.defaultSimpleSRSettings = {
     correctFactor: 1.6,
     incorrectFactor: 0.5,
     inactiveTags: [],
+    doTwoSided: true,
     readCorrectAnswers: false,
     speechSettings: (0, speech_1.defaultSpeechSettings)(),
     filterSettings: text_filters_1.defaultTextFilterSettings
 };
 exports.defaultSimpleSRState = {
     cards: (0, spaced_repetition_general_1.makeSpacedRepCardDict)([
-        { prompt: "the dog", answers: ["le chien"], tags: [] },
-        { prompt: "the man", answers: ["l'homme"], tags: [] },
-        { prompt: "the woman", answers: ["la dame"], tags: [] }
+        { prompt: ["the dog"], answers: ["le chien"], tags: [], twoSided: false },
+        { prompt: ["the man"], answers: ["l'homme"], tags: [], twoSided: false },
+        { prompt: ["the woman"], answers: ["la dame"], tags: [], twoSided: false }
     ], () => { return { streak: 0, intervalMinutes: 0, due: undefined }; }),
     newQ: (0, spaced_repetition_newqueue_1.emptySRQueue)(10),
     studying: spaced_repetition_general_1.SpacedRepStudying.NewCards,
@@ -2900,9 +2911,10 @@ function makeEmptyCard() {
     return {
         guid: (0, utils_1.guidGenerator)(),
         content: {
-            prompt: "",
+            prompt: [""],
             answers: [""],
-            tags: []
+            tags: [],
+            twoSided: false
         },
         due: new Date(),
         intervalMinutes: 0,
@@ -2949,20 +2961,47 @@ class SimpleSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGe
         if (st.newQ === undefined) {
             st.newQ = (0, spaced_repetition_newqueue_1.emptySRQueue)(10);
         }
+        if (st.settings.doTwoSided === undefined) {
+            st.settings.doTwoSided = true;
+        }
+        for (var i in Object.keys(st.cards)) {
+            var k = Object.keys(st.cards)[i];
+            if (!Object.prototype.toString.call(st.cards[k].content.prompt).includes("Array")) {
+                st.cards[k].content.prompt = [st.cards[k].content.prompt];
+            }
+            if (!("twoSided" in st.cards[k])) {
+                st.cards[k]["twoSided"] = false;
+            }
+        }
         return st;
     }
     applyCardTemplating(card) {
         // Random substitution card templating
-        var res = (0, random_templating_1.randomizeStringSub)(card.data.content.prompt, {});
-        card.data.content.prompt = res[0];
-        card.data.content.answers = card.data.content.answers.map((a) => (0, random_templating_1.randomizeStringSub)(a, res[1])[0]);
+        var new_prompt = [];
+        var new_answers = [];
+        var ctx = {};
+        for (var i in Object.keys(card.data.content.prompt)) {
+            var res = (0, random_templating_1.randomizeStringSub)(card.data.content.prompt[i], ctx);
+            ctx = res[1];
+            new_prompt.push(res[0]);
+        }
+        for (var i in Object.keys(card.data.content.answers)) {
+            var res = (0, random_templating_1.randomizeStringSub)(card.data.content.answers[i], ctx);
+            ctx = res[1];
+            new_answers.push(res[0]);
+        }
+        card.data.content.prompt = new_prompt;
+        card.data.content.answers = new_answers;
         return card;
     }
-    nextCardPreprocessing(card) {
+    nextCardPreprocessing(card, st) {
         // Clone the card so we don't mess with its state in the deck
         var card = JSON.parse(JSON.stringify(card));
         if (card.data !== undefined) {
             card = this.applyCardTemplating(card);
+            if (card.data.content.twoSided && st.settings.doTwoSided) {
+                card.data.content.reversed = (Math.random() < 0.5);
+            }
         }
         return card;
     }
@@ -2972,9 +3011,16 @@ class SimpleSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGe
         var answers = [];
         var hint = "You cannot continue studying until more cards become due.";
         if (card.data !== undefined) {
-            prompt = card.data.content.prompt;
-            answers = card.data.content.answers;
-            hint = card.data.content.answers[0];
+            if (card.data.content.reversed) {
+                prompt = card.data.content.answers[0];
+                answers = card.data.content.prompt;
+                hint = card.data.content.prompt[0];
+            }
+            else {
+                prompt = card.data.content.prompt[0];
+                answers = card.data.content.answers;
+                hint = card.data.content.answers[0];
+            }
         }
         var fontSize = 100.0 / (10.0 * Math.log(10 + prompt.length));
         a.style.fontSize = `${fontSize}vw`;
@@ -2991,13 +3037,17 @@ class SimpleSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGe
             return false;
         var cardData = card.data;
         var tf = (s) => (0, text_filters_1.applyTextFilter)(s, st.settings.filterSettings);
-        return cardData.content.answers.map(tf).includes(tf(answer));
+        // When verifying the answer, check if the card has been reversed
+        if (cardData.content.twoSided && cardData.content.reversed)
+            return cardData.content.prompt.map(tf).includes(tf(answer));
+        else
+            return cardData.content.answers.map(tf).includes(tf(answer));
     }
     correctEffect(st, card, attempt, resolve) {
         var cardData = card.data;
         if (st.settings.readCorrectAnswers) {
             var ss = st.settings.speechSettings;
-            if (attempt.length > 0) {
+            if (attempt.length > 0 && !(cardData.content.reversed)) {
                 (0, speech_1.utter)(attempt, ss.voice, ss.rate, ss.pitch, resolve);
             }
             else {
@@ -3029,6 +3079,9 @@ function simpleSRMenu(st) {
     var omitTagsCont = document.createElement("div");
     omitTagsCont.textContent = "Omit cards with the following tags: ";
     omitTagsCont.appendChild(omitTagsEditor.element);
+    var twoSidedEditor = (0, editor_1.boolEditor)("Study both sides of two-sided cards?", settings.doTwoSided);
+    var twoSidedCont = document.createElement("div");
+    twoSidedCont.appendChild(twoSidedEditor.element);
     var filterEditor = (0, text_filters_1.textFilterSelectionMenu)(settings.filterSettings);
     [
         studyingEditor.element,
@@ -3037,6 +3090,7 @@ function simpleSRMenu(st) {
         incorrectFactor.element,
         newQueueSizeEditor.element,
         omitTagsCont,
+        twoSidedCont,
         speechDiv,
         filterEditor.element
     ].map((el) => el.classList.add("deck-menu-submenu"));
@@ -3053,12 +3107,14 @@ function simpleSRMenu(st) {
                 e.preventDefault();
             }
         };
-        var edMain = (0, editor_1.swappingTextEditor)([c.content.prompt, c.content.answers.join('|')]);
+        var edMain = (0, editor_1.swappingTextEditor)([c.content.prompt.join('|'), c.content.answers.join('|')]);
         edMain.element.style.display = "inline-block";
         edSummary.appendChild(edMain.element);
         var tagsEd = (0, editor_1.singleTextFieldEditor)(c.content.tags.join(','));
         tagsEd.element.placeholder = "tags...";
         edDetails.appendChild(tagsEd.element);
+        var twoSideEd = (0, editor_1.boolEditor)("Double-sided card?", c.content.twoSided);
+        edDetails.appendChild(twoSideEd.element);
         var cardInfo = document.createElement("a");
         cardInfo.classList.add("sr-card-due-date");
         cardInfo.style.color = "lightgray";
@@ -3090,9 +3146,10 @@ function simpleSRMenu(st) {
                 return {
                     guid: c.guid,
                     content: {
-                        prompt: tp[0],
+                        prompt: tp[0].split('|'),
                         answers: tp[1].split('|'),
-                        tags: tagsEd.menuToState().split(',').filter((t) => t.length > 0)
+                        tags: tagsEd.menuToState().split(',').filter((t) => t.length > 0),
+                        twoSided: twoSideEd.menuToState()
                     },
                     due: c.due,
                     intervalMinutes: c.intervalMinutes,
@@ -3115,6 +3172,7 @@ function simpleSRMenu(st) {
         incorrectFactor.element,
         newQueueSizeEditor.element,
         omitTagsCont,
+        twoSidedCont,
         speechDiv,
         filterEditor.element,
         cardsEditor.element,
@@ -3132,7 +3190,8 @@ function simpleSRMenu(st) {
                     readCorrectAnswers: speechCheckbox.menuToState(),
                     speechSettings: speechEditor.menuToState(),
                     filterSettings: filterEditor.menuToState(),
-                    inactiveTags: omitTagsEditor.menuToState().split(',')
+                    inactiveTags: omitTagsEditor.menuToState().split(','),
+                    doTwoSided: twoSidedEditor.menuToState()
                 },
                 newQ: (0, spaced_repetition_newqueue_1.emptySRQueue)(newQueueSizeEditor.menuToState()),
                 cards: (0, utils_1.makeDict)(cardsEditor.menuToState(), (c) => c.guid),

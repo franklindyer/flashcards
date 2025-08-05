@@ -86,7 +86,7 @@ def get_cloze():
     tgt_lang = request.args.get("tgt")
     lemma = request.args.get("lemma")
     groups = request.args.get("groups")
-    if groups is None:
+    if groups is None or len(groups) == 0:
         groups = all_groups
     else:
         groups = groups.split(',')

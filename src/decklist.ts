@@ -8,7 +8,9 @@ import {
 import {
     FlashcardDeck,
     runDeck,
+    gDeckTypeRegistry,
     gDeckRegistry,
+    gDeckDefaultRegistry,
     saveDeck,
     setDeck,
     eraseDeck
@@ -64,6 +66,30 @@ export function generateDecklistMenu(
     var decklistEditor = <HTMLElement>document.getElementById("flashcard-decklist-editor");
     decklistEditor.innerHTML = "";
     var decklistOverlay = <HTMLElement>document.getElementById("flashcard-decklist-overlay");
+
+    var deckTypeList = document.createElement("select");
+    deckTypeList.id = "deck-type-dropdown";
+    for (var i in Object.keys(gDeckTypeRegistry)) {
+        var deckTypeId = Object.keys(gDeckTypeRegistry)[i];
+        var deckTypeName = gDeckDefaultRegistry[deckTypeId].name;
+        var deckTypeOption = document.createElement("option");
+        deckTypeOption.value = deckTypeId;
+        deckTypeOption.textContent = deckTypeName;
+        deckTypeList.appendChild(deckTypeOption);
+    }
+    var newDeckBtn = document.createElement("button");
+    newDeckBtn.textContent = "Create new deck";
+    newDeckBtn.onclick = (e) => {
+        deckTypeId = (<HTMLInputElement>document.getElementById("deck-type-dropdown"))!.value;
+        var guid = guidGenerator();
+        var deckClone = <FlashcardDeck<any>>JSON.parse(JSON.stringify(gDeckDefaultRegistry[deckTypeId]));
+        deckClone.slug = guid;
+        decklist[guid] = deckClone;
+        generateDecklistMenu(decklist, onfinish);
+    };
+    decklistEditor.appendChild(newDeckBtn);
+    decklistEditor.appendChild(deckTypeList);
+    decklistEditor.appendChild(document.createElement("br"));
 
     var syncServerBtn = document.createElement("button");
     syncServerBtn.textContent = "Setup sync server";
@@ -128,20 +154,6 @@ export function generateDecklistMenu(
             if (e.stopPropagation) e.stopPropagation();
             generateDecklistMenu(decklist, onfinish);
         })(decklist[k]);
-
-        var deckCloneBtn = document.createElement("button");
-        deckCloneBtn.title = "Clone deck";
-        deckCloneBtn.classList.add("deck-editor-button");
-        deckCloneBtn.innerHTML = "<img src='copy.png'/>";
-        deckCloneBtn.onclick = ((dk) => (e) => {
-            var guid = guidGenerator();
-            var deckClone = <FlashcardDeck<any>>JSON.parse(JSON.stringify(dk));
-            deckClone.slug = guid;
-            decklist[guid] = deckClone;
-            e.cancelBubble = true;
-            if (e.stopPropagation) e.stopPropagation();
-            generateDecklistMenu(decklist, onfinish);
-        })(decklist[k])
         
         var deckUploadBtn = document.createElement("button");
         deckUploadBtn.title = "Upload deck to server";
@@ -167,7 +179,6 @@ export function generateDecklistMenu(
         deckDiv.appendChild(deckDownloadBtn);
         deckDiv.appendChild(deckEditBtn);
         deckDiv.appendChild(deckDeleteBtn);
-        deckDiv.appendChild(deckCloneBtn);
         decklistEditor.appendChild(deckDiv);
 
     }
