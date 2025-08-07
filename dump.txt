@@ -1,4 +1,30 @@
+[0m[7m[1m[32m PASS [39m[22m[27m[0m [2mtests/[22m[1mutils.test.ts[22m
+  arbitrary JSON repairing algorithm works correctly
+    [32m✓[39m [2mrepairing same object has no effect (1 ms)[22m
 
-> web-flashcards@1.0.0 develop
-> webpack-dev-server
+[0m[7m[1m[32m PASS [39m[22m[27m[0m [2mtests/[22m[1mspaced-repetition-common.test.ts[22m
+  simple spaced repetition generator common unit tests
+    [32m✓[39m [2mcan generate cards (2 ms)[22m
+    [32m✓[39m [2mcannot generate new cards indefinitely (1 ms)[22m
+    [32m✓[39m [2mdate getter and setter on test class works[22m
+    [32m✓[39m [2mthere are not initially any due cards[22m
+    [32m✓[39m [2mnew cards come due after enough hours (1 ms)[22m
+    [32m✓[39m [2mdue cards can be studied each day for many days (2 ms)[22m
+    [32m✓[39m [2mthere are no duplicated new cards in each run of new cards (1 ms)[22m
+    [32m✓[39m [2mnumber of due cards decreases by 1 precisely when card is marked correct (45 ms)[22m
 
+[0m[7m[1m[32m PASS [39m[22m[27m[0m [2mtests/[22m[1muniform-key-value.test.ts[22m
+  uniform key-value generator unit tests
+    [32m✓[39m [2mcan generate cards (1 ms)[22m
+    [32m✓[39m [2mgenerated cards appear uniformly distributed (1 ms)[22m
+    [32m✓[39m [2mdeck state does not change[22m
+
+[0m[7m[1m[32m PASS [39m[22m[27m[0m [2mtests/[22m[1msample.test.ts[22m
+  example unit tests
+    [32m✓[39m [2m1 plus 2 should equal 3[22m
+
+[1mTest Suites: [22m[1m[32m4 passed[39m[22m, 4 total
+[1mTests:       [22m[1m[32m13 passed[39m[22m, 13 total
+[1mSnapshots:   [22m0 total
+[1mTime:[22m        0.724 s, estimated 1 s
+[2mRan all test suites[22m[2m.[22m

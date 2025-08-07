@@ -3,7 +3,9 @@ import {
     guidGenerator,
     makeDict,
     trivialPromise,
-    getSRFutureDateInfo
+    getSRFutureDateInfo,
+    recursiveRepairJSON,
+    recursiveRepairEachValueJSON
 } from "./utils"
 import {
     Preloader
@@ -138,12 +140,8 @@ export class ClozeSpacedRepGen
     getGenName(): string { return "cloze-spaced-repetition"; }
 
     repairDeckState(st: any): any {
-        if (st.newQ === undefined) {
-            st.newQ = emptySRQueue(10);
-        }
-        if (st.settings.clozeGroups === undefined) {
-            st.settings.clozeGroups = [];
-        }
+        st = recursiveRepairJSON(st, defaultSRClozeState, ["cards"]);
+        st.cards = recursiveRepairEachValueJSON(st.cards, Object.values(defaultSRClozeState.cards)[0]);
         this.preFetchClozes(st);
         return st;
     }

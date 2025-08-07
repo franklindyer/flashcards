@@ -85,3 +85,52 @@ export function iconButton(imgUrl: string, effect: () => void): HTMLElement {
     btn.onclick = effect;
     return btn;
 }
+
+export function recursiveRepairJSON(obj: any, defaultObj: any, omitKeys: string[] = []) {
+    if (typeof obj === 'string' || obj instanceof String)
+        return obj;
+
+    var objKeys = Object.keys(obj);
+    var defaultKeys = Object.keys(defaultObj);
+
+    for (var i in defaultKeys) {
+        var k = defaultKeys[i];
+        if (omitKeys.includes(k))
+            continue;        
+
+        if (!(k in obj)) {
+            obj[k] = JSON.parse(JSON.stringify(defaultObj[k]));
+        }
+
+        if (["number", "string", "boolean", "null"].includes(typeof obj[k]) || obj[k] === null)
+            continue;
+
+        if (Array.isArray(obj[k])) {
+            if (defaultObj[k].length > 0) {
+                for (var j in obj[k]) {
+                    obj[k][j] = recursiveRepairJSON(obj[k][j], defaultObj[k][0], omitKeys);
+                }
+            }
+        } else if (typeof obj[k] === "object") {
+            obj[k] = recursiveRepairJSON(obj[k], defaultObj[k], omitKeys);
+        }
+    }
+   
+    for (var i in objKeys) {
+        var k = objKeys[i];
+        if (!(k in defaultObj)) {
+            delete obj[k];
+        }
+    }
+
+    return obj;
+}
+
+export function recursiveRepairEachValueJSON(objDict: any, defaultObj: any, omitKeys: string[] = []) {
+    var objDictKeys = Object.keys(objDict);
+    for (var i in objDictKeys) {
+        var k = objDictKeys[i];
+        objDict[k] = recursiveRepairJSON(objDict[k], defaultObj, omitKeys);
+    }
+    return objDict;
+}

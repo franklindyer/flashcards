@@ -4,7 +4,9 @@ import {
     makeDict,
     getSRFutureDateInfo,
     iconButton,
-    trivialPromise
+    trivialPromise,
+    recursiveRepairJSON,
+    recursiveRepairEachValueJSON
 } from "./utils"
 import {
     randomizeStringSub
@@ -98,7 +100,7 @@ export const defaultSimpleSRState: SpacedRepState<SRSimpleContent, SRSimpleAuxDa
         { prompt: ["the dog"], answers: ["le chien"], tags: [], twoSided: false },
         { prompt: ["the man"], answers: ["l'homme"], tags: [], twoSided: false },
         { prompt: ["the woman"], answers: ["la dame"], tags: [], twoSided: false }
-    ], () => { return { streak: 0, intervalMinutes: 0, due: undefined }; }),
+    ], () => { return { streak: 0, intervalMinutes: 0 }; }),
     newQ: emptySRQueue(10),
     studying: SpacedRepStudying.NewCards,
     settings: defaultSimpleSRSettings
@@ -168,21 +170,8 @@ export class SimpleSpacedRepGen
     }
 
     repairDeckState(st: any): any {
-        if (st.newQ === undefined) {
-            st.newQ = emptySRQueue(10);
-        }
-        if (st.settings.doTwoSided === undefined) {
-            st.settings.doTwoSided = true;
-        }
-        for (var i in Object.keys(st.cards)) {
-            var k = Object.keys(st.cards)[i];
-            if (!Object.prototype.toString.call(st.cards[k].content.prompt).includes("Array")) {
-                st.cards[k].content.prompt = [st.cards[k].content.prompt];
-            }
-            if (!("twoSided" in st.cards[k])) {
-                st.cards[k]["twoSided"] = false;
-            }
-        }
+        st = recursiveRepairJSON(st, defaultSimpleSRState, ["cards"]);
+        st.cards = recursiveRepairEachValueJSON(st.cards, Object.values(defaultSimpleSRState.cards)[0]); 
         return st;
     }
 

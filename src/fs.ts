@@ -1,5 +1,6 @@
 const opfsRootP = () => navigator.storage.getDirectory();
 const deckFolderP = () => opfsRootP().then((r) => r.getDirectoryHandle("decks", { create: true }));
+const logFolderP = () => opfsRootP().then((r) => r.getDirectoryHandle("logs", { create: true }));
 
 export function getDeckJSON(deckSlug: string): Promise<string> {
     var deckHandleP = deckFolderP().then((f) => f.getFileHandle(deckSlug));
