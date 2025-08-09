@@ -165,7 +165,6 @@ export function getStartingDeck(defaultSlug: string): string {
 
 export function registerDeckType<S, D>(
     gen: FlashcardGen<S, D>,
-    mkEd: (s: S) => StateEditor<S>,
     defaultSlug: string,
     defaultName: string,
     defaultState: S,
@@ -174,7 +173,7 @@ export function registerDeckType<S, D>(
     gDeckTypeRegistry[gen.getGenName()] = {
         slug: gen.getGenName(),
         gen: gen,
-        editor: mkEd
+        editor: gen.makeEditor
     };
     gDeckDefaultRegistry[gen.getGenName()] = {
         name: defaultName,

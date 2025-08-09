@@ -57,21 +57,21 @@ export class KVFlashcardGen extends FlashcardSyncGen<KVFlashcardState, BasicCard
         return renderCard("basic-template", data);
     }
 
-    correctEffect(_: KVFlashcardState, __: BasicCardData, ___: string, resolve: () => void) { resolve() };
-    repairDeckState(st: any) { return st; }
-}
-
-function makeKVEditor(state: KVFlashcardState): StateEditor<KVFlashcardState> {
-    var transEd = makeTranslationEditor(state.deck, (x: string) => true);
-    return {
-        element: transEd.element,
-        menuToState: () => {
-            return {
-                deck: transEd.menuToState(),
-                history: state.history
-            };
+    makeEditor(state: KVFlashcardState): StateEditor<KVFlashcardState> {
+        var transEd = makeTranslationEditor(state.deck, (x: string) => true);
+        return {
+            element: transEd.element,
+            menuToState: () => {
+                return {
+                    deck: transEd.menuToState(),
+                    history: state.history
+                };
+            }
         }
     }
+
+    correctEffect(_: KVFlashcardState, __: BasicCardData, ___: string, resolve: () => void) { resolve() };
+    repairDeckState(st: any) { return st; }
 }
 
 var kvDefaultState: KVFlashcardState = {
@@ -85,7 +85,6 @@ var kvDefaultState: KVFlashcardState = {
 
 registerDeckType(
     new KVFlashcardGen(),
-    makeKVEditor,
     "key-value-quizzer",
     "Simple key-value quizzer",
     kvDefaultState

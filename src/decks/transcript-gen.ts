@@ -68,33 +68,33 @@ class TranscriptFlashcardGen extends FlashcardSyncGen<TranscriptDeckState, Trans
         return renderCard("transcript-template", data);
     }
 
-    correctEffect(_: TranscriptDeckState, __: TranscriptCardData, ___: string, resolve: () => void) { resolve() };
-    repairDeckState(st: any) { return st; } 
-}
+    makeEditor(state: TranscriptDeckState): StateEditor<TranscriptDeckState> {
+        var speechEd = speechSettingsEditor(state.settings.speechSettings);
+        speechEd.element.classList.add("deck-menu-submenu");
 
-function makeTranscriptEditor(state: TranscriptDeckState): StateEditor<TranscriptDeckState> {
-    var speechEd = speechSettingsEditor(state.settings.speechSettings);
-    speechEd.element.classList.add("deck-menu-submenu");
+        var fileEd = fileUploadEditor("Upload a list of phrases", (s: string) => {});
+        fileEd.element.classList.add("deck-menu-submenu");   
+     
+        var container = document.createElement("div");
+        container.appendChild(speechEd.element);
+        container.appendChild(fileEd.element);
 
-    var fileEd = fileUploadEditor("Upload a list of phrases", (s: string) => {});
-    fileEd.element.classList.add("deck-menu-submenu");   
- 
-    var container = document.createElement("div");
-    container.appendChild(speechEd.element);
-    container.appendChild(fileEd.element);
-
-    return {
-        element: container,
-        menuToState: () => {
-            var fileInput = fileEd.menuToState();
-            return {
-                deck: fileInput.length == 0 ? state.deck : fileInput.split('\n').map((x: string) => x.trim()),
-                settings: {
-                    speechSettings: speechEd.menuToState()
-                }
-            };
+        return {
+            element: container,
+            menuToState: () => {
+                var fileInput = fileEd.menuToState();
+                return {
+                    deck: fileInput.length == 0 ? state.deck : fileInput.split('\n').map((x: string) => x.trim()),
+                    settings: {
+                        speechSettings: speechEd.menuToState()
+                    }
+                };
+            }
         }
     }
+
+    correctEffect(_: TranscriptDeckState, __: TranscriptCardData, ___: string, resolve: () => void) { resolve() };
+    repairDeckState(st: any) { return st; } 
 }
 
 var transcriptionDefaultState: TranscriptDeckState = {
@@ -111,7 +111,6 @@ var transcriptionDefaultState: TranscriptDeckState = {
 
 registerDeckType(
     new TranscriptFlashcardGen(),
-    makeTranscriptEditor,
     "transcription-quizzer",
     "Transcription quizzer",
     transcriptionDefaultState

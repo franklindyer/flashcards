@@ -315,142 +315,142 @@ export class ClozeSpacedRepGen
         fl.el.appendChild(makeCardsLeftSpan(card));
         return trivialPromise(fl);
     }
-}
 
-function clozeSRMenu(st: SpacedRepState<SRClozeContent, SRClozeAuxData, SRClozeSettings>):
-    StateEditor<SpacedRepState<SRClozeContent, SRClozeAuxData, SRClozeSettings>> {
-    var contDiv = document.createElement("div");
+    makeEditor(st: SpacedRepState<SRClozeContent, SRClozeAuxData, SRClozeSettings>):
+        StateEditor<SpacedRepState<SRClozeContent, SRClozeAuxData, SRClozeSettings>> {
+        var contDiv = document.createElement("div");
 
-    var infoWidget = infoWidgetSR(st);
-    var studyingEditor = studyingEditorSR(st);
-    var newQueueSizeEditor = scrollNumberEditor("Max new cards to study at once: ", st.newQ.maxNewCards, 1, 100, 1);
+        var infoWidget = infoWidgetSR(st);
+        var studyingEditor = studyingEditorSR(st);
+        var newQueueSizeEditor = scrollNumberEditor("Max new cards to study at once: ", st.newQ.maxNewCards, 1, 100, 1);
 
-    var clozeServerDiv = document.createElement("div");
-    clozeServerDiv.classList.add("deck-menu-submenu");
-    var clozeServerUrlEditor = singleTextFieldEditor(st.settings.clozeServerUrl)
-    var clozeSourceLangEditor = singleTextFieldEditor(st.settings.sourceLangs.join(','));
-    var clozeTargetLangEditor = singleTextFieldEditor(st.settings.targetLang);
-    var clozeGroupsEditor = singleTextFieldEditor(st.settings.clozeGroups.join(','));
-    (<HTMLInputElement>clozeGroupsEditor.element).placeholder = "allowed groups...";
-    clozeServerDiv.appendChild(clozeServerUrlEditor.element);
-    clozeServerDiv.appendChild(clozeSourceLangEditor.element);
-    clozeServerDiv.appendChild(clozeTargetLangEditor.element);
-    clozeServerDiv.appendChild(clozeGroupsEditor.element);
+        var clozeServerDiv = document.createElement("div");
+        clozeServerDiv.classList.add("deck-menu-submenu");
+        var clozeServerUrlEditor = singleTextFieldEditor(st.settings.clozeServerUrl)
+        var clozeSourceLangEditor = singleTextFieldEditor(st.settings.sourceLangs.join(','));
+        var clozeTargetLangEditor = singleTextFieldEditor(st.settings.targetLang);
+        var clozeGroupsEditor = singleTextFieldEditor(st.settings.clozeGroups.join(','));
+        (<HTMLInputElement>clozeGroupsEditor.element).placeholder = "allowed groups...";
+        clozeServerDiv.appendChild(clozeServerUrlEditor.element);
+        clozeServerDiv.appendChild(clozeSourceLangEditor.element);
+        clozeServerDiv.appendChild(clozeTargetLangEditor.element);
+        clozeServerDiv.appendChild(clozeGroupsEditor.element);
 
-    var initHoursEditor = scrollNumberEditor("Initial interval (hours): ", st.settings.initialHours, 1, 240, 1);
-    var correctFactor = scrollNumberEditor("Correct factor: ", st.settings.correctFactor, 1, 10, 0.1);
-    var incorrectFactor = scrollNumberEditor("Incorrect factor: ", st.settings.incorrectFactor, 0, 1.0, 0.01);
+        var initHoursEditor = scrollNumberEditor("Initial interval (hours): ", st.settings.initialHours, 1, 240, 1);
+        var correctFactor = scrollNumberEditor("Correct factor: ", st.settings.correctFactor, 1, 10, 0.1);
+        var incorrectFactor = scrollNumberEditor("Incorrect factor: ", st.settings.incorrectFactor, 0, 1.0, 0.01);
 
-    var omitTagsEditor = singleTextFieldEditor(st.settings.inactiveTags.join(','));
-    (<HTMLInputElement>omitTagsEditor.element).placeholder = "comma-separated tags...";
-    var omitTagsCont = document.createElement("div");
-    omitTagsCont.textContent = "Omit cards with the following tags: "
-    omitTagsCont.appendChild(omitTagsEditor.element);
+        var omitTagsEditor = singleTextFieldEditor(st.settings.inactiveTags.join(','));
+        (<HTMLInputElement>omitTagsEditor.element).placeholder = "comma-separated tags...";
+        var omitTagsCont = document.createElement("div");
+        omitTagsCont.textContent = "Omit cards with the following tags: "
+        omitTagsCont.appendChild(omitTagsEditor.element);
 
-    var speechCheckbox = boolEditor("Speak correct answers using text-to-speech?", st.settings.readCorrectAnswers);
-    var speechEditor = speechSettingsEditor(st.settings.speechSettings);
-    var speechDiv = document.createElement("div");
-    speechDiv.appendChild(speechCheckbox.element);
-    speechDiv.appendChild(speechEditor.element);
+        var speechCheckbox = boolEditor("Speak correct answers using text-to-speech?", st.settings.readCorrectAnswers);
+        var speechEditor = speechSettingsEditor(st.settings.speechSettings);
+        var speechDiv = document.createElement("div");
+        speechDiv.appendChild(speechCheckbox.element);
+        speechDiv.appendChild(speechEditor.element);
 
-    var omitTagsEditor = singleTextFieldEditor(st.settings.inactiveTags.join(','));
-    (<HTMLInputElement>omitTagsEditor.element).placeholder = "comma-separated tags...";
-    var omitTagsCont = document.createElement("div");
-    omitTagsCont.textContent = "Omit cards with the following tags: "
-    omitTagsCont.appendChild(omitTagsEditor.element); 
+        var omitTagsEditor = singleTextFieldEditor(st.settings.inactiveTags.join(','));
+        (<HTMLInputElement>omitTagsEditor.element).placeholder = "comma-separated tags...";
+        var omitTagsCont = document.createElement("div");
+        omitTagsCont.textContent = "Omit cards with the following tags: "
+        omitTagsCont.appendChild(omitTagsEditor.element); 
 
-    var filterEditor = textFilterSelectionMenu(st.settings.filterSettings);
+        var filterEditor = textFilterSelectionMenu(st.settings.filterSettings);
 
-    function makeCardEditor(c: SpacedRepCard<SRClozeContent, SRClozeAuxData>):
-        StateEditor<SpacedRepCard<SRClozeContent, SRClozeAuxData>> {
-        var ed = combineEditors(
-            [c.content.key, c.content.tags.join(',')],
-            (k) => {
-                var ed2 = singleTextFieldEditor(k);
-                ed2.element.style.display = "inline-block";
-                return ed2;
-            },
-            (ts) => {
-                var ed2 = singleTextFieldEditor(ts);
-                (<HTMLInputElement>ed2.element).placeholder = "tags...";
-                return ed2;
+        function makeCardEditor(c: SpacedRepCard<SRClozeContent, SRClozeAuxData>):
+            StateEditor<SpacedRepCard<SRClozeContent, SRClozeAuxData>> {
+            var ed = combineEditors(
+                [c.content.key, c.content.tags.join(',')],
+                (k) => {
+                    var ed2 = singleTextFieldEditor(k);
+                    ed2.element.style.display = "inline-block";
+                    return ed2;
+                },
+                (ts) => {
+                    var ed2 = singleTextFieldEditor(ts);
+                    (<HTMLInputElement>ed2.element).placeholder = "tags...";
+                    return ed2;
+                }
+            );
+            var tf1 = ed.element.children[0];
+            if (c.auxdata.invalid)
+                (<HTMLElement>tf1).style.backgroundColor = "#ffeeee";
+            var cardInfo = document.createElement("a");
+            cardInfo.style.color = "lightgray";
+            cardInfo.style.marginLeft = "10px";
+            cardInfo.style.marginRight = "10px";
+            cardInfo.style.verticalAlign = "middle";
+            if (c.intervalMinutes == 0) {
+                cardInfo.textContent = "not studied";
+            } else {
+                cardInfo.textContent = `due ${getSRFutureDateInfo(c.due!)}`;
             }
+            ed.element.appendChild(cardInfo);
+            return {
+                element: ed.element,
+                menuToState: () => {
+                    let tp = ed.menuToState();
+                    c.content.key = tp[0];
+                    c.content.tags = tp[1].length == 0 ? [] : tp[1].split(",");
+                    return c;
+                }
+            }
+        }
+        var cardsEditor = multipleEditors(
+            Object.values(st.cards),
+            () => makeEmptyCard(),
+            makeCardEditor,
+            true,
+            (s, cd) => cd.content.key.includes(s)
         );
-        var tf1 = ed.element.children[0];
-        if (c.auxdata.invalid)
-            (<HTMLElement>tf1).style.backgroundColor = "#ffeeee";
-        var cardInfo = document.createElement("a");
-        cardInfo.style.color = "lightgray";
-        cardInfo.style.marginLeft = "10px";
-        cardInfo.style.marginRight = "10px";
-        cardInfo.style.verticalAlign = "middle";
-        if (c.intervalMinutes == 0) {
-            cardInfo.textContent = "not studied";
-        } else {
-            cardInfo.textContent = `due ${getSRFutureDateInfo(c.due!)}`;
-        }
-        ed.element.appendChild(cardInfo);
+
+        [
+            infoWidget,
+            studyingEditor.element,
+            clozeServerDiv,
+            initHoursEditor.element,
+            newQueueSizeEditor.element,
+            correctFactor.element,
+            incorrectFactor.element,
+            omitTagsCont,
+            speechDiv,
+            filterEditor.element,
+            cardsEditor.element
+        ].map((el) => {
+            el.classList.add("deck-menu-submenu");
+            contDiv.appendChild(el);
+        });
+
         return {
-            element: ed.element,
-            menuToState: () => {
-                let tp = ed.menuToState();
-                c.content.key = tp[0];
-                c.content.tags = tp[1].length == 0 ? [] : tp[1].split(",");
-                return c;
-            }
-        }
+            element: contDiv,
+            menuToState: () => { return {
+                studying: studyingEditor.menuToState(),
+                settings: {
+                    clozeServerUrl: clozeServerUrlEditor.menuToState(),
+                    sourceLangs: clozeSourceLangEditor.menuToState().split(","),
+                    targetLang: clozeTargetLangEditor.menuToState(),
+                    clozeGroups: clozeGroupsEditor.menuToState().split(","),
+                    initialHours: initHoursEditor.menuToState(),
+                    correctFactor: correctFactor.menuToState(),
+                    incorrectFactor: incorrectFactor.menuToState(),
+                    readCorrectAnswers: speechCheckbox.menuToState(),
+                    speechSettings: speechEditor.menuToState(),
+                    filterSettings: filterEditor.menuToState(),
+                    inactiveTags: omitTagsEditor.menuToState().split(",")
+                },
+                newQ: emptySRQueue(newQueueSizeEditor.menuToState()),
+                cards: makeDict(cardsEditor.menuToState(), (c) => c.guid),
+            }}
+        };
     }
-    var cardsEditor = multipleEditors(
-        Object.values(st.cards),
-        () => makeEmptyCard(),
-        makeCardEditor,
-        true,
-        (s, cd) => cd.content.key.includes(s)
-    );
 
-    [
-        infoWidget,
-        studyingEditor.element,
-        clozeServerDiv,
-        initHoursEditor.element,
-        newQueueSizeEditor.element,
-        correctFactor.element,
-        incorrectFactor.element,
-        omitTagsCont,
-        speechDiv,
-        filterEditor.element,
-        cardsEditor.element
-    ].map((el) => {
-        el.classList.add("deck-menu-submenu");
-        contDiv.appendChild(el);
-    });
-
-    return {
-        element: contDiv,
-        menuToState: () => { return {
-            studying: studyingEditor.menuToState(),
-            settings: {
-                clozeServerUrl: clozeServerUrlEditor.menuToState(),
-                sourceLangs: clozeSourceLangEditor.menuToState().split(","),
-                targetLang: clozeTargetLangEditor.menuToState(),
-                clozeGroups: clozeGroupsEditor.menuToState().split(","),
-                initialHours: initHoursEditor.menuToState(),
-                correctFactor: correctFactor.menuToState(),
-                incorrectFactor: incorrectFactor.menuToState(),
-                readCorrectAnswers: speechCheckbox.menuToState(),
-                speechSettings: speechEditor.menuToState(),
-                filterSettings: filterEditor.menuToState(),
-                inactiveTags: omitTagsEditor.menuToState().split(",")
-            },
-            newQ: emptySRQueue(newQueueSizeEditor.menuToState()),
-            cards: makeDict(cardsEditor.menuToState(), (c) => c.guid),
-        }}
-    };
 }
 
 registerDeckType(
     new ClozeSpacedRepGen(),
-    clozeSRMenu,
     "cloze-spaced-repetition-deck",
     "Cloze spaced repetition deck",
     defaultSRClozeState,

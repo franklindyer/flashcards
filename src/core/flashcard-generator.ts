@@ -4,6 +4,9 @@ import {
     hideLoadingIcon
 } from "utils/utils"
 import {
+    StateEditor
+} from "core/editor"
+import {
     Flashcard
 } from "core/flashcard"
 
@@ -31,6 +34,8 @@ export abstract class FlashcardGen<S, D> {
     abstract updateStateAsync(state: S, cardData: D, correct: FlashcardResult): Promise<S>;
     abstract generateCardAsync(state: S, data: D): Promise<Flashcard>;
     abstract checkAnswerAsync(answer: string, state: S, data: D): Promise<boolean>;
+
+    abstract makeEditor(s: S): StateEditor<S>;
 
     // Should not attempt to change the deck's state
     abstract correctEffect(state: S, cardData: D, attempt: string, resolve: () => void): void;   
