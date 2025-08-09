@@ -1072,246 +1072,7 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/*
 
 /***/ }),
 
-/***/ 193:
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-const flashcard_1 = __webpack_require__(88);
-const flashcard_template_1 = __webpack_require__(791);
-class BasicFlashcardTemplate extends flashcard_template_1.FlashcardTemplate {
-    getName() { return "basic-template"; }
-    render(data) {
-        var a = document.createElement("div");
-        a.textContent = data[0];
-        var fontSize = 100.0 / (10.0 * Math.log(10 + data[0].length));
-        var fl = new flashcard_1.Flashcard(a, data[1]);
-        fl.el.style.fontSize = `${fontSize}vw`;
-        return fl;
-    }
-}
-(0, flashcard_template_1.registerTemplate)(new BasicFlashcardTemplate());
-
-
-/***/ }),
-
-/***/ 994:
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-const utils_1 = __webpack_require__(185);
-const flashcard_generator_1 = __webpack_require__(808);
-const flashcard_sync_generator_1 = __webpack_require__(410);
-const flashcard_template_1 = __webpack_require__(791);
-const editor_1 = __webpack_require__(43);
-const flashcard_deck_1 = __webpack_require__(836);
-class ClozeFlashcardGen extends flashcard_sync_generator_1.FlashcardSyncGen {
-    getGenName() { return "cloze-puzzles"; }
-    getNextCard(state) {
-        var cardIsOk = (c) => !(state.settings.blacklist.includes(c.guid));
-        var validKeys = Object.keys(state.cards).filter((k) => state.cards[k].cards.some(cardIsOk));
-        var key = validKeys[Math.floor(Math.random() * validKeys.length)];
-        var group = state.cards[key].cards.filter(cardIsOk);
-        return group[Math.floor(Math.random() * group.length)];
-    }
-    updateState(state, cardData, result) {
-        if (result == flashcard_generator_1.FlashcardResult.Correct) {
-            state.cards[cardData.group].correct += 1;
-        }
-        else if (result == flashcard_generator_1.FlashcardResult.Incorrect) {
-            state.cards[cardData.group].incorrect += 1;
-        }
-        else {
-            state.cards[cardData.group].skipped += 1;
-            if (state.settings.blacklistSkipped) {
-                state.settings.blacklist.push(cardData.guid);
-            }
-        }
-        return state;
-    }
-    checkAnswer(ans, st, cardData) {
-        var targetWords = [];
-        cardData.upper.replaceAll(/\{\{([^\{\}]+)\}\}/g, (match, p1) => {
-            targetWords.push(p1);
-            return match;
-        });
-        var correctAns = targetWords.join(", ");
-        return (ans == correctAns);
-    }
-    generateCard(st, data) {
-        return (0, flashcard_template_1.renderCard)("cloze-template", data);
-    }
-    correctEffect(_, __, ___, resolve) { resolve(); }
-    repairDeckState(st) { return st; }
-}
-function makeClozeCard(group, top, bottom) {
-    return {
-        group: group,
-        guid: (0, utils_1.getUuid)(`${top} | ${bottom}`, 5),
-        upper: top,
-        lower: bottom
-    };
-}
-function makeClozeEditor(state) {
-    var container = document.createElement("div");
-    var blacklistEditor = (0, editor_1.boolEditor)("Permanently remove skipped cards?", state.settings.blacklistSkipped);
-    blacklistEditor.element.classList.add("deck-menu-submenu");
-    var summaryContainer = document.createElement("div");
-    summaryContainer.classList.add("deck-menu-submenu");
-    var loadCards = (s) => {
-        if (s.length > 0) {
-            var newCardDict = {};
-            var infoList = JSON.parse(s);
-            console.log(infoList);
-            for (var i in Object.keys(infoList)) {
-                var k = Object.keys(infoList)[i];
-                newCardDict[k] = {
-                    key: k,
-                    cards: infoList[k].map((c) => {
-                        return {
-                            upper: c["prompt"],
-                            lower: c["translation"],
-                            guid: (0, utils_1.guidGenerator)(),
-                            group: k
-                        };
-                    }),
-                    correct: Object.keys(state.cards).includes(k) ? state.cards[k].correct : 0,
-                    incorrect: Object.keys(state.cards).includes(k) ? state.cards[k].incorrect : 0,
-                    skipped: Object.keys(state.cards).includes(k) ? state.cards[k].skipped : 0
-                };
-            }
-            state.cards = newCardDict;
-        }
-    };
-    var deckSummary = document.createElement("div");
-    var makeDeckSummary = () => {
-        deckSummary.innerHTML = "";
-        var keys = Object.keys(state.cards).sort();
-        for (var i in keys) {
-            var k = keys[i];
-            var entryDiv = document.createElement("div");
-            entryDiv.classList.add("deck-editor-info-entry");
-            var entryKey = document.createElement("span");
-            entryKey.textContent = k;
-            var entryInfo = document.createElement("span");
-            entryInfo.textContent = `${state.cards[k].cards.length} puzzles`;
-            entryInfo.style.float = "right";
-            entryDiv.appendChild(entryKey);
-            entryDiv.appendChild(entryInfo);
-            deckSummary.appendChild(entryDiv);
-        }
-    };
-    makeDeckSummary();
-    var fileEd = (0, editor_1.fileUploadEditor)("Upload cloze puzzles", (s) => {
-        loadCards(s);
-        makeDeckSummary();
-    });
-    summaryContainer.appendChild(fileEd.element);
-    summaryContainer.appendChild(deckSummary);
-    container.appendChild(blacklistEditor.element);
-    container.appendChild(summaryContainer);
-    return {
-        element: container,
-        menuToState: () => {
-            var deckStr = fileEd.menuToState();
-            if (deckStr.length > 0) {
-                var newCardDict = {};
-                var infoList = JSON.parse(deckStr);
-                console.log(infoList);
-                for (var i in Object.keys(infoList)) {
-                    var k = Object.keys(infoList)[i];
-                    newCardDict[k] = {
-                        key: k,
-                        cards: infoList[k].map((c) => makeClozeCard(k, c["prompt"], c["translation"])),
-                        correct: Object.keys(state.cards).includes(k) ? state.cards[k].correct : 0,
-                        incorrect: Object.keys(state.cards).includes(k) ? state.cards[k].incorrect : 0,
-                        skipped: Object.keys(state.cards).includes(k) ? state.cards[k].skipped : 0
-                    };
-                }
-                state.cards = newCardDict;
-            }
-            state.settings.blacklistSkipped = blacklistEditor.menuToState();
-            return state;
-        }
-    };
-}
-var clozeDefaultState = {
-    cards: {
-        "gehen": {
-            key: "gehen",
-            cards: [
-                makeClozeCard("gehen", "Ich {{gehe}} ins Kino.", "I go to the movies."),
-                makeClozeCard("gehen", "Wohin {{gehst}} du?", "Where are you going?")
-            ],
-            correct: 0,
-            incorrect: 0,
-            skipped: 0
-        },
-        "haben": {
-            key: "haben",
-            cards: [
-                makeClozeCard("haben", "Ich {{habe}} einen Hund.", "I have a dog."),
-                makeClozeCard("haben", "{{Hast}} du einen Hund?", "Do you have a dog?")
-            ],
-            correct: 0,
-            incorrect: 0,
-            skipped: 0
-        }
-    },
-    settings: {
-        blacklist: [],
-        blacklistSkipped: true
-    }
-};
-(0, flashcard_deck_1.registerDeckType)(new ClozeFlashcardGen(), makeClozeEditor, "cloze-quizzer", "Simple German cloze quizzer", clozeDefaultState, "#ffddbb");
-
-
-/***/ }),
-
-/***/ 292:
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-const flashcard_1 = __webpack_require__(88);
-const flashcard_template_1 = __webpack_require__(791);
-class ClozeFlashcardTemplate extends flashcard_template_1.FlashcardTemplate {
-    getName() { return "cloze-template"; }
-    render(data) {
-        var el = document.createElement("div");
-        el.style.display = "block";
-        el.style.textAlign = "center";
-        var aUpper = document.createElement("p");
-        var aLower = document.createElement("p");
-        aUpper.style.display = "block";
-        aLower.style.display = "block";
-        el.appendChild(aUpper);
-        el.appendChild(document.createElement("hr"));
-        el.appendChild(aLower);
-        var targetWords = [];
-        aUpper.textContent = data.upper.replaceAll(/\{\{([^\{\}]+)\}\}/g, (match, p1) => {
-            targetWords.push(p1);
-            return "___";
-        });
-        var answer = targetWords.join(", ");
-        aLower.textContent = data.lower;
-        var fontSize = 900.0 / (10.0 * Math.log(10 + aUpper.textContent.length));
-        aUpper.style.fontSize = `${fontSize}px`;
-        aLower.style.fontSize = `${0.7 * fontSize}px`;
-        var fl = new flashcard_1.Flashcard(el, answer);
-        return fl;
-    }
-}
-(0, flashcard_template_1.registerTemplate)(new ClozeFlashcardTemplate());
-
-
-/***/ }),
-
-/***/ 79:
+/***/ 701:
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
@@ -1319,10 +1080,10 @@ class ClozeFlashcardTemplate extends flashcard_template_1.FlashcardTemplate {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.generateDecklistMenu = generateDecklistMenu;
 exports.setupDecklistMenu = setupDecklistMenu;
-const utils_1 = __webpack_require__(185);
-const flashcard_deck_1 = __webpack_require__(836);
-const editor_1 = __webpack_require__(43);
-const synchronization_1 = __webpack_require__(36);
+const utils_1 = __webpack_require__(135);
+const flashcard_deck_1 = __webpack_require__(134);
+const editor_1 = __webpack_require__(613);
+const synchronization_1 = __webpack_require__(918);
 function generateDeckNameEditor(deck) {
     var nicknameEditor = (0, editor_1.singleTextFieldEditor)(deck.name);
     var colorEditor = (0, editor_1.singleTextFieldEditor)(deck.view.color);
@@ -1358,6 +1119,29 @@ function generateDecklistMenu(decklist, onfinish) {
     var decklistEditor = document.getElementById("flashcard-decklist-editor");
     decklistEditor.innerHTML = "";
     var decklistOverlay = document.getElementById("flashcard-decklist-overlay");
+    var deckTypeList = document.createElement("select");
+    deckTypeList.id = "deck-type-dropdown";
+    for (var i in Object.keys(flashcard_deck_1.gDeckTypeRegistry)) {
+        var deckTypeId = Object.keys(flashcard_deck_1.gDeckTypeRegistry)[i];
+        var deckTypeName = flashcard_deck_1.gDeckDefaultRegistry[deckTypeId].name;
+        var deckTypeOption = document.createElement("option");
+        deckTypeOption.value = deckTypeId;
+        deckTypeOption.textContent = deckTypeName;
+        deckTypeList.appendChild(deckTypeOption);
+    }
+    var newDeckBtn = document.createElement("button");
+    newDeckBtn.textContent = "Create new deck";
+    newDeckBtn.onclick = (e) => {
+        deckTypeId = document.getElementById("deck-type-dropdown").value;
+        var guid = (0, utils_1.guidGenerator)();
+        var deckClone = JSON.parse(JSON.stringify(flashcard_deck_1.gDeckDefaultRegistry[deckTypeId]));
+        deckClone.slug = guid;
+        decklist[guid] = deckClone;
+        generateDecklistMenu(decklist, onfinish);
+    };
+    decklistEditor.appendChild(newDeckBtn);
+    decklistEditor.appendChild(deckTypeList);
+    decklistEditor.appendChild(document.createElement("br"));
     var syncServerBtn = document.createElement("button");
     syncServerBtn.textContent = "Setup sync server";
     syncServerBtn.onclick = synchronization_1.promptForSyncCreds;
@@ -1422,20 +1206,6 @@ function generateDecklistMenu(decklist, onfinish) {
                 e.stopPropagation();
             generateDecklistMenu(decklist, onfinish);
         })(decklist[k]);
-        var deckCloneBtn = document.createElement("button");
-        deckCloneBtn.title = "Clone deck";
-        deckCloneBtn.classList.add("deck-editor-button");
-        deckCloneBtn.innerHTML = "<img src='copy.png'/>";
-        deckCloneBtn.onclick = ((dk) => (e) => {
-            var guid = (0, utils_1.guidGenerator)();
-            var deckClone = JSON.parse(JSON.stringify(dk));
-            deckClone.slug = guid;
-            decklist[guid] = deckClone;
-            e.cancelBubble = true;
-            if (e.stopPropagation)
-                e.stopPropagation();
-            generateDecklistMenu(decklist, onfinish);
-        })(decklist[k]);
         var deckUploadBtn = document.createElement("button");
         deckUploadBtn.title = "Upload deck to server";
         deckUploadBtn.classList.add("deck-editor-button");
@@ -1460,7 +1230,6 @@ function generateDecklistMenu(decklist, onfinish) {
         deckDiv.appendChild(deckDownloadBtn);
         deckDiv.appendChild(deckEditBtn);
         deckDiv.appendChild(deckDeleteBtn);
-        deckDiv.appendChild(deckCloneBtn);
         decklistEditor.appendChild(deckDiv);
     }
 }
@@ -1476,7 +1245,7 @@ function setupDecklistMenu() {
 
 /***/ }),
 
-/***/ 43:
+/***/ 613:
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
@@ -1495,7 +1264,7 @@ exports.swappingTextEditor = swappingTextEditor;
 exports.makeTranslationEditor = makeTranslationEditor;
 exports.fixedNumEditors = fixedNumEditors;
 exports.multipleEditors = multipleEditors;
-const utils_1 = __webpack_require__(185);
+const utils_1 = __webpack_require__(135);
 /* Some useful state editors */
 function boolEditor(label, val) {
     var checkbox = document.createElement("input");
@@ -1773,13 +1542,13 @@ function multipleEditors(ls, empty, ed, includeSearch = false, searchFxn = (s, x
 
 /***/ }),
 
-/***/ 836:
+/***/ 134:
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.gDeckRegistry = exports.gDeckTypeRegistry = void 0;
+exports.gDeckDefaultRegistry = exports.gDeckRegistry = exports.gDeckTypeRegistry = void 0;
 exports.setDeck = setDeck;
 exports.saveDeck = saveDeck;
 exports.loadAllDecks = loadAllDecks;
@@ -1788,10 +1557,11 @@ exports.runDeck = runDeck;
 exports.setLastDeck = setLastDeck;
 exports.getStartingDeck = getStartingDeck;
 exports.registerDeckType = registerDeckType;
-const utils_1 = __webpack_require__(185);
-const fs_1 = __webpack_require__(633);
+const utils_1 = __webpack_require__(135);
+const fs_1 = __webpack_require__(635);
 exports.gDeckTypeRegistry = {};
 exports.gDeckRegistry = {};
+exports.gDeckDefaultRegistry = {};
 function setDeck(deckSlug, deckString, callback) {
     var deck = JSON.parse(deckString);
     exports.gDeckRegistry[deckSlug] = deck;
@@ -1905,7 +1675,7 @@ function registerDeckType(gen, mkEd, defaultSlug, defaultName, defaultState, col
         gen: gen,
         editor: mkEd
     };
-    exports.gDeckRegistry[defaultSlug] = {
+    exports.gDeckDefaultRegistry[gen.getGenName()] = {
         name: defaultName,
         slug: defaultSlug,
         type: gen.getGenName(),
@@ -1919,14 +1689,14 @@ function registerDeckType(gen, mkEd, defaultSlug, defaultName, defaultState, col
 
 /***/ }),
 
-/***/ 808:
+/***/ 850:
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.FlashcardGen = exports.FlashcardResult = void 0;
-const utils_1 = __webpack_require__(185);
+const utils_1 = __webpack_require__(135);
 var FlashcardResult;
 (function (FlashcardResult) {
     FlashcardResult[FlashcardResult["Correct"] = 0] = "Correct";
@@ -2013,14 +1783,14 @@ exports.FlashcardGen = FlashcardGen;
 
 /***/ }),
 
-/***/ 410:
+/***/ 868:
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.FlashcardSyncGen = void 0;
-const flashcard_generator_1 = __webpack_require__(808);
+const flashcard_generator_1 = __webpack_require__(850);
 class FlashcardSyncGen extends flashcard_generator_1.FlashcardGen {
     // Type S is the state type for this flashcard deck
     // Type D is the type of the data involved in the single card
@@ -2045,7 +1815,7 @@ exports.FlashcardSyncGen = FlashcardSyncGen;
 
 /***/ }),
 
-/***/ 791:
+/***/ 217:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -2071,7 +1841,7 @@ function renderCard(tplName, cardData) {
 
 /***/ }),
 
-/***/ 88:
+/***/ 70:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -2119,7 +1889,7 @@ exports.Flashcard = Flashcard;
 
 /***/ }),
 
-/***/ 633:
+/***/ 635:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -2131,6 +1901,7 @@ exports.setDeckJSON = setDeckJSON;
 exports.deleteDeck = deleteDeck;
 const opfsRootP = () => navigator.storage.getDirectory();
 const deckFolderP = () => opfsRootP().then((r) => r.getDirectoryHandle("decks", { create: true }));
+const logFolderP = () => opfsRootP().then((r) => r.getDirectoryHandle("logs", { create: true }));
 function getDeckJSON(deckSlug) {
     var deckHandleP = deckFolderP().then((f) => f.getFileHandle(deckSlug));
     return deckHandleP
@@ -2156,220 +1927,310 @@ function deleteDeck(deckSlug) {
 
 /***/ }),
 
-/***/ 602:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.Preloader = void 0;
-class Preloader {
-    values = {};
-    valueCounts = {};
-    numPreload;
-    delaySeconds = 1.0;
-    constructor(numPreload) {
-        this.numPreload = numPreload;
-    }
-    fillCacheForKey(k, fetcher) {
-        var valuesNeeded = this.numPreload - this.valueCounts[k];
-        return fetcher(k).then((xs) => {
-            if (xs === null || xs === undefined)
-                return;
-            xs.map((x) => this.values[k].push(x));
-            this.valueCounts[k] = this.values[k].length;
-        }).catch((e) => { console.log(e); });
-    }
-    addKey(k, fetcher) {
-        if (this.values[k] === undefined) {
-            this.values[k] = [];
-            this.valueCounts[k] = 0;
-        }
-        return this.fillCacheForKey(k, fetcher);
-    }
-    getKey(k, fetcher, maxAttempts = 3) {
-        if (maxAttempts == 0)
-            return new Promise((resolve, _) => resolve(undefined));
-        var keyAddedPromise = this.addKey(k, fetcher);
-        if (this.values[k].length > 0) {
-            return new Promise((resolve, _) => {
-                this.valueCounts[k] += -1;
-                var nextVal = this.values[k].shift();
-                this.fillCacheForKey(k, fetcher);
-                resolve(nextVal);
-            });
-        }
-        else {
-            return keyAddedPromise.then((_) => this.getKey(k, fetcher, maxAttempts - 1));
-        }
-    }
-}
-exports.Preloader = Preloader;
-
-
-/***/ }),
-
-/***/ 926:
+/***/ 918:
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const utils_1 = __webpack_require__(185);
-const flashcard_1 = __webpack_require__(88);
-const flashcard_template_1 = __webpack_require__(791);
-class NoAnswerFlashcardTemplate extends flashcard_template_1.FlashcardTemplate {
-    getName() { return "noanswer-template"; }
-    render(data) {
-        var a = document.createElement("div");
-        a.textContent = data;
-        var fontSize = 90.0 / (10.0 * Math.log(10 + data[0].length));
-        var fl = new flashcard_1.Flashcard(a, "", (_) => (0, utils_1.trivialPromise)(false));
-        fl.el.style.fontSize = `${fontSize}vw`;
-        return fl;
+exports.getHostname = getHostname;
+exports.setRemote = setRemote;
+exports.getRemote = getRemote;
+exports.setSyncKey = setSyncKey;
+exports.getSyncKey = getSyncKey;
+exports.validateSyncCreds = validateSyncCreds;
+exports.promptForSyncCreds = promptForSyncCreds;
+exports.syncUploadDeck = syncUploadDeck;
+exports.syncDownloadDeck = syncDownloadDeck;
+const utils_1 = __webpack_require__(135);
+function getHostname() {
+    var host = localStorage.getItem("host");
+    if (host === null) {
+        host = (0, utils_1.guidGenerator)();
+        localStorage.setItem("host", host);
+    }
+    return host;
+}
+function setRemote(url) {
+    localStorage.setItem("syncserver", url);
+}
+function getRemote() {
+    return localStorage.getItem("syncserver");
+}
+function setSyncKey(key) {
+    localStorage.setItem("synckey", key);
+}
+function getSyncKey() {
+    return localStorage.getItem("synckey");
+}
+function validateSyncCreds(goodCallback, badCallback) {
+    var remote = getRemote();
+    var key = getSyncKey();
+    try {
+        fetch(`${remote}/status`, {
+            method: "POST",
+            headers: {
+                'Accept': 'application/json, text/plain, */*',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ key: key })
+        }).then(res => res.json())
+            .then(res => goodCallback(remote, key))
+            .catch(res => badCallback());
+    }
+    catch (e) {
+        badCallback();
     }
 }
-(0, flashcard_template_1.registerTemplate)(new NoAnswerFlashcardTemplate());
+function promptForSyncCreds() {
+    var remote = window.prompt("Enter the URL of your synchronization server.") || "";
+    var key = window.prompt("Enter your key with the synchronization server.") || "";
+    setRemote(remote);
+    setSyncKey(key);
+    validateSyncCreds((_, __) => alert("Successfully paired with synchronization server."), () => alert("Error attempting to connect to synchronization server. Try again."));
+}
+function syncUploadDeck(deck) {
+    var badCallback = () => alert("Could not upload deck. Ensure your sync server is set up.");
+    var host = getHostname();
+    validateSyncCreds((remote, key) => {
+        try {
+            fetch(`${remote}/put`, {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ host: host, key: key, id: deck.slug, data: JSON.stringify(deck) })
+            }).then(res => alert("Deck uploaded successfully."))
+                .catch(res => badCallback());
+        }
+        catch (e) {
+            badCallback();
+        }
+    }, () => badCallback());
+}
+function syncDownloadDeck(slug, setDeck) {
+    var badCallback = () => alert("Could not download deck. Ensure your sync server is set up and that the deck ID is correct.");
+    var host = getHostname();
+    validateSyncCreds((remote, key) => {
+        try {
+            fetch(`${remote}/get`, {
+                method: "POST",
+                headers: {
+                    'Accept': 'application/json, text/plain, */*',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ host: host, key: key, id: slug })
+            }).then(res => res.json())
+                .then(res => {
+                if (confirm("Are you sure you want to download this deck? Any local version will be overwritten.")) {
+                    setDeck(res['data']);
+                    alert("Deck downloaded successfully.");
+                }
+            })
+                .catch(res => badCallback());
+        }
+        catch (e) {
+            badCallback();
+        }
+    }, () => badCallback());
+}
 
 
 /***/ }),
 
-/***/ 735:
-/***/ ((__unused_webpack_module, exports) => {
+/***/ 627:
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.preprocessStringSub = preprocessStringSub;
-exports.validateStringSub = validateStringSub;
-exports.randomizeStringSub = randomizeStringSub;
-function preprocessStringSub(subString) {
-    var subs = {};
-    var i = 0;
-    const tplString = subString.replaceAll(/\{r([0-9]):([^\}]*)\}/g, function (m, g1, g2) {
-        subs[i] = { index: i, group: +g1, options: g2.split(',') };
-        var sub = `{${i}}`;
-        i += 1;
-        return sub;
-    });
-    return [tplString, subs];
-}
-function validateStringSub(subString) {
-    var preproc = preprocessStringSub(subString);
-    var subs = preproc[1];
-    var counts = {};
-    for (var k in Object.keys(subs)) {
-        var sub = subs[k];
-        if (sub.group in Object.keys(counts)) {
-            if (sub.options.length != counts[sub.group]) {
-                return false;
+const utils_1 = __webpack_require__(135);
+const flashcard_generator_1 = __webpack_require__(850);
+const flashcard_sync_generator_1 = __webpack_require__(868);
+const flashcard_template_1 = __webpack_require__(217);
+const editor_1 = __webpack_require__(613);
+const flashcard_deck_1 = __webpack_require__(134);
+class ClozeFlashcardGen extends flashcard_sync_generator_1.FlashcardSyncGen {
+    getGenName() { return "cloze-puzzles"; }
+    getNextCard(state) {
+        var cardIsOk = (c) => !(state.settings.blacklist.includes(c.guid));
+        var validKeys = Object.keys(state.cards).filter((k) => state.cards[k].cards.some(cardIsOk));
+        var key = validKeys[Math.floor(Math.random() * validKeys.length)];
+        var group = state.cards[key].cards.filter(cardIsOk);
+        return group[Math.floor(Math.random() * group.length)];
+    }
+    updateState(state, cardData, result) {
+        if (result == flashcard_generator_1.FlashcardResult.Correct) {
+            state.cards[cardData.group].correct += 1;
+        }
+        else if (result == flashcard_generator_1.FlashcardResult.Incorrect) {
+            state.cards[cardData.group].incorrect += 1;
+        }
+        else {
+            state.cards[cardData.group].skipped += 1;
+            if (state.settings.blacklistSkipped) {
+                state.settings.blacklist.push(cardData.guid);
             }
         }
-        else {
-            counts[sub.group] = sub.options.length;
-        }
+        return state;
     }
-    return true;
-}
-function randomizeStringSub(subString, rands = {}) {
-    var preproc = preprocessStringSub(subString);
-    var outString = preproc[0];
-    var subs = preproc[1];
-    for (var k in Object.keys(subs)) {
-        var sub = subs[k];
-        if (!(sub.group in Object.keys(rands))) {
-            rands[sub.group] = Math.floor(Math.random() * sub.options.length);
-        }
-        var sel = sub.options[rands[sub.group]];
-        outString = outString.replace(`{${sub.index}}`, sel);
+    checkAnswer(ans, st, cardData) {
+        var targetWords = [];
+        cardData.upper.replaceAll(/\{\{([^\{\}]+)\}\}/g, (match, p1) => {
+            targetWords.push(p1);
+            return match;
+        });
+        var correctAns = targetWords.join(", ");
+        return (ans == correctAns);
     }
-    return [outString, rands];
+    generateCard(st, data) {
+        return (0, flashcard_template_1.renderCard)("cloze-template", data);
+    }
+    correctEffect(_, __, ___, resolve) { resolve(); }
+    repairDeckState(st) { return st; }
 }
+function makeClozeCard(group, top, bottom) {
+    return {
+        group: group,
+        guid: (0, utils_1.getUuid)(`${top} | ${bottom}`, 5),
+        upper: top,
+        lower: bottom
+    };
+}
+function makeClozeEditor(state) {
+    var container = document.createElement("div");
+    var blacklistEditor = (0, editor_1.boolEditor)("Permanently remove skipped cards?", state.settings.blacklistSkipped);
+    blacklistEditor.element.classList.add("deck-menu-submenu");
+    var summaryContainer = document.createElement("div");
+    summaryContainer.classList.add("deck-menu-submenu");
+    var loadCards = (s) => {
+        if (s.length > 0) {
+            var newCardDict = {};
+            var infoList = JSON.parse(s);
+            console.log(infoList);
+            for (var i in Object.keys(infoList)) {
+                var k = Object.keys(infoList)[i];
+                newCardDict[k] = {
+                    key: k,
+                    cards: infoList[k].map((c) => {
+                        return {
+                            upper: c["prompt"],
+                            lower: c["translation"],
+                            guid: (0, utils_1.guidGenerator)(),
+                            group: k
+                        };
+                    }),
+                    correct: Object.keys(state.cards).includes(k) ? state.cards[k].correct : 0,
+                    incorrect: Object.keys(state.cards).includes(k) ? state.cards[k].incorrect : 0,
+                    skipped: Object.keys(state.cards).includes(k) ? state.cards[k].skipped : 0
+                };
+            }
+            state.cards = newCardDict;
+        }
+    };
+    var deckSummary = document.createElement("div");
+    var makeDeckSummary = () => {
+        deckSummary.innerHTML = "";
+        var keys = Object.keys(state.cards).sort();
+        for (var i in keys) {
+            var k = keys[i];
+            var entryDiv = document.createElement("div");
+            entryDiv.classList.add("deck-editor-info-entry");
+            var entryKey = document.createElement("span");
+            entryKey.textContent = k;
+            var entryInfo = document.createElement("span");
+            entryInfo.textContent = `${state.cards[k].cards.length} puzzles`;
+            entryInfo.style.float = "right";
+            entryDiv.appendChild(entryKey);
+            entryDiv.appendChild(entryInfo);
+            deckSummary.appendChild(entryDiv);
+        }
+    };
+    makeDeckSummary();
+    var fileEd = (0, editor_1.fileUploadEditor)("Upload cloze puzzles", (s) => {
+        loadCards(s);
+        makeDeckSummary();
+    });
+    summaryContainer.appendChild(fileEd.element);
+    summaryContainer.appendChild(deckSummary);
+    container.appendChild(blacklistEditor.element);
+    container.appendChild(summaryContainer);
+    return {
+        element: container,
+        menuToState: () => {
+            var deckStr = fileEd.menuToState();
+            if (deckStr.length > 0) {
+                var newCardDict = {};
+                var infoList = JSON.parse(deckStr);
+                console.log(infoList);
+                for (var i in Object.keys(infoList)) {
+                    var k = Object.keys(infoList)[i];
+                    newCardDict[k] = {
+                        key: k,
+                        cards: infoList[k].map((c) => makeClozeCard(k, c["prompt"], c["translation"])),
+                        correct: Object.keys(state.cards).includes(k) ? state.cards[k].correct : 0,
+                        incorrect: Object.keys(state.cards).includes(k) ? state.cards[k].incorrect : 0,
+                        skipped: Object.keys(state.cards).includes(k) ? state.cards[k].skipped : 0
+                    };
+                }
+                state.cards = newCardDict;
+            }
+            state.settings.blacklistSkipped = blacklistEditor.menuToState();
+            return state;
+        }
+    };
+}
+var clozeDefaultState = {
+    cards: {
+        "gehen": {
+            key: "gehen",
+            cards: [
+                makeClozeCard("gehen", "Ich {{gehe}} ins Kino.", "I go to the movies."),
+                makeClozeCard("gehen", "Wohin {{gehst}} du?", "Where are you going?")
+            ],
+            correct: 0,
+            incorrect: 0,
+            skipped: 0
+        },
+        "haben": {
+            key: "haben",
+            cards: [
+                makeClozeCard("haben", "Ich {{habe}} einen Hund.", "I have a dog."),
+                makeClozeCard("haben", "{{Hast}} du einen Hund?", "Do you have a dog?")
+            ],
+            correct: 0,
+            incorrect: 0,
+            skipped: 0
+        }
+    },
+    settings: {
+        blacklist: [],
+        blacklistSkipped: true
+    }
+};
+(0, flashcard_deck_1.registerDeckType)(new ClozeFlashcardGen(), makeClozeEditor, "cloze-quizzer", "Simple German cloze quizzer", clozeDefaultState, "#ffddbb");
 
 
 /***/ }),
 
-/***/ 337:
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-const flashcard_deck_1 = __webpack_require__(836);
-const decklist_1 = __webpack_require__(79);
-__webpack_require__(193);
-__webpack_require__(292);
-__webpack_require__(127);
-__webpack_require__(926);
-__webpack_require__(633);
-__webpack_require__(737);
-__webpack_require__(18);
-__webpack_require__(601);
-__webpack_require__(66);
-__webpack_require__(994);
-__webpack_require__(159);
-__webpack_require__(192);
-(0, decklist_1.setupDecklistMenu)();
-(0, flashcard_deck_1.loadAllDecks)().then((_) => (0, flashcard_deck_1.runDeck)((0, flashcard_deck_1.getStartingDeck)("key-value-quizzer")));
-
-
-/***/ }),
-
-/***/ 702:
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.infoWidgetSR = infoWidgetSR;
-exports.studyingEditorSR = studyingEditorSR;
-const spaced_repetition_general_1 = __webpack_require__(547);
-const editor_1 = __webpack_require__(43);
-function infoWidgetSR(st) {
-    var contDiv = document.createElement("div");
-    contDiv.classList.add("deck-menu-submenu");
-    var totP = document.createElement("p");
-    totP.textContent = `Total cards: ${Object.keys(st.cards).length}`;
-    totP.style.color = "#666666";
-    totP.style.fontWeight = "bold";
-    var newP = document.createElement("p");
-    newP.textContent = `New cards: ${Object.keys(st.cards).filter((i) => st.cards[i].intervalMinutes == 0).length}`;
-    newP.style.color = "#9999ee";
-    newP.style.fontWeight = "bold";
-    var dueP = document.createElement("p");
-    dueP.textContent = `Due cards: ${Object.keys(st.cards).filter((i) => st.cards[i].intervalMinutes > 0
-        && new Date(st.cards[i].due) < new Date()).length}`;
-    dueP.style.color = "#ee9999";
-    dueP.style.fontWeight = "bold";
-    [totP, newP, dueP].map((el) => contDiv.appendChild(el));
-    return contDiv;
-}
-function studyingEditorSR(st) {
-    var studyingEditor = (0, editor_1.radioEditor)(st.studying, [spaced_repetition_general_1.SpacedRepStudying.NewCards, spaced_repetition_general_1.SpacedRepStudying.DueCards, spaced_repetition_general_1.SpacedRepStudying.RandomCards], ["Study new cards", "Study due cards", "Practice random cards"]);
-    return studyingEditor;
-}
-
-
-/***/ }),
-
-/***/ 66:
+/***/ 815:
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ClozeSpacedRepGen = exports.defaultSRClozeState = exports.defaultSRClozeSettings = void 0;
-const utils_1 = __webpack_require__(185);
-const generic_preloader_1 = __webpack_require__(602);
-const flashcard_generator_1 = __webpack_require__(808);
-const spaced_repetition_general_1 = __webpack_require__(547);
-const speech_1 = __webpack_require__(192);
-const text_filters_1 = __webpack_require__(460);
-const editor_1 = __webpack_require__(43);
-const shared_sr_menu_components_1 = __webpack_require__(702);
-const flashcard_template_1 = __webpack_require__(791);
-const flashcard_deck_1 = __webpack_require__(836);
-const spaced_repetition_newqueue_1 = __webpack_require__(338);
+const utils_1 = __webpack_require__(135);
+const generic_preloader_1 = __webpack_require__(816);
+const flashcard_generator_1 = __webpack_require__(850);
+const spaced_repetition_general_1 = __webpack_require__(2);
+const speech_1 = __webpack_require__(230);
+const text_filters_1 = __webpack_require__(265);
+const editor_1 = __webpack_require__(613);
+const shared_sr_menu_components_1 = __webpack_require__(228);
+const flashcard_template_1 = __webpack_require__(217);
+const flashcard_deck_1 = __webpack_require__(134);
+const spaced_repetition_newqueue_1 = __webpack_require__(620);
 exports.defaultSRClozeSettings = {
     clozeServerUrl: "",
     sourceLangs: ["eng", "spa"],
@@ -2411,12 +2272,8 @@ function makeEmptyCard() {
 class ClozeSpacedRepGen extends spaced_repetition_general_1.AbstractAsyncSpacedRepGen {
     getGenName() { return "cloze-spaced-repetition"; }
     repairDeckState(st) {
-        if (st.newQ === undefined) {
-            st.newQ = (0, spaced_repetition_newqueue_1.emptySRQueue)(10);
-        }
-        if (st.settings.clozeGroups === undefined) {
-            st.settings.clozeGroups = [];
-        }
+        st = (0, utils_1.recursiveRepairJSON)(st, exports.defaultSRClozeState, ["cards"]);
+        st.cards = (0, utils_1.recursiveRepairEachValueJSON)(st.cards, Object.values(exports.defaultSRClozeState.cards)[0]);
         this.preFetchClozes(st);
         return st;
     }
@@ -2503,6 +2360,9 @@ class ClozeSpacedRepGen extends spaced_repetition_general_1.AbstractAsyncSpacedR
         });
     }
     nextCardAsyncPreprocessing(card, st) {
+        if (card.data === undefined)
+            return (0, utils_1.trivialPromise)(card);
+        card.data.auxdata.cloze = undefined;
         if (st.settings.clozeServerUrl.length == 0 || card.data === undefined) {
             // Returns with .cloze attribute undefined, indicating failure
             return (0, utils_1.trivialPromise)(card);
@@ -2660,7 +2520,7 @@ function clozeSRMenu(st) {
 
 /***/ }),
 
-/***/ 547:
+/***/ 2:
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
@@ -2669,9 +2529,9 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AbstractSpacedRepGen = exports.AbstractAsyncSpacedRepGen = exports.SpacedRepStudying = void 0;
 exports.makeSpacedRepCardDict = makeSpacedRepCardDict;
 exports.makeCardsLeftSpan = makeCardsLeftSpan;
-const utils_1 = __webpack_require__(185);
-const flashcard_generator_1 = __webpack_require__(808);
-const spaced_repetition_newqueue_1 = __webpack_require__(338);
+const utils_1 = __webpack_require__(135);
+const flashcard_generator_1 = __webpack_require__(850);
+const spaced_repetition_newqueue_1 = __webpack_require__(620);
 var SpacedRepStudying;
 (function (SpacedRepStudying) {
     SpacedRepStudying[SpacedRepStudying["NewCards"] = 1] = "NewCards";
@@ -2820,55 +2680,7 @@ function makeCardsLeftSpan(card) {
 
 /***/ }),
 
-/***/ 338:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.emptySRQueue = emptySRQueue;
-exports.chooseNext = chooseNext;
-exports.incorporateLast = incorporateLast;
-exports.filterNewQueue = filterNewQueue;
-function emptySRQueue(maxNewCards) {
-    return {
-        maxNewCards: maxNewCards,
-        newQueue: []
-    };
-}
-function chooseNext(q, allOpts) {
-    var newOpts = allOpts.filter((k) => !q.newQueue.includes(k));
-    if (q.newQueue.length < q.maxNewCards && newOpts.length > 0) {
-        return newOpts[Math.floor(Math.random() * newOpts.length)];
-    }
-    else if (q.newQueue.length > 0) {
-        return q.newQueue[0];
-    }
-    else {
-        return undefined;
-    }
-}
-function incorporateLast(q, c, isStillNew) {
-    if (c === undefined) {
-        return q;
-    }
-    if (c === q.newQueue[0]) {
-        q.newQueue.shift();
-    }
-    if (isStillNew) {
-        q.newQueue.push(c);
-    }
-    return q;
-}
-function filterNewQueue(q, fxn) {
-    q.newQueue = q.newQueue.filter(fxn);
-    return q;
-}
-
-
-/***/ }),
-
-/***/ 601:
+/***/ 846:
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
@@ -2876,17 +2688,17 @@ function filterNewQueue(q, fxn) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.SimpleSpacedRepGen = exports.defaultSimpleSRState = exports.defaultSimpleSRSettings = void 0;
 exports.makeEmptyCard = makeEmptyCard;
-const utils_1 = __webpack_require__(185);
-const random_templating_1 = __webpack_require__(735);
-const flashcard_1 = __webpack_require__(88);
-const flashcard_generator_1 = __webpack_require__(808);
-const spaced_repetition_general_1 = __webpack_require__(547);
-const speech_1 = __webpack_require__(192);
-const text_filters_1 = __webpack_require__(460);
-const editor_1 = __webpack_require__(43);
-const shared_sr_menu_components_1 = __webpack_require__(702);
-const flashcard_deck_1 = __webpack_require__(836);
-const spaced_repetition_newqueue_1 = __webpack_require__(338);
+const utils_1 = __webpack_require__(135);
+const random_templating_1 = __webpack_require__(53);
+const flashcard_1 = __webpack_require__(70);
+const flashcard_generator_1 = __webpack_require__(850);
+const spaced_repetition_general_1 = __webpack_require__(2);
+const speech_1 = __webpack_require__(230);
+const text_filters_1 = __webpack_require__(265);
+const editor_1 = __webpack_require__(613);
+const shared_sr_menu_components_1 = __webpack_require__(228);
+const flashcard_deck_1 = __webpack_require__(134);
+const spaced_repetition_newqueue_1 = __webpack_require__(620);
 exports.defaultSimpleSRSettings = {
     initialHours: 6,
     correctFactor: 1.6,
@@ -2902,7 +2714,7 @@ exports.defaultSimpleSRState = {
         { prompt: ["the dog"], answers: ["le chien"], tags: [], twoSided: false },
         { prompt: ["the man"], answers: ["l'homme"], tags: [], twoSided: false },
         { prompt: ["the woman"], answers: ["la dame"], tags: [], twoSided: false }
-    ], () => { return { streak: 0, intervalMinutes: 0, due: undefined }; }),
+    ], () => { return { streak: 0, intervalMinutes: 0 }; }),
     newQ: (0, spaced_repetition_newqueue_1.emptySRQueue)(10),
     studying: spaced_repetition_general_1.SpacedRepStudying.NewCards,
     settings: exports.defaultSimpleSRSettings
@@ -2958,21 +2770,8 @@ class SimpleSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGe
         return card.data.auxdata;
     }
     repairDeckState(st) {
-        if (st.newQ === undefined) {
-            st.newQ = (0, spaced_repetition_newqueue_1.emptySRQueue)(10);
-        }
-        if (st.settings.doTwoSided === undefined) {
-            st.settings.doTwoSided = true;
-        }
-        for (var i in Object.keys(st.cards)) {
-            var k = Object.keys(st.cards)[i];
-            if (!Object.prototype.toString.call(st.cards[k].content.prompt).includes("Array")) {
-                st.cards[k].content.prompt = [st.cards[k].content.prompt];
-            }
-            if (!("twoSided" in st.cards[k])) {
-                st.cards[k]["twoSided"] = false;
-            }
-        }
+        st = (0, utils_1.recursiveRepairJSON)(st, exports.defaultSimpleSRState, ["cards"]);
+        st.cards = (0, utils_1.recursiveRepairEachValueJSON)(st.cards, Object.values(exports.defaultSimpleSRState.cards)[0]);
         return st;
     }
     applyCardTemplating(card) {
@@ -3204,7 +3003,438 @@ function simpleSRMenu(st) {
 
 /***/ }),
 
-/***/ 192:
+/***/ 142:
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.TimesTableGen = exports.defaultTimesTableState = void 0;
+const flashcard_generator_1 = __webpack_require__(850);
+const flashcard_sync_generator_1 = __webpack_require__(868);
+const flashcard_template_1 = __webpack_require__(217);
+const editor_1 = __webpack_require__(613);
+const flashcard_deck_1 = __webpack_require__(134);
+// The state of the deck when the user is using it for the first time
+exports.defaultTimesTableState = {
+    minNum: 1,
+    maxNum: 12,
+    recentlyIncorrect: []
+};
+class TimesTableGen extends flashcard_sync_generator_1.FlashcardSyncGen {
+    getGenName() {
+        return "times-table-generator";
+    }
+    repairDeckState(st) {
+        return st;
+    }
+    correctEffect(st, c, attempt, resolve) {
+        resolve();
+    }
+    getNextCard(st) {
+        var factor1 = Math.floor(Math.random() * (st.maxNum - st.minNum + 1)) + st.minNum;
+        var factor2 = Math.floor(Math.random() * (st.maxNum - st.minNum + 1)) + st.minNum;
+        return { factor1: factor1, factor2: factor2 };
+    }
+    updateState(st, c, res) {
+        // Keep track of the last 10 multiplication facts to be incorrectly answered
+        if (res === flashcard_generator_1.FlashcardResult.Incorrect) {
+            st.recentlyIncorrect.unshift([c.factor1, c.factor2]);
+            st.recentlyIncorrect = st.recentlyIncorrect.slice(0, 10);
+        }
+        return st;
+    }
+    generateCard(st, c) {
+        var cardData = [`${c.factor1} × ${c.factor2}`, (c.factor1 * c.factor2).toString()];
+        return (0, flashcard_template_1.renderCard)("basic-template", cardData);
+    }
+    checkAnswer(answer, st, c) {
+        return (answer === (c.factor1 * c.factor2).toString());
+    }
+}
+exports.TimesTableGen = TimesTableGen;
+function makeTimesTableEditor(st) {
+    var minEd = (0, editor_1.scrollNumberEditor)("Minimum factor:", st.minNum, 0, 100, 1);
+    var maxEd = (0, editor_1.scrollNumberEditor)("Maximum factor:", st.maxNum, 0, 100, 1);
+    var wrongDiv = document.createElement("div");
+    wrongDiv.style.backgroundColor = "#ffdddd";
+    wrongDiv.classList.add("deck-menu-submenu");
+    var wrongList = document.createElement("ul");
+    var wrongHdr = document.createElement("b");
+    wrongHdr.textContent = "You have not gotten any cards wrong yet.";
+    for (var i in Object.keys(st.recentlyIncorrect)) {
+        var fct = st.recentlyIncorrect[i];
+        var li = document.createElement("li");
+        li.textContent = `${fct[0]} × ${fct[1]} = ${fct[0] * fct[1]}`;
+        wrongList.appendChild(li);
+        wrongHdr.textContent = "You have gotten the following cards wrong:";
+    }
+    wrongDiv.appendChild(wrongHdr);
+    wrongDiv.appendChild(wrongList);
+    var edDiv = document.createElement("div");
+    edDiv.appendChild(minEd.element);
+    edDiv.appendChild(maxEd.element);
+    edDiv.appendChild(wrongDiv);
+    return {
+        element: edDiv,
+        menuToState: () => {
+            return {
+                minNum: minEd.menuToState(),
+                maxNum: maxEd.menuToState(),
+                recentlyIncorrect: st.recentlyIncorrect
+            };
+        }
+    };
+}
+(0, flashcard_deck_1.registerDeckType)(new TimesTableGen(), makeTimesTableEditor, "times-table-quizzer", "Times table quizzer", exports.defaultTimesTableState, "#ffcccc");
+
+
+/***/ }),
+
+/***/ 304:
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const flashcard_sync_generator_1 = __webpack_require__(868);
+const flashcard_deck_1 = __webpack_require__(134);
+const flashcard_template_1 = __webpack_require__(217);
+const speech_1 = __webpack_require__(230);
+const editor_1 = __webpack_require__(613);
+class TranscriptFlashcardGen extends flashcard_sync_generator_1.FlashcardSyncGen {
+    getGenName() { return "transcript-generator"; }
+    getNextCard(state) {
+        var dat = state.deck[Math.floor(Math.random() * Object.keys(state.deck).length)];
+        return {
+            text: dat,
+            speechSettings: state.settings.speechSettings
+        };
+    }
+    updateState(state, cardData, correct) {
+        return state;
+    }
+    checkAnswer(ans, st, data) {
+        return (ans == data.text);
+    }
+    generateCard(st, data) {
+        return (0, flashcard_template_1.renderCard)("transcript-template", data);
+    }
+    correctEffect(_, __, ___, resolve) { resolve(); }
+    ;
+    repairDeckState(st) { return st; }
+}
+function makeTranscriptEditor(state) {
+    var speechEd = (0, speech_1.speechSettingsEditor)(state.settings.speechSettings);
+    speechEd.element.classList.add("deck-menu-submenu");
+    var fileEd = (0, editor_1.fileUploadEditor)("Upload a list of phrases", (s) => { });
+    fileEd.element.classList.add("deck-menu-submenu");
+    var container = document.createElement("div");
+    container.appendChild(speechEd.element);
+    container.appendChild(fileEd.element);
+    return {
+        element: container,
+        menuToState: () => {
+            var fileInput = fileEd.menuToState();
+            return {
+                deck: fileInput.length == 0 ? state.deck : fileInput.split('\n').map((x) => x.trim()),
+                settings: {
+                    speechSettings: speechEd.menuToState()
+                }
+            };
+        }
+    };
+}
+var transcriptionDefaultState = {
+    deck: [
+        "Hello, how are you?",
+        "My name is Bob.",
+        "What strange weather we're having.",
+        "I'm 50 years old."
+    ],
+    settings: {
+        speechSettings: (0, speech_1.defaultSpeechSettings)()
+    }
+};
+(0, flashcard_deck_1.registerDeckType)(new TranscriptFlashcardGen(), makeTranscriptEditor, "transcription-quizzer", "Transcription quizzer", transcriptionDefaultState);
+
+
+/***/ }),
+
+/***/ 91:
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.KVFlashcardGen = void 0;
+const flashcard_generator_1 = __webpack_require__(850);
+const flashcard_sync_generator_1 = __webpack_require__(868);
+const flashcard_deck_1 = __webpack_require__(134);
+const flashcard_template_1 = __webpack_require__(217);
+const editor_1 = __webpack_require__(613);
+class KVFlashcardGen extends flashcard_sync_generator_1.FlashcardSyncGen {
+    getGenName() { return "uniform-key-value"; }
+    getNextCard(state) {
+        var dat = state.deck[Math.floor(Math.random() * Object.keys(state.deck).length)];
+        return dat;
+    }
+    updateState(state, cardData, correct) {
+        if (correct != flashcard_generator_1.FlashcardResult.Unanswered) {
+            state.history.push([cardData[0], correct == flashcard_generator_1.FlashcardResult.Correct]);
+        }
+        return state;
+    }
+    checkAnswer(ans, state, cardData) {
+        return (ans == cardData[1]);
+    }
+    generateCard(_, data) {
+        return (0, flashcard_template_1.renderCard)("basic-template", data);
+    }
+    correctEffect(_, __, ___, resolve) { resolve(); }
+    ;
+    repairDeckState(st) { return st; }
+}
+exports.KVFlashcardGen = KVFlashcardGen;
+function makeKVEditor(state) {
+    var transEd = (0, editor_1.makeTranslationEditor)(state.deck, (x) => true);
+    return {
+        element: transEd.element,
+        menuToState: () => {
+            return {
+                deck: transEd.menuToState(),
+                history: state.history
+            };
+        }
+    };
+}
+var kvDefaultState = {
+    deck: [
+        ["cat", "gato"],
+        ["dog", "perro"],
+        ["el perro runs", "el perro corre"],
+    ],
+    history: []
+};
+(0, flashcard_deck_1.registerDeckType)(new KVFlashcardGen(), makeKVEditor, "key-value-quizzer", "Simple key-value quizzer", kvDefaultState);
+
+
+/***/ }),
+
+/***/ 337:
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const flashcard_deck_1 = __webpack_require__(134);
+const decklist_1 = __webpack_require__(701);
+__webpack_require__(142);
+__webpack_require__(91);
+__webpack_require__(846);
+__webpack_require__(815);
+__webpack_require__(627);
+__webpack_require__(304);
+(0, decklist_1.setupDecklistMenu)();
+(0, flashcard_deck_1.loadAllDecks)().then((_) => (0, flashcard_deck_1.runDeck)((0, flashcard_deck_1.getStartingDeck)("key-value-quizzer")));
+
+
+/***/ }),
+
+/***/ 816:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.Preloader = void 0;
+class Preloader {
+    values = {};
+    valueCounts = {};
+    numPreload;
+    delaySeconds = 1.0;
+    constructor(numPreload) {
+        this.numPreload = numPreload;
+    }
+    fillCacheForKey(k, fetcher) {
+        var valuesNeeded = this.numPreload - this.valueCounts[k];
+        return fetcher(k).then((xs) => {
+            if (xs === null || xs === undefined)
+                return;
+            xs.map((x) => this.values[k].push(x));
+            this.valueCounts[k] = this.values[k].length;
+        }).catch((e) => { console.log(e); });
+    }
+    addKey(k, fetcher) {
+        if (this.values[k] === undefined) {
+            this.values[k] = [];
+            this.valueCounts[k] = 0;
+        }
+        return this.fillCacheForKey(k, fetcher);
+    }
+    getKey(k, fetcher, maxAttempts = 3) {
+        if (maxAttempts == 0)
+            return new Promise((resolve, _) => resolve(undefined));
+        var keyAddedPromise = this.addKey(k, fetcher);
+        if (this.values[k].length > 0) {
+            return new Promise((resolve, _) => {
+                this.valueCounts[k] += -1;
+                var nextVal = this.values[k].shift();
+                this.fillCacheForKey(k, fetcher);
+                resolve(nextVal);
+            });
+        }
+        else {
+            return keyAddedPromise.then((_) => this.getKey(k, fetcher, maxAttempts - 1));
+        }
+    }
+}
+exports.Preloader = Preloader;
+
+
+/***/ }),
+
+/***/ 53:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.preprocessStringSub = preprocessStringSub;
+exports.validateStringSub = validateStringSub;
+exports.randomizeStringSub = randomizeStringSub;
+function preprocessStringSub(subString) {
+    var subs = {};
+    var i = 0;
+    const tplString = subString.replaceAll(/\{r([0-9]):([^\}]*)\}/g, function (m, g1, g2) {
+        subs[i] = { index: i, group: +g1, options: g2.split(',') };
+        var sub = `{${i}}`;
+        i += 1;
+        return sub;
+    });
+    return [tplString, subs];
+}
+function validateStringSub(subString) {
+    var preproc = preprocessStringSub(subString);
+    var subs = preproc[1];
+    var counts = {};
+    for (var k in Object.keys(subs)) {
+        var sub = subs[k];
+        if (sub.group in Object.keys(counts)) {
+            if (sub.options.length != counts[sub.group]) {
+                return false;
+            }
+        }
+        else {
+            counts[sub.group] = sub.options.length;
+        }
+    }
+    return true;
+}
+function randomizeStringSub(subString, rands = {}) {
+    var preproc = preprocessStringSub(subString);
+    var outString = preproc[0];
+    var subs = preproc[1];
+    for (var k in Object.keys(subs)) {
+        var sub = subs[k];
+        if (!(sub.group in Object.keys(rands))) {
+            rands[sub.group] = Math.floor(Math.random() * sub.options.length);
+        }
+        var sel = sub.options[rands[sub.group]];
+        outString = outString.replace(`{${sub.index}}`, sel);
+    }
+    return [outString, rands];
+}
+
+
+/***/ }),
+
+/***/ 228:
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.infoWidgetSR = infoWidgetSR;
+exports.studyingEditorSR = studyingEditorSR;
+const spaced_repetition_general_1 = __webpack_require__(2);
+const editor_1 = __webpack_require__(613);
+function infoWidgetSR(st) {
+    var contDiv = document.createElement("div");
+    contDiv.classList.add("deck-menu-submenu");
+    var totP = document.createElement("p");
+    totP.textContent = `Total cards: ${Object.keys(st.cards).length}`;
+    totP.style.color = "#666666";
+    totP.style.fontWeight = "bold";
+    var newP = document.createElement("p");
+    newP.textContent = `New cards: ${Object.keys(st.cards).filter((i) => st.cards[i].intervalMinutes == 0).length}`;
+    newP.style.color = "#9999ee";
+    newP.style.fontWeight = "bold";
+    var dueP = document.createElement("p");
+    dueP.textContent = `Due cards: ${Object.keys(st.cards).filter((i) => st.cards[i].intervalMinutes > 0
+        && new Date(st.cards[i].due) < new Date()).length}`;
+    dueP.style.color = "#ee9999";
+    dueP.style.fontWeight = "bold";
+    [totP, newP, dueP].map((el) => contDiv.appendChild(el));
+    return contDiv;
+}
+function studyingEditorSR(st) {
+    var studyingEditor = (0, editor_1.radioEditor)(st.studying, [spaced_repetition_general_1.SpacedRepStudying.NewCards, spaced_repetition_general_1.SpacedRepStudying.DueCards, spaced_repetition_general_1.SpacedRepStudying.RandomCards], ["Study new cards", "Study due cards", "Practice random cards"]);
+    return studyingEditor;
+}
+
+
+/***/ }),
+
+/***/ 620:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.emptySRQueue = emptySRQueue;
+exports.chooseNext = chooseNext;
+exports.incorporateLast = incorporateLast;
+exports.filterNewQueue = filterNewQueue;
+function emptySRQueue(maxNewCards) {
+    return {
+        maxNewCards: maxNewCards,
+        newQueue: []
+    };
+}
+function chooseNext(q, allOpts) {
+    var newOpts = allOpts.filter((k) => !q.newQueue.includes(k));
+    if (q.newQueue.length < q.maxNewCards && newOpts.length > 0) {
+        return newOpts[Math.floor(Math.random() * newOpts.length)];
+    }
+    else if (q.newQueue.length > 0) {
+        return q.newQueue[0];
+    }
+    else {
+        return undefined;
+    }
+}
+function incorporateLast(q, c, isStillNew) {
+    if (c === undefined) {
+        return q;
+    }
+    if (c === q.newQueue[0]) {
+        q.newQueue.shift();
+    }
+    if (isStillNew) {
+        q.newQueue.push(c);
+    }
+    return q;
+}
+function filterNewQueue(q, fxn) {
+    q.newQueue = q.newQueue.filter(fxn);
+    return q;
+}
+
+
+/***/ }),
+
+/***/ 230:
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
@@ -3214,7 +3444,7 @@ exports.gSynth = void 0;
 exports.utter = utter;
 exports.defaultSpeechSettings = defaultSpeechSettings;
 exports.speechSettingsEditor = speechSettingsEditor;
-const editor_1 = __webpack_require__(43);
+const editor_1 = __webpack_require__(613);
 const gSynth = () => { return window.speechSynthesis; };
 exports.gSynth = gSynth;
 function getVoice(voiceName) {
@@ -3282,118 +3512,7 @@ function speechSettingsEditor(ss) {
 
 /***/ }),
 
-/***/ 36:
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getHostname = getHostname;
-exports.setRemote = setRemote;
-exports.getRemote = getRemote;
-exports.setSyncKey = setSyncKey;
-exports.getSyncKey = getSyncKey;
-exports.validateSyncCreds = validateSyncCreds;
-exports.promptForSyncCreds = promptForSyncCreds;
-exports.syncUploadDeck = syncUploadDeck;
-exports.syncDownloadDeck = syncDownloadDeck;
-const utils_1 = __webpack_require__(185);
-function getHostname() {
-    var host = localStorage.getItem("host");
-    if (host === null) {
-        host = (0, utils_1.guidGenerator)();
-        localStorage.setItem("host", host);
-    }
-    return host;
-}
-function setRemote(url) {
-    localStorage.setItem("syncserver", url);
-}
-function getRemote() {
-    return localStorage.getItem("syncserver");
-}
-function setSyncKey(key) {
-    localStorage.setItem("synckey", key);
-}
-function getSyncKey() {
-    return localStorage.getItem("synckey");
-}
-function validateSyncCreds(goodCallback, badCallback) {
-    var remote = getRemote();
-    var key = getSyncKey();
-    try {
-        fetch(`${remote}/status`, {
-            method: "POST",
-            headers: {
-                'Accept': 'application/json, text/plain, */*',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ key: key })
-        }).then(res => res.json())
-            .then(res => goodCallback(remote, key))
-            .catch(res => badCallback());
-    }
-    catch (e) {
-        badCallback();
-    }
-}
-function promptForSyncCreds() {
-    var remote = window.prompt("Enter the URL of your synchronization server.") || "";
-    var key = window.prompt("Enter your key with the synchronization server.") || "";
-    setRemote(remote);
-    setSyncKey(key);
-    validateSyncCreds((_, __) => alert("Successfully paired with synchronization server."), () => alert("Error attempting to connect to synchronization server. Try again."));
-}
-function syncUploadDeck(deck) {
-    var badCallback = () => alert("Could not upload deck. Ensure your sync server is set up.");
-    var host = getHostname();
-    validateSyncCreds((remote, key) => {
-        try {
-            fetch(`${remote}/put`, {
-                method: "POST",
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ host: host, key: key, id: deck.slug, data: JSON.stringify(deck) })
-            }).then(res => alert("Deck uploaded successfully."))
-                .catch(res => badCallback());
-        }
-        catch (e) {
-            badCallback();
-        }
-    }, () => badCallback());
-}
-function syncDownloadDeck(slug, setDeck) {
-    var badCallback = () => alert("Could not download deck. Ensure your sync server is set up and that the deck ID is correct.");
-    var host = getHostname();
-    validateSyncCreds((remote, key) => {
-        try {
-            fetch(`${remote}/get`, {
-                method: "POST",
-                headers: {
-                    'Accept': 'application/json, text/plain, */*',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ host: host, key: key, id: slug })
-            }).then(res => res.json())
-                .then(res => {
-                if (confirm("Are you sure you want to download this deck? Any local version will be overwritten.")) {
-                    setDeck(res['data']);
-                    alert("Deck downloaded successfully.");
-                }
-            })
-                .catch(res => badCallback());
-        }
-        catch (e) {
-            badCallback();
-        }
-    }, () => badCallback());
-}
-
-
-/***/ }),
-
-/***/ 460:
+/***/ 265:
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
@@ -3402,7 +3521,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.defaultTextFilterSettings = void 0;
 exports.applyTextFilter = applyTextFilter;
 exports.textFilterSelectionMenu = textFilterSelectionMenu;
-const editor_1 = __webpack_require__(43);
+const editor_1 = __webpack_require__(613);
 exports.defaultTextFilterSettings = {
     removeParenDelimited: false,
     removeSqDelimited: false,
@@ -3504,256 +3623,7 @@ function textFilterSelectionMenu(tfs) {
 
 /***/ }),
 
-/***/ 737:
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.TimesTableGen = exports.defaultTimesTableState = void 0;
-const flashcard_generator_1 = __webpack_require__(808);
-const flashcard_sync_generator_1 = __webpack_require__(410);
-const flashcard_template_1 = __webpack_require__(791);
-const editor_1 = __webpack_require__(43);
-const flashcard_deck_1 = __webpack_require__(836);
-// The state of the deck when the user is using it for the first time
-exports.defaultTimesTableState = {
-    minNum: 1,
-    maxNum: 12,
-    recentlyIncorrect: []
-};
-class TimesTableGen extends flashcard_sync_generator_1.FlashcardSyncGen {
-    getGenName() {
-        return "times-table-generator";
-    }
-    repairDeckState(st) {
-        return st;
-    }
-    correctEffect(st, c, attempt, resolve) {
-        resolve();
-    }
-    getNextCard(st) {
-        var factor1 = Math.floor(Math.random() * (st.maxNum - st.minNum + 1)) + st.minNum;
-        var factor2 = Math.floor(Math.random() * (st.maxNum - st.minNum + 1)) + st.minNum;
-        return { factor1: factor1, factor2: factor2 };
-    }
-    updateState(st, c, res) {
-        // Keep track of the last 10 multiplication facts to be incorrectly answered
-        if (res === flashcard_generator_1.FlashcardResult.Incorrect) {
-            st.recentlyIncorrect.unshift([c.factor1, c.factor2]);
-            st.recentlyIncorrect = st.recentlyIncorrect.slice(0, 10);
-        }
-        return st;
-    }
-    generateCard(st, c) {
-        var cardData = [`${c.factor1} × ${c.factor2}`, (c.factor1 * c.factor2).toString()];
-        return (0, flashcard_template_1.renderCard)("basic-template", cardData);
-    }
-    checkAnswer(answer, st, c) {
-        return (answer === (c.factor1 * c.factor2).toString());
-    }
-}
-exports.TimesTableGen = TimesTableGen;
-function makeTimesTableEditor(st) {
-    var minEd = (0, editor_1.scrollNumberEditor)("Minimum factor:", st.minNum, 0, 100, 1);
-    var maxEd = (0, editor_1.scrollNumberEditor)("Maximum factor:", st.maxNum, 0, 100, 1);
-    var wrongDiv = document.createElement("div");
-    wrongDiv.style.backgroundColor = "#ffdddd";
-    wrongDiv.classList.add("deck-menu-submenu");
-    var wrongList = document.createElement("ul");
-    var wrongHdr = document.createElement("b");
-    wrongHdr.textContent = "You have not gotten any cards wrong yet.";
-    for (var i in Object.keys(st.recentlyIncorrect)) {
-        var fct = st.recentlyIncorrect[i];
-        var li = document.createElement("li");
-        li.textContent = `${fct[0]} × ${fct[1]} = ${fct[0] * fct[1]}`;
-        wrongList.appendChild(li);
-        wrongHdr.textContent = "You have gotten the following cards wrong:";
-    }
-    wrongDiv.appendChild(wrongHdr);
-    wrongDiv.appendChild(wrongList);
-    var edDiv = document.createElement("div");
-    edDiv.appendChild(minEd.element);
-    edDiv.appendChild(maxEd.element);
-    edDiv.appendChild(wrongDiv);
-    return {
-        element: edDiv,
-        menuToState: () => {
-            return {
-                minNum: minEd.menuToState(),
-                maxNum: maxEd.menuToState(),
-                recentlyIncorrect: st.recentlyIncorrect
-            };
-        }
-    };
-}
-(0, flashcard_deck_1.registerDeckType)(new TimesTableGen(), makeTimesTableEditor, "times-table-quizzer", "Times table quizzer", exports.defaultTimesTableState, "#ffcccc");
-
-
-/***/ }),
-
-/***/ 159:
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-const flashcard_sync_generator_1 = __webpack_require__(410);
-const flashcard_deck_1 = __webpack_require__(836);
-const flashcard_template_1 = __webpack_require__(791);
-const speech_1 = __webpack_require__(192);
-const editor_1 = __webpack_require__(43);
-class TranscriptFlashcardGen extends flashcard_sync_generator_1.FlashcardSyncGen {
-    getGenName() { return "transcript-generator"; }
-    getNextCard(state) {
-        var dat = state.deck[Math.floor(Math.random() * Object.keys(state.deck).length)];
-        return {
-            text: dat,
-            speechSettings: state.settings.speechSettings
-        };
-    }
-    updateState(state, cardData, correct) {
-        return state;
-    }
-    checkAnswer(ans, st, data) {
-        return (ans == data.text);
-    }
-    generateCard(st, data) {
-        return (0, flashcard_template_1.renderCard)("transcript-template", data);
-    }
-    correctEffect(_, __, ___, resolve) { resolve(); }
-    ;
-    repairDeckState(st) { return st; }
-}
-function makeTranscriptEditor(state) {
-    var speechEd = (0, speech_1.speechSettingsEditor)(state.settings.speechSettings);
-    speechEd.element.classList.add("deck-menu-submenu");
-    var fileEd = (0, editor_1.fileUploadEditor)("Upload a list of phrases", (s) => { });
-    fileEd.element.classList.add("deck-menu-submenu");
-    var container = document.createElement("div");
-    container.appendChild(speechEd.element);
-    container.appendChild(fileEd.element);
-    return {
-        element: container,
-        menuToState: () => {
-            var fileInput = fileEd.menuToState();
-            return {
-                deck: fileInput.length == 0 ? state.deck : fileInput.split('\n').map((x) => x.trim()),
-                settings: {
-                    speechSettings: speechEd.menuToState()
-                }
-            };
-        }
-    };
-}
-var transcriptionDefaultState = {
-    deck: [
-        "Hello, how are you?",
-        "My name is Bob.",
-        "What strange weather we're having.",
-        "I'm 50 years old."
-    ],
-    settings: {
-        speechSettings: (0, speech_1.defaultSpeechSettings)()
-    }
-};
-(0, flashcard_deck_1.registerDeckType)(new TranscriptFlashcardGen(), makeTranscriptEditor, "transcription-quizzer", "Transcription quizzer", transcriptionDefaultState);
-
-
-/***/ }),
-
-/***/ 127:
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-const flashcard_1 = __webpack_require__(88);
-const flashcard_template_1 = __webpack_require__(791);
-const speech_1 = __webpack_require__(192);
-class TranscriptFlashcardTemplate extends flashcard_template_1.FlashcardTemplate {
-    getName() { return "transcript-template"; }
-    render(data) {
-        var container = document.createElement("div");
-        var playBtn = document.createElement("img");
-        playBtn.src = "/static/images/speaker.png";
-        playBtn.classList.add("transcription-audio-button");
-        playBtn.onclick = (e) => {
-            var ss = data.speechSettings;
-            (0, speech_1.utter)(data.text, ss.voice, ss.rate, ss.pitch);
-        };
-        container.appendChild(playBtn);
-        var fl = new flashcard_1.Flashcard(container, data.text);
-        return fl;
-    }
-}
-(0, flashcard_template_1.registerTemplate)(new TranscriptFlashcardTemplate());
-
-
-/***/ }),
-
-/***/ 18:
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.KVFlashcardGen = void 0;
-const flashcard_generator_1 = __webpack_require__(808);
-const flashcard_sync_generator_1 = __webpack_require__(410);
-const flashcard_deck_1 = __webpack_require__(836);
-const flashcard_template_1 = __webpack_require__(791);
-const editor_1 = __webpack_require__(43);
-class KVFlashcardGen extends flashcard_sync_generator_1.FlashcardSyncGen {
-    getGenName() { return "uniform-key-value"; }
-    getNextCard(state) {
-        var dat = state.deck[Math.floor(Math.random() * Object.keys(state.deck).length)];
-        return dat;
-    }
-    updateState(state, cardData, correct) {
-        if (correct != flashcard_generator_1.FlashcardResult.Unanswered) {
-            state.history.push([cardData[0], correct == flashcard_generator_1.FlashcardResult.Correct]);
-        }
-        return state;
-    }
-    checkAnswer(ans, state, cardData) {
-        return (ans == cardData[1]);
-    }
-    generateCard(_, data) {
-        return (0, flashcard_template_1.renderCard)("basic-template", data);
-    }
-    correctEffect(_, __, ___, resolve) { resolve(); }
-    ;
-    repairDeckState(st) { return st; }
-}
-exports.KVFlashcardGen = KVFlashcardGen;
-function makeKVEditor(state) {
-    var transEd = (0, editor_1.makeTranslationEditor)(state.deck, (x) => true);
-    return {
-        element: transEd.element,
-        menuToState: () => {
-            return {
-                deck: transEd.menuToState(),
-                history: state.history
-            };
-        }
-    };
-}
-var kvDefaultState = {
-    deck: [
-        ["cat", "gato"],
-        ["dog", "perro"],
-        ["{r0:the dog,the cat} runs", "{r0:el perro,el gato} corre"],
-        ["{r0:I want,you want,he wants} {r1:to eat,to drink}", "{r0:quiero,quieres,quiere} {r1:comer,beber}"]
-    ],
-    history: []
-};
-(0, flashcard_deck_1.registerDeckType)(new KVFlashcardGen(), makeKVEditor, "key-value-quizzer", "Simple key-value quizzer", kvDefaultState);
-
-
-/***/ }),
-
-/***/ 185:
+/***/ 135:
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
@@ -3770,6 +3640,8 @@ exports.getSRFutureDateInfo = getSRFutureDateInfo;
 exports.showLoadingIcon = showLoadingIcon;
 exports.hideLoadingIcon = hideLoadingIcon;
 exports.iconButton = iconButton;
+exports.recursiveRepairJSON = recursiveRepairJSON;
+exports.recursiveRepairEachValueJSON = recursiveRepairEachValueJSON;
 // https://stackoverflow.com/questions/6860853/generate-random-string-for-div-id
 function guidGenerator() {
     var S4 = function () {
@@ -3848,6 +3720,47 @@ function iconButton(imgUrl, effect) {
     icon.src = imgUrl;
     btn.onclick = effect;
     return btn;
+}
+function recursiveRepairJSON(obj, defaultObj, omitKeys = []) {
+    if (typeof obj === 'string' || obj instanceof String)
+        return obj;
+    var objKeys = Object.keys(obj);
+    var defaultKeys = Object.keys(defaultObj);
+    for (var i in defaultKeys) {
+        var k = defaultKeys[i];
+        if (omitKeys.includes(k))
+            continue;
+        if (!(k in obj)) {
+            obj[k] = JSON.parse(JSON.stringify(defaultObj[k]));
+        }
+        if (["number", "string", "boolean", "null"].includes(typeof obj[k]) || obj[k] === null)
+            continue;
+        if (Array.isArray(obj[k])) {
+            if (defaultObj[k].length > 0) {
+                for (var j in obj[k]) {
+                    obj[k][j] = recursiveRepairJSON(obj[k][j], defaultObj[k][0], omitKeys);
+                }
+            }
+        }
+        else if (typeof obj[k] === "object") {
+            obj[k] = recursiveRepairJSON(obj[k], defaultObj[k], omitKeys);
+        }
+    }
+    for (var i in objKeys) {
+        var k = objKeys[i];
+        if (!(k in defaultObj)) {
+            delete obj[k];
+        }
+    }
+    return obj;
+}
+function recursiveRepairEachValueJSON(objDict, defaultObj, omitKeys = []) {
+    var objDictKeys = Object.keys(objDict);
+    for (var i in objDictKeys) {
+        var k = objDictKeys[i];
+        objDict[k] = recursiveRepairJSON(objDict[k], defaultObj, omitKeys);
+    }
+    return objDict;
 }
 
 

@@ -3,27 +3,17 @@ import {
     runDeck,
     gDeckRegistry,
     getStartingDeck
-} from "./flashcard-deck"
+} from "core/flashcard-deck"
 import {
-    generateDecklistMenu,
     setupDecklistMenu
-} from "./decklist"
+} from "core/decklist"
 
-import "./basic-template"
-import "./cloze-template"
-import "./transcript-template"
-import "./noanswer-template"
-
-import "./fs"
-
-import "./times-tables-gen";
-import "./uniform-key-value";
-import "./spaced-repetition-simple";
-import "./spaced-repetition-cloze";
-import "./cloze-gen";
-import "./transcript-gen";
-
-import "./speech";
+import "decks/times-tables-gen";
+import "decks/uniform-key-value";
+import "decks/spaced-repetition-simple";
+import "decks/spaced-repetition-cloze";
+import "decks/cloze-gen";
+import "decks/transcript-gen";
 
 setupDecklistMenu();
 

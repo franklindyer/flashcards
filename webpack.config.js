@@ -18,7 +18,12 @@ module.exports = {
     minimize: false
   },
   resolve: {
-    extensions: ['.tsx', '.ts', '.js']
+    extensions: ['.tsx', '.ts', '.js'],
+    alias: {
+        core: path.resolve(process.cwd(), 'src/core/'),
+        utils: path.resolve(process.cwd(), 'src/utils/'),
+        decks: path.resolve(process.cwd(), 'src/decks/'),
+    }
   },
   output: {
     filename: 'bundle.js',
