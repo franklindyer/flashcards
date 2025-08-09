@@ -1,10 +1,10 @@
 import {
     FlashcardResult
-} from "../src/flashcard-generator"
+} from "../src/core/flashcard-generator"
 import {
     KVFlashcardState,
     KVFlashcardGen
-} from "../src/uniform-key-value"
+} from "../src/decks/uniform-key-value"
 
 function makeKVTestState(): KVFlashcardState {
     return {

@@ -1,6 +1,6 @@
 import {
     recursiveRepairJSON
-} from "../src/utils"
+} from "../src/utils/utils"
 
 var defaultObj = () => { return {
     "abc": "123",
