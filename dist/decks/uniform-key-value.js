@@ -24,23 +24,23 @@ class KVFlashcardGen extends flashcard_sync_generator_1.FlashcardSyncGen {
     generateCard(_, data) {
         return (0, flashcard_template_1.renderCard)("basic-template", data);
     }
+    makeEditor(state) {
+        var transEd = (0, editor_1.makeTranslationEditor)(state.deck, (x) => true);
+        return {
+            element: transEd.element,
+            menuToState: () => {
+                return {
+                    deck: transEd.menuToState(),
+                    history: state.history
+                };
+            }
+        };
+    }
     correctEffect(_, __, ___, resolve) { resolve(); }
     ;
     repairDeckState(st) { return st; }
 }
 exports.KVFlashcardGen = KVFlashcardGen;
-function makeKVEditor(state) {
-    var transEd = (0, editor_1.makeTranslationEditor)(state.deck, (x) => true);
-    return {
-        element: transEd.element,
-        menuToState: () => {
-            return {
-                deck: transEd.menuToState(),
-                history: state.history
-            };
-        }
-    };
-}
 var kvDefaultState = {
     deck: [
         ["cat", "gato"],
@@ -49,4 +49,4 @@ var kvDefaultState = {
     ],
     history: []
 };
-(0, flashcard_deck_1.registerDeckType)(new KVFlashcardGen(), makeKVEditor, "key-value-quizzer", "Simple key-value quizzer", kvDefaultState);
+(0, flashcard_deck_1.registerDeckType)(new KVFlashcardGen(), "key-value-quizzer", "Simple key-value quizzer", kvDefaultState);

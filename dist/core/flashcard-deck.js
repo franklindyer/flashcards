@@ -121,11 +121,11 @@ function getStartingDeck(defaultSlug) {
     return lastDeckSlug;
 }
 /* Register a new type of deck */
-function registerDeckType(gen, mkEd, defaultSlug, defaultName, defaultState, colorCode = "#ffffee") {
+function registerDeckType(gen, defaultSlug, defaultName, defaultState, colorCode = "#ffffee") {
     exports.gDeckTypeRegistry[gen.getGenName()] = {
         slug: gen.getGenName(),
         gen: gen,
-        editor: mkEd
+        editor: gen.makeEditor
     };
     exports.gDeckDefaultRegistry[gen.getGenName()] = {
         name: defaultName,

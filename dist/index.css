@@ -273,6 +273,10 @@ hr {
     padding: 1px;
 }
 
+.sr-card-due-date {
+    display: inline-block;
+}
+
 // Animation for loading icon
 
 .lds-spinner,

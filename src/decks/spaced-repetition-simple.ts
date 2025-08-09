@@ -215,7 +215,7 @@ export class SimpleSpacedRepGen
         st: SpacedRepState<SRSimpleContent, SRSimpleAuxData, SRSimpleSettings>,
         card: SpacedRepCardPhysical<SRSimpleContent, SRSimpleAuxData>
         ): Flashcard {
-        var a = document.createElement("a");
+        var a = document.createElement("div");
         var prompt = "No cards left to study.";
         var answers: string[] = [];
         var hint = "You cannot continue studying until more cards become due."
@@ -363,8 +363,6 @@ export class SimpleSpacedRepGen
             } else {
                 cardInfo.textContent = `due ${getSRFutureDateInfo(c.due!)}`;
             }
-            cardInfo.style.display = "block";
-            edDetails.appendChild(cardInfo);
 
             var listenBtn = ((ed) => iconButton("speaker.png", () => {
                 var ss = speechEditor.menuToState();
@@ -375,7 +373,13 @@ export class SimpleSpacedRepGen
             var listenDiv = document.createElement("div");
             listenDiv.style.overflowY = "visible";
             listenDiv.appendChild(listenBtn);
-            edDetails.appendChild(listenDiv);
+            
+            var cardBottomDiv = document.createElement("div");
+            // cardBottomDiv.style.overflow = "auto";
+            edDetails.appendChild(cardBottomDiv);
+            cardBottomDiv.appendChild(cardInfo);
+            cardBottomDiv.appendChild(listenBtn);
+
 
             return {
                 element: edDetails,

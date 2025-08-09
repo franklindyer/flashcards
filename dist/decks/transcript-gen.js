@@ -23,30 +23,30 @@ class TranscriptFlashcardGen extends flashcard_sync_generator_1.FlashcardSyncGen
     generateCard(st, data) {
         return (0, flashcard_template_1.renderCard)("transcript-template", data);
     }
+    makeEditor(state) {
+        var speechEd = (0, speech_1.speechSettingsEditor)(state.settings.speechSettings);
+        speechEd.element.classList.add("deck-menu-submenu");
+        var fileEd = (0, editor_1.fileUploadEditor)("Upload a list of phrases", (s) => { });
+        fileEd.element.classList.add("deck-menu-submenu");
+        var container = document.createElement("div");
+        container.appendChild(speechEd.element);
+        container.appendChild(fileEd.element);
+        return {
+            element: container,
+            menuToState: () => {
+                var fileInput = fileEd.menuToState();
+                return {
+                    deck: fileInput.length == 0 ? state.deck : fileInput.split('\n').map((x) => x.trim()),
+                    settings: {
+                        speechSettings: speechEd.menuToState()
+                    }
+                };
+            }
+        };
+    }
     correctEffect(_, __, ___, resolve) { resolve(); }
     ;
     repairDeckState(st) { return st; }
-}
-function makeTranscriptEditor(state) {
-    var speechEd = (0, speech_1.speechSettingsEditor)(state.settings.speechSettings);
-    speechEd.element.classList.add("deck-menu-submenu");
-    var fileEd = (0, editor_1.fileUploadEditor)("Upload a list of phrases", (s) => { });
-    fileEd.element.classList.add("deck-menu-submenu");
-    var container = document.createElement("div");
-    container.appendChild(speechEd.element);
-    container.appendChild(fileEd.element);
-    return {
-        element: container,
-        menuToState: () => {
-            var fileInput = fileEd.menuToState();
-            return {
-                deck: fileInput.length == 0 ? state.deck : fileInput.split('\n').map((x) => x.trim()),
-                settings: {
-                    speechSettings: speechEd.menuToState()
-                }
-            };
-        }
-    };
 }
 var transcriptionDefaultState = {
     deck: [
@@ -59,4 +59,4 @@ var transcriptionDefaultState = {
         speechSettings: (0, speech_1.defaultSpeechSettings)()
     }
 };
-(0, flashcard_deck_1.registerDeckType)(new TranscriptFlashcardGen(), makeTranscriptEditor, "transcription-quizzer", "Transcription quizzer", transcriptionDefaultState);
+(0, flashcard_deck_1.registerDeckType)(new TranscriptFlashcardGen(), "transcription-quizzer", "Transcription quizzer", transcriptionDefaultState);

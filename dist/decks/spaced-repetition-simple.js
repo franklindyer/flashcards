@@ -119,7 +119,7 @@ class SimpleSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGe
         return card;
     }
     generateCard(st, card) {
-        var a = document.createElement("a");
+        var a = document.createElement("div");
         var prompt = "No cards left to study.";
         var answers = [];
         var hint = "You cannot continue studying until more cards become due.";
@@ -171,145 +171,148 @@ class SimpleSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGe
             resolve();
         }
     }
-}
-exports.SimpleSpacedRepGen = SimpleSpacedRepGen;
-function simpleSRMenu(st) {
-    var contDiv = document.createElement("div");
-    var infoWidget = (0, shared_sr_menu_components_1.infoWidgetSR)(st);
-    var studyingEditor = (0, shared_sr_menu_components_1.studyingEditorSR)(st);
-    var settings = st.settings;
-    var initHoursEditor = (0, editor_1.scrollNumberEditor)("Initial interval (hours): ", settings.initialHours, 1, 240, 1);
-    var newQueueSizeEditor = (0, editor_1.scrollNumberEditor)("Max new cards to study at once: ", st.newQ.maxNewCards, 1, 100, 1);
-    var correctFactor = (0, editor_1.scrollNumberEditor)("Correct factor: ", settings.correctFactor, 1, 10, 0.1);
-    var incorrectFactor = (0, editor_1.scrollNumberEditor)("Incorrect factor: ", settings.incorrectFactor, 0, 1.0, 0.01);
-    var speechCheckbox = (0, editor_1.boolEditor)("Speak correct answers using text-to-speech?", settings.readCorrectAnswers);
-    var speechEditor = (0, speech_1.speechSettingsEditor)(settings.speechSettings);
-    var speechDiv = document.createElement("div");
-    speechDiv.appendChild(speechCheckbox.element);
-    speechDiv.appendChild(speechEditor.element);
-    var omitTagsEditor = (0, editor_1.singleTextFieldEditor)(settings.inactiveTags.join(','));
-    omitTagsEditor.element.placeholder = "comma-separated tags...";
-    var omitTagsCont = document.createElement("div");
-    omitTagsCont.textContent = "Omit cards with the following tags: ";
-    omitTagsCont.appendChild(omitTagsEditor.element);
-    var twoSidedEditor = (0, editor_1.boolEditor)("Study both sides of two-sided cards?", settings.doTwoSided);
-    var twoSidedCont = document.createElement("div");
-    twoSidedCont.appendChild(twoSidedEditor.element);
-    var filterEditor = (0, text_filters_1.textFilterSelectionMenu)(settings.filterSettings);
-    [
-        studyingEditor.element,
-        initHoursEditor.element,
-        correctFactor.element,
-        incorrectFactor.element,
-        newQueueSizeEditor.element,
-        omitTagsCont,
-        twoSidedCont,
-        speechDiv,
-        filterEditor.element
-    ].map((el) => el.classList.add("deck-menu-submenu"));
-    function makeCardEditor(c) {
-        var edDetails = document.createElement("details");
-        var edSummary = document.createElement("summary");
-        edDetails.style.display = "inline-block";
-        edDetails.appendChild(edSummary);
-        edDetails.classList.add("cardlist-accordion");
-        edDetails.onkeyup = function (e) {
-            // The default behavior for SPACE in a <details> element is to toggle its openness.
-            // We need to disable this since the user may be typing in an <input> inside this element.
-            if (e.keyCode == 32) {
-                e.preventDefault();
+    makeEditor(st) {
+        var contDiv = document.createElement("div");
+        var infoWidget = (0, shared_sr_menu_components_1.infoWidgetSR)(st);
+        var studyingEditor = (0, shared_sr_menu_components_1.studyingEditorSR)(st);
+        var settings = st.settings;
+        var initHoursEditor = (0, editor_1.scrollNumberEditor)("Initial interval (hours): ", settings.initialHours, 1, 240, 1);
+        var newQueueSizeEditor = (0, editor_1.scrollNumberEditor)("Max new cards to study at once: ", st.newQ.maxNewCards, 1, 100, 1);
+        var correctFactor = (0, editor_1.scrollNumberEditor)("Correct factor: ", settings.correctFactor, 1, 10, 0.1);
+        var incorrectFactor = (0, editor_1.scrollNumberEditor)("Incorrect factor: ", settings.incorrectFactor, 0, 1.0, 0.01);
+        var speechCheckbox = (0, editor_1.boolEditor)("Speak correct answers using text-to-speech?", settings.readCorrectAnswers);
+        var speechEditor = (0, speech_1.speechSettingsEditor)(settings.speechSettings);
+        var speechDiv = document.createElement("div");
+        speechDiv.appendChild(speechCheckbox.element);
+        speechDiv.appendChild(speechEditor.element);
+        var omitTagsEditor = (0, editor_1.singleTextFieldEditor)(settings.inactiveTags.join(','));
+        omitTagsEditor.element.placeholder = "comma-separated tags...";
+        var omitTagsCont = document.createElement("div");
+        omitTagsCont.textContent = "Omit cards with the following tags: ";
+        omitTagsCont.appendChild(omitTagsEditor.element);
+        var twoSidedEditor = (0, editor_1.boolEditor)("Study both sides of two-sided cards?", settings.doTwoSided);
+        var twoSidedCont = document.createElement("div");
+        twoSidedCont.appendChild(twoSidedEditor.element);
+        var filterEditor = (0, text_filters_1.textFilterSelectionMenu)(settings.filterSettings);
+        [
+            studyingEditor.element,
+            initHoursEditor.element,
+            correctFactor.element,
+            incorrectFactor.element,
+            newQueueSizeEditor.element,
+            omitTagsCont,
+            twoSidedCont,
+            speechDiv,
+            filterEditor.element
+        ].map((el) => el.classList.add("deck-menu-submenu"));
+        function makeCardEditor(c) {
+            var edDetails = document.createElement("details");
+            var edSummary = document.createElement("summary");
+            edDetails.style.display = "inline-block";
+            edDetails.appendChild(edSummary);
+            edDetails.classList.add("cardlist-accordion");
+            edDetails.onkeyup = function (e) {
+                // The default behavior for SPACE in a <details> element is to toggle its openness.
+                // We need to disable this since the user may be typing in an <input> inside this element.
+                if (e.keyCode == 32) {
+                    e.preventDefault();
+                }
+            };
+            var edMain = (0, editor_1.swappingTextEditor)([c.content.prompt.join('|'), c.content.answers.join('|')]);
+            edMain.element.style.display = "inline-block";
+            edSummary.appendChild(edMain.element);
+            var tagsEd = (0, editor_1.singleTextFieldEditor)(c.content.tags.join(','));
+            tagsEd.element.placeholder = "tags...";
+            edDetails.appendChild(tagsEd.element);
+            var twoSideEd = (0, editor_1.boolEditor)("Double-sided card?", c.content.twoSided);
+            edDetails.appendChild(twoSideEd.element);
+            var cardInfo = document.createElement("a");
+            cardInfo.classList.add("sr-card-due-date");
+            cardInfo.style.color = "lightgray";
+            cardInfo.style.marginLeft = "10px";
+            cardInfo.style.marginRight = "10px";
+            cardInfo.style.verticalAlign = "middle";
+            if (c.intervalMinutes == 0) {
+                cardInfo.textContent = "not studied";
             }
-        };
-        var edMain = (0, editor_1.swappingTextEditor)([c.content.prompt.join('|'), c.content.answers.join('|')]);
-        edMain.element.style.display = "inline-block";
-        edSummary.appendChild(edMain.element);
-        var tagsEd = (0, editor_1.singleTextFieldEditor)(c.content.tags.join(','));
-        tagsEd.element.placeholder = "tags...";
-        edDetails.appendChild(tagsEd.element);
-        var twoSideEd = (0, editor_1.boolEditor)("Double-sided card?", c.content.twoSided);
-        edDetails.appendChild(twoSideEd.element);
-        var cardInfo = document.createElement("a");
-        cardInfo.classList.add("sr-card-due-date");
-        cardInfo.style.color = "lightgray";
-        cardInfo.style.marginLeft = "10px";
-        cardInfo.style.marginRight = "10px";
-        cardInfo.style.verticalAlign = "middle";
-        if (c.intervalMinutes == 0) {
-            cardInfo.textContent = "not studied";
+            else {
+                cardInfo.textContent = `due ${(0, utils_1.getSRFutureDateInfo)(c.due)}`;
+            }
+            cardInfo.style.display = "block";
+            var listenBtn = ((ed) => (0, utils_1.iconButton)("speaker.png", () => {
+                var ss = speechEditor.menuToState();
+                var tgtText = ed.menuToState()[1];
+                (0, speech_1.utter)(tgtText, ss.voice, ss.rate, ss.pitch, () => { });
+            }))(edMain);
+            listenBtn.style.float = "";
+            var listenDiv = document.createElement("div");
+            listenDiv.style.overflowY = "visible";
+            listenDiv.appendChild(listenBtn);
+            var cardBottomDiv = document.createElement("div");
+            // cardBottomDiv.style.overflow = "auto";
+            edDetails.appendChild(cardBottomDiv);
+            cardBottomDiv.appendChild(cardInfo);
+            cardBottomDiv.appendChild(listenBtn);
+            return {
+                element: edDetails,
+                menuToState: () => {
+                    let tp = edMain.menuToState();
+                    return {
+                        guid: c.guid,
+                        content: {
+                            prompt: tp[0].split('|'),
+                            answers: tp[1].split('|'),
+                            tags: tagsEd.menuToState().split(',').filter((t) => t.length > 0),
+                            twoSided: twoSideEd.menuToState()
+                        },
+                        due: c.due,
+                        intervalMinutes: c.intervalMinutes,
+                        auxdata: c.auxdata
+                    };
+                }
+            };
         }
-        else {
-            cardInfo.textContent = `due ${(0, utils_1.getSRFutureDateInfo)(c.due)}`;
-        }
-        cardInfo.style.display = "block";
-        edDetails.appendChild(cardInfo);
-        var listenBtn = ((ed) => (0, utils_1.iconButton)("speaker.png", () => {
-            var ss = speechEditor.menuToState();
-            var tgtText = ed.menuToState()[1];
-            (0, speech_1.utter)(tgtText, ss.voice, ss.rate, ss.pitch, () => { });
-        }))(edMain);
-        listenBtn.style.float = "";
-        var listenDiv = document.createElement("div");
-        listenDiv.style.overflowY = "visible";
-        listenDiv.appendChild(listenBtn);
-        edDetails.appendChild(listenDiv);
+        ;
+        var cardsEditor = (0, editor_1.multipleEditors)(Object.values(st.cards), () => makeEmptyCard(), makeCardEditor, true, (s, cd) => cd.content.prompt.includes(s) || cd.content.answers.some((a) => a.includes(s)));
+        var cardsEditorTitle = document.createElement("h3");
+        cardsEditorTitle.textContent = "Cards";
+        cardsEditor.element.prepend(cardsEditorTitle);
+        cardsEditor.element.classList.add("deck-menu-submenu");
+        var components = [
+            infoWidget,
+            studyingEditor.element,
+            initHoursEditor.element,
+            correctFactor.element,
+            incorrectFactor.element,
+            newQueueSizeEditor.element,
+            omitTagsCont,
+            twoSidedCont,
+            speechDiv,
+            filterEditor.element,
+            cardsEditor.element,
+        ];
+        components.map((el) => contDiv.appendChild(el));
         return {
-            element: edDetails,
+            element: contDiv,
             menuToState: () => {
-                let tp = edMain.menuToState();
                 return {
-                    guid: c.guid,
-                    content: {
-                        prompt: tp[0].split('|'),
-                        answers: tp[1].split('|'),
-                        tags: tagsEd.menuToState().split(',').filter((t) => t.length > 0),
-                        twoSided: twoSideEd.menuToState()
+                    studying: studyingEditor.menuToState(),
+                    settings: {
+                        initialHours: initHoursEditor.menuToState(),
+                        correctFactor: correctFactor.menuToState(),
+                        incorrectFactor: incorrectFactor.menuToState(),
+                        readCorrectAnswers: speechCheckbox.menuToState(),
+                        speechSettings: speechEditor.menuToState(),
+                        filterSettings: filterEditor.menuToState(),
+                        inactiveTags: omitTagsEditor.menuToState().split(','),
+                        doTwoSided: twoSidedEditor.menuToState()
                     },
-                    due: c.due,
-                    intervalMinutes: c.intervalMinutes,
-                    auxdata: c.auxdata
+                    newQ: (0, spaced_repetition_newqueue_1.emptySRQueue)(newQueueSizeEditor.menuToState()),
+                    cards: (0, utils_1.makeDict)(cardsEditor.menuToState(), (c) => c.guid),
                 };
             }
         };
     }
-    ;
-    var cardsEditor = (0, editor_1.multipleEditors)(Object.values(st.cards), () => makeEmptyCard(), makeCardEditor, true, (s, cd) => cd.content.prompt.includes(s) || cd.content.answers.some((a) => a.includes(s)));
-    var cardsEditorTitle = document.createElement("h3");
-    cardsEditorTitle.textContent = "Cards";
-    cardsEditor.element.prepend(cardsEditorTitle);
-    cardsEditor.element.classList.add("deck-menu-submenu");
-    var components = [
-        infoWidget,
-        studyingEditor.element,
-        initHoursEditor.element,
-        correctFactor.element,
-        incorrectFactor.element,
-        newQueueSizeEditor.element,
-        omitTagsCont,
-        twoSidedCont,
-        speechDiv,
-        filterEditor.element,
-        cardsEditor.element,
-    ];
-    components.map((el) => contDiv.appendChild(el));
-    return {
-        element: contDiv,
-        menuToState: () => {
-            return {
-                studying: studyingEditor.menuToState(),
-                settings: {
-                    initialHours: initHoursEditor.menuToState(),
-                    correctFactor: correctFactor.menuToState(),
-                    incorrectFactor: incorrectFactor.menuToState(),
-                    readCorrectAnswers: speechCheckbox.menuToState(),
-                    speechSettings: speechEditor.menuToState(),
-                    filterSettings: filterEditor.menuToState(),
-                    inactiveTags: omitTagsEditor.menuToState().split(','),
-                    doTwoSided: twoSidedEditor.menuToState()
-                },
-                newQ: (0, spaced_repetition_newqueue_1.emptySRQueue)(newQueueSizeEditor.menuToState()),
-                cards: (0, utils_1.makeDict)(cardsEditor.menuToState(), (c) => c.guid),
-            };
-        }
-    };
 }
-(0, flashcard_deck_1.registerDeckType)(new SimpleSpacedRepGen(), simpleSRMenu, "simple-spaced-repetition-deck", "Simple spaced repetition deck", exports.defaultSimpleSRState, "#ffffdd");
+exports.SimpleSpacedRepGen = SimpleSpacedRepGen;
+(0, flashcard_deck_1.registerDeckType)(new SimpleSpacedRepGen(), "simple-spaced-repetition-deck", "Simple spaced repetition deck", exports.defaultSimpleSRState, "#ffffdd");

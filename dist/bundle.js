@@ -1669,11 +1669,11 @@ function getStartingDeck(defaultSlug) {
     return lastDeckSlug;
 }
 /* Register a new type of deck */
-function registerDeckType(gen, mkEd, defaultSlug, defaultName, defaultState, colorCode = "#ffffee") {
+function registerDeckType(gen, defaultSlug, defaultName, defaultState, colorCode = "#ffffee") {
     exports.gDeckTypeRegistry[gen.getGenName()] = {
         slug: gen.getGenName(),
         gen: gen,
-        editor: mkEd
+        editor: gen.makeEditor
     };
     exports.gDeckDefaultRegistry[gen.getGenName()] = {
         name: defaultName,
@@ -2038,181 +2038,6 @@ function syncDownloadDeck(slug, setDeck) {
 
 /***/ }),
 
-/***/ 627:
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-const utils_1 = __webpack_require__(135);
-const flashcard_generator_1 = __webpack_require__(850);
-const flashcard_sync_generator_1 = __webpack_require__(868);
-const flashcard_template_1 = __webpack_require__(217);
-const editor_1 = __webpack_require__(613);
-const flashcard_deck_1 = __webpack_require__(134);
-class ClozeFlashcardGen extends flashcard_sync_generator_1.FlashcardSyncGen {
-    getGenName() { return "cloze-puzzles"; }
-    getNextCard(state) {
-        var cardIsOk = (c) => !(state.settings.blacklist.includes(c.guid));
-        var validKeys = Object.keys(state.cards).filter((k) => state.cards[k].cards.some(cardIsOk));
-        var key = validKeys[Math.floor(Math.random() * validKeys.length)];
-        var group = state.cards[key].cards.filter(cardIsOk);
-        return group[Math.floor(Math.random() * group.length)];
-    }
-    updateState(state, cardData, result) {
-        if (result == flashcard_generator_1.FlashcardResult.Correct) {
-            state.cards[cardData.group].correct += 1;
-        }
-        else if (result == flashcard_generator_1.FlashcardResult.Incorrect) {
-            state.cards[cardData.group].incorrect += 1;
-        }
-        else {
-            state.cards[cardData.group].skipped += 1;
-            if (state.settings.blacklistSkipped) {
-                state.settings.blacklist.push(cardData.guid);
-            }
-        }
-        return state;
-    }
-    checkAnswer(ans, st, cardData) {
-        var targetWords = [];
-        cardData.upper.replaceAll(/\{\{([^\{\}]+)\}\}/g, (match, p1) => {
-            targetWords.push(p1);
-            return match;
-        });
-        var correctAns = targetWords.join(", ");
-        return (ans == correctAns);
-    }
-    generateCard(st, data) {
-        return (0, flashcard_template_1.renderCard)("cloze-template", data);
-    }
-    correctEffect(_, __, ___, resolve) { resolve(); }
-    repairDeckState(st) { return st; }
-}
-function makeClozeCard(group, top, bottom) {
-    return {
-        group: group,
-        guid: (0, utils_1.getUuid)(`${top} | ${bottom}`, 5),
-        upper: top,
-        lower: bottom
-    };
-}
-function makeClozeEditor(state) {
-    var container = document.createElement("div");
-    var blacklistEditor = (0, editor_1.boolEditor)("Permanently remove skipped cards?", state.settings.blacklistSkipped);
-    blacklistEditor.element.classList.add("deck-menu-submenu");
-    var summaryContainer = document.createElement("div");
-    summaryContainer.classList.add("deck-menu-submenu");
-    var loadCards = (s) => {
-        if (s.length > 0) {
-            var newCardDict = {};
-            var infoList = JSON.parse(s);
-            console.log(infoList);
-            for (var i in Object.keys(infoList)) {
-                var k = Object.keys(infoList)[i];
-                newCardDict[k] = {
-                    key: k,
-                    cards: infoList[k].map((c) => {
-                        return {
-                            upper: c["prompt"],
-                            lower: c["translation"],
-                            guid: (0, utils_1.guidGenerator)(),
-                            group: k
-                        };
-                    }),
-                    correct: Object.keys(state.cards).includes(k) ? state.cards[k].correct : 0,
-                    incorrect: Object.keys(state.cards).includes(k) ? state.cards[k].incorrect : 0,
-                    skipped: Object.keys(state.cards).includes(k) ? state.cards[k].skipped : 0
-                };
-            }
-            state.cards = newCardDict;
-        }
-    };
-    var deckSummary = document.createElement("div");
-    var makeDeckSummary = () => {
-        deckSummary.innerHTML = "";
-        var keys = Object.keys(state.cards).sort();
-        for (var i in keys) {
-            var k = keys[i];
-            var entryDiv = document.createElement("div");
-            entryDiv.classList.add("deck-editor-info-entry");
-            var entryKey = document.createElement("span");
-            entryKey.textContent = k;
-            var entryInfo = document.createElement("span");
-            entryInfo.textContent = `${state.cards[k].cards.length} puzzles`;
-            entryInfo.style.float = "right";
-            entryDiv.appendChild(entryKey);
-            entryDiv.appendChild(entryInfo);
-            deckSummary.appendChild(entryDiv);
-        }
-    };
-    makeDeckSummary();
-    var fileEd = (0, editor_1.fileUploadEditor)("Upload cloze puzzles", (s) => {
-        loadCards(s);
-        makeDeckSummary();
-    });
-    summaryContainer.appendChild(fileEd.element);
-    summaryContainer.appendChild(deckSummary);
-    container.appendChild(blacklistEditor.element);
-    container.appendChild(summaryContainer);
-    return {
-        element: container,
-        menuToState: () => {
-            var deckStr = fileEd.menuToState();
-            if (deckStr.length > 0) {
-                var newCardDict = {};
-                var infoList = JSON.parse(deckStr);
-                console.log(infoList);
-                for (var i in Object.keys(infoList)) {
-                    var k = Object.keys(infoList)[i];
-                    newCardDict[k] = {
-                        key: k,
-                        cards: infoList[k].map((c) => makeClozeCard(k, c["prompt"], c["translation"])),
-                        correct: Object.keys(state.cards).includes(k) ? state.cards[k].correct : 0,
-                        incorrect: Object.keys(state.cards).includes(k) ? state.cards[k].incorrect : 0,
-                        skipped: Object.keys(state.cards).includes(k) ? state.cards[k].skipped : 0
-                    };
-                }
-                state.cards = newCardDict;
-            }
-            state.settings.blacklistSkipped = blacklistEditor.menuToState();
-            return state;
-        }
-    };
-}
-var clozeDefaultState = {
-    cards: {
-        "gehen": {
-            key: "gehen",
-            cards: [
-                makeClozeCard("gehen", "Ich {{gehe}} ins Kino.", "I go to the movies."),
-                makeClozeCard("gehen", "Wohin {{gehst}} du?", "Where are you going?")
-            ],
-            correct: 0,
-            incorrect: 0,
-            skipped: 0
-        },
-        "haben": {
-            key: "haben",
-            cards: [
-                makeClozeCard("haben", "Ich {{habe}} einen Hund.", "I have a dog."),
-                makeClozeCard("haben", "{{Hast}} du einen Hund?", "Do you have a dog?")
-            ],
-            correct: 0,
-            incorrect: 0,
-            skipped: 0
-        }
-    },
-    settings: {
-        blacklist: [],
-        blacklistSkipped: true
-    }
-};
-(0, flashcard_deck_1.registerDeckType)(new ClozeFlashcardGen(), makeClozeEditor, "cloze-quizzer", "Simple German cloze quizzer", clozeDefaultState, "#ffddbb");
-
-
-/***/ }),
-
 /***/ 815:
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
@@ -2402,120 +2227,120 @@ class ClozeSpacedRepGen extends spaced_repetition_general_1.AbstractAsyncSpacedR
         fl.el.appendChild((0, spaced_repetition_general_1.makeCardsLeftSpan)(card));
         return (0, utils_1.trivialPromise)(fl);
     }
-}
-exports.ClozeSpacedRepGen = ClozeSpacedRepGen;
-function clozeSRMenu(st) {
-    var contDiv = document.createElement("div");
-    var infoWidget = (0, shared_sr_menu_components_1.infoWidgetSR)(st);
-    var studyingEditor = (0, shared_sr_menu_components_1.studyingEditorSR)(st);
-    var newQueueSizeEditor = (0, editor_1.scrollNumberEditor)("Max new cards to study at once: ", st.newQ.maxNewCards, 1, 100, 1);
-    var clozeServerDiv = document.createElement("div");
-    clozeServerDiv.classList.add("deck-menu-submenu");
-    var clozeServerUrlEditor = (0, editor_1.singleTextFieldEditor)(st.settings.clozeServerUrl);
-    var clozeSourceLangEditor = (0, editor_1.singleTextFieldEditor)(st.settings.sourceLangs.join(','));
-    var clozeTargetLangEditor = (0, editor_1.singleTextFieldEditor)(st.settings.targetLang);
-    var clozeGroupsEditor = (0, editor_1.singleTextFieldEditor)(st.settings.clozeGroups.join(','));
-    clozeGroupsEditor.element.placeholder = "allowed groups...";
-    clozeServerDiv.appendChild(clozeServerUrlEditor.element);
-    clozeServerDiv.appendChild(clozeSourceLangEditor.element);
-    clozeServerDiv.appendChild(clozeTargetLangEditor.element);
-    clozeServerDiv.appendChild(clozeGroupsEditor.element);
-    var initHoursEditor = (0, editor_1.scrollNumberEditor)("Initial interval (hours): ", st.settings.initialHours, 1, 240, 1);
-    var correctFactor = (0, editor_1.scrollNumberEditor)("Correct factor: ", st.settings.correctFactor, 1, 10, 0.1);
-    var incorrectFactor = (0, editor_1.scrollNumberEditor)("Incorrect factor: ", st.settings.incorrectFactor, 0, 1.0, 0.01);
-    var omitTagsEditor = (0, editor_1.singleTextFieldEditor)(st.settings.inactiveTags.join(','));
-    omitTagsEditor.element.placeholder = "comma-separated tags...";
-    var omitTagsCont = document.createElement("div");
-    omitTagsCont.textContent = "Omit cards with the following tags: ";
-    omitTagsCont.appendChild(omitTagsEditor.element);
-    var speechCheckbox = (0, editor_1.boolEditor)("Speak correct answers using text-to-speech?", st.settings.readCorrectAnswers);
-    var speechEditor = (0, speech_1.speechSettingsEditor)(st.settings.speechSettings);
-    var speechDiv = document.createElement("div");
-    speechDiv.appendChild(speechCheckbox.element);
-    speechDiv.appendChild(speechEditor.element);
-    var omitTagsEditor = (0, editor_1.singleTextFieldEditor)(st.settings.inactiveTags.join(','));
-    omitTagsEditor.element.placeholder = "comma-separated tags...";
-    var omitTagsCont = document.createElement("div");
-    omitTagsCont.textContent = "Omit cards with the following tags: ";
-    omitTagsCont.appendChild(omitTagsEditor.element);
-    var filterEditor = (0, text_filters_1.textFilterSelectionMenu)(st.settings.filterSettings);
-    function makeCardEditor(c) {
-        var ed = (0, editor_1.combineEditors)([c.content.key, c.content.tags.join(',')], (k) => {
-            var ed2 = (0, editor_1.singleTextFieldEditor)(k);
-            ed2.element.style.display = "inline-block";
-            return ed2;
-        }, (ts) => {
-            var ed2 = (0, editor_1.singleTextFieldEditor)(ts);
-            ed2.element.placeholder = "tags...";
-            return ed2;
+    makeEditor(st) {
+        var contDiv = document.createElement("div");
+        var infoWidget = (0, shared_sr_menu_components_1.infoWidgetSR)(st);
+        var studyingEditor = (0, shared_sr_menu_components_1.studyingEditorSR)(st);
+        var newQueueSizeEditor = (0, editor_1.scrollNumberEditor)("Max new cards to study at once: ", st.newQ.maxNewCards, 1, 100, 1);
+        var clozeServerDiv = document.createElement("div");
+        clozeServerDiv.classList.add("deck-menu-submenu");
+        var clozeServerUrlEditor = (0, editor_1.singleTextFieldEditor)(st.settings.clozeServerUrl);
+        var clozeSourceLangEditor = (0, editor_1.singleTextFieldEditor)(st.settings.sourceLangs.join(','));
+        var clozeTargetLangEditor = (0, editor_1.singleTextFieldEditor)(st.settings.targetLang);
+        var clozeGroupsEditor = (0, editor_1.singleTextFieldEditor)(st.settings.clozeGroups.join(','));
+        clozeGroupsEditor.element.placeholder = "allowed groups...";
+        clozeServerDiv.appendChild(clozeServerUrlEditor.element);
+        clozeServerDiv.appendChild(clozeSourceLangEditor.element);
+        clozeServerDiv.appendChild(clozeTargetLangEditor.element);
+        clozeServerDiv.appendChild(clozeGroupsEditor.element);
+        var initHoursEditor = (0, editor_1.scrollNumberEditor)("Initial interval (hours): ", st.settings.initialHours, 1, 240, 1);
+        var correctFactor = (0, editor_1.scrollNumberEditor)("Correct factor: ", st.settings.correctFactor, 1, 10, 0.1);
+        var incorrectFactor = (0, editor_1.scrollNumberEditor)("Incorrect factor: ", st.settings.incorrectFactor, 0, 1.0, 0.01);
+        var omitTagsEditor = (0, editor_1.singleTextFieldEditor)(st.settings.inactiveTags.join(','));
+        omitTagsEditor.element.placeholder = "comma-separated tags...";
+        var omitTagsCont = document.createElement("div");
+        omitTagsCont.textContent = "Omit cards with the following tags: ";
+        omitTagsCont.appendChild(omitTagsEditor.element);
+        var speechCheckbox = (0, editor_1.boolEditor)("Speak correct answers using text-to-speech?", st.settings.readCorrectAnswers);
+        var speechEditor = (0, speech_1.speechSettingsEditor)(st.settings.speechSettings);
+        var speechDiv = document.createElement("div");
+        speechDiv.appendChild(speechCheckbox.element);
+        speechDiv.appendChild(speechEditor.element);
+        var omitTagsEditor = (0, editor_1.singleTextFieldEditor)(st.settings.inactiveTags.join(','));
+        omitTagsEditor.element.placeholder = "comma-separated tags...";
+        var omitTagsCont = document.createElement("div");
+        omitTagsCont.textContent = "Omit cards with the following tags: ";
+        omitTagsCont.appendChild(omitTagsEditor.element);
+        var filterEditor = (0, text_filters_1.textFilterSelectionMenu)(st.settings.filterSettings);
+        function makeCardEditor(c) {
+            var ed = (0, editor_1.combineEditors)([c.content.key, c.content.tags.join(',')], (k) => {
+                var ed2 = (0, editor_1.singleTextFieldEditor)(k);
+                ed2.element.style.display = "inline-block";
+                return ed2;
+            }, (ts) => {
+                var ed2 = (0, editor_1.singleTextFieldEditor)(ts);
+                ed2.element.placeholder = "tags...";
+                return ed2;
+            });
+            var tf1 = ed.element.children[0];
+            if (c.auxdata.invalid)
+                tf1.style.backgroundColor = "#ffeeee";
+            var cardInfo = document.createElement("a");
+            cardInfo.style.color = "lightgray";
+            cardInfo.style.marginLeft = "10px";
+            cardInfo.style.marginRight = "10px";
+            cardInfo.style.verticalAlign = "middle";
+            if (c.intervalMinutes == 0) {
+                cardInfo.textContent = "not studied";
+            }
+            else {
+                cardInfo.textContent = `due ${(0, utils_1.getSRFutureDateInfo)(c.due)}`;
+            }
+            ed.element.appendChild(cardInfo);
+            return {
+                element: ed.element,
+                menuToState: () => {
+                    let tp = ed.menuToState();
+                    c.content.key = tp[0];
+                    c.content.tags = tp[1].length == 0 ? [] : tp[1].split(",");
+                    return c;
+                }
+            };
+        }
+        var cardsEditor = (0, editor_1.multipleEditors)(Object.values(st.cards), () => makeEmptyCard(), makeCardEditor, true, (s, cd) => cd.content.key.includes(s));
+        [
+            infoWidget,
+            studyingEditor.element,
+            clozeServerDiv,
+            initHoursEditor.element,
+            newQueueSizeEditor.element,
+            correctFactor.element,
+            incorrectFactor.element,
+            omitTagsCont,
+            speechDiv,
+            filterEditor.element,
+            cardsEditor.element
+        ].map((el) => {
+            el.classList.add("deck-menu-submenu");
+            contDiv.appendChild(el);
         });
-        var tf1 = ed.element.children[0];
-        if (c.auxdata.invalid)
-            tf1.style.backgroundColor = "#ffeeee";
-        var cardInfo = document.createElement("a");
-        cardInfo.style.color = "lightgray";
-        cardInfo.style.marginLeft = "10px";
-        cardInfo.style.marginRight = "10px";
-        cardInfo.style.verticalAlign = "middle";
-        if (c.intervalMinutes == 0) {
-            cardInfo.textContent = "not studied";
-        }
-        else {
-            cardInfo.textContent = `due ${(0, utils_1.getSRFutureDateInfo)(c.due)}`;
-        }
-        ed.element.appendChild(cardInfo);
         return {
-            element: ed.element,
+            element: contDiv,
             menuToState: () => {
-                let tp = ed.menuToState();
-                c.content.key = tp[0];
-                c.content.tags = tp[1].length == 0 ? [] : tp[1].split(",");
-                return c;
+                return {
+                    studying: studyingEditor.menuToState(),
+                    settings: {
+                        clozeServerUrl: clozeServerUrlEditor.menuToState(),
+                        sourceLangs: clozeSourceLangEditor.menuToState().split(","),
+                        targetLang: clozeTargetLangEditor.menuToState(),
+                        clozeGroups: clozeGroupsEditor.menuToState().split(","),
+                        initialHours: initHoursEditor.menuToState(),
+                        correctFactor: correctFactor.menuToState(),
+                        incorrectFactor: incorrectFactor.menuToState(),
+                        readCorrectAnswers: speechCheckbox.menuToState(),
+                        speechSettings: speechEditor.menuToState(),
+                        filterSettings: filterEditor.menuToState(),
+                        inactiveTags: omitTagsEditor.menuToState().split(",")
+                    },
+                    newQ: (0, spaced_repetition_newqueue_1.emptySRQueue)(newQueueSizeEditor.menuToState()),
+                    cards: (0, utils_1.makeDict)(cardsEditor.menuToState(), (c) => c.guid),
+                };
             }
         };
     }
-    var cardsEditor = (0, editor_1.multipleEditors)(Object.values(st.cards), () => makeEmptyCard(), makeCardEditor, true, (s, cd) => cd.content.key.includes(s));
-    [
-        infoWidget,
-        studyingEditor.element,
-        clozeServerDiv,
-        initHoursEditor.element,
-        newQueueSizeEditor.element,
-        correctFactor.element,
-        incorrectFactor.element,
-        omitTagsCont,
-        speechDiv,
-        filterEditor.element,
-        cardsEditor.element
-    ].map((el) => {
-        el.classList.add("deck-menu-submenu");
-        contDiv.appendChild(el);
-    });
-    return {
-        element: contDiv,
-        menuToState: () => {
-            return {
-                studying: studyingEditor.menuToState(),
-                settings: {
-                    clozeServerUrl: clozeServerUrlEditor.menuToState(),
-                    sourceLangs: clozeSourceLangEditor.menuToState().split(","),
-                    targetLang: clozeTargetLangEditor.menuToState(),
-                    clozeGroups: clozeGroupsEditor.menuToState().split(","),
-                    initialHours: initHoursEditor.menuToState(),
-                    correctFactor: correctFactor.menuToState(),
-                    incorrectFactor: incorrectFactor.menuToState(),
-                    readCorrectAnswers: speechCheckbox.menuToState(),
-                    speechSettings: speechEditor.menuToState(),
-                    filterSettings: filterEditor.menuToState(),
-                    inactiveTags: omitTagsEditor.menuToState().split(",")
-                },
-                newQ: (0, spaced_repetition_newqueue_1.emptySRQueue)(newQueueSizeEditor.menuToState()),
-                cards: (0, utils_1.makeDict)(cardsEditor.menuToState(), (c) => c.guid),
-            };
-        }
-    };
 }
-(0, flashcard_deck_1.registerDeckType)(new ClozeSpacedRepGen(), clozeSRMenu, "cloze-spaced-repetition-deck", "Cloze spaced repetition deck", exports.defaultSRClozeState, "#ffffdd");
+exports.ClozeSpacedRepGen = ClozeSpacedRepGen;
+(0, flashcard_deck_1.registerDeckType)(new ClozeSpacedRepGen(), "cloze-spaced-repetition-deck", "Cloze spaced repetition deck", exports.defaultSRClozeState, "#ffffdd");
 
 
 /***/ }),
@@ -2805,7 +2630,7 @@ class SimpleSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGe
         return card;
     }
     generateCard(st, card) {
-        var a = document.createElement("a");
+        var a = document.createElement("div");
         var prompt = "No cards left to study.";
         var answers = [];
         var hint = "You cannot continue studying until more cards become due.";
@@ -2857,148 +2682,151 @@ class SimpleSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGe
             resolve();
         }
     }
-}
-exports.SimpleSpacedRepGen = SimpleSpacedRepGen;
-function simpleSRMenu(st) {
-    var contDiv = document.createElement("div");
-    var infoWidget = (0, shared_sr_menu_components_1.infoWidgetSR)(st);
-    var studyingEditor = (0, shared_sr_menu_components_1.studyingEditorSR)(st);
-    var settings = st.settings;
-    var initHoursEditor = (0, editor_1.scrollNumberEditor)("Initial interval (hours): ", settings.initialHours, 1, 240, 1);
-    var newQueueSizeEditor = (0, editor_1.scrollNumberEditor)("Max new cards to study at once: ", st.newQ.maxNewCards, 1, 100, 1);
-    var correctFactor = (0, editor_1.scrollNumberEditor)("Correct factor: ", settings.correctFactor, 1, 10, 0.1);
-    var incorrectFactor = (0, editor_1.scrollNumberEditor)("Incorrect factor: ", settings.incorrectFactor, 0, 1.0, 0.01);
-    var speechCheckbox = (0, editor_1.boolEditor)("Speak correct answers using text-to-speech?", settings.readCorrectAnswers);
-    var speechEditor = (0, speech_1.speechSettingsEditor)(settings.speechSettings);
-    var speechDiv = document.createElement("div");
-    speechDiv.appendChild(speechCheckbox.element);
-    speechDiv.appendChild(speechEditor.element);
-    var omitTagsEditor = (0, editor_1.singleTextFieldEditor)(settings.inactiveTags.join(','));
-    omitTagsEditor.element.placeholder = "comma-separated tags...";
-    var omitTagsCont = document.createElement("div");
-    omitTagsCont.textContent = "Omit cards with the following tags: ";
-    omitTagsCont.appendChild(omitTagsEditor.element);
-    var twoSidedEditor = (0, editor_1.boolEditor)("Study both sides of two-sided cards?", settings.doTwoSided);
-    var twoSidedCont = document.createElement("div");
-    twoSidedCont.appendChild(twoSidedEditor.element);
-    var filterEditor = (0, text_filters_1.textFilterSelectionMenu)(settings.filterSettings);
-    [
-        studyingEditor.element,
-        initHoursEditor.element,
-        correctFactor.element,
-        incorrectFactor.element,
-        newQueueSizeEditor.element,
-        omitTagsCont,
-        twoSidedCont,
-        speechDiv,
-        filterEditor.element
-    ].map((el) => el.classList.add("deck-menu-submenu"));
-    function makeCardEditor(c) {
-        var edDetails = document.createElement("details");
-        var edSummary = document.createElement("summary");
-        edDetails.style.display = "inline-block";
-        edDetails.appendChild(edSummary);
-        edDetails.classList.add("cardlist-accordion");
-        edDetails.onkeyup = function (e) {
-            // The default behavior for SPACE in a <details> element is to toggle its openness.
-            // We need to disable this since the user may be typing in an <input> inside this element.
-            if (e.keyCode == 32) {
-                e.preventDefault();
+    makeEditor(st) {
+        var contDiv = document.createElement("div");
+        var infoWidget = (0, shared_sr_menu_components_1.infoWidgetSR)(st);
+        var studyingEditor = (0, shared_sr_menu_components_1.studyingEditorSR)(st);
+        var settings = st.settings;
+        var initHoursEditor = (0, editor_1.scrollNumberEditor)("Initial interval (hours): ", settings.initialHours, 1, 240, 1);
+        var newQueueSizeEditor = (0, editor_1.scrollNumberEditor)("Max new cards to study at once: ", st.newQ.maxNewCards, 1, 100, 1);
+        var correctFactor = (0, editor_1.scrollNumberEditor)("Correct factor: ", settings.correctFactor, 1, 10, 0.1);
+        var incorrectFactor = (0, editor_1.scrollNumberEditor)("Incorrect factor: ", settings.incorrectFactor, 0, 1.0, 0.01);
+        var speechCheckbox = (0, editor_1.boolEditor)("Speak correct answers using text-to-speech?", settings.readCorrectAnswers);
+        var speechEditor = (0, speech_1.speechSettingsEditor)(settings.speechSettings);
+        var speechDiv = document.createElement("div");
+        speechDiv.appendChild(speechCheckbox.element);
+        speechDiv.appendChild(speechEditor.element);
+        var omitTagsEditor = (0, editor_1.singleTextFieldEditor)(settings.inactiveTags.join(','));
+        omitTagsEditor.element.placeholder = "comma-separated tags...";
+        var omitTagsCont = document.createElement("div");
+        omitTagsCont.textContent = "Omit cards with the following tags: ";
+        omitTagsCont.appendChild(omitTagsEditor.element);
+        var twoSidedEditor = (0, editor_1.boolEditor)("Study both sides of two-sided cards?", settings.doTwoSided);
+        var twoSidedCont = document.createElement("div");
+        twoSidedCont.appendChild(twoSidedEditor.element);
+        var filterEditor = (0, text_filters_1.textFilterSelectionMenu)(settings.filterSettings);
+        [
+            studyingEditor.element,
+            initHoursEditor.element,
+            correctFactor.element,
+            incorrectFactor.element,
+            newQueueSizeEditor.element,
+            omitTagsCont,
+            twoSidedCont,
+            speechDiv,
+            filterEditor.element
+        ].map((el) => el.classList.add("deck-menu-submenu"));
+        function makeCardEditor(c) {
+            var edDetails = document.createElement("details");
+            var edSummary = document.createElement("summary");
+            edDetails.style.display = "inline-block";
+            edDetails.appendChild(edSummary);
+            edDetails.classList.add("cardlist-accordion");
+            edDetails.onkeyup = function (e) {
+                // The default behavior for SPACE in a <details> element is to toggle its openness.
+                // We need to disable this since the user may be typing in an <input> inside this element.
+                if (e.keyCode == 32) {
+                    e.preventDefault();
+                }
+            };
+            var edMain = (0, editor_1.swappingTextEditor)([c.content.prompt.join('|'), c.content.answers.join('|')]);
+            edMain.element.style.display = "inline-block";
+            edSummary.appendChild(edMain.element);
+            var tagsEd = (0, editor_1.singleTextFieldEditor)(c.content.tags.join(','));
+            tagsEd.element.placeholder = "tags...";
+            edDetails.appendChild(tagsEd.element);
+            var twoSideEd = (0, editor_1.boolEditor)("Double-sided card?", c.content.twoSided);
+            edDetails.appendChild(twoSideEd.element);
+            var cardInfo = document.createElement("a");
+            cardInfo.classList.add("sr-card-due-date");
+            cardInfo.style.color = "lightgray";
+            cardInfo.style.marginLeft = "10px";
+            cardInfo.style.marginRight = "10px";
+            cardInfo.style.verticalAlign = "middle";
+            if (c.intervalMinutes == 0) {
+                cardInfo.textContent = "not studied";
             }
-        };
-        var edMain = (0, editor_1.swappingTextEditor)([c.content.prompt.join('|'), c.content.answers.join('|')]);
-        edMain.element.style.display = "inline-block";
-        edSummary.appendChild(edMain.element);
-        var tagsEd = (0, editor_1.singleTextFieldEditor)(c.content.tags.join(','));
-        tagsEd.element.placeholder = "tags...";
-        edDetails.appendChild(tagsEd.element);
-        var twoSideEd = (0, editor_1.boolEditor)("Double-sided card?", c.content.twoSided);
-        edDetails.appendChild(twoSideEd.element);
-        var cardInfo = document.createElement("a");
-        cardInfo.classList.add("sr-card-due-date");
-        cardInfo.style.color = "lightgray";
-        cardInfo.style.marginLeft = "10px";
-        cardInfo.style.marginRight = "10px";
-        cardInfo.style.verticalAlign = "middle";
-        if (c.intervalMinutes == 0) {
-            cardInfo.textContent = "not studied";
+            else {
+                cardInfo.textContent = `due ${(0, utils_1.getSRFutureDateInfo)(c.due)}`;
+            }
+            cardInfo.style.display = "block";
+            var listenBtn = ((ed) => (0, utils_1.iconButton)("speaker.png", () => {
+                var ss = speechEditor.menuToState();
+                var tgtText = ed.menuToState()[1];
+                (0, speech_1.utter)(tgtText, ss.voice, ss.rate, ss.pitch, () => { });
+            }))(edMain);
+            listenBtn.style.float = "";
+            var listenDiv = document.createElement("div");
+            listenDiv.style.overflowY = "visible";
+            listenDiv.appendChild(listenBtn);
+            var cardBottomDiv = document.createElement("div");
+            // cardBottomDiv.style.overflow = "auto";
+            edDetails.appendChild(cardBottomDiv);
+            cardBottomDiv.appendChild(cardInfo);
+            cardBottomDiv.appendChild(listenBtn);
+            return {
+                element: edDetails,
+                menuToState: () => {
+                    let tp = edMain.menuToState();
+                    return {
+                        guid: c.guid,
+                        content: {
+                            prompt: tp[0].split('|'),
+                            answers: tp[1].split('|'),
+                            tags: tagsEd.menuToState().split(',').filter((t) => t.length > 0),
+                            twoSided: twoSideEd.menuToState()
+                        },
+                        due: c.due,
+                        intervalMinutes: c.intervalMinutes,
+                        auxdata: c.auxdata
+                    };
+                }
+            };
         }
-        else {
-            cardInfo.textContent = `due ${(0, utils_1.getSRFutureDateInfo)(c.due)}`;
-        }
-        cardInfo.style.display = "block";
-        edDetails.appendChild(cardInfo);
-        var listenBtn = ((ed) => (0, utils_1.iconButton)("speaker.png", () => {
-            var ss = speechEditor.menuToState();
-            var tgtText = ed.menuToState()[1];
-            (0, speech_1.utter)(tgtText, ss.voice, ss.rate, ss.pitch, () => { });
-        }))(edMain);
-        listenBtn.style.float = "";
-        var listenDiv = document.createElement("div");
-        listenDiv.style.overflowY = "visible";
-        listenDiv.appendChild(listenBtn);
-        edDetails.appendChild(listenDiv);
+        ;
+        var cardsEditor = (0, editor_1.multipleEditors)(Object.values(st.cards), () => makeEmptyCard(), makeCardEditor, true, (s, cd) => cd.content.prompt.includes(s) || cd.content.answers.some((a) => a.includes(s)));
+        var cardsEditorTitle = document.createElement("h3");
+        cardsEditorTitle.textContent = "Cards";
+        cardsEditor.element.prepend(cardsEditorTitle);
+        cardsEditor.element.classList.add("deck-menu-submenu");
+        var components = [
+            infoWidget,
+            studyingEditor.element,
+            initHoursEditor.element,
+            correctFactor.element,
+            incorrectFactor.element,
+            newQueueSizeEditor.element,
+            omitTagsCont,
+            twoSidedCont,
+            speechDiv,
+            filterEditor.element,
+            cardsEditor.element,
+        ];
+        components.map((el) => contDiv.appendChild(el));
         return {
-            element: edDetails,
+            element: contDiv,
             menuToState: () => {
-                let tp = edMain.menuToState();
                 return {
-                    guid: c.guid,
-                    content: {
-                        prompt: tp[0].split('|'),
-                        answers: tp[1].split('|'),
-                        tags: tagsEd.menuToState().split(',').filter((t) => t.length > 0),
-                        twoSided: twoSideEd.menuToState()
+                    studying: studyingEditor.menuToState(),
+                    settings: {
+                        initialHours: initHoursEditor.menuToState(),
+                        correctFactor: correctFactor.menuToState(),
+                        incorrectFactor: incorrectFactor.menuToState(),
+                        readCorrectAnswers: speechCheckbox.menuToState(),
+                        speechSettings: speechEditor.menuToState(),
+                        filterSettings: filterEditor.menuToState(),
+                        inactiveTags: omitTagsEditor.menuToState().split(','),
+                        doTwoSided: twoSidedEditor.menuToState()
                     },
-                    due: c.due,
-                    intervalMinutes: c.intervalMinutes,
-                    auxdata: c.auxdata
+                    newQ: (0, spaced_repetition_newqueue_1.emptySRQueue)(newQueueSizeEditor.menuToState()),
+                    cards: (0, utils_1.makeDict)(cardsEditor.menuToState(), (c) => c.guid),
                 };
             }
         };
     }
-    ;
-    var cardsEditor = (0, editor_1.multipleEditors)(Object.values(st.cards), () => makeEmptyCard(), makeCardEditor, true, (s, cd) => cd.content.prompt.includes(s) || cd.content.answers.some((a) => a.includes(s)));
-    var cardsEditorTitle = document.createElement("h3");
-    cardsEditorTitle.textContent = "Cards";
-    cardsEditor.element.prepend(cardsEditorTitle);
-    cardsEditor.element.classList.add("deck-menu-submenu");
-    var components = [
-        infoWidget,
-        studyingEditor.element,
-        initHoursEditor.element,
-        correctFactor.element,
-        incorrectFactor.element,
-        newQueueSizeEditor.element,
-        omitTagsCont,
-        twoSidedCont,
-        speechDiv,
-        filterEditor.element,
-        cardsEditor.element,
-    ];
-    components.map((el) => contDiv.appendChild(el));
-    return {
-        element: contDiv,
-        menuToState: () => {
-            return {
-                studying: studyingEditor.menuToState(),
-                settings: {
-                    initialHours: initHoursEditor.menuToState(),
-                    correctFactor: correctFactor.menuToState(),
-                    incorrectFactor: incorrectFactor.menuToState(),
-                    readCorrectAnswers: speechCheckbox.menuToState(),
-                    speechSettings: speechEditor.menuToState(),
-                    filterSettings: filterEditor.menuToState(),
-                    inactiveTags: omitTagsEditor.menuToState().split(','),
-                    doTwoSided: twoSidedEditor.menuToState()
-                },
-                newQ: (0, spaced_repetition_newqueue_1.emptySRQueue)(newQueueSizeEditor.menuToState()),
-                cards: (0, utils_1.makeDict)(cardsEditor.menuToState(), (c) => c.guid),
-            };
-        }
-    };
 }
-(0, flashcard_deck_1.registerDeckType)(new SimpleSpacedRepGen(), simpleSRMenu, "simple-spaced-repetition-deck", "Simple spaced repetition deck", exports.defaultSimpleSRState, "#ffffdd");
+exports.SimpleSpacedRepGen = SimpleSpacedRepGen;
+(0, flashcard_deck_1.registerDeckType)(new SimpleSpacedRepGen(), "simple-spaced-repetition-deck", "Simple spaced repetition deck", exports.defaultSimpleSRState, "#ffffdd");
 
 
 /***/ }),
@@ -3051,42 +2879,42 @@ class TimesTableGen extends flashcard_sync_generator_1.FlashcardSyncGen {
     checkAnswer(answer, st, c) {
         return (answer === (c.factor1 * c.factor2).toString());
     }
+    makeEditor(st) {
+        var minEd = (0, editor_1.scrollNumberEditor)("Minimum factor:", st.minNum, 0, 100, 1);
+        var maxEd = (0, editor_1.scrollNumberEditor)("Maximum factor:", st.maxNum, 0, 100, 1);
+        var wrongDiv = document.createElement("div");
+        wrongDiv.style.backgroundColor = "#ffdddd";
+        wrongDiv.classList.add("deck-menu-submenu");
+        var wrongList = document.createElement("ul");
+        var wrongHdr = document.createElement("b");
+        wrongHdr.textContent = "You have not gotten any cards wrong yet.";
+        for (var i in Object.keys(st.recentlyIncorrect)) {
+            var fct = st.recentlyIncorrect[i];
+            var li = document.createElement("li");
+            li.textContent = `${fct[0]} × ${fct[1]} = ${fct[0] * fct[1]}`;
+            wrongList.appendChild(li);
+            wrongHdr.textContent = "You have gotten the following cards wrong:";
+        }
+        wrongDiv.appendChild(wrongHdr);
+        wrongDiv.appendChild(wrongList);
+        var edDiv = document.createElement("div");
+        edDiv.appendChild(minEd.element);
+        edDiv.appendChild(maxEd.element);
+        edDiv.appendChild(wrongDiv);
+        return {
+            element: edDiv,
+            menuToState: () => {
+                return {
+                    minNum: minEd.menuToState(),
+                    maxNum: maxEd.menuToState(),
+                    recentlyIncorrect: st.recentlyIncorrect
+                };
+            }
+        };
+    }
 }
 exports.TimesTableGen = TimesTableGen;
-function makeTimesTableEditor(st) {
-    var minEd = (0, editor_1.scrollNumberEditor)("Minimum factor:", st.minNum, 0, 100, 1);
-    var maxEd = (0, editor_1.scrollNumberEditor)("Maximum factor:", st.maxNum, 0, 100, 1);
-    var wrongDiv = document.createElement("div");
-    wrongDiv.style.backgroundColor = "#ffdddd";
-    wrongDiv.classList.add("deck-menu-submenu");
-    var wrongList = document.createElement("ul");
-    var wrongHdr = document.createElement("b");
-    wrongHdr.textContent = "You have not gotten any cards wrong yet.";
-    for (var i in Object.keys(st.recentlyIncorrect)) {
-        var fct = st.recentlyIncorrect[i];
-        var li = document.createElement("li");
-        li.textContent = `${fct[0]} × ${fct[1]} = ${fct[0] * fct[1]}`;
-        wrongList.appendChild(li);
-        wrongHdr.textContent = "You have gotten the following cards wrong:";
-    }
-    wrongDiv.appendChild(wrongHdr);
-    wrongDiv.appendChild(wrongList);
-    var edDiv = document.createElement("div");
-    edDiv.appendChild(minEd.element);
-    edDiv.appendChild(maxEd.element);
-    edDiv.appendChild(wrongDiv);
-    return {
-        element: edDiv,
-        menuToState: () => {
-            return {
-                minNum: minEd.menuToState(),
-                maxNum: maxEd.menuToState(),
-                recentlyIncorrect: st.recentlyIncorrect
-            };
-        }
-    };
-}
-(0, flashcard_deck_1.registerDeckType)(new TimesTableGen(), makeTimesTableEditor, "times-table-quizzer", "Times table quizzer", exports.defaultTimesTableState, "#ffcccc");
+(0, flashcard_deck_1.registerDeckType)(new TimesTableGen(), "times-table-quizzer", "Times table quizzer", exports.defaultTimesTableState, "#ffcccc");
 
 
 /***/ }),
@@ -3120,30 +2948,30 @@ class TranscriptFlashcardGen extends flashcard_sync_generator_1.FlashcardSyncGen
     generateCard(st, data) {
         return (0, flashcard_template_1.renderCard)("transcript-template", data);
     }
+    makeEditor(state) {
+        var speechEd = (0, speech_1.speechSettingsEditor)(state.settings.speechSettings);
+        speechEd.element.classList.add("deck-menu-submenu");
+        var fileEd = (0, editor_1.fileUploadEditor)("Upload a list of phrases", (s) => { });
+        fileEd.element.classList.add("deck-menu-submenu");
+        var container = document.createElement("div");
+        container.appendChild(speechEd.element);
+        container.appendChild(fileEd.element);
+        return {
+            element: container,
+            menuToState: () => {
+                var fileInput = fileEd.menuToState();
+                return {
+                    deck: fileInput.length == 0 ? state.deck : fileInput.split('\n').map((x) => x.trim()),
+                    settings: {
+                        speechSettings: speechEd.menuToState()
+                    }
+                };
+            }
+        };
+    }
     correctEffect(_, __, ___, resolve) { resolve(); }
     ;
     repairDeckState(st) { return st; }
-}
-function makeTranscriptEditor(state) {
-    var speechEd = (0, speech_1.speechSettingsEditor)(state.settings.speechSettings);
-    speechEd.element.classList.add("deck-menu-submenu");
-    var fileEd = (0, editor_1.fileUploadEditor)("Upload a list of phrases", (s) => { });
-    fileEd.element.classList.add("deck-menu-submenu");
-    var container = document.createElement("div");
-    container.appendChild(speechEd.element);
-    container.appendChild(fileEd.element);
-    return {
-        element: container,
-        menuToState: () => {
-            var fileInput = fileEd.menuToState();
-            return {
-                deck: fileInput.length == 0 ? state.deck : fileInput.split('\n').map((x) => x.trim()),
-                settings: {
-                    speechSettings: speechEd.menuToState()
-                }
-            };
-        }
-    };
 }
 var transcriptionDefaultState = {
     deck: [
@@ -3156,7 +2984,7 @@ var transcriptionDefaultState = {
         speechSettings: (0, speech_1.defaultSpeechSettings)()
     }
 };
-(0, flashcard_deck_1.registerDeckType)(new TranscriptFlashcardGen(), makeTranscriptEditor, "transcription-quizzer", "Transcription quizzer", transcriptionDefaultState);
+(0, flashcard_deck_1.registerDeckType)(new TranscriptFlashcardGen(), "transcription-quizzer", "Transcription quizzer", transcriptionDefaultState);
 
 
 /***/ }),
@@ -3191,23 +3019,23 @@ class KVFlashcardGen extends flashcard_sync_generator_1.FlashcardSyncGen {
     generateCard(_, data) {
         return (0, flashcard_template_1.renderCard)("basic-template", data);
     }
+    makeEditor(state) {
+        var transEd = (0, editor_1.makeTranslationEditor)(state.deck, (x) => true);
+        return {
+            element: transEd.element,
+            menuToState: () => {
+                return {
+                    deck: transEd.menuToState(),
+                    history: state.history
+                };
+            }
+        };
+    }
     correctEffect(_, __, ___, resolve) { resolve(); }
     ;
     repairDeckState(st) { return st; }
 }
 exports.KVFlashcardGen = KVFlashcardGen;
-function makeKVEditor(state) {
-    var transEd = (0, editor_1.makeTranslationEditor)(state.deck, (x) => true);
-    return {
-        element: transEd.element,
-        menuToState: () => {
-            return {
-                deck: transEd.menuToState(),
-                history: state.history
-            };
-        }
-    };
-}
 var kvDefaultState = {
     deck: [
         ["cat", "gato"],
@@ -3216,7 +3044,7 @@ var kvDefaultState = {
     ],
     history: []
 };
-(0, flashcard_deck_1.registerDeckType)(new KVFlashcardGen(), makeKVEditor, "key-value-quizzer", "Simple key-value quizzer", kvDefaultState);
+(0, flashcard_deck_1.registerDeckType)(new KVFlashcardGen(), "key-value-quizzer", "Simple key-value quizzer", kvDefaultState);
 
 
 /***/ }),
@@ -3233,10 +3061,77 @@ __webpack_require__(142);
 __webpack_require__(91);
 __webpack_require__(846);
 __webpack_require__(815);
-__webpack_require__(627);
 __webpack_require__(304);
+__webpack_require__(467);
+__webpack_require__(854);
+__webpack_require__(456);
+__webpack_require__(669);
 (0, decklist_1.setupDecklistMenu)();
 (0, flashcard_deck_1.loadAllDecks)().then((_) => (0, flashcard_deck_1.runDeck)((0, flashcard_deck_1.getStartingDeck)("key-value-quizzer")));
+
+
+/***/ }),
+
+/***/ 467:
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const flashcard_1 = __webpack_require__(70);
+const flashcard_template_1 = __webpack_require__(217);
+class BasicFlashcardTemplate extends flashcard_template_1.FlashcardTemplate {
+    getName() { return "basic-template"; }
+    render(data) {
+        var a = document.createElement("div");
+        a.textContent = data[0];
+        var fontSize = 100.0 / (10.0 * Math.log(10 + data[0].length));
+        var fl = new flashcard_1.Flashcard(a, data[1]);
+        fl.el.style.fontSize = `${fontSize}vw`;
+        return fl;
+    }
+}
+(0, flashcard_template_1.registerTemplate)(new BasicFlashcardTemplate());
+
+
+/***/ }),
+
+/***/ 854:
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const flashcard_1 = __webpack_require__(70);
+const flashcard_template_1 = __webpack_require__(217);
+class ClozeFlashcardTemplate extends flashcard_template_1.FlashcardTemplate {
+    getName() { return "cloze-template"; }
+    render(data) {
+        var el = document.createElement("div");
+        el.style.display = "block";
+        el.style.textAlign = "center";
+        var aUpper = document.createElement("p");
+        var aLower = document.createElement("p");
+        aUpper.style.display = "block";
+        aLower.style.display = "block";
+        el.appendChild(aUpper);
+        el.appendChild(document.createElement("hr"));
+        el.appendChild(aLower);
+        var targetWords = [];
+        aUpper.textContent = data.upper.replaceAll(/\{\{([^\{\}]+)\}\}/g, (match, p1) => {
+            targetWords.push(p1);
+            return "___";
+        });
+        var answer = targetWords.join(", ");
+        aLower.textContent = data.lower;
+        var fontSize = 900.0 / (10.0 * Math.log(10 + aUpper.textContent.length));
+        aUpper.style.fontSize = `${fontSize}px`;
+        aLower.style.fontSize = `${0.7 * fontSize}px`;
+        var fl = new flashcard_1.Flashcard(el, answer);
+        return fl;
+    }
+}
+(0, flashcard_template_1.registerTemplate)(new ClozeFlashcardTemplate());
 
 
 /***/ }),
@@ -3290,6 +3185,31 @@ class Preloader {
     }
 }
 exports.Preloader = Preloader;
+
+
+/***/ }),
+
+/***/ 456:
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const utils_1 = __webpack_require__(135);
+const flashcard_1 = __webpack_require__(70);
+const flashcard_template_1 = __webpack_require__(217);
+class NoAnswerFlashcardTemplate extends flashcard_template_1.FlashcardTemplate {
+    getName() { return "noanswer-template"; }
+    render(data) {
+        var a = document.createElement("div");
+        a.textContent = data;
+        var fontSize = 90.0 / (10.0 * Math.log(10 + data[0].length));
+        var fl = new flashcard_1.Flashcard(a, "", (_) => (0, utils_1.trivialPromise)(false));
+        fl.el.style.fontSize = `${fontSize}vw`;
+        return fl;
+    }
+}
+(0, flashcard_template_1.registerTemplate)(new NoAnswerFlashcardTemplate());
 
 
 /***/ }),
@@ -3619,6 +3539,36 @@ function textFilterSelectionMenu(tfs) {
         }
     };
 }
+
+
+/***/ }),
+
+/***/ 669:
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const flashcard_1 = __webpack_require__(70);
+const flashcard_template_1 = __webpack_require__(217);
+const speech_1 = __webpack_require__(230);
+class TranscriptFlashcardTemplate extends flashcard_template_1.FlashcardTemplate {
+    getName() { return "transcript-template"; }
+    render(data) {
+        var container = document.createElement("div");
+        var playBtn = document.createElement("img");
+        playBtn.src = "/static/images/speaker.png";
+        playBtn.classList.add("transcription-audio-button");
+        playBtn.onclick = (e) => {
+            var ss = data.speechSettings;
+            (0, speech_1.utter)(data.text, ss.voice, ss.rate, ss.pitch);
+        };
+        container.appendChild(playBtn);
+        var fl = new flashcard_1.Flashcard(container, data.text);
+        return fl;
+    }
+}
+(0, flashcard_template_1.registerTemplate)(new TranscriptFlashcardTemplate());
 
 
 /***/ }),
