@@ -205,7 +205,9 @@ class SimpleSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGe
             speechDiv,
             filterEditor.element
         ].map((el) => el.classList.add("deck-menu-submenu"));
-        function makeCardEditor(c) {
+        var _this = this;
+        var makeCardEditor = (c) => {
+            //            StateEditor<SpacedRepCard<SRSimpleContent, SRSimpleAuxData>> => {
             var edDetails = document.createElement("details");
             var edSummary = document.createElement("summary");
             edDetails.style.display = "inline-block";
@@ -238,41 +240,57 @@ class SimpleSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGe
             else {
                 cardInfo.textContent = `due ${(0, utils_1.getSRFutureDateInfo)(c.due)}`;
             }
-            cardInfo.style.display = "block";
+            var cardMenuToState = ((edMain) => () => {
+                let tp = edMain.menuToState();
+                return {
+                    guid: c.guid,
+                    content: {
+                        prompt: tp[0].split('|'),
+                        answers: tp[1].split('|'),
+                        tags: tagsEd.menuToState().split(',').filter((t) => t.length > 0),
+                        twoSided: twoSideEd.menuToState()
+                    },
+                    due: c.due,
+                    intervalMinutes: c.intervalMinutes,
+                    auxdata: c.auxdata
+                };
+            })(edMain);
             var listenBtn = ((ed) => (0, utils_1.iconButton)("speaker.png", () => {
                 var ss = speechEditor.menuToState();
                 var tgtText = ed.menuToState()[1];
                 (0, speech_1.utter)(tgtText, ss.voice, ss.rate, ss.pitch, () => { });
             }))(edMain);
             listenBtn.style.float = "";
-            var listenDiv = document.createElement("div");
-            listenDiv.style.overflowY = "visible";
-            listenDiv.appendChild(listenBtn);
+            var cardPreviewCont = document.createElement("div");
+            var previewBtn = (0, utils_1.iconButton)("eyeball.png", () => {
+                console.log(this);
+                var cardData = cardMenuToState();
+                var cardPreviewDiv = this.gen.generateCard(st, this.gen.nextCardPreprocessing({
+                    data: cardData,
+                    context: {
+                        cardsLeft: 0,
+                        isPractice: false
+                    }
+                }, st));
+                cardPreviewCont.innerHTML = "";
+                cardPreviewDiv.el.classList.add("flashcard");
+                cardPreviewDiv.el.classList.add("flashcard-preview");
+                cardPreviewCont.appendChild(cardPreviewDiv.el);
+            });
+            previewBtn.style.float = "";
+            cardPreviewCont.classList.add("card-preview-container");
             var cardBottomDiv = document.createElement("div");
             // cardBottomDiv.style.overflow = "auto";
             edDetails.appendChild(cardBottomDiv);
             cardBottomDiv.appendChild(cardInfo);
             cardBottomDiv.appendChild(listenBtn);
+            cardBottomDiv.appendChild(previewBtn);
+            edDetails.appendChild(cardPreviewCont);
             return {
                 element: edDetails,
-                menuToState: () => {
-                    let tp = edMain.menuToState();
-                    return {
-                        guid: c.guid,
-                        content: {
-                            prompt: tp[0].split('|'),
-                            answers: tp[1].split('|'),
-                            tags: tagsEd.menuToState().split(',').filter((t) => t.length > 0),
-                            twoSided: twoSideEd.menuToState()
-                        },
-                        due: c.due,
-                        intervalMinutes: c.intervalMinutes,
-                        auxdata: c.auxdata
-                    };
-                }
+                menuToState: cardMenuToState
             };
-        }
-        ;
+        };
         var cardsEditor = (0, editor_1.multipleEditors)(Object.values(st.cards), () => makeEmptyCard(), makeCardEditor, true, (s, cd) => cd.content.prompt.includes(s) || cd.content.answers.some((a) => a.includes(s)));
         var cardsEditorTitle = document.createElement("h3");
         cardsEditorTitle.textContent = "Cards";
