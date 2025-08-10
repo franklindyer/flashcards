@@ -96,6 +96,18 @@ button {
     animation-timing-function: ease-in-out;
 }
 
+.flashcard-preview {
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 50%;
+}
+
+.card-preview-container {
+    display: block;
+    padding-top: 10px;
+    width: 100%;
+}
+
 .answer-text-box {
     width: 70%;
     display: block;
@@ -271,6 +283,10 @@ hr {
     right: 2px;
     display: inline-block;
     padding: 1px;
+}
+
+.sr-card-due-date {
+    display: inline-block;
 }
 
 // Animation for loading icon

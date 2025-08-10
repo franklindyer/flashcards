@@ -15,6 +15,9 @@
   "resolveJsonModule": true,
   "moduleResolution": "node",
   "paths": {
+    "utils/*": ["./src/utils/*"],
+    "core/*": ["./src/core/*"],
+    "decks/*": ["./src/decks/*"],
     "plotly.js": [
       "../node_modules/plotly.js/lib/core.js"
     ]

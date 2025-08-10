@@ -1,20 +1,20 @@
 import {
     FlashcardResult
-} from "../src/flashcard-generator"
+} from "../src/core/flashcard-generator"
 import {
     SpacedRepState,
     SpacedRepCard,
     SpacedRepStudying,
     makeSpacedRepCardDict,
     AbstractSpacedRepGen
-} from "../src/spaced-repetition-general"
+} from "../src/decks/spaced-repetition-general"
 import {
     SimpleSpacedRepGen,
     SRSimpleContent,
     SRSimpleAuxData,
     SRSimpleSettings,
     defaultSimpleSRState
-} from "../src/spaced-repetition-simple"
+} from "../src/decks/spaced-repetition-simple"
 
 async function studyAllNewCards<content, timing, settings>(
     fgen: AbstractSpacedRepGen<content, timing, settings>,
