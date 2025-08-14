@@ -7,6 +7,7 @@ export type TextFilterSettings = {
     removeParenDelimited: boolean,
     removeSqDelimited: boolean,
     noPunctuation: boolean,
+    noCaps: boolean,
     smartQuotes: boolean,
     doubleSpaces: boolean,
     trimSpaces: boolean,
@@ -17,6 +18,7 @@ export const defaultTextFilterSettings = {
     removeParenDelimited: false,
     removeSqDelimited: false,
     noPunctuation: false,
+    noCaps: false,
     smartQuotes: false,
     doubleSpaces: false,
     trimSpaces: false,
@@ -51,6 +53,11 @@ function filterPunctuation(str: string) {
     return str.replaceAll(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "");
 }
 
+function filterCaps(str: string) {
+    return str.toLowerCase();
+}
+
+
 // Replace missing settings in the case of updates
 function repairTextFilterSettings(tfs: any): TextFilterSettings {
     for (var i in Object.keys(defaultTextFilterSettings)) {
@@ -70,6 +77,8 @@ export function applyTextFilter(str: string, tfs: TextFilterSettings) {
         str = filterHintSqs(str);
     if (tfs.noPunctuation)
         str = filterPunctuation(str);
+    if (tfs.noCaps)
+        str = filterCaps(str);
     if (tfs.smartQuotes)
         str = filterSmartQuotes(str);
     if (tfs.doubleSpaces)
@@ -92,6 +101,7 @@ export function textFilterSelectionMenu(tfs: TextFilterSettings): StateEditor<Te
     container.appendChild(accordion);
     
     var noPunctuationEd = boolEditor("Ignore punctuation", tfs.noPunctuation);
+    var noCapsEd = boolEditor("Ignore capitalization", tfs.noCaps);
     var smartQuotesEd = boolEditor("Ignore smart quotes", tfs.smartQuotes);
     var doubleSpacesEd = boolEditor("Ignore multiple spaces", tfs.doubleSpaces);
     var trimSpacesEd = boolEditor("Ignore leading and trailing spaces", tfs.trimSpaces);
@@ -101,6 +111,7 @@ export function textFilterSelectionMenu(tfs: TextFilterSettings): StateEditor<Te
 
     [
         noPunctuationEd.element,
+        noCapsEd.element,
         smartQuotesEd.element,
         doubleSpacesEd.element,
         trimSpacesEd.element,
@@ -116,6 +127,7 @@ export function textFilterSelectionMenu(tfs: TextFilterSettings): StateEditor<Te
                 removeParenDelimited: removeParenEd.menuToState(),
                 removeSqDelimited: removeSqEd.menuToState(),
                 noPunctuation: noPunctuationEd.menuToState(),
+                noCaps: noCapsEd.menuToState(),
                 smartQuotes: smartQuotesEd.menuToState(),
                 doubleSpaces: doubleSpacesEd.menuToState(),
                 trimSpaces: trimSpacesEd.menuToState(),
