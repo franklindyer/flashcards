@@ -286,7 +286,7 @@ export class SimpleSpacedRepGen
         StateEditor<SpacedRepState<SRSimpleContent, SRSimpleAuxData, SRSimpleSettings>> {
         var contDiv = document.createElement("div");
 
-        var infoWidget = infoWidgetSR(st);
+        var infoWidget = infoWidgetSR((<any>this).gen, st);
       
         var studyingEditor = studyingEditorSR(st); 
 
