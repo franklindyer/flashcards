@@ -12,6 +12,7 @@ import "decks/times-tables-gen";
 import "decks/uniform-key-value";
 import "decks/spaced-repetition-simple";
 import "decks/spaced-repetition-cloze";
+import "decks/spaced-repetition-modular";
 import "decks/transcript-gen";
 
 import "utils/basic-template";

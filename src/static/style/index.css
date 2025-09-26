@@ -3,6 +3,11 @@ body {
     overflow-y: hidden;
 }
 
+h2 {
+    margin-top: 5px;
+    padding-botton: 5px;
+}
+
 button {
     margin: 2px;
     padding: 3px;

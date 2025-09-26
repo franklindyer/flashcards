@@ -8,6 +8,7 @@ exports.defaultTextFilterSettings = {
     removeParenDelimited: false,
     removeSqDelimited: false,
     noPunctuation: false,
+    noCaps: false,
     smartQuotes: false,
     doubleSpaces: false,
     trimSpaces: false,
@@ -34,6 +35,9 @@ function filterNFC(str) {
 function filterPunctuation(str) {
     return str.replaceAll(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "");
 }
+function filterCaps(str) {
+    return str.toLowerCase();
+}
 // Replace missing settings in the case of updates
 function repairTextFilterSettings(tfs) {
     for (var i in Object.keys(exports.defaultTextFilterSettings)) {
@@ -52,6 +56,8 @@ function applyTextFilter(str, tfs) {
         str = filterHintSqs(str);
     if (tfs.noPunctuation)
         str = filterPunctuation(str);
+    if (tfs.noCaps)
+        str = filterCaps(str);
     if (tfs.smartQuotes)
         str = filterSmartQuotes(str);
     if (tfs.doubleSpaces)
@@ -71,6 +77,7 @@ function textFilterSelectionMenu(tfs) {
     accordion.appendChild(accordionSummary);
     container.appendChild(accordion);
     var noPunctuationEd = (0, editor_1.boolEditor)("Ignore punctuation", tfs.noPunctuation);
+    var noCapsEd = (0, editor_1.boolEditor)("Ignore capitalization", tfs.noCaps);
     var smartQuotesEd = (0, editor_1.boolEditor)("Ignore smart quotes", tfs.smartQuotes);
     var doubleSpacesEd = (0, editor_1.boolEditor)("Ignore multiple spaces", tfs.doubleSpaces);
     var trimSpacesEd = (0, editor_1.boolEditor)("Ignore leading and trailing spaces", tfs.trimSpaces);
@@ -79,6 +86,7 @@ function textFilterSelectionMenu(tfs) {
     var removeSqEd = (0, editor_1.boolEditor)("Ignore substrings enclosed in [square brackets]", tfs.removeSqDelimited);
     [
         noPunctuationEd.element,
+        noCapsEd.element,
         smartQuotesEd.element,
         doubleSpacesEd.element,
         trimSpacesEd.element,
@@ -93,6 +101,7 @@ function textFilterSelectionMenu(tfs) {
                 removeParenDelimited: removeParenEd.menuToState(),
                 removeSqDelimited: removeSqEd.menuToState(),
                 noPunctuation: noPunctuationEd.menuToState(),
+                noCaps: noCapsEd.menuToState(),
                 smartQuotes: smartQuotesEd.menuToState(),
                 doubleSpaces: doubleSpacesEd.menuToState(),
                 trimSpaces: trimSpacesEd.menuToState(),
