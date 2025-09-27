@@ -12,6 +12,7 @@ exports.combineEditors = combineEditors;
 exports.swappingTextEditor = swappingTextEditor;
 exports.makeTranslationEditor = makeTranslationEditor;
 exports.fixedNumEditors = fixedNumEditors;
+exports.acceptDeclineEditor = acceptDeclineEditor;
 exports.multipleEditors = multipleEditors;
 const utils_1 = require("utils/utils");
 /* Some useful state editors */
@@ -218,6 +219,32 @@ function fixedNumEditors(ls, ed) {
         statePartEditorFactory(ls[i]);
     }
     return editor;
+}
+function acceptDeclineEditor(value, summary) {
+    // Return 0 if no decision, 1 if accepted, 2 if rejected
+    var contDiv = document.createElement("div");
+    var summaryEl = document.createElement("a");
+    summaryEl.textContent = summary;
+    var choice = 0;
+    var acceptBtn = document.createElement("button");
+    acceptBtn.textContent = "Accept";
+    var rejectBtn = document.createElement("button");
+    rejectBtn.textContent = "Decline";
+    acceptBtn.onclick = (e) => {
+        contDiv.style.backgroundColor = "#ddffdd";
+        choice = 1;
+    };
+    rejectBtn.onclick = (e) => {
+        contDiv.style.backgroundColor = "#ffdddd";
+        choice = 2;
+    };
+    contDiv.appendChild(acceptBtn);
+    contDiv.appendChild(rejectBtn);
+    contDiv.appendChild(summaryEl);
+    return {
+        element: contDiv,
+        menuToState: () => choice
+    };
 }
 function multipleEditors(ls, empty, ed, includeSearch = false, searchFxn = (s, x) => true) {
     var children = [];

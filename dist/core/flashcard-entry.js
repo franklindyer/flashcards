@@ -1,9 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SimpleCardType = exports.FlashcardType = exports.gCardTypeRegistry = void 0;
+exports.ClozeCardType = exports.SimpleCardType = exports.FlashcardType = exports.gCardTypeRegistry = void 0;
 exports.registerFlashcardType = registerFlashcardType;
 const utils_1 = require("utils/utils");
 const editor_1 = require("core/editor");
+const flashcard_template_1 = require("core/flashcard-template");
+const generic_preloader_1 = require("utils/generic-preloader");
 const flashcard_1 = require("core/flashcard");
 exports.gCardTypeRegistry = {};
 class FlashcardType {
@@ -64,7 +66,6 @@ class SimpleCardType extends FlashcardType {
     }
     // abstract checkAnswer(answer: string, data: D, settings: S): Promise<boolean>;
     checkAnswer(answer, data, settings, tf) {
-        console.log(data);
         return (0, utils_1.trivialPromise)(data.answer.map(tf).includes(tf(answer)));
     }
     // abstract makeEntryEditor(entry: E): StateEditor<E>;
@@ -129,3 +130,123 @@ class SimpleCardType extends FlashcardType {
 }
 exports.SimpleCardType = SimpleCardType;
 registerFlashcardType(new SimpleCardType());
+class ClozeCardType extends FlashcardType {
+    getTypeName() {
+        return "cloze-card";
+    }
+    getUserFriendlyName() {
+        return "Cloze puzzle cards";
+    }
+    cache = new generic_preloader_1.Preloader(10);
+    fetchCloze(key, settings) {
+        return fetch(`${settings.clozeServerUrl}/cloze?` + new URLSearchParams({
+            "srcs": settings.sourceLangs.join(","),
+            "groups": settings.clozeGroups.join(","),
+            "tgt": settings.targetLang,
+            "lemma": key,
+            "n": this.cache.numPreload.toString()
+        }).toString()).then((r) => r.json()).catch((e) => undefined);
+    }
+    // abstract preprocessEntry(entry: E, settings: S): void;
+    preprocessEntry(entry, settings) {
+        this.cache.addKey(entry.key, (k) => this.fetchCloze(entry.key, settings));
+    }
+    // abstract processEntry(entry: E, settings: S): Promise<D>;
+    processEntry(entry, settings) {
+        return this.cache.getKey(entry.key, (k) => this.fetchCloze(entry.key, settings)).then((j) => {
+            if (j === undefined) {
+                return { valid: false, key: entry.key };
+            }
+            return {
+                key: entry.key,
+                valid: true,
+                cloze: {
+                    prompt: j["puzzle"],
+                    answer: j["target"],
+                    translation: j["source"],
+                    group: j["group"]
+                }
+            };
+        }).catch((e) => {
+            return { valid: false, key: entry.key };
+        });
+    }
+    // abstract getSearchableText(entry: E): string;
+    getSearchableText(entry) {
+        return entry.key;
+    }
+    // abstract generateCard(data: D, settings: S): Flashcard;
+    generateCard(data, settings) {
+        if (!data.valid) {
+            return (0, flashcard_template_1.renderCard)("noanswer-template", `Could not get puzzle for card "${data.key}".`);
+        }
+        var fl = (0, flashcard_template_1.renderCard)("cloze-template", {
+            group: data.cloze.group,
+            guid: "",
+            upper: data.cloze.prompt,
+            lower: data.cloze.translation
+        });
+        return fl;
+    }
+    // abstract checkAnswer(answer: string, data: D, settings: S, tf: (s: string) => string): Promise<boolean>;
+    checkAnswer(answer, data, settings, tf) {
+        return (0, utils_1.trivialPromise)(data.valid && tf(answer) == tf(data.cloze.answer));
+    }
+    // abstract makeEntryEditor(entry: E): StateEditor<E>;
+    makeEntryEditor(entry) {
+        var edCont = document.createElement("div");
+        var keyEd = (0, editor_1.singleTextFieldEditor)(entry.key);
+        keyEd.element.style.display = "inline-block";
+        edCont.appendChild(keyEd.element);
+        return {
+            element: edCont,
+            menuToState: () => {
+                return {
+                    key: keyEd.menuToState()
+                };
+            }
+        };
+    }
+    // abstract makeSettingsEditor(settings: S): StateEditor<S>;
+    makeSettingsEditor(settings) {
+        var clozeServerDiv = document.createElement("div");
+        clozeServerDiv.classList.add("deck-menu-submenu");
+        var clozeServerUrlEditor = (0, editor_1.singleTextFieldEditor)(settings.clozeServerUrl);
+        var clozeSourceLangEditor = (0, editor_1.singleTextFieldEditor)(settings.sourceLangs.join(','));
+        var clozeTargetLangEditor = (0, editor_1.singleTextFieldEditor)(settings.targetLang);
+        var clozeGroupsEditor = (0, editor_1.singleTextFieldEditor)(settings.clozeGroups.join(','));
+        clozeGroupsEditor.element.placeholder = "allowed groups...";
+        clozeServerDiv.appendChild(clozeServerUrlEditor.element);
+        clozeServerDiv.appendChild(clozeSourceLangEditor.element);
+        clozeServerDiv.appendChild(clozeTargetLangEditor.element);
+        clozeServerDiv.appendChild(clozeGroupsEditor.element);
+        return {
+            element: clozeServerDiv,
+            menuToState: () => {
+                return {
+                    clozeServerUrl: clozeServerUrlEditor.menuToState(),
+                    sourceLangs: clozeSourceLangEditor.menuToState().split(','),
+                    targetLang: clozeTargetLangEditor.menuToState(),
+                    clozeGroups: clozeGroupsEditor.menuToState().split(',').filter((g) => g.length > 0)
+                };
+            }
+        };
+    }
+    // abstract getDefaultEntry(): E;
+    getDefaultEntry() {
+        return {
+            key: ""
+        };
+    }
+    // abstract getDefaultSettings(): S;
+    getDefaultSettings() {
+        return {
+            clozeServerUrl: "",
+            sourceLangs: [],
+            targetLang: "",
+            clozeGroups: []
+        };
+    }
+}
+exports.ClozeCardType = ClozeCardType;
+registerFlashcardType(new ClozeCardType());

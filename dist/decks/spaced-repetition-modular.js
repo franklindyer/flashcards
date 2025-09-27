@@ -46,15 +46,14 @@ function makeEmptyCard(cardType) {
 class ModularSpacedRepGen extends spaced_repetition_general_1.AbstractAsyncSpacedRepGen {
     getGenName() { return "modular-spaced-repetition"; }
     repairDeckState(st) {
-        st = (0, utils_1.recursiveRepairJSON)(st, exports.defaultSRModularState, ["cards"]);
-        console.log(st);
+        st = (0, utils_1.recursiveRepairJSON)(st, exports.defaultSRModularState, ["cards", "cardTypeSettings"]);
         // st.cards = recursiveRepairEachValueJSON(st.cards, Object.values(defaultSRModularState.cards)[0]);
-        if (st.settings.cardTypeSettings == null) {
+        if (st.settings.cardTypeSettings === undefined) {
             st.settings.cardTypeSettings = {};
         }
         for (var i in Object.keys(flashcard_entry_1.gCardTypeRegistry)) {
             var cardType = Object.keys(flashcard_entry_1.gCardTypeRegistry)[i];
-            if (!(cardType in st.settings.cardTypeSettings)) {
+            if (!Object.keys(st.settings.cardTypeSettings).includes(cardType)) {
                 st.settings.cardTypeSettings[cardType]
                     = flashcard_entry_1.gCardTypeRegistry[cardType].getDefaultSettings();
             }
@@ -140,12 +139,13 @@ class ModularSpacedRepGen extends spaced_repetition_general_1.AbstractAsyncSpace
         });
     }
     generateCardAsync(st, card) {
-        if (card.data === undefined) {
+        if (card.data === undefined || card.data.content.cardData === undefined) {
             return (0, utils_1.trivialPromise)((0, flashcard_template_1.renderCard)("noanswer-template", "No cards left to study."));
         }
         var cardType = card.data.content.cardType;
         var cardEntry = card.data.content.cardEntry;
-        var fl = flashcard_entry_1.gCardTypeRegistry[cardType].generateCard(cardEntry, st.settings.cardTypeSettings[cardType]);
+        var cardData = card.data.content.cardData;
+        var fl = flashcard_entry_1.gCardTypeRegistry[cardType].generateCard(cardData, st.settings.cardTypeSettings[cardType]);
         fl.el.appendChild((0, spaced_repetition_general_1.makeCardsLeftSpan)(card));
         return (0, utils_1.trivialPromise)(fl);
     }
@@ -198,7 +198,7 @@ class ModularSpacedRepGen extends spaced_repetition_general_1.AbstractAsyncSpace
                 }
             };
         }
-        var cardSettingsGroups = st.settings.cardTypeSettings;
+        var cardSettingsGroups = {};
         var cardEditorGroups = [];
         for (var i in Object.keys(flashcard_entry_1.gCardTypeRegistry)) {
             var t = Object.keys(flashcard_entry_1.gCardTypeRegistry)[i];
@@ -218,6 +218,14 @@ class ModularSpacedRepGen extends spaced_repetition_general_1.AbstractAsyncSpace
             header.textContent = flashcard_entry_1.gCardTypeRegistry[t].getUserFriendlyName();
             cardsEditor.element.prepend(cardSettingsGroups[t].element);
             cardsEditor.element.prepend(header);
+        }
+        function getAllCardSettings() {
+            var d = {};
+            for (var i in Object.keys(flashcard_entry_1.gCardTypeRegistry)) {
+                var t = Object.keys(flashcard_entry_1.gCardTypeRegistry)[i];
+                d[t] = cardSettingsGroups[t].menuToState();
+            }
+            return d;
         }
         [
             infoWidget,
@@ -239,7 +247,7 @@ class ModularSpacedRepGen extends spaced_repetition_general_1.AbstractAsyncSpace
                 return {
                     studying: studyingEditor.menuToState(),
                     settings: {
-                        cardTypeSettings: null, // TODO
+                        cardTypeSettings: getAllCardSettings(),
                         initialHours: initHoursEditor.menuToState(),
                         correctFactor: correctFactor.menuToState(),
                         incorrectFactor: incorrectFactor.menuToState(),
