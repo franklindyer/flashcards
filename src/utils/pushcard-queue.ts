@@ -61,9 +61,9 @@ export function makePCQEditor(pcq: PushcardQueue): StateEditor<PushcardQueue> {
     contDiv.appendChild(titleDiv);
     contDiv.classList.add("deck-menu-submenu");
     var urlEditor = singleTextFieldEditor(pcq.url);
-    (<HTMLInputElement>urlEditor.element).placeholder = "url...";
+    (<HTMLInputElement>urlEditor.element).placeholder = "url of server...";
     var keyEditor = singleTextFieldEditor(pcq.key);
-    (<HTMLInputElement>urlEditor.element).placeholder = "name of queue...";
+    (<HTMLInputElement>keyEditor.element).placeholder = "name of queue...";
     contDiv.appendChild(urlEditor.element);
     contDiv.appendChild(keyEditor.element);
     var refreshBtn = document.createElement("button");
