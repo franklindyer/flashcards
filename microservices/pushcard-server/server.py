@@ -25,6 +25,8 @@ def add_to_queue(qkey, s):
     if not qkey in QUEUE_DICT:
         QUEUE_DICT[qkey] = (0, [])
     qs, q = QUEUE_DICT[qkey]
+    if s in q:
+        return
     with QUEUE_LOCK:
         q = [s] + q
         q = q[:QUEUE_MAX_SIZE]
