@@ -489,7 +489,7 @@ export class SimpleSpacedRepGen
                         doTwoSided: twoSidedEditor.menuToState()
                     },
                     newQ: emptySRQueue(newQueueSizeEditor.menuToState()),
-                    cards: makeDict(cardsEditor.menuToState().concat(pushedCards), (c) => c.guid),
+                    cards: makeDict(pushedCards.concat(cardsEditor.menuToState()), (c) => c.guid),
                 };
             }
         } 
