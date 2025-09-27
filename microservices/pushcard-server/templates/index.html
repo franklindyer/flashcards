@@ -1,0 +1,80 @@
+<head>
+<style>
+input {
+    display: block;
+}
+
+textarea {
+    display: block;
+    width: 500px;
+    height: 300px;
+}
+</style>
+<script>
+function submitQueueItem() {
+    var key = document.getElementById("key-input").value;
+    var passkey = document.getElementById("passkey-input").value;
+    var summary = document.getElementById("summary-input").value;
+    var value = document.getElementById("value-input").value;
+    fetch("/put", {
+        method: "POST",
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            key: key,
+            passkey: passkey,
+            summary: summary,
+            data: value
+        })
+    }).then((r) => {
+        refreshQueueItems();
+    });
+}
+
+function refreshQueueItems() {
+    var key = document.getElementById("key-input").value;
+    fetch("/get", {
+        method: "POST",
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            index: 0,
+            key: key
+        })
+    }).then(
+        (r) => r.json()
+    ).then(
+        (r) => {
+            console.log(r);
+            var ul = document.getElementById("queue-item-list");
+            ul.textContent = "";
+            for (var i in r.results) {
+                var entry = r.results[i];
+                var li = document.createElement("li");
+                li.textContent = entry.summary;
+                ul.appendChild(li);
+            }
+        }
+    )
+}
+</script>
+</head>
+<body>
+    <h1>Remote Flashcard push queue</h1>
+    <div>
+        <form>
+            <input id="passkey-input" type="text" label="passkey" placeholder="server password..." />
+            <input id="key-input" type="text" label="key" placeholder="queue key..." />
+            <input id="summary-input" type="text" label="summary" placeholder="item summary..." />
+            <textarea id="value-input" placeholder="queue value..."></textarea>
+        </form>
+        <button onclick="submitQueueItem()">Submit</button>
+        <button onclick="refreshQueueItems()">Show items in queue</button>
+        <ul id="queue-item-list">
+        </ul>
+    </div>
+</body>
