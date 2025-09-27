@@ -61,9 +61,9 @@ export function makePCQEditor(pcq: PushcardQueue): StateEditor<PushcardQueue> {
     contDiv.appendChild(titleDiv);
     contDiv.classList.add("deck-menu-submenu");
     var urlEditor = singleTextFieldEditor(pcq.url);
-    (<HTMLInputElement>urlEditor.element).placeholder = "url...";
+    (<HTMLInputElement>urlEditor.element).placeholder = "url of server...";
     var keyEditor = singleTextFieldEditor(pcq.key);
-    (<HTMLInputElement>urlEditor.element).placeholder = "name of queue...";
+    (<HTMLInputElement>keyEditor.element).placeholder = "name of queue...";
     contDiv.appendChild(urlEditor.element);
     contDiv.appendChild(keyEditor.element);
     var refreshBtn = document.createElement("button");
@@ -88,7 +88,7 @@ export function makePCQEditor(pcq: PushcardQueue): StateEditor<PushcardQueue> {
             var cardData = opt.data;
             var cardSummary = opt.summary;
             var yesNoEd = acceptDeclineEditor(cardData, cardSummary);
-            suggestions.push(cardData);
+            suggestions.push(opt);
             yesNoEds.push(yesNoEd);
             suggestionsDiv.appendChild(yesNoEd.element);
         }
@@ -108,8 +108,8 @@ export function makePCQEditor(pcq: PushcardQueue): StateEditor<PushcardQueue> {
             for (var i in suggestions) {
                 var sugg = suggestions[i];
                 var ed = yesNoEds[i];
-                if (ed.menuToState() == 0) pcq.pending.unshift(sugg);
-                if (ed.menuToState() == 1) pcq.accepted.unshift(sugg);
+                if (ed.menuToState() == 0) pcq.pending.push(sugg);
+                if (ed.menuToState() == 1) pcq.accepted.push(sugg.data);
             }
             return pcq;
         }
