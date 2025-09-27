@@ -127,6 +127,7 @@ export function recursiveRepairJSON(obj: any, defaultObj: any, omitKeys: string[
 }
 
 export function recursiveRepairEachValueJSON(objDict: any, defaultObj: any, omitKeys: string[] = []) {
+    console.log(objDict);
     var objDictKeys = Object.keys(objDict);
     for (var i in objDictKeys) {
         var k = objDictKeys[i];

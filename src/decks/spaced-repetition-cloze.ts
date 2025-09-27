@@ -320,7 +320,7 @@ export class ClozeSpacedRepGen
         StateEditor<SpacedRepState<SRClozeContent, SRClozeAuxData, SRClozeSettings>> {
         var contDiv = document.createElement("div");
 
-        var infoWidget = infoWidgetSR(st);
+        var infoWidget = infoWidgetSR((<any>this).gen, st);
         var studyingEditor = studyingEditorSR(st);
         var newQueueSizeEditor = scrollNumberEditor("Max new cards to study at once: ", st.newQ.maxNewCards, 1, 100, 1);
 

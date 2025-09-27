@@ -6,6 +6,7 @@ require("decks/times-tables-gen");
 require("decks/uniform-key-value");
 require("decks/spaced-repetition-simple");
 require("decks/spaced-repetition-cloze");
+require("decks/spaced-repetition-modular");
 require("decks/transcript-gen");
 require("utils/basic-template");
 require("utils/cloze-template");

@@ -185,7 +185,7 @@ class ClozeSpacedRepGen extends spaced_repetition_general_1.AbstractAsyncSpacedR
     }
     makeEditor(st) {
         var contDiv = document.createElement("div");
-        var infoWidget = (0, shared_sr_menu_components_1.infoWidgetSR)(st);
+        var infoWidget = (0, shared_sr_menu_components_1.infoWidgetSR)(this.gen, st);
         var studyingEditor = (0, shared_sr_menu_components_1.studyingEditorSR)(st);
         var newQueueSizeEditor = (0, editor_1.scrollNumberEditor)("Max new cards to study at once: ", st.newQ.maxNewCards, 1, 100, 1);
         var clozeServerDiv = document.createElement("div");

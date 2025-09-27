@@ -173,7 +173,7 @@ class SimpleSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGe
     }
     makeEditor(st) {
         var contDiv = document.createElement("div");
-        var infoWidget = (0, shared_sr_menu_components_1.infoWidgetSR)(st);
+        var infoWidget = (0, shared_sr_menu_components_1.infoWidgetSR)(this.gen, st);
         var studyingEditor = (0, shared_sr_menu_components_1.studyingEditorSR)(st);
         var settings = st.settings;
         var initHoursEditor = (0, editor_1.scrollNumberEditor)("Initial interval (hours): ", settings.initialHours, 1, 240, 1);
@@ -255,23 +255,26 @@ class SimpleSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGe
                     auxdata: c.auxdata
                 };
             })(edMain);
+            var cardMenuToPreview = () => {
+                var cardState = cardMenuToState();
+                return this.gen.nextCardPreprocessing({
+                    data: cardState,
+                    context: {
+                        cardsLeft: 0,
+                        isPractice: false
+                    }
+                }, st);
+            };
             var listenBtn = ((ed) => (0, utils_1.iconButton)("speaker.png", () => {
                 var ss = speechEditor.menuToState();
-                var tgtText = ed.menuToState()[1];
+                var tgtText = cardMenuToPreview().data.content.answers[0];
                 (0, speech_1.utter)(tgtText, ss.voice, ss.rate, ss.pitch, () => { });
             }))(edMain);
             listenBtn.style.float = "";
             var cardPreviewCont = document.createElement("div");
             var previewBtn = (0, utils_1.iconButton)("eyeball.png", () => {
-                console.log(this);
                 var cardData = cardMenuToState();
-                var cardPreviewDiv = this.gen.generateCard(st, this.gen.nextCardPreprocessing({
-                    data: cardData,
-                    context: {
-                        cardsLeft: 0,
-                        isPractice: false
-                    }
-                }, st));
+                var cardPreviewDiv = this.gen.generateCard(st, cardMenuToPreview());
                 cardPreviewCont.innerHTML = "";
                 cardPreviewDiv.el.classList.add("flashcard");
                 cardPreviewDiv.el.classList.add("flashcard-preview");

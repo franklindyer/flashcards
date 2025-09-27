@@ -251,6 +251,34 @@ export function fixedNumEditors<a, b>(ls: a[], ed: (st: a) => StateEditor<b>):
 
 }
 
+export function acceptDeclineEditor<a>(value: a, summary: string): StateEditor<number> {
+    // Return 0 if no decision, 1 if accepted, 2 if rejected
+    var contDiv = document.createElement("div");
+    var summaryEl = document.createElement("a");
+    summaryEl.textContent = summary;
+   
+    var choice = 0;
+    var acceptBtn = document.createElement("button");
+    acceptBtn.textContent = "Accept";
+    var rejectBtn = document.createElement("button");
+    rejectBtn.textContent = "Decline";
+    acceptBtn.onclick = (e) => {
+        contDiv.style.backgroundColor = "#ddffdd";
+        choice = 1;
+    }
+    rejectBtn.onclick = (e) => {
+        contDiv.style.backgroundColor = "#ffdddd";
+        choice = 2;
+    }
+    contDiv.appendChild(acceptBtn);
+    contDiv.appendChild(rejectBtn);
+    contDiv.appendChild(summaryEl);
+    return {
+        element: contDiv,
+        menuToState: () => choice
+    };
+}
+
 export function multipleEditors<a>(
     ls: a[], 
     empty: () => a, 

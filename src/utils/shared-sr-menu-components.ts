@@ -12,6 +12,7 @@ import {
 } from "core/flashcard-generator"
 import {
     AbstractSpacedRepGen,
+    AbstractAsyncSpacedRepGen,
     SpacedRepState,
     SpacedRepCard,
     SpacedRepCardPhysical,
@@ -45,6 +46,7 @@ import {
 } from "core/flashcard-deck"
 
 export function infoWidgetSR<content, auxdata, settings>(
+    fgen: AbstractAsyncSpacedRepGen<content, auxdata, settings>,
     st: SpacedRepState<content, auxdata, settings>
 ): HTMLElement {
     var contDiv = document.createElement("div");
@@ -54,12 +56,12 @@ export function infoWidgetSR<content, auxdata, settings>(
     totP.style.color = "#666666";
     totP.style.fontWeight = "bold";
     var newP = document.createElement("p");
-    newP.textContent = `New cards: ${Object.keys(st.cards).filter((i) => st.cards[i].intervalMinutes == 0).length}`;
+    console.log(fgen);
+    newP.textContent = `New cards: ${Object.keys(st.cards).filter((i) => fgen.cardIsNew(st.cards[i]) && fgen.cardIsEnabled(st.cards[i], st)).length}`;
     newP.style.color = "#9999ee";
     newP.style.fontWeight = "bold";
     var dueP = document.createElement("p");
-    dueP.textContent = `Due cards: ${Object.keys(st.cards).filter((i) => st.cards[i].intervalMinutes > 0
- && new Date(st.cards[i].due) < new Date()).length}`;
+    dueP.textContent = `Due cards: ${Object.keys(st.cards).filter((i) => fgen.cardIsDue(st.cards[i]) && fgen.cardIsEnabled(st.cards[i], st)).length}`;
     dueP.style.color = "#ee9999";
     dueP.style.fontWeight = "bold";
     [totP, newP, dueP].map((el) => contDiv.appendChild(el));

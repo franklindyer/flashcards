@@ -1,30 +1,291 @@
-[0m[7m[1m[32m PASS [39m[22m[27m[0m [2mtests/[22m[1mutils.test.ts[22m
-  arbitrary JSON repairing algorithm works correctly
-    [32m✓[39m [2mrepairing same object has no effect (1 ms)[22m
 
-[0m[7m[1m[32m PASS [39m[22m[27m[0m [2mtests/[22m[1mspaced-repetition-common.test.ts[22m
-  simple spaced repetition generator common unit tests
-    [32m✓[39m [2mcan generate cards (2 ms)[22m
-    [32m✓[39m [2mcannot generate new cards indefinitely (1 ms)[22m
-    [32m✓[39m [2mdate getter and setter on test class works[22m
-    [32m✓[39m [2mthere are not initially any due cards[22m
-    [32m✓[39m [2mnew cards come due after enough hours (1 ms)[22m
-    [32m✓[39m [2mdue cards can be studied each day for many days (2 ms)[22m
-    [32m✓[39m [2mthere are no duplicated new cards in each run of new cards (1 ms)[22m
-    [32m✓[39m [2mnumber of due cards decreases by 1 precisely when card is marked correct (45 ms)[22m
+> web-flashcards@1.0.0 develop
+> webpack-dev-server
 
-[0m[7m[1m[32m PASS [39m[22m[27m[0m [2mtests/[22m[1muniform-key-value.test.ts[22m
-  uniform key-value generator unit tests
-    [32m✓[39m [2mcan generate cards (1 ms)[22m
-    [32m✓[39m [2mgenerated cards appear uniformly distributed (1 ms)[22m
-    [32m✓[39m [2mdeck state does not change[22m
+assets by status 295 KiB [cached] 1 asset
+runtime modules 27.4 KiB 13 modules
+orphan modules 32.5 KiB [orphan] 4 modules
+cacheable modules 245 KiB
+  modules by path ./src/ 98.7 KiB
+    modules by path ./src/utils/*.ts 20.3 KiB 11 modules
+    modules by path ./src/core/*.ts 34 KiB 9 modules
+    modules by path ./src/decks/*.ts 43.7 KiB 6 modules
+    modules by path ./src/*.ts 783 bytes 2 modules
+  modules by path ./node_modules/ 146 KiB
+    modules by path ./node_modules/webpack-dev-server/client/ 81.9 KiB 4 modules
+    modules by path ./node_modules/webpack/hot/*.js 5.17 KiB 4 modules
+    modules by path ./node_modules/uuid-by-string/src/*.js 5.86 KiB 2 modules
+    + 4 modules
 
-[0m[7m[1m[32m PASS [39m[22m[27m[0m [2mtests/[22m[1msample.test.ts[22m
-  example unit tests
-    [32m✓[39m [2m1 plus 2 should equal 3[22m
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts
+325:24-25
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts(325,25)
+      TS1005: ',' expected.
 
-[1mTest Suites: [22m[1m[32m4 passed[39m[22m, 4 total
-[1mTests:       [22m[1m[32m13 passed[39m[22m, 13 total
-[1mSnapshots:   [22m0 total
-[1mTime:[22m        0.724 s, estimated 1 s
-[2mRan all test suites[22m[2m.[22m
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts
+325:34-35
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts(325,35)
+      TS1005: ',' expected.
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts
+326:16-17
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts(326,17)
+      TS1005: ':' expected.
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts
+326:37-38
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts(326,38)
+      TS1005: ',' expected.
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts
+327:12-15
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts(327,13)
+      TS1109: Expression expected.
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts
+339:26-27
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts(339,27)
+      TS1005: ',' expected.
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts
+340:27-28
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts(340,28)
+      TS1005: ',' expected.
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts
+341:30-31
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts(341,31)
+      TS1005: ',' expected.
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts
+342:25-26
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts(342,26)
+      TS1005: ',' expected.
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts
+343:27-28
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts(343,28)
+      TS1005: ',' expected.
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts
+346:24-25
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts(346,25)
+      TS1005: ',' expected.
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts
+347:9-10
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts(347,10)
+      TS1005: ';' expected.
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts
+347:29-30
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts(347,30)
+      TS1144: '{' or ';' expected.
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts
+347:34-35
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts(347,35)
+      TS1138: Parameter declaration expected.
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts
+350:9-10
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts(350,10)
+      TS1005: ';' expected.
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts
+373:4-5
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts(373,5)
+      TS1128: Declaration or statement expected.
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts
+375:0-1
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts(375,1)
+      TS1128: Declaration or statement expected.
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts
+264:8-90
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts(264,9)
+      TS2355: A function whose declared type is neither 'undefined', 'void', nor 'any' must return a value.
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts
+298:29-33
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts(298,30)
+      TS2339: Property 'data' does not exist on type 'SpacedRepCard<SRModularContent, SRModularAuxData>'.
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts
+299:30-34
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts(299,31)
+      TS2339: Property 'data' does not exist on type 'SpacedRepCard<SRModularContent, SRModularAuxData>'.
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts
+303:15-26
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts(303,16)
+      TS2339: Property 'appendChild' does not exist on type 'StateEditor<any>'.
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts
+305:16-23
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts(305,17)
+      TS2740: Type 'StateEditor<any>' is missing the following properties from type 'HTMLElement': accessKey, accessKeyLabel, autocapitalize, dir, and 302 more.
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts
+306:16-27
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts(306,17)
+      TS2322: Type '() => { guid: string; content: { cardType: any; cardEntry: any; cardData: null; tags: string; }; due: Date; intervalMinutes: number; auxdata: SRModularAuxData; }' is not assignable to type '() => SpacedRepCard<SRModularContent, SRModularAuxData>'.
+  Call signature return types '{ guid: string; content: { cardType: any; cardEntry: any; cardData: null; tags: string; }; due: Date; intervalMinutes: number; auxdata: SRModularAuxData; }' and 'SpacedRepCard<SRModularContent, SRModularAuxData>' are incompatible.
+    The types of 'content.tags' are incompatible between these types.
+      Type 'string' is not assignable to type 'string[]'.
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts
+310:40-48
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts(310,41)
+      TS2339: Property 'cardType' does not exist on type 'SpacedRepCard<SRModularContent, SRModularAuxData>'.
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts
+326:20-37
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts(326,21)
+      TS2536: Type 'this' cannot be used to index type 'string[]'.
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts
+326:35-36
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts(326,36)
+      TS2454: Variable 'i' is used before being assigned.
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts
+334:29-39
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts(334,30)
+      TS2552: Cannot find name 'cardEditor'. Did you mean 'cardEditors'?
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts
+338:12-22
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts(338,13)
+      TS7006: Parameter 'infoWidget' implicitly has an 'any' type.
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts
+339:12-26
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts(339,13)
+      TS7006: Parameter 'studyingEditor' implicitly has an 'any' type.
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts
+339:27-34
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts(339,28)
+      TS2300: Duplicate identifier 'element'.
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts
+339:27-34
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts(339,28)
+      TS7006: Parameter 'element' implicitly has an 'any' type.
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts
+340:12-27
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts(340,13)
+      TS7006: Parameter 'initHoursEditor' implicitly has an 'any' type.
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts
+340:28-35
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts(340,29)
+      TS2300: Duplicate identifier 'element'.
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts
+340:28-35
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts(340,29)
+      TS7006: Parameter 'element' implicitly has an 'any' type.
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts
+341:12-30
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts(341,13)
+      TS7006: Parameter 'newQueueSizeEditor' implicitly has an 'any' type.
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts
+341:31-38
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts(341,32)
+      TS2300: Duplicate identifier 'element'.
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts
+341:31-38
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts(341,32)
+      TS7006: Parameter 'element' implicitly has an 'any' type.
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts
+342:12-25
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts(342,13)
+      TS7006: Parameter 'correctFactor' implicitly has an 'any' type.
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts
+342:26-33
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts(342,27)
+      TS2300: Duplicate identifier 'element'.
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts
+342:26-33
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts(342,27)
+      TS7006: Parameter 'element' implicitly has an 'any' type.
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts
+343:12-27
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts(343,13)
+      TS7006: Parameter 'incorrectFactor' implicitly has an 'any' type.
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts
+343:28-35
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts(343,29)
+      TS2300: Duplicate identifier 'element'.
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts
+343:28-35
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts(343,29)
+      TS7006: Parameter 'element' implicitly has an 'any' type.
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts
+344:12-24
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts(344,13)
+      TS7006: Parameter 'omitTagsCont' implicitly has an 'any' type.
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts
+345:12-21
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts(345,13)
+      TS7006: Parameter 'speechDiv' implicitly has an 'any' type.
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts
+346:12-24
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts(346,13)
+      TS7006: Parameter 'filterEditor' implicitly has an 'any' type.
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts
+346:25-32
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts(346,26)
+      TS2300: Duplicate identifier 'element'.
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts
+346:25-32
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts(346,26)
+      TS7006: Parameter 'element' implicitly has an 'any' type.
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts
+347:10-16
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts(347,11)
+      TS7010: 'concat', which lacks return-type annotation, implicitly has an 'any' return type.
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts
+347:17-28
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts(347,18)
+      TS7006: Parameter 'cardEditors' implicitly has an 'any' type.
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts
+347:30-33
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts(347,31)
+      TS7010: 'map', which lacks return-type annotation, implicitly has an 'any' return type.
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts
+347:35-37
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts(347,36)
+      TS7006: Parameter 'el' implicitly has an 'any' type.
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts
+349:12-19
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-modular.ts(349,13)
+      TS2304: Cannot find name 'contDiv'.
+
+53 errors have detailed information that is not shown.
+Use 'stats.errorDetails: true' resp. '--stats-error-details' to show it.
+
+webpack 5.97.1 compiled with 53 errors in 1089 ms
