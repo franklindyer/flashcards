@@ -60,6 +60,11 @@ import {
     emptySRQueue,
     SRNewQueue
 } from "utils/spaced-repetition-newqueue"
+import {
+    PushcardQueue,
+    makePCQEditor,
+    defaultPushcardQueue
+} from "utils/pushcard-queue"
 
 export type SRSimpleContent = {
     prompt: string[],
@@ -81,7 +86,8 @@ export type SRSimpleSettings = {
     doTwoSided: boolean,
     readCorrectAnswers: boolean,
     speechSettings: SpeechSettings,
-    filterSettings: TextFilterSettings
+    filterSettings: TextFilterSettings,
+    pushcardQueue: PushcardQueue
 }
 
 export const defaultSimpleSRSettings = {
@@ -92,7 +98,8 @@ export const defaultSimpleSRSettings = {
     doTwoSided: true,
     readCorrectAnswers: false,
     speechSettings: defaultSpeechSettings(),
-    filterSettings: defaultTextFilterSettings
+    filterSettings: defaultTextFilterSettings,
+    pushcardQueue: defaultPushcardQueue()
 };
 
 export const defaultSimpleSRState: SpacedRepState<SRSimpleContent, SRSimpleAuxData, SRSimpleSettings> = {
@@ -103,7 +110,7 @@ export const defaultSimpleSRState: SpacedRepState<SRSimpleContent, SRSimpleAuxDa
     ], () => { return { streak: 0, intervalMinutes: 0 }; }),
     newQ: emptySRQueue(10),
     studying: SpacedRepStudying.NewCards,
-    settings: defaultSimpleSRSettings
+    settings: defaultSimpleSRSettings,
 };
 
 export function makeEmptyCard(): SpacedRepCard<SRSimpleContent, SRSimpleAuxData> { 
@@ -314,6 +321,8 @@ export class SimpleSpacedRepGen
 
         var filterEditor = textFilterSelectionMenu(settings.filterSettings);
 
+        var pcqEditor = makePCQEditor(settings.pushcardQueue);
+
         [
             studyingEditor.element,
             initHoursEditor.element,
@@ -323,7 +332,8 @@ export class SimpleSpacedRepGen
             omitTagsCont,
             twoSidedCont,
             speechDiv,
-            filterEditor.element
+            filterEditor.element,
+            pcqEditor.element,
         ].map((el) => el.classList.add("deck-menu-submenu"));
 
         var _this = this;
@@ -450,27 +460,38 @@ export class SimpleSpacedRepGen
             twoSidedCont,
             speechDiv,
             filterEditor.element,
+            pcqEditor.element,
             cardsEditor.element,
         ];
         components.map((el) => contDiv.appendChild(el));
 
         return {
             element: contDiv,
-            menuToState: () => { return {
-                studying: studyingEditor.menuToState(),
-                settings: {
-                    initialHours: initHoursEditor.menuToState(),
-                    correctFactor: correctFactor.menuToState(),
-                    incorrectFactor: incorrectFactor.menuToState(),
-                    readCorrectAnswers: speechCheckbox.menuToState(),
-                    speechSettings: speechEditor.menuToState(),
-                    filterSettings: filterEditor.menuToState(),
-                    inactiveTags: omitTagsEditor.menuToState().split(','),
-                    doTwoSided: twoSidedEditor.menuToState()
-                },
-                newQ: emptySRQueue(newQueueSizeEditor.menuToState()),
-                cards: makeDict(cardsEditor.menuToState(), (c) => c.guid),
-            }}
+            menuToState: () => { 
+                var pcq = pcqEditor.menuToState();
+                var pushedCards = pcq.accepted.map((content) => {
+                    var c = makeEmptyCard();
+                    c.content = content;
+                    return c;
+                });
+                pcq.accepted = [];
+                return {
+                    studying: studyingEditor.menuToState(),
+                    settings: {
+                        initialHours: initHoursEditor.menuToState(),
+                        correctFactor: correctFactor.menuToState(),
+                        incorrectFactor: incorrectFactor.menuToState(),
+                        readCorrectAnswers: speechCheckbox.menuToState(),
+                        speechSettings: speechEditor.menuToState(),
+                        filterSettings: filterEditor.menuToState(),
+                        pushcardQueue: pcq, 
+                        inactiveTags: omitTagsEditor.menuToState().split(','),
+                        doTwoSided: twoSidedEditor.menuToState()
+                    },
+                    newQ: emptySRQueue(newQueueSizeEditor.menuToState()),
+                    cards: makeDict(cardsEditor.menuToState().concat(pushedCards), (c) => c.guid),
+                };
+            }
         } 
     }
 

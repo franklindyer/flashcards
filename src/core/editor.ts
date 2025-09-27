@@ -256,7 +256,6 @@ export function acceptDeclineEditor<a>(value: a, summary: string): StateEditor<n
     var contDiv = document.createElement("div");
     var summaryEl = document.createElement("a");
     summaryEl.textContent = summary;
-    contDiv.appendChild(summaryEl);
    
     var choice = 0;
     var acceptBtn = document.createElement("button");
@@ -273,6 +272,7 @@ export function acceptDeclineEditor<a>(value: a, summary: string): StateEditor<n
     }
     contDiv.appendChild(acceptBtn);
     contDiv.appendChild(rejectBtn);
+    contDiv.appendChild(summaryEl);
     return {
         element: contDiv,
         menuToState: () => choice

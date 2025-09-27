@@ -51,7 +51,7 @@ def put_data():
     summary = j.get('summary')
     if pk != PASSKEY:
         return abort(403)
-    add_to_queue(key, json.dumps({ "summary": summary, "data": data }))
+    add_to_queue(key, json.dumps({ "summary": summary, "data": json.loads(data) }))
     resp = jsonify(success=True)
     return resp
 

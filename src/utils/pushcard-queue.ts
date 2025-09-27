@@ -16,8 +16,20 @@ export type PushcardQueue = {
     accepted: any[]
 };
 
+export function defaultPushcardQueue(): PushcardQueue {
+    return {
+        url: "",
+        key: "",
+        index: 0,
+        pending: [],
+        accepted: []
+    };
+}
+
 function pullCards(pcq: PushcardQueue): Promise<PushcardQueue> {
     if (pcq.url.length == 0) {
+        pcq.index = 0;
+        pcq.pending = [];
         return trivialPromise(pcq);
     }
     return fetch(`${pcq.url}/get`, {
@@ -36,19 +48,27 @@ function pullCards(pcq: PushcardQueue): Promise<PushcardQueue> {
         var deltaIndex = r.index - pcq.index;
         pcq.index = serverIndex;
         if (deltaIndex > 0) {
-            pcq.pending = results.slice(0, deltaIndex-1).concat(pcq.pending);
+            pcq.pending = results.slice(0, deltaIndex).concat(pcq.pending);
         }
         return pcq;
     })
 }
 
-function makePCQEditor(pcq: PushcardQueue): StateEditor<PushcardQueue> {
+export function makePCQEditor(pcq: PushcardQueue): StateEditor<PushcardQueue> {
     var contDiv = document.createElement("div");
+    var titleDiv = document.createElement("h3");
+    titleDiv.textContent = "Suggested third-party cards";
+    contDiv.appendChild(titleDiv);
     contDiv.classList.add("deck-menu-submenu");
     var urlEditor = singleTextFieldEditor(pcq.url);
+    (<HTMLInputElement>urlEditor.element).placeholder = "url...";
     var keyEditor = singleTextFieldEditor(pcq.key);
+    (<HTMLInputElement>urlEditor.element).placeholder = "name of queue...";
     contDiv.appendChild(urlEditor.element);
     contDiv.appendChild(keyEditor.element);
+    var refreshBtn = document.createElement("button");
+    refreshBtn.textContent = "Refresh";
+    contDiv.appendChild(refreshBtn);
 
     var suggestionsDiv = document.createElement("div");
     contDiv.appendChild(suggestionsDiv);
@@ -58,6 +78,8 @@ function makePCQEditor(pcq: PushcardQueue): StateEditor<PushcardQueue> {
     function refreshSuggestions(pcqNew: PushcardQueue) {
         suggestions = [];
         yesNoEds = [];
+        pcq.url = urlEditor.menuToState();
+        pcq.key = keyEditor.menuToState();
         pcq.index = pcqNew.index;
         pcq.pending = pcqNew.pending;
         suggestionsDiv.innerHTML = "";
@@ -74,6 +96,7 @@ function makePCQEditor(pcq: PushcardQueue): StateEditor<PushcardQueue> {
 
     refreshSuggestions(pcq);
     pullCards(pcq).then(refreshSuggestions);
+    refreshBtn.onclick = (e) => { pullCards(pcq).then(refreshSuggestions); };
 
     return {
         element: contDiv,
