@@ -19,6 +19,9 @@ import {
     renderCard 
 } from "core/flashcard-template"
 import {
+    randomizeStringSub
+} from "utils/random-templating"
+import {
     Preloader
 } from "utils/generic-preloader"
 import {
@@ -97,9 +100,24 @@ export class SimpleCardType extends FlashcardType<SimpleCardEntry, SimpleCardDat
     processEntry(entry: SimpleCardEntry, settings: SimpleCardSettings): Promise<SimpleCardData> {
         var reversed = entry.twoSided && (Math.random() < 0.5);
         var spoken = reversed && (Math.random() < 0.5);
+
+        var tpPrompt = [];
+        var tpAnswers = [];
+        var ctx = {};
+        for (var i in Object.keys(entry.prompt)) {
+            var res = randomizeStringSub(entry.prompt[i], ctx);
+            ctx = res[1];
+            tpPrompt.push(res[0]);
+        }
+        for (var i in Object.keys(entry.answer)) {
+            var res = randomizeStringSub(entry.answer[i], ctx);
+            ctx = res[1];
+            tpAnswers.push(res[0]);
+        }
+
         return trivialPromise({
-            prompt: entry.prompt,
-            answer: entry.answer,
+            prompt: tpPrompt,
+            answer: tpAnswers,
             reversed: reversed,
             spoken: spoken 
         });
@@ -139,7 +157,10 @@ export class SimpleCardType extends FlashcardType<SimpleCardEntry, SimpleCardDat
 
     // abstract checkAnswer(answer: string, data: D, settings: S): Promise<boolean>;
     checkAnswer(answer: string, data: SimpleCardData, settings: SimpleCardSettings, tf: (s: string) => string): Promise<boolean> {
-        return trivialPromise(data.answer.map(tf).includes(tf(answer)));
+        if (data.reversed)
+            return trivialPromise(data.prompt.map(tf).includes(tf(answer)));
+        else 
+            return trivialPromise(data.answer.map(tf).includes(tf(answer)));
     }
 
     // abstract makeEntryEditor(entry: E): StateEditor<E>;
