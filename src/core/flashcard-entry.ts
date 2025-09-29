@@ -22,6 +22,11 @@ import {
     Preloader
 } from "utils/generic-preloader"
 import {
+    defaultSpeechSettings,
+    speechSettingsEditor,
+    SpeechSettings
+} from "utils/speech"
+import {
     Flashcard
 } from "core/flashcard"
 
@@ -58,17 +63,21 @@ export function registerFlashcardType(ft: FlashcardType<any, any, any>) {
 export type SimpleCardEntry = {
     prompt: string[],
     answer: string[],
-    twoSided: boolean
+    twoSided: boolean,
+    readAloud: boolean
 }
 
 export type SimpleCardData = {
     prompt: string[],
     answer: string[],
-    reversed: boolean
+    reversed: boolean,
+    spoken: boolean
 }
 
 export type SimpleCardSettings = {
-    doTwoSided: boolean
+    doTwoSided: boolean,
+    doReadAloud: boolean,
+    speechSettings: SpeechSettings
 }
 
 export class SimpleCardType extends FlashcardType<SimpleCardEntry, SimpleCardData, SimpleCardSettings> {
@@ -86,10 +95,13 @@ export class SimpleCardType extends FlashcardType<SimpleCardEntry, SimpleCardDat
 
     // abstract processEntry(entry: E, settings: S): Promise<D>;
     processEntry(entry: SimpleCardEntry, settings: SimpleCardSettings): Promise<SimpleCardData> {
+        var reversed = entry.twoSided && (Math.random() < 0.5);
+        var spoken = reversed && (Math.random() < 0.5);
         return trivialPromise({
             prompt: entry.prompt,
             answer: entry.answer,
-            reversed: entry.twoSided && (Math.random() < 0.5)
+            reversed: reversed,
+            spoken: spoken 
         });
     }
 
@@ -108,6 +120,12 @@ export class SimpleCardType extends FlashcardType<SimpleCardEntry, SimpleCardDat
             prompt = data.prompt[0];
             answers = data.answer;
             hint = data.answer[0];
+        } else if (data.spoken) {
+            return renderCard("transcript-template", {
+                spokenText: data.answer[0],
+                hintText: data.prompt[0],
+                speechSettings: settings.speechSettings 
+           })
         } else {
             prompt = data.answer[0];
             answers = data.prompt;
@@ -144,6 +162,9 @@ export class SimpleCardType extends FlashcardType<SimpleCardEntry, SimpleCardDat
         var twoSideEd = boolEditor("Double-sided card?", entry.twoSided);
         edDetails.appendChild(twoSideEd.element);
 
+        var readAloudEd = boolEditor("Reversed card can be read aloud?", entry.readAloud);
+        edDetails.appendChild(readAloudEd.element);
+
         return {
             element: edDetails,
             menuToState: () => {
@@ -151,7 +172,8 @@ export class SimpleCardType extends FlashcardType<SimpleCardEntry, SimpleCardDat
                 return {
                     prompt: tp[0].split('|'),
                     answer: tp[1].split('|'),
-                    twoSided: twoSideEd.menuToState()
+                    twoSided: twoSideEd.menuToState(),
+                    readAloud: readAloudEd.menuToState()
                 };
             }
         }; 
@@ -160,15 +182,29 @@ export class SimpleCardType extends FlashcardType<SimpleCardEntry, SimpleCardDat
     // abstract makeSettingsEditor(settings: S): StateEditor<S>;
     makeSettingsEditor(settings: SimpleCardSettings): StateEditor<SimpleCardSettings> {
         var contDiv = document.createElement("div");
+
         var twoSidedEditor = boolEditor("Study both sides of two-sided cards?", settings.doTwoSided);
         var twoSidedCont = document.createElement("div");
         twoSidedCont.appendChild(twoSidedEditor.element);
         contDiv.appendChild(twoSidedCont);
+
+        var readAloudEditor = boolEditor("Read aloud two-sided cards with setting enabled?", settings.doReadAloud);
+        var readAloudCont = document.createElement("div");
+        readAloudCont.appendChild(readAloudEditor.element);
+        contDiv.appendChild(readAloudCont);
+
+        var ssEditor = speechSettingsEditor(settings.speechSettings);
+        var ssCont = document.createElement("div")
+        ssCont.appendChild(ssEditor.element);
+        contDiv.appendChild(ssCont);
+
         return {
             element: contDiv,
             menuToState: () => {
                 return {
-                    doTwoSided: twoSidedEditor.menuToState()
+                    doTwoSided: twoSidedEditor.menuToState(),
+                    doReadAloud: readAloudEditor.menuToState(),
+                    speechSettings: ssEditor.menuToState()
                 };
             }
         }
@@ -179,14 +215,17 @@ export class SimpleCardType extends FlashcardType<SimpleCardEntry, SimpleCardDat
         return {
             prompt: [],
             answer: [],
-            twoSided: false
+            twoSided: false,
+            readAloud: false
         };
     }
 
     // abstract getDefaultSettings(): S;
     getDefaultSettings(): SimpleCardSettings {
         return {
-            doTwoSided: true
+            doTwoSided: true,
+            doReadAloud: true,
+            speechSettings: defaultSpeechSettings()
         };
     }
 }

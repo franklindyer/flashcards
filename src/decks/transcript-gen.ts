@@ -51,7 +51,8 @@ class TranscriptFlashcardGen extends FlashcardSyncGen<TranscriptDeckState, Trans
     getNextCard(state: TranscriptDeckState): TranscriptCardData {
         var dat = state.deck[Math.floor(Math.random() * Object.keys(state.deck).length)];
         return {
-            text: dat,
+            spokenText: dat,
+            hintText: dat,
             speechSettings: state.settings.speechSettings
         };
     }
@@ -61,7 +62,7 @@ class TranscriptFlashcardGen extends FlashcardSyncGen<TranscriptDeckState, Trans
     }
     
     checkAnswer(ans: string, st: TranscriptDeckState, data: TranscriptCardData) {
-        return (ans == data.text);
+        return (ans == data.hintText);
     }
 
     generateCard(st: TranscriptDeckState, data: TranscriptCardData): Flashcard {

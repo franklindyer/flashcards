@@ -330,13 +330,13 @@ export class ModularSpacedRepGen
         var cardEditorGroups: StateEditor<SpacedRepCard<SRModularContent, SRModularAuxData>[]>[] = [];
         for (var i in Object.keys(gCardTypeRegistry)) {
             var t = Object.keys(gCardTypeRegistry)[i];
-            var cardsEditor = multipleEditors(
+            var cardsEditor = ((t) => multipleEditors(
                 Object.values(st.cards).filter((c) => c.content.cardType == t),
                 () => makeEmptyCard(t), 
                 makeCardEditor,
                 true,
                 (s, cd) => gCardTypeRegistry[t].getSearchableText(cd.content.cardEntry).includes(s)
-            );
+            ))(t);
             var cardsEditorCont = document.createElement("div");
             var cardsEditorDetails = document.createElement("details");
             var cardsEditorSummary = document.createElement("summary");

@@ -13,6 +13,7 @@ const editor_1 = require("core/editor");
 const shared_sr_menu_components_1 = require("utils/shared-sr-menu-components");
 const flashcard_deck_1 = require("core/flashcard-deck");
 const spaced_repetition_newqueue_1 = require("utils/spaced-repetition-newqueue");
+const pushcard_queue_1 = require("utils/pushcard-queue");
 exports.defaultSimpleSRSettings = {
     initialHours: 6,
     correctFactor: 1.6,
@@ -21,7 +22,8 @@ exports.defaultSimpleSRSettings = {
     doTwoSided: true,
     readCorrectAnswers: false,
     speechSettings: (0, speech_1.defaultSpeechSettings)(),
-    filterSettings: text_filters_1.defaultTextFilterSettings
+    filterSettings: text_filters_1.defaultTextFilterSettings,
+    pushcardQueue: (0, pushcard_queue_1.defaultPushcardQueue)()
 };
 exports.defaultSimpleSRState = {
     cards: (0, spaced_repetition_general_1.makeSpacedRepCardDict)([
@@ -31,7 +33,7 @@ exports.defaultSimpleSRState = {
     ], () => { return { streak: 0, intervalMinutes: 0 }; }),
     newQ: (0, spaced_repetition_newqueue_1.emptySRQueue)(10),
     studying: spaced_repetition_general_1.SpacedRepStudying.NewCards,
-    settings: exports.defaultSimpleSRSettings
+    settings: exports.defaultSimpleSRSettings,
 };
 function makeEmptyCard() {
     return {
@@ -194,6 +196,7 @@ class SimpleSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGe
         var twoSidedCont = document.createElement("div");
         twoSidedCont.appendChild(twoSidedEditor.element);
         var filterEditor = (0, text_filters_1.textFilterSelectionMenu)(settings.filterSettings);
+        var pcqEditor = (0, pushcard_queue_1.makePCQEditor)(settings.pushcardQueue);
         [
             studyingEditor.element,
             initHoursEditor.element,
@@ -203,7 +206,8 @@ class SimpleSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGe
             omitTagsCont,
             twoSidedCont,
             speechDiv,
-            filterEditor.element
+            filterEditor.element,
+            pcqEditor.element,
         ].map((el) => el.classList.add("deck-menu-submenu"));
         var _this = this;
         var makeCardEditor = (c) => {
@@ -310,12 +314,20 @@ class SimpleSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGe
             twoSidedCont,
             speechDiv,
             filterEditor.element,
+            pcqEditor.element,
             cardsEditor.element,
         ];
         components.map((el) => contDiv.appendChild(el));
         return {
             element: contDiv,
             menuToState: () => {
+                var pcq = pcqEditor.menuToState();
+                var pushedCards = pcq.accepted.map((content) => {
+                    var c = makeEmptyCard();
+                    c.content = content;
+                    return c;
+                });
+                pcq.accepted = [];
                 return {
                     studying: studyingEditor.menuToState(),
                     settings: {
@@ -325,11 +337,12 @@ class SimpleSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGe
                         readCorrectAnswers: speechCheckbox.menuToState(),
                         speechSettings: speechEditor.menuToState(),
                         filterSettings: filterEditor.menuToState(),
+                        pushcardQueue: pcq,
                         inactiveTags: omitTagsEditor.menuToState().split(','),
                         doTwoSided: twoSidedEditor.menuToState()
                     },
                     newQ: (0, spaced_repetition_newqueue_1.emptySRQueue)(newQueueSizeEditor.menuToState()),
-                    cards: (0, utils_1.makeDict)(cardsEditor.menuToState(), (c) => c.guid),
+                    cards: (0, utils_1.makeDict)(pushedCards.concat(cardsEditor.menuToState()), (c) => c.guid),
                 };
             }
         };

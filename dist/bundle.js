@@ -1142,6 +1142,34 @@ function generateDecklistMenu(decklist, onfinish) {
     decklistEditor.appendChild(newDeckBtn);
     decklistEditor.appendChild(deckTypeList);
     decklistEditor.appendChild(document.createElement("br"));
+    var importDeckBtn = document.createElement("button");
+    importDeckBtn.textContent = "Import Deck";
+    var fileUploadInput = document.createElement("input");
+    fileUploadInput.type = "file";
+    importDeckBtn.onclick = (e) => {
+        fileUploadInput.click();
+        fileUploadInput.onchange = (e) => {
+            var files = fileUploadInput.files;
+            if (files == null)
+                return;
+            var file = files[0];
+            if (file == null)
+                return;
+            var reader = new FileReader();
+            reader.onload = (e) => {
+                var importedDeck = JSON.parse(e.target.result);
+                importedDeck.slug = (0, utils_1.guidGenerator)();
+                (0, flashcard_deck_1.setDeck)(importedDeck.slug, JSON.stringify(importedDeck), () => {
+                    (0, flashcard_deck_1.saveDeck)(importedDeck.slug, () => {
+                        generateDecklistMenu(decklist, onfinish);
+                    });
+                });
+            };
+            reader.readAsText(file, "UTF-8");
+        };
+    };
+    decklistEditor.appendChild(importDeckBtn);
+    decklistEditor.appendChild(document.createElement("br"));
     var syncServerBtn = document.createElement("button");
     syncServerBtn.textContent = "Setup sync server";
     syncServerBtn.onclick = synchronization_1.promptForSyncCreds;
@@ -1263,6 +1291,7 @@ exports.combineEditors = combineEditors;
 exports.swappingTextEditor = swappingTextEditor;
 exports.makeTranslationEditor = makeTranslationEditor;
 exports.fixedNumEditors = fixedNumEditors;
+exports.acceptDeclineEditor = acceptDeclineEditor;
 exports.multipleEditors = multipleEditors;
 const utils_1 = __webpack_require__(135);
 /* Some useful state editors */
@@ -1469,6 +1498,32 @@ function fixedNumEditors(ls, ed) {
         statePartEditorFactory(ls[i]);
     }
     return editor;
+}
+function acceptDeclineEditor(value, summary) {
+    // Return 0 if no decision, 1 if accepted, 2 if rejected
+    var contDiv = document.createElement("div");
+    var summaryEl = document.createElement("a");
+    summaryEl.textContent = summary;
+    var choice = 0;
+    var acceptBtn = document.createElement("button");
+    acceptBtn.textContent = "Accept";
+    var rejectBtn = document.createElement("button");
+    rejectBtn.textContent = "Decline";
+    acceptBtn.onclick = (e) => {
+        contDiv.style.backgroundColor = "#ddffdd";
+        choice = 1;
+    };
+    rejectBtn.onclick = (e) => {
+        contDiv.style.backgroundColor = "#ffdddd";
+        choice = 2;
+    };
+    contDiv.appendChild(acceptBtn);
+    contDiv.appendChild(rejectBtn);
+    contDiv.appendChild(summaryEl);
+    return {
+        element: contDiv,
+        menuToState: () => choice
+    };
 }
 function multipleEditors(ls, empty, ed, includeSearch = false, searchFxn = (s, x) => true) {
     var children = [];
@@ -1695,10 +1750,13 @@ function registerDeckType(gen, defaultSlug, defaultName, defaultState, colorCode
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.SimpleCardType = exports.FlashcardType = exports.gCardTypeRegistry = void 0;
+exports.ClozeCardType = exports.SimpleCardType = exports.FlashcardType = exports.gCardTypeRegistry = void 0;
 exports.registerFlashcardType = registerFlashcardType;
 const utils_1 = __webpack_require__(135);
 const editor_1 = __webpack_require__(613);
+const flashcard_template_1 = __webpack_require__(217);
+const generic_preloader_1 = __webpack_require__(816);
+const speech_1 = __webpack_require__(230);
 const flashcard_1 = __webpack_require__(70);
 exports.gCardTypeRegistry = {};
 class FlashcardType {
@@ -1726,10 +1784,13 @@ class SimpleCardType extends FlashcardType {
     }
     // abstract processEntry(entry: E, settings: S): Promise<D>;
     processEntry(entry, settings) {
+        var reversed = entry.twoSided && (Math.random() < 0.5);
+        var spoken = reversed && (Math.random() < 0.5);
         return (0, utils_1.trivialPromise)({
             prompt: entry.prompt,
             answer: entry.answer,
-            reversed: entry.twoSided && (Math.random() < 0.5)
+            reversed: reversed,
+            spoken: spoken
         });
     }
     // abstract getSearchableText(entry: E): string;
@@ -1747,6 +1808,13 @@ class SimpleCardType extends FlashcardType {
             answers = data.answer;
             hint = data.answer[0];
         }
+        else if (data.spoken) {
+            return (0, flashcard_template_1.renderCard)("transcript-template", {
+                spokenText: data.answer[0],
+                hintText: data.prompt[0],
+                speechSettings: settings.speechSettings
+            });
+        }
         else {
             prompt = data.answer[0];
             answers = data.prompt;
@@ -1759,7 +1827,6 @@ class SimpleCardType extends FlashcardType {
     }
     // abstract checkAnswer(answer: string, data: D, settings: S): Promise<boolean>;
     checkAnswer(answer, data, settings, tf) {
-        console.log(data);
         return (0, utils_1.trivialPromise)(data.answer.map(tf).includes(tf(answer)));
     }
     // abstract makeEntryEditor(entry: E): StateEditor<E>;
@@ -1779,6 +1846,8 @@ class SimpleCardType extends FlashcardType {
         edSummary.appendChild(edMain.element);
         var twoSideEd = (0, editor_1.boolEditor)("Double-sided card?", entry.twoSided);
         edDetails.appendChild(twoSideEd.element);
+        var readAloudEd = (0, editor_1.boolEditor)("Reversed card can be read aloud?", entry.readAloud);
+        edDetails.appendChild(readAloudEd.element);
         return {
             element: edDetails,
             menuToState: () => {
@@ -1786,7 +1855,8 @@ class SimpleCardType extends FlashcardType {
                 return {
                     prompt: tp[0].split('|'),
                     answer: tp[1].split('|'),
-                    twoSided: twoSideEd.menuToState()
+                    twoSided: twoSideEd.menuToState(),
+                    readAloud: readAloudEd.menuToState()
                 };
             }
         };
@@ -1798,11 +1868,16 @@ class SimpleCardType extends FlashcardType {
         var twoSidedCont = document.createElement("div");
         twoSidedCont.appendChild(twoSidedEditor.element);
         contDiv.appendChild(twoSidedCont);
+        var ssEditor = (0, speech_1.speechSettingsEditor)(settings.speechSettings);
+        var ssCont = document.createElement("div");
+        ssCont.appendChild(ssEditor.element);
+        contDiv.appendChild(ssCont);
         return {
             element: contDiv,
             menuToState: () => {
                 return {
-                    doTwoSided: twoSidedEditor.menuToState()
+                    doTwoSided: twoSidedEditor.menuToState(),
+                    speechSettings: ssEditor.menuToState()
                 };
             }
         };
@@ -1812,18 +1887,140 @@ class SimpleCardType extends FlashcardType {
         return {
             prompt: [],
             answer: [],
-            twoSided: false
+            twoSided: false,
+            readAloud: false
         };
     }
     // abstract getDefaultSettings(): S;
     getDefaultSettings() {
         return {
-            doTwoSided: true
+            doTwoSided: true,
+            speechSettings: (0, speech_1.defaultSpeechSettings)()
         };
     }
 }
 exports.SimpleCardType = SimpleCardType;
 registerFlashcardType(new SimpleCardType());
+class ClozeCardType extends FlashcardType {
+    getTypeName() {
+        return "cloze-card";
+    }
+    getUserFriendlyName() {
+        return "Cloze puzzle cards";
+    }
+    cache = new generic_preloader_1.Preloader(10);
+    fetchCloze(key, settings) {
+        return fetch(`${settings.clozeServerUrl}/cloze?` + new URLSearchParams({
+            "srcs": settings.sourceLangs.join(","),
+            "groups": settings.clozeGroups.join(","),
+            "tgt": settings.targetLang,
+            "lemma": key,
+            "n": this.cache.numPreload.toString()
+        }).toString()).then((r) => r.json()).catch((e) => undefined);
+    }
+    // abstract preprocessEntry(entry: E, settings: S): void;
+    preprocessEntry(entry, settings) {
+        this.cache.addKey(entry.key, (k) => this.fetchCloze(entry.key, settings));
+    }
+    // abstract processEntry(entry: E, settings: S): Promise<D>;
+    processEntry(entry, settings) {
+        return this.cache.getKey(entry.key, (k) => this.fetchCloze(entry.key, settings)).then((j) => {
+            if (j === undefined) {
+                return { valid: false, key: entry.key };
+            }
+            return {
+                key: entry.key,
+                valid: true,
+                cloze: {
+                    prompt: j["puzzle"],
+                    answer: j["target"],
+                    translation: j["source"],
+                    group: j["group"]
+                }
+            };
+        }).catch((e) => {
+            return { valid: false, key: entry.key };
+        });
+    }
+    // abstract getSearchableText(entry: E): string;
+    getSearchableText(entry) {
+        return entry.key;
+    }
+    // abstract generateCard(data: D, settings: S): Flashcard;
+    generateCard(data, settings) {
+        if (!data.valid) {
+            return (0, flashcard_template_1.renderCard)("noanswer-template", `Could not get puzzle for card "${data.key}".`);
+        }
+        var fl = (0, flashcard_template_1.renderCard)("cloze-template", {
+            group: data.cloze.group,
+            guid: "",
+            upper: data.cloze.prompt,
+            lower: data.cloze.translation
+        });
+        return fl;
+    }
+    // abstract checkAnswer(answer: string, data: D, settings: S, tf: (s: string) => string): Promise<boolean>;
+    checkAnswer(answer, data, settings, tf) {
+        return (0, utils_1.trivialPromise)(data.valid && tf(answer) == tf(data.cloze.answer));
+    }
+    // abstract makeEntryEditor(entry: E): StateEditor<E>;
+    makeEntryEditor(entry) {
+        var edCont = document.createElement("div");
+        var keyEd = (0, editor_1.singleTextFieldEditor)(entry.key);
+        keyEd.element.style.display = "inline-block";
+        edCont.appendChild(keyEd.element);
+        return {
+            element: edCont,
+            menuToState: () => {
+                return {
+                    key: keyEd.menuToState()
+                };
+            }
+        };
+    }
+    // abstract makeSettingsEditor(settings: S): StateEditor<S>;
+    makeSettingsEditor(settings) {
+        var clozeServerDiv = document.createElement("div");
+        clozeServerDiv.classList.add("deck-menu-submenu");
+        var clozeServerUrlEditor = (0, editor_1.singleTextFieldEditor)(settings.clozeServerUrl);
+        var clozeSourceLangEditor = (0, editor_1.singleTextFieldEditor)(settings.sourceLangs.join(','));
+        var clozeTargetLangEditor = (0, editor_1.singleTextFieldEditor)(settings.targetLang);
+        var clozeGroupsEditor = (0, editor_1.singleTextFieldEditor)(settings.clozeGroups.join(','));
+        clozeGroupsEditor.element.placeholder = "allowed groups...";
+        clozeServerDiv.appendChild(clozeServerUrlEditor.element);
+        clozeServerDiv.appendChild(clozeSourceLangEditor.element);
+        clozeServerDiv.appendChild(clozeTargetLangEditor.element);
+        clozeServerDiv.appendChild(clozeGroupsEditor.element);
+        return {
+            element: clozeServerDiv,
+            menuToState: () => {
+                return {
+                    clozeServerUrl: clozeServerUrlEditor.menuToState(),
+                    sourceLangs: clozeSourceLangEditor.menuToState().split(','),
+                    targetLang: clozeTargetLangEditor.menuToState(),
+                    clozeGroups: clozeGroupsEditor.menuToState().split(',').filter((g) => g.length > 0)
+                };
+            }
+        };
+    }
+    // abstract getDefaultEntry(): E;
+    getDefaultEntry() {
+        return {
+            key: ""
+        };
+    }
+    // abstract getDefaultSettings(): S;
+    getDefaultSettings() {
+        return {
+            clozeServerUrl: "",
+            sourceLangs: [],
+            targetLang: "",
+            clozeGroups: []
+        };
+    }
+}
+exports.ClozeCardType = ClozeCardType;
+registerFlashcardType(new ClozeCardType());
 
 
 /***/ }),
@@ -2696,15 +2893,14 @@ function makeEmptyCard(cardType) {
 class ModularSpacedRepGen extends spaced_repetition_general_1.AbstractAsyncSpacedRepGen {
     getGenName() { return "modular-spaced-repetition"; }
     repairDeckState(st) {
-        st = (0, utils_1.recursiveRepairJSON)(st, exports.defaultSRModularState, ["cards"]);
-        console.log(st);
+        st = (0, utils_1.recursiveRepairJSON)(st, exports.defaultSRModularState, ["cards", "cardTypeSettings"]);
         // st.cards = recursiveRepairEachValueJSON(st.cards, Object.values(defaultSRModularState.cards)[0]);
-        if (st.settings.cardTypeSettings == null) {
+        if (st.settings.cardTypeSettings === undefined) {
             st.settings.cardTypeSettings = {};
         }
         for (var i in Object.keys(flashcard_entry_1.gCardTypeRegistry)) {
             var cardType = Object.keys(flashcard_entry_1.gCardTypeRegistry)[i];
-            if (!(cardType in st.settings.cardTypeSettings)) {
+            if (!Object.keys(st.settings.cardTypeSettings).includes(cardType)) {
                 st.settings.cardTypeSettings[cardType]
                     = flashcard_entry_1.gCardTypeRegistry[cardType].getDefaultSettings();
             }
@@ -2790,12 +2986,13 @@ class ModularSpacedRepGen extends spaced_repetition_general_1.AbstractAsyncSpace
         });
     }
     generateCardAsync(st, card) {
-        if (card.data === undefined) {
+        if (card.data === undefined || card.data.content.cardData === undefined) {
             return (0, utils_1.trivialPromise)((0, flashcard_template_1.renderCard)("noanswer-template", "No cards left to study."));
         }
         var cardType = card.data.content.cardType;
         var cardEntry = card.data.content.cardEntry;
-        var fl = flashcard_entry_1.gCardTypeRegistry[cardType].generateCard(cardEntry, st.settings.cardTypeSettings[cardType]);
+        var cardData = card.data.content.cardData;
+        var fl = flashcard_entry_1.gCardTypeRegistry[cardType].generateCard(cardData, st.settings.cardTypeSettings[cardType]);
         fl.el.appendChild((0, spaced_repetition_general_1.makeCardsLeftSpan)(card));
         return (0, utils_1.trivialPromise)(fl);
     }
@@ -2848,11 +3045,11 @@ class ModularSpacedRepGen extends spaced_repetition_general_1.AbstractAsyncSpace
                 }
             };
         }
-        var cardSettingsGroups = st.settings.cardTypeSettings;
+        var cardSettingsGroups = {};
         var cardEditorGroups = [];
         for (var i in Object.keys(flashcard_entry_1.gCardTypeRegistry)) {
             var t = Object.keys(flashcard_entry_1.gCardTypeRegistry)[i];
-            var cardsEditor = (0, editor_1.multipleEditors)(Object.values(st.cards).filter((c) => c.content.cardType == t), () => makeEmptyCard(t), makeCardEditor, true, (s, cd) => flashcard_entry_1.gCardTypeRegistry[t].getSearchableText(cd.content.cardEntry).includes(s));
+            var cardsEditor = ((t) => (0, editor_1.multipleEditors)(Object.values(st.cards).filter((c) => c.content.cardType == t), () => makeEmptyCard(t), makeCardEditor, true, (s, cd) => flashcard_entry_1.gCardTypeRegistry[t].getSearchableText(cd.content.cardEntry).includes(s)))(t);
             var cardsEditorCont = document.createElement("div");
             var cardsEditorDetails = document.createElement("details");
             var cardsEditorSummary = document.createElement("summary");
@@ -2868,6 +3065,14 @@ class ModularSpacedRepGen extends spaced_repetition_general_1.AbstractAsyncSpace
             header.textContent = flashcard_entry_1.gCardTypeRegistry[t].getUserFriendlyName();
             cardsEditor.element.prepend(cardSettingsGroups[t].element);
             cardsEditor.element.prepend(header);
+        }
+        function getAllCardSettings() {
+            var d = {};
+            for (var i in Object.keys(flashcard_entry_1.gCardTypeRegistry)) {
+                var t = Object.keys(flashcard_entry_1.gCardTypeRegistry)[i];
+                d[t] = cardSettingsGroups[t].menuToState();
+            }
+            return d;
         }
         [
             infoWidget,
@@ -2889,7 +3094,7 @@ class ModularSpacedRepGen extends spaced_repetition_general_1.AbstractAsyncSpace
                 return {
                     studying: studyingEditor.menuToState(),
                     settings: {
-                        cardTypeSettings: null, // TODO
+                        cardTypeSettings: getAllCardSettings(),
                         initialHours: initHoursEditor.menuToState(),
                         correctFactor: correctFactor.menuToState(),
                         incorrectFactor: incorrectFactor.menuToState(),
@@ -2930,6 +3135,7 @@ const editor_1 = __webpack_require__(613);
 const shared_sr_menu_components_1 = __webpack_require__(228);
 const flashcard_deck_1 = __webpack_require__(134);
 const spaced_repetition_newqueue_1 = __webpack_require__(620);
+const pushcard_queue_1 = __webpack_require__(744);
 exports.defaultSimpleSRSettings = {
     initialHours: 6,
     correctFactor: 1.6,
@@ -2938,7 +3144,8 @@ exports.defaultSimpleSRSettings = {
     doTwoSided: true,
     readCorrectAnswers: false,
     speechSettings: (0, speech_1.defaultSpeechSettings)(),
-    filterSettings: text_filters_1.defaultTextFilterSettings
+    filterSettings: text_filters_1.defaultTextFilterSettings,
+    pushcardQueue: (0, pushcard_queue_1.defaultPushcardQueue)()
 };
 exports.defaultSimpleSRState = {
     cards: (0, spaced_repetition_general_1.makeSpacedRepCardDict)([
@@ -2948,7 +3155,7 @@ exports.defaultSimpleSRState = {
     ], () => { return { streak: 0, intervalMinutes: 0 }; }),
     newQ: (0, spaced_repetition_newqueue_1.emptySRQueue)(10),
     studying: spaced_repetition_general_1.SpacedRepStudying.NewCards,
-    settings: exports.defaultSimpleSRSettings
+    settings: exports.defaultSimpleSRSettings,
 };
 function makeEmptyCard() {
     return {
@@ -3111,6 +3318,7 @@ class SimpleSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGe
         var twoSidedCont = document.createElement("div");
         twoSidedCont.appendChild(twoSidedEditor.element);
         var filterEditor = (0, text_filters_1.textFilterSelectionMenu)(settings.filterSettings);
+        var pcqEditor = (0, pushcard_queue_1.makePCQEditor)(settings.pushcardQueue);
         [
             studyingEditor.element,
             initHoursEditor.element,
@@ -3120,7 +3328,8 @@ class SimpleSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGe
             omitTagsCont,
             twoSidedCont,
             speechDiv,
-            filterEditor.element
+            filterEditor.element,
+            pcqEditor.element,
         ].map((el) => el.classList.add("deck-menu-submenu"));
         var _this = this;
         var makeCardEditor = (c) => {
@@ -3227,12 +3436,20 @@ class SimpleSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGe
             twoSidedCont,
             speechDiv,
             filterEditor.element,
+            pcqEditor.element,
             cardsEditor.element,
         ];
         components.map((el) => contDiv.appendChild(el));
         return {
             element: contDiv,
             menuToState: () => {
+                var pcq = pcqEditor.menuToState();
+                var pushedCards = pcq.accepted.map((content) => {
+                    var c = makeEmptyCard();
+                    c.content = content;
+                    return c;
+                });
+                pcq.accepted = [];
                 return {
                     studying: studyingEditor.menuToState(),
                     settings: {
@@ -3242,11 +3459,12 @@ class SimpleSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGe
                         readCorrectAnswers: speechCheckbox.menuToState(),
                         speechSettings: speechEditor.menuToState(),
                         filterSettings: filterEditor.menuToState(),
+                        pushcardQueue: pcq,
                         inactiveTags: omitTagsEditor.menuToState().split(','),
                         doTwoSided: twoSidedEditor.menuToState()
                     },
                     newQ: (0, spaced_repetition_newqueue_1.emptySRQueue)(newQueueSizeEditor.menuToState()),
-                    cards: (0, utils_1.makeDict)(cardsEditor.menuToState(), (c) => c.guid),
+                    cards: (0, utils_1.makeDict)(pushedCards.concat(cardsEditor.menuToState()), (c) => c.guid),
                 };
             }
         };
@@ -3362,7 +3580,8 @@ class TranscriptFlashcardGen extends flashcard_sync_generator_1.FlashcardSyncGen
     getNextCard(state) {
         var dat = state.deck[Math.floor(Math.random() * Object.keys(state.deck).length)];
         return {
-            text: dat,
+            spokenText: dat,
+            hintText: dat,
             speechSettings: state.settings.speechSettings
         };
     }
@@ -3370,7 +3589,7 @@ class TranscriptFlashcardGen extends flashcard_sync_generator_1.FlashcardSyncGen
         return state;
     }
     checkAnswer(ans, st, data) {
-        return (ans == data.text);
+        return (ans == data.hintText);
     }
     generateCard(st, data) {
         return (0, flashcard_template_1.renderCard)("transcript-template", data);
@@ -3638,6 +3857,115 @@ class NoAnswerFlashcardTemplate extends flashcard_template_1.FlashcardTemplate {
     }
 }
 (0, flashcard_template_1.registerTemplate)(new NoAnswerFlashcardTemplate());
+
+
+/***/ }),
+
+/***/ 744:
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.defaultPushcardQueue = defaultPushcardQueue;
+exports.makePCQEditor = makePCQEditor;
+const utils_1 = __webpack_require__(135);
+const editor_1 = __webpack_require__(613);
+function defaultPushcardQueue() {
+    return {
+        url: "",
+        key: "",
+        index: 0,
+        pending: [],
+        accepted: []
+    };
+}
+function pullCards(pcq) {
+    if (pcq.url.length == 0) {
+        pcq.index = 0;
+        pcq.pending = [];
+        return (0, utils_1.trivialPromise)(pcq);
+    }
+    return fetch(`${pcq.url}/get`, {
+        method: "POST",
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            key: pcq.key
+        })
+    }).then((r) => r.json())
+        .then((r) => {
+        var serverIndex = r.index;
+        var results = r.results;
+        var deltaIndex = r.index - pcq.index;
+        pcq.index = serverIndex;
+        if (deltaIndex > 0) {
+            pcq.pending = results.slice(0, deltaIndex).concat(pcq.pending);
+        }
+        return pcq;
+    });
+}
+function makePCQEditor(pcq) {
+    var contDiv = document.createElement("div");
+    var titleDiv = document.createElement("h3");
+    titleDiv.textContent = "Suggested third-party cards";
+    contDiv.appendChild(titleDiv);
+    contDiv.classList.add("deck-menu-submenu");
+    var urlEditor = (0, editor_1.singleTextFieldEditor)(pcq.url);
+    urlEditor.element.placeholder = "url of server...";
+    var keyEditor = (0, editor_1.singleTextFieldEditor)(pcq.key);
+    keyEditor.element.placeholder = "name of queue...";
+    contDiv.appendChild(urlEditor.element);
+    contDiv.appendChild(keyEditor.element);
+    var refreshBtn = document.createElement("button");
+    refreshBtn.textContent = "Refresh";
+    contDiv.appendChild(refreshBtn);
+    var suggestionsDiv = document.createElement("div");
+    contDiv.appendChild(suggestionsDiv);
+    var suggestions = [];
+    var yesNoEds = [];
+    function refreshSuggestions(pcqNew) {
+        suggestions = [];
+        yesNoEds = [];
+        pcq.url = urlEditor.menuToState();
+        pcq.key = keyEditor.menuToState();
+        pcq.index = pcqNew.index;
+        pcq.pending = pcqNew.pending;
+        suggestionsDiv.innerHTML = "";
+        for (var i in pcq.pending) {
+            var opt = pcq.pending[i];
+            var cardData = opt.data;
+            var cardSummary = opt.summary;
+            var yesNoEd = (0, editor_1.acceptDeclineEditor)(cardData, cardSummary);
+            suggestions.push(opt);
+            yesNoEds.push(yesNoEd);
+            suggestionsDiv.appendChild(yesNoEd.element);
+        }
+    }
+    refreshSuggestions(pcq);
+    pullCards(pcq).then(refreshSuggestions);
+    refreshBtn.onclick = (e) => { pullCards(pcq).then(refreshSuggestions); };
+    return {
+        element: contDiv,
+        menuToState: () => {
+            pcq.url = urlEditor.menuToState();
+            pcq.key = keyEditor.menuToState();
+            pcq.pending = [];
+            pcq.accepted = [];
+            for (var i in suggestions) {
+                var sugg = suggestions[i];
+                var ed = yesNoEds[i];
+                if (ed.menuToState() == 0)
+                    pcq.pending.push(sugg);
+                if (ed.menuToState() == 1)
+                    pcq.accepted.push(sugg.data);
+            }
+            return pcq;
+        }
+    };
+}
 
 
 /***/ }),
@@ -3998,10 +4326,10 @@ class TranscriptFlashcardTemplate extends flashcard_template_1.FlashcardTemplate
         playBtn.classList.add("transcription-audio-button");
         playBtn.onclick = (e) => {
             var ss = data.speechSettings;
-            (0, speech_1.utter)(data.text, ss.voice, ss.rate, ss.pitch);
+            (0, speech_1.utter)(data.spokenText, ss.voice, ss.rate, ss.pitch);
         };
         container.appendChild(playBtn);
-        var fl = new flashcard_1.Flashcard(container, data.text);
+        var fl = new flashcard_1.Flashcard(container, data.hintText);
         return fl;
     }
 }

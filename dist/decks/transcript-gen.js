@@ -10,7 +10,8 @@ class TranscriptFlashcardGen extends flashcard_sync_generator_1.FlashcardSyncGen
     getNextCard(state) {
         var dat = state.deck[Math.floor(Math.random() * Object.keys(state.deck).length)];
         return {
-            text: dat,
+            spokenText: dat,
+            hintText: dat,
             speechSettings: state.settings.speechSettings
         };
     }
@@ -18,7 +19,7 @@ class TranscriptFlashcardGen extends flashcard_sync_generator_1.FlashcardSyncGen
         return state;
     }
     checkAnswer(ans, st, data) {
-        return (ans == data.text);
+        return (ans == data.hintText);
     }
     generateCard(st, data) {
         return (0, flashcard_template_1.renderCard)("transcript-template", data);

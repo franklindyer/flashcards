@@ -64,6 +64,34 @@ function generateDecklistMenu(decklist, onfinish) {
     decklistEditor.appendChild(newDeckBtn);
     decklistEditor.appendChild(deckTypeList);
     decklistEditor.appendChild(document.createElement("br"));
+    var importDeckBtn = document.createElement("button");
+    importDeckBtn.textContent = "Import Deck";
+    var fileUploadInput = document.createElement("input");
+    fileUploadInput.type = "file";
+    importDeckBtn.onclick = (e) => {
+        fileUploadInput.click();
+        fileUploadInput.onchange = (e) => {
+            var files = fileUploadInput.files;
+            if (files == null)
+                return;
+            var file = files[0];
+            if (file == null)
+                return;
+            var reader = new FileReader();
+            reader.onload = (e) => {
+                var importedDeck = JSON.parse(e.target.result);
+                importedDeck.slug = (0, utils_1.guidGenerator)();
+                (0, flashcard_deck_1.setDeck)(importedDeck.slug, JSON.stringify(importedDeck), () => {
+                    (0, flashcard_deck_1.saveDeck)(importedDeck.slug, () => {
+                        generateDecklistMenu(decklist, onfinish);
+                    });
+                });
+            };
+            reader.readAsText(file, "UTF-8");
+        };
+    };
+    decklistEditor.appendChild(importDeckBtn);
+    decklistEditor.appendChild(document.createElement("br"));
     var syncServerBtn = document.createElement("button");
     syncServerBtn.textContent = "Setup sync server";
     syncServerBtn.onclick = synchronization_1.promptForSyncCreds;
