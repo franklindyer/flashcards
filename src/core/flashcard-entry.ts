@@ -46,6 +46,7 @@ export abstract class FlashcardType<E, D, S> {
     abstract preprocessEntry(entry: E, settings: S): void;
     abstract processEntry(entry: E, settings: S): Promise<D>;
     abstract getSearchableText(entry: E): string;
+    abstract getSpeakableText(data: D): string;
     abstract generateCard(data: D, settings: S): Flashcard;
     abstract checkAnswer(answer: string, data: D, settings: S, tf: (s: string) => string): Promise<boolean>;
     abstract makeEntryEditor(entry: E): StateEditor<E>;
@@ -116,8 +117,8 @@ export class SimpleCardType extends FlashcardType<SimpleCardEntry, SimpleCardDat
         }
 
         return trivialPromise({
-            prompt: tpPrompt,
-            answer: tpAnswers,
+            prompt: reversed ? tpAnswers : tpPrompt,
+            answer: reversed ? tpPrompt : tpAnswers,
             reversed: reversed,
             spoken: spoken 
         });
@@ -128,27 +129,33 @@ export class SimpleCardType extends FlashcardType<SimpleCardEntry, SimpleCardDat
         return entry.prompt.join(" ").concat(entry.answer.join(" "));
     }
 
+    // abstract getSpeakableText(data: D): string;
+    getSpeakableText(data: SimpleCardData): string {
+        if (data.reversed)
+            return data.prompt[0]
+        else
+            return data.answer[0];
+    }
+
     // abstract generateCard(data: D, settings: S): Flashcard;
     generateCard(data: SimpleCardData, settings: SimpleCardSettings): Flashcard {
         var a = document.createElement("div");
         var prompt = "";
         var answers: string[] = [];
         var hint = "";
-        if (!data.reversed) {
-            prompt = data.prompt[0];
-            answers = data.answer;
-            hint = data.answer[0];
-        } else if (data.spoken) {
+        
+        if (data.spoken) {
             return renderCard("transcript-template", {
-                spokenText: data.answer[0],
-                hintText: data.prompt[0],
+                spokenText: data.prompt[0],
+                hintText: data.answer[0],
                 speechSettings: settings.speechSettings 
            })
         } else {
-            prompt = data.answer[0];
-            answers = data.prompt;
-            hint = data.prompt[0];
+            prompt = data.prompt[0];
+            answers = data.answer;
+            hint = data.answer[0];
         }
+
         var fontSize = 100.0/(10.0*Math.log(10+prompt.length));
         a.style.fontSize = `${fontSize}vw`;
         a.textContent = prompt;
@@ -157,10 +164,7 @@ export class SimpleCardType extends FlashcardType<SimpleCardEntry, SimpleCardDat
 
     // abstract checkAnswer(answer: string, data: D, settings: S): Promise<boolean>;
     checkAnswer(answer: string, data: SimpleCardData, settings: SimpleCardSettings, tf: (s: string) => string): Promise<boolean> {
-        if (data.reversed)
-            return trivialPromise(data.prompt.map(tf).includes(tf(answer)));
-        else 
-            return trivialPromise(data.answer.map(tf).includes(tf(answer)));
+        return trivialPromise(data.answer.map(tf).includes(tf(answer)));
     }
 
     // abstract makeEntryEditor(entry: E): StateEditor<E>;
@@ -334,6 +338,14 @@ export class ClozeCardType extends FlashcardType<ClozeCardEntry, ClozeCardData, 
     // abstract getSearchableText(entry: E): string;
     getSearchableText(entry: ClozeCardEntry): string {
         return entry.key;
+    }
+
+    // abstract getSpeakableText(data: D): string;
+    getSpeakableText(data: ClozeCardData): string {
+        if (data.valid)
+            return data.cloze!.answer;
+        else
+            return "";
     }
 
     // abstract generateCard(data: D, settings: S): Flashcard;

@@ -161,11 +161,8 @@ export class ModularSpacedRepGen
         var cardData = card.data!;
         if (st.settings.readCorrectAnswers) {
             var ss = st.settings.speechSettings;
-            if (attempt.length > 0) { 
-                utter(attempt, ss.voice, ss.rate, ss.pitch, resolve);
-            } else {
-                // TODO: how do we determine what to say about an arbitrary card that is overridden?
-            }
+            var spokenAnswer = gCardTypeRegistry[cardData.content.cardType].getSpeakableText(cardData.content.cardData);
+            utter(spokenAnswer, ss.voice, ss.rate, ss.pitch, resolve);
         } else {
             resolve();
         }
