@@ -8,7 +8,7 @@ class TranscriptFlashcardTemplate extends flashcard_template_1.FlashcardTemplate
     render(data) {
         var container = document.createElement("div");
         var playBtn = document.createElement("img");
-        playBtn.src = "/static/images/speaker.png";
+        playBtn.src = "/speaker.png";
         playBtn.classList.add("transcription-audio-button");
         playBtn.onclick = (e) => {
             var ss = data.speechSettings;

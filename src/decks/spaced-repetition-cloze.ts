@@ -374,10 +374,6 @@ export class ClozeSpacedRepGen
             if (c.auxdata.invalid)
                 (<HTMLElement>tf1).style.backgroundColor = "#ffeeee";
             var cardInfo = document.createElement("a");
-            cardInfo.style.color = "lightgray";
-            cardInfo.style.marginLeft = "10px";
-            cardInfo.style.marginRight = "10px";
-            cardInfo.style.verticalAlign = "middle";
             if (c.intervalMinutes == 0) {
                 cardInfo.textContent = "not studied";
             } else {

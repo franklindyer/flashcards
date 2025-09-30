@@ -292,6 +292,10 @@ hr {
 
 .sr-card-due-date {
     display: inline-block;
+    color: lightgray;
+    margin-left: 10px;
+    margin-right: 10px;
+    vertical-align: middle;
 }
 
 // Animation for loading icon

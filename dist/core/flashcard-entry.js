@@ -5,6 +5,7 @@ exports.registerFlashcardType = registerFlashcardType;
 const utils_1 = require("utils/utils");
 const editor_1 = require("core/editor");
 const flashcard_template_1 = require("core/flashcard-template");
+const random_templating_1 = require("utils/random-templating");
 const generic_preloader_1 = require("utils/generic-preloader");
 const speech_1 = require("utils/speech");
 const flashcard_1 = require("core/flashcard");
@@ -36,9 +37,22 @@ class SimpleCardType extends FlashcardType {
     processEntry(entry, settings) {
         var reversed = entry.twoSided && (Math.random() < 0.5);
         var spoken = reversed && (Math.random() < 0.5);
+        var tpPrompt = [];
+        var tpAnswers = [];
+        var ctx = {};
+        for (var i in Object.keys(entry.prompt)) {
+            var res = (0, random_templating_1.randomizeStringSub)(entry.prompt[i], ctx);
+            ctx = res[1];
+            tpPrompt.push(res[0]);
+        }
+        for (var i in Object.keys(entry.answer)) {
+            var res = (0, random_templating_1.randomizeStringSub)(entry.answer[i], ctx);
+            ctx = res[1];
+            tpAnswers.push(res[0]);
+        }
         return (0, utils_1.trivialPromise)({
-            prompt: entry.prompt,
-            answer: entry.answer,
+            prompt: reversed ? tpAnswers : tpPrompt,
+            answer: reversed ? tpPrompt : tpAnswers,
             reversed: reversed,
             spoken: spoken
         });
@@ -47,28 +61,30 @@ class SimpleCardType extends FlashcardType {
     getSearchableText(entry) {
         return entry.prompt.join(" ").concat(entry.answer.join(" "));
     }
+    // abstract getSpeakableText(data: D): string;
+    getSpeakableText(data) {
+        if (data.reversed)
+            return data.prompt[0];
+        else
+            return data.answer[0];
+    }
     // abstract generateCard(data: D, settings: S): Flashcard;
     generateCard(data, settings) {
         var a = document.createElement("div");
         var prompt = "";
         var answers = [];
         var hint = "";
-        if (!data.reversed) {
-            prompt = data.prompt[0];
-            answers = data.answer;
-            hint = data.answer[0];
-        }
-        else if (data.spoken) {
+        if (data.spoken) {
             return (0, flashcard_template_1.renderCard)("transcript-template", {
-                spokenText: data.answer[0],
-                hintText: data.prompt[0],
+                spokenText: data.prompt[0],
+                hintText: data.answer[0],
                 speechSettings: settings.speechSettings
             });
         }
         else {
-            prompt = data.answer[0];
-            answers = data.prompt;
-            hint = data.prompt[0];
+            prompt = data.prompt[0];
+            answers = data.answer;
+            hint = data.answer[0];
         }
         var fontSize = 100.0 / (10.0 * Math.log(10 + prompt.length));
         a.style.fontSize = `${fontSize}vw`;
@@ -118,6 +134,10 @@ class SimpleCardType extends FlashcardType {
         var twoSidedCont = document.createElement("div");
         twoSidedCont.appendChild(twoSidedEditor.element);
         contDiv.appendChild(twoSidedCont);
+        var readAloudEditor = (0, editor_1.boolEditor)("Read aloud two-sided cards with setting enabled?", settings.doReadAloud);
+        var readAloudCont = document.createElement("div");
+        readAloudCont.appendChild(readAloudEditor.element);
+        contDiv.appendChild(readAloudCont);
         var ssEditor = (0, speech_1.speechSettingsEditor)(settings.speechSettings);
         var ssCont = document.createElement("div");
         ssCont.appendChild(ssEditor.element);
@@ -127,6 +147,7 @@ class SimpleCardType extends FlashcardType {
             menuToState: () => {
                 return {
                     doTwoSided: twoSidedEditor.menuToState(),
+                    doReadAloud: readAloudEditor.menuToState(),
                     speechSettings: ssEditor.menuToState()
                 };
             }
@@ -145,6 +166,7 @@ class SimpleCardType extends FlashcardType {
     getDefaultSettings() {
         return {
             doTwoSided: true,
+            doReadAloud: true,
             speechSettings: (0, speech_1.defaultSpeechSettings)()
         };
     }
@@ -195,6 +217,13 @@ class ClozeCardType extends FlashcardType {
     // abstract getSearchableText(entry: E): string;
     getSearchableText(entry) {
         return entry.key;
+    }
+    // abstract getSpeakableText(data: D): string;
+    getSpeakableText(data) {
+        if (data.valid)
+            return data.cloze.answer;
+        else
+            return "";
     }
     // abstract generateCard(data: D, settings: S): Flashcard;
     generateCard(data, settings) {

@@ -25,6 +25,10 @@ class ClozeFlashcardTemplate extends flashcard_template_1.FlashcardTemplate {
         var fontSize = 900.0 / (10.0 * Math.log(10 + aUpper.textContent.length));
         aUpper.style.fontSize = `${fontSize}px`;
         aLower.style.fontSize = `${0.7 * fontSize}px`;
+        var puzzleSourceSpan = document.createElement("span");
+        puzzleSourceSpan.textContent = data.group;
+        puzzleSourceSpan.classList.add("cloze-puzzle-attribution");
+        el.appendChild(puzzleSourceSpan);
         var fl = new flashcard_1.Flashcard(el, answer);
         return fl;
     }

@@ -68,12 +68,8 @@ class ModularSpacedRepGen extends spaced_repetition_general_1.AbstractAsyncSpace
         var cardData = card.data;
         if (st.settings.readCorrectAnswers) {
             var ss = st.settings.speechSettings;
-            if (attempt.length > 0) {
-                (0, speech_1.utter)(attempt, ss.voice, ss.rate, ss.pitch, resolve);
-            }
-            else {
-                // TODO: how do we determine what to say about an arbitrary card that is overridden?
-            }
+            var spokenAnswer = flashcard_entry_1.gCardTypeRegistry[cardData.content.cardType].getSpeakableText(cardData.content.cardData);
+            (0, speech_1.utter)(spokenAnswer, ss.voice, ss.rate, ss.pitch, resolve);
         }
         else {
             resolve();
@@ -180,6 +176,15 @@ class ModularSpacedRepGen extends spaced_repetition_general_1.AbstractAsyncSpace
             var tagsEd = (0, editor_1.singleTextFieldEditor)(c.content.tags.join(','));
             tagsEd.element.placeholder = "tags...";
             ed.element.appendChild(tagsEd.element);
+            var cardInfo = document.createElement("a");
+            cardInfo.classList.add("sr-card-due-date");
+            if (c.intervalMinutes == 0) {
+                cardInfo.textContent = "not studied";
+            }
+            else {
+                cardInfo.textContent = `due ${(0, utils_1.getSRFutureDateInfo)(c.due)}`;
+            }
+            ed.element.appendChild(cardInfo);
             return {
                 element: ed.element,
                 menuToState: () => {

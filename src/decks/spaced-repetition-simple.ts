@@ -365,10 +365,6 @@ export class SimpleSpacedRepGen
 
             var cardInfo = document.createElement("a");
             cardInfo.classList.add("sr-card-due-date");
-            cardInfo.style.color = "lightgray";
-            cardInfo.style.marginLeft = "10px";
-            cardInfo.style.marginRight = "10px";
-            cardInfo.style.verticalAlign = "middle";
             if (c.intervalMinutes == 0) {
                 cardInfo.textContent = "not studied";
             } else {

@@ -171,15 +171,11 @@ class ClozeSpacedRepGen extends spaced_repetition_general_1.AbstractAsyncSpacedR
             return (0, utils_1.trivialPromise)((0, flashcard_template_1.renderCard)("noanswer-template", `Could not get puzzle for card "${card.data.content.key}".`));
         }
         var fl = (0, flashcard_template_1.renderCard)("cloze-template", {
-            group: "",
+            group: card.data.auxdata.cloze.group,
             guid: card.data.guid,
             upper: card.data.auxdata.cloze.prompt,
             lower: card.data.auxdata.cloze.translation
         });
-        var puzzleSourceSpan = document.createElement("span");
-        puzzleSourceSpan.textContent = card.data.auxdata.cloze.group;
-        puzzleSourceSpan.classList.add("cloze-puzzle-attribution");
-        fl.el.appendChild(puzzleSourceSpan);
         fl.el.appendChild((0, spaced_repetition_general_1.makeCardsLeftSpan)(card));
         return (0, utils_1.trivialPromise)(fl);
     }

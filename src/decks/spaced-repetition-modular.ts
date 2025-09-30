@@ -301,9 +301,20 @@ export class ModularSpacedRepGen
             var cardType = c.content.cardType;
             var cardEntry = c.content.cardEntry;
             var ed = gCardTypeRegistry[cardType].makeEntryEditor(c.content.cardEntry);
+
             var tagsEd = singleTextFieldEditor(c.content.tags.join(','));
             (<HTMLInputElement>tagsEd.element).placeholder = "tags...";
             ed.element.appendChild(tagsEd.element);
+
+            var cardInfo = document.createElement("a");
+            cardInfo.classList.add("sr-card-due-date");
+            if (c.intervalMinutes == 0) {
+                cardInfo.textContent = "not studied";
+            } else {
+                cardInfo.textContent = `due ${getSRFutureDateInfo(c.due!)}`;
+            }
+            ed.element.appendChild(cardInfo);
+
             return {
                 element: ed.element,
                 menuToState: () => {

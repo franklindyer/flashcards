@@ -1755,6 +1755,7 @@ exports.registerFlashcardType = registerFlashcardType;
 const utils_1 = __webpack_require__(135);
 const editor_1 = __webpack_require__(613);
 const flashcard_template_1 = __webpack_require__(217);
+const random_templating_1 = __webpack_require__(53);
 const generic_preloader_1 = __webpack_require__(816);
 const speech_1 = __webpack_require__(230);
 const flashcard_1 = __webpack_require__(70);
@@ -1786,9 +1787,22 @@ class SimpleCardType extends FlashcardType {
     processEntry(entry, settings) {
         var reversed = entry.twoSided && (Math.random() < 0.5);
         var spoken = reversed && (Math.random() < 0.5);
+        var tpPrompt = [];
+        var tpAnswers = [];
+        var ctx = {};
+        for (var i in Object.keys(entry.prompt)) {
+            var res = (0, random_templating_1.randomizeStringSub)(entry.prompt[i], ctx);
+            ctx = res[1];
+            tpPrompt.push(res[0]);
+        }
+        for (var i in Object.keys(entry.answer)) {
+            var res = (0, random_templating_1.randomizeStringSub)(entry.answer[i], ctx);
+            ctx = res[1];
+            tpAnswers.push(res[0]);
+        }
         return (0, utils_1.trivialPromise)({
-            prompt: entry.prompt,
-            answer: entry.answer,
+            prompt: reversed ? tpAnswers : tpPrompt,
+            answer: reversed ? tpPrompt : tpAnswers,
             reversed: reversed,
             spoken: spoken
         });
@@ -1797,28 +1811,30 @@ class SimpleCardType extends FlashcardType {
     getSearchableText(entry) {
         return entry.prompt.join(" ").concat(entry.answer.join(" "));
     }
+    // abstract getSpeakableText(data: D): string;
+    getSpeakableText(data) {
+        if (data.reversed)
+            return data.prompt[0];
+        else
+            return data.answer[0];
+    }
     // abstract generateCard(data: D, settings: S): Flashcard;
     generateCard(data, settings) {
         var a = document.createElement("div");
         var prompt = "";
         var answers = [];
         var hint = "";
-        if (!data.reversed) {
-            prompt = data.prompt[0];
-            answers = data.answer;
-            hint = data.answer[0];
-        }
-        else if (data.spoken) {
+        if (data.spoken) {
             return (0, flashcard_template_1.renderCard)("transcript-template", {
-                spokenText: data.answer[0],
-                hintText: data.prompt[0],
+                spokenText: data.prompt[0],
+                hintText: data.answer[0],
                 speechSettings: settings.speechSettings
             });
         }
         else {
-            prompt = data.answer[0];
-            answers = data.prompt;
-            hint = data.prompt[0];
+            prompt = data.prompt[0];
+            answers = data.answer;
+            hint = data.answer[0];
         }
         var fontSize = 100.0 / (10.0 * Math.log(10 + prompt.length));
         a.style.fontSize = `${fontSize}vw`;
@@ -1868,6 +1884,10 @@ class SimpleCardType extends FlashcardType {
         var twoSidedCont = document.createElement("div");
         twoSidedCont.appendChild(twoSidedEditor.element);
         contDiv.appendChild(twoSidedCont);
+        var readAloudEditor = (0, editor_1.boolEditor)("Read aloud two-sided cards with setting enabled?", settings.doReadAloud);
+        var readAloudCont = document.createElement("div");
+        readAloudCont.appendChild(readAloudEditor.element);
+        contDiv.appendChild(readAloudCont);
         var ssEditor = (0, speech_1.speechSettingsEditor)(settings.speechSettings);
         var ssCont = document.createElement("div");
         ssCont.appendChild(ssEditor.element);
@@ -1877,6 +1897,7 @@ class SimpleCardType extends FlashcardType {
             menuToState: () => {
                 return {
                     doTwoSided: twoSidedEditor.menuToState(),
+                    doReadAloud: readAloudEditor.menuToState(),
                     speechSettings: ssEditor.menuToState()
                 };
             }
@@ -1895,6 +1916,7 @@ class SimpleCardType extends FlashcardType {
     getDefaultSettings() {
         return {
             doTwoSided: true,
+            doReadAloud: true,
             speechSettings: (0, speech_1.defaultSpeechSettings)()
         };
     }
@@ -1945,6 +1967,13 @@ class ClozeCardType extends FlashcardType {
     // abstract getSearchableText(entry: E): string;
     getSearchableText(entry) {
         return entry.key;
+    }
+    // abstract getSpeakableText(data: D): string;
+    getSpeakableText(data) {
+        if (data.valid)
+            return data.cloze.answer;
+        else
+            return "";
     }
     // abstract generateCard(data: D, settings: S): Flashcard;
     generateCard(data, settings) {
@@ -2551,15 +2580,11 @@ class ClozeSpacedRepGen extends spaced_repetition_general_1.AbstractAsyncSpacedR
             return (0, utils_1.trivialPromise)((0, flashcard_template_1.renderCard)("noanswer-template", `Could not get puzzle for card "${card.data.content.key}".`));
         }
         var fl = (0, flashcard_template_1.renderCard)("cloze-template", {
-            group: "",
+            group: card.data.auxdata.cloze.group,
             guid: card.data.guid,
             upper: card.data.auxdata.cloze.prompt,
             lower: card.data.auxdata.cloze.translation
         });
-        var puzzleSourceSpan = document.createElement("span");
-        puzzleSourceSpan.textContent = card.data.auxdata.cloze.group;
-        puzzleSourceSpan.classList.add("cloze-puzzle-attribution");
-        fl.el.appendChild(puzzleSourceSpan);
         fl.el.appendChild((0, spaced_repetition_general_1.makeCardsLeftSpan)(card));
         return (0, utils_1.trivialPromise)(fl);
     }
@@ -2915,12 +2940,8 @@ class ModularSpacedRepGen extends spaced_repetition_general_1.AbstractAsyncSpace
         var cardData = card.data;
         if (st.settings.readCorrectAnswers) {
             var ss = st.settings.speechSettings;
-            if (attempt.length > 0) {
-                (0, speech_1.utter)(attempt, ss.voice, ss.rate, ss.pitch, resolve);
-            }
-            else {
-                // TODO: how do we determine what to say about an arbitrary card that is overridden?
-            }
+            var spokenAnswer = flashcard_entry_1.gCardTypeRegistry[cardData.content.cardType].getSpeakableText(cardData.content.cardData);
+            (0, speech_1.utter)(spokenAnswer, ss.voice, ss.rate, ss.pitch, resolve);
         }
         else {
             resolve();
@@ -3027,6 +3048,15 @@ class ModularSpacedRepGen extends spaced_repetition_general_1.AbstractAsyncSpace
             var tagsEd = (0, editor_1.singleTextFieldEditor)(c.content.tags.join(','));
             tagsEd.element.placeholder = "tags...";
             ed.element.appendChild(tagsEd.element);
+            var cardInfo = document.createElement("a");
+            cardInfo.classList.add("sr-card-due-date");
+            if (c.intervalMinutes == 0) {
+                cardInfo.textContent = "not studied";
+            }
+            else {
+                cardInfo.textContent = `due ${(0, utils_1.getSRFutureDateInfo)(c.due)}`;
+            }
+            ed.element.appendChild(cardInfo);
             return {
                 element: ed.element,
                 menuToState: () => {
@@ -3774,6 +3804,10 @@ class ClozeFlashcardTemplate extends flashcard_template_1.FlashcardTemplate {
         var fontSize = 900.0 / (10.0 * Math.log(10 + aUpper.textContent.length));
         aUpper.style.fontSize = `${fontSize}px`;
         aLower.style.fontSize = `${0.7 * fontSize}px`;
+        var puzzleSourceSpan = document.createElement("span");
+        puzzleSourceSpan.textContent = data.group;
+        puzzleSourceSpan.classList.add("cloze-puzzle-attribution");
+        el.appendChild(puzzleSourceSpan);
         var fl = new flashcard_1.Flashcard(el, answer);
         return fl;
     }
@@ -4322,7 +4356,7 @@ class TranscriptFlashcardTemplate extends flashcard_template_1.FlashcardTemplate
     render(data) {
         var container = document.createElement("div");
         var playBtn = document.createElement("img");
-        playBtn.src = "/static/images/speaker.png";
+        playBtn.src = "/speaker.png";
         playBtn.classList.add("transcription-audio-button");
         playBtn.onclick = (e) => {
             var ss = data.speechSettings;
