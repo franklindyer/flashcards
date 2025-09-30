@@ -44,6 +44,11 @@ class ClozeFlashcardTemplate extends FlashcardTemplate<ClozeCardData> {
         var fontSize = 900.0/(10.0*Math.log(10+aUpper.textContent.length));
         aUpper.style.fontSize = `${fontSize}px`;
         aLower.style.fontSize = `${0.7*fontSize}px`; 
+
+        var puzzleSourceSpan = document.createElement("span");
+        puzzleSourceSpan.textContent = data.group;
+        puzzleSourceSpan.classList.add("cloze-puzzle-attribution");
+        el.appendChild(puzzleSourceSpan);
    
         var fl = new Flashcard(el, answer);
         return fl;

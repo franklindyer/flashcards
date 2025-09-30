@@ -301,17 +301,12 @@ export class ClozeSpacedRepGen
             ));
         }
         var fl = renderCard("cloze-template", {
-            group: "", 
+            group: card.data!.auxdata.cloze!.group, 
             guid: card.data!.guid,
             upper: card.data!.auxdata.cloze!.prompt,
             lower: card.data!.auxdata.cloze!.translation
         });
 
-        var puzzleSourceSpan = document.createElement("span");
-        puzzleSourceSpan.textContent = card.data!.auxdata.cloze!.group;
-        puzzleSourceSpan.classList.add("cloze-puzzle-attribution");
-
-        fl.el.appendChild(puzzleSourceSpan);
         fl.el.appendChild(makeCardsLeftSpan(card));
         return trivialPromise(fl);
     }
