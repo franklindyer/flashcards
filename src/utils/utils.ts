@@ -135,3 +135,23 @@ export function recursiveRepairEachValueJSON(objDict: any, defaultObj: any, omit
     }
     return objDict;
 }
+
+export function makeSubber(subs: [string, string][]): (s: string) => string {
+    var reSubs: [RegExp, string][] = subs.map((r) => [new RegExp(r[0]), r[1]]);
+    return function(s: string) {
+        for (var i in reSubs) {
+            var r = reSubs[i];
+            s = s.replace(r[0], r[1]);
+        }
+        return s;
+    };
+}
+
+export function hideDetails(el: HTMLElement, summary: string) {
+    var detailsEl = document.createElement("details");
+    var summaryEl = document.createElement("summary");
+    summaryEl.textContent = summary;
+    detailsEl.appendChild(summaryEl);
+    detailsEl.appendChild(el);
+    return detailsEl;
+}

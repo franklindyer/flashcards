@@ -6,7 +6,9 @@ import {
     iconButton,
     trivialPromise,
     recursiveRepairJSON,
-    recursiveRepairEachValueJSON
+    recursiveRepairEachValueJSON,
+    makeSubber,
+    hideDetails
 } from "utils/utils"
 import {
     randomizeStringSub
@@ -47,7 +49,8 @@ import {
     radioEditor,
     combineEditors,
     swappingTextEditor,
-    multipleEditors
+    multipleEditors,
+    doubleTextFieldEditor
 } from "core/editor"
 import {
     infoWidgetSR,
@@ -86,6 +89,7 @@ export type SRSimpleSettings = {
     doTwoSided: boolean,
     readCorrectAnswers: boolean,
     speechSettings: SpeechSettings,
+    substitutions: [string, string][],
     filterSettings: TextFilterSettings,
     pushcardQueue: PushcardQueue
 }
@@ -98,6 +102,7 @@ export const defaultSimpleSRSettings = {
     doTwoSided: true,
     readCorrectAnswers: false,
     speechSettings: defaultSpeechSettings(),
+    substitutions: [],
     filterSettings: defaultTextFilterSettings,
     pushcardQueue: defaultPushcardQueue()
 };
@@ -209,7 +214,10 @@ export class SimpleSpacedRepGen
         ) : SpacedRepCardPhysical<SRSimpleContent, SRSimpleAuxData> {
         // Clone the card so we don't mess with its state in the deck
         var card = <SpacedRepCardPhysical<SRSimpleContent, SRSimpleAuxData>>JSON.parse(JSON.stringify(card));
+        var subber = makeSubber(st.settings.substitutions);
         if (card.data !== undefined) {
+            card.data!.content.prompt = card.data!.content.prompt.map(subber);
+            card.data!.content.answers = card.data!.content.answers.map(subber);
             card = this.applyCardTemplating(card);
             if (card.data!.content.twoSided && st.settings.doTwoSided) {
                 card.data!.content.reversed = (Math.random() < 0.5);
@@ -320,6 +328,13 @@ export class SimpleSpacedRepGen
         twoSidedCont.appendChild(twoSidedEditor.element);
 
         var filterEditor = textFilterSelectionMenu(settings.filterSettings);
+        var subsEditor = multipleEditors(
+            settings.substitutions,
+            () => <[string, string]>["", ""],
+            doubleTextFieldEditor
+        );
+        subsEditor.element = hideDetails(subsEditor.element, "Card substitution settings");
+        filterEditor.element.appendChild(subsEditor.element);
 
         var pcqEditor = makePCQEditor(settings.pushcardQueue);
 
@@ -479,6 +494,7 @@ export class SimpleSpacedRepGen
                         incorrectFactor: incorrectFactor.menuToState(),
                         readCorrectAnswers: speechCheckbox.menuToState(),
                         speechSettings: speechEditor.menuToState(),
+                        substitutions: subsEditor.menuToState(),
                         filterSettings: filterEditor.menuToState(),
                         pushcardQueue: pcq, 
                         inactiveTags: omitTagsEditor.menuToState().split(','),
