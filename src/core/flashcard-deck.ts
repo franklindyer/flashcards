@@ -64,8 +64,8 @@ export function loadAllDecks() {
 }
 
 export function eraseDeck(deckSlug: string) {
-    deleteDeck(deckSlug);
     delete gDeckRegistry[deckSlug];
+    deleteDeck(deckSlug);
 }
 
 /* Setup general-purpose menus */

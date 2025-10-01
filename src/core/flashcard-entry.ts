@@ -1,13 +1,17 @@
 import {
     IDictionary,
     guidGenerator,
-    trivialPromise
+    trivialPromise,
+    hideDetails,
+    makeSubber
 } from "utils/utils"
 import {
     StateEditor,
     boolEditor,
     swappingTextEditor,
-    singleTextFieldEditor
+    singleTextFieldEditor,
+    multipleEditors,
+    doubleTextFieldEditor
 } from "core/editor"
 import {
     TextFilterSettings,
@@ -81,7 +85,8 @@ export type SimpleCardData = {
 export type SimpleCardSettings = {
     doTwoSided: boolean,
     doReadAloud: boolean,
-    speechSettings: SpeechSettings
+    speechSettings: SpeechSettings,
+    substitutions: [string, string][]
 }
 
 export class SimpleCardType extends FlashcardType<SimpleCardEntry, SimpleCardData, SimpleCardSettings> {
@@ -102,16 +107,17 @@ export class SimpleCardType extends FlashcardType<SimpleCardEntry, SimpleCardDat
         var reversed = entry.twoSided && (Math.random() < 0.5);
         var spoken = reversed && (Math.random() < 0.5);
 
+        var subber = makeSubber(settings.substitutions);
         var tpPrompt = [];
         var tpAnswers = [];
         var ctx = {};
         for (var i in Object.keys(entry.prompt)) {
-            var res = randomizeStringSub(entry.prompt[i], ctx);
+            var res = randomizeStringSub(subber(entry.prompt[i]), ctx);
             ctx = res[1];
             tpPrompt.push(res[0]);
         }
         for (var i in Object.keys(entry.answer)) {
-            var res = randomizeStringSub(entry.answer[i], ctx);
+            var res = randomizeStringSub(subber(entry.answer[i]), ctx);
             ctx = res[1];
             tpAnswers.push(res[0]);
         }
@@ -223,13 +229,22 @@ export class SimpleCardType extends FlashcardType<SimpleCardEntry, SimpleCardDat
         ssCont.appendChild(ssEditor.element);
         contDiv.appendChild(ssCont);
 
+        var subsEditor = multipleEditors(
+            settings.substitutions,
+            () => <[string, string]>["", ""],
+            doubleTextFieldEditor
+        );
+        subsEditor.element = hideDetails(subsEditor.element, "Card substitution settings");
+        contDiv.appendChild(subsEditor.element);
+
         return {
             element: contDiv,
             menuToState: () => {
                 return {
                     doTwoSided: twoSidedEditor.menuToState(),
                     doReadAloud: readAloudEditor.menuToState(),
-                    speechSettings: ssEditor.menuToState()
+                    speechSettings: ssEditor.menuToState(),
+                    substitutions: subsEditor.menuToState()
                 };
             }
         }
@@ -250,7 +265,8 @@ export class SimpleCardType extends FlashcardType<SimpleCardEntry, SimpleCardDat
         return {
             doTwoSided: true,
             doReadAloud: true,
-            speechSettings: defaultSpeechSettings()
+            speechSettings: defaultSpeechSettings(),
+            substitutions: []
         };
     }
 }
