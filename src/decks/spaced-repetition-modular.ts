@@ -5,7 +5,8 @@ import {
     trivialPromise,
     getSRFutureDateInfo,
     recursiveRepairJSON,
-    recursiveRepairEachValueJSON
+    recursiveRepairEachValueJSON,
+    iconButton
 } from "utils/utils"
 import {
     Preloader
@@ -315,22 +316,52 @@ export class ModularSpacedRepGen
             }
             ed.element.appendChild(cardInfo);
 
+            var cardMenuToState = () => {
+                return {
+                    guid: c.guid,
+                    content: {
+                        cardType: c.content.cardType,
+                        cardEntry: ed.menuToState(),
+                        cardData: null,
+                        tags: tagsEd.menuToState().split(",").filter((t) => t.length > 0)
+                    },
+                    due: c.due,
+                    intervalMinutes: c.intervalMinutes,
+                    auxdata: c.auxdata
+                };
+            };
+
+            /* var cardMenuToPreview = () => {
+                var cardState = <any>cardMenuToState();
+                return (<any>this).gen.nextCardAsyncPreprocessing({
+                    data: cardState,
+                    context: {
+                        cardsLeft: 0,
+                        isPractice: false
+                    }
+                }, st);
+            };
+
+            var cardPreviewCont = document.createElement("div");
+            var previewBtn = iconButton("eyeball.png", () => {
+                var cardDataPromise = cardMenuToPreview();
+                cardDataPromise.then((d: any) => {
+                    var cardPreviewDiv = (<any>this).gen.generateCard(
+                        st,
+                        cardMenuToPreview()
+                    );
+                    cardPreviewCont.innerHTML = ""; 
+                    cardPreviewDiv.el.classList.add("flashcard");
+                    cardPreviewDiv.el.classList.add("flashcard-preview");
+                    cardPreviewCont.appendChild(cardPreviewDiv.el); 
+                });
+            });
+            ed.element.appendChild(previewBtn);
+            ed.element.appendChild(cardPreviewCont); */
+
             return {
                 element: ed.element,
-                menuToState: () => {
-                    return {
-                        guid: c.guid,
-                        content: {
-                            cardType: c.content.cardType,
-                            cardEntry: ed.menuToState(),
-                            cardData: null,
-                            tags: tagsEd.menuToState().split(",").filter((t) => t.length > 0)
-                        },
-                        due: c.due,
-                        intervalMinutes: c.intervalMinutes,
-                        auxdata: c.auxdata
-                    };
-                }
+                menuToState: cardMenuToState
             };
         }
        
