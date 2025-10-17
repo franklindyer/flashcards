@@ -1639,8 +1639,8 @@ function loadAllDecks() {
     return deckSlugsP.then((slugs) => Promise.all(slugs.map(loadDeckIfExists)));
 }
 function eraseDeck(deckSlug) {
-    (0, fs_1.deleteDeck)(deckSlug);
     delete exports.gDeckRegistry[deckSlug];
+    (0, fs_1.deleteDeck)(deckSlug);
 }
 /* Setup general-purpose menus */
 function menuSetup(deckSlug) {
@@ -1787,16 +1787,17 @@ class SimpleCardType extends FlashcardType {
     processEntry(entry, settings) {
         var reversed = entry.twoSided && (Math.random() < 0.5);
         var spoken = reversed && (Math.random() < 0.5);
+        var subber = (0, utils_1.makeSubber)(settings.substitutions);
         var tpPrompt = [];
         var tpAnswers = [];
         var ctx = {};
         for (var i in Object.keys(entry.prompt)) {
-            var res = (0, random_templating_1.randomizeStringSub)(entry.prompt[i], ctx);
+            var res = (0, random_templating_1.randomizeStringSub)(subber(entry.prompt[i]), ctx);
             ctx = res[1];
             tpPrompt.push(res[0]);
         }
         for (var i in Object.keys(entry.answer)) {
-            var res = (0, random_templating_1.randomizeStringSub)(entry.answer[i], ctx);
+            var res = (0, random_templating_1.randomizeStringSub)(subber(entry.answer[i]), ctx);
             ctx = res[1];
             tpAnswers.push(res[0]);
         }
@@ -1892,13 +1893,17 @@ class SimpleCardType extends FlashcardType {
         var ssCont = document.createElement("div");
         ssCont.appendChild(ssEditor.element);
         contDiv.appendChild(ssCont);
+        var subsEditor = (0, editor_1.multipleEditors)(settings.substitutions, () => ["", ""], editor_1.doubleTextFieldEditor);
+        subsEditor.element = (0, utils_1.hideDetails)(subsEditor.element, "Card substitution settings");
+        contDiv.appendChild(subsEditor.element);
         return {
             element: contDiv,
             menuToState: () => {
                 return {
                     doTwoSided: twoSidedEditor.menuToState(),
                     doReadAloud: readAloudEditor.menuToState(),
-                    speechSettings: ssEditor.menuToState()
+                    speechSettings: ssEditor.menuToState(),
+                    substitutions: subsEditor.menuToState()
                 };
             }
         };
@@ -1917,7 +1922,8 @@ class SimpleCardType extends FlashcardType {
         return {
             doTwoSided: true,
             doReadAloud: true,
-            speechSettings: (0, speech_1.defaultSpeechSettings)()
+            speechSettings: (0, speech_1.defaultSpeechSettings)(),
+            substitutions: []
         };
     }
 }
@@ -1994,12 +2000,15 @@ class ClozeCardType extends FlashcardType {
     }
     // abstract makeEntryEditor(entry: E): StateEditor<E>;
     makeEntryEditor(entry) {
-        var edCont = document.createElement("div");
+        var edDetails = document.createElement("details");
+        var edSummary = document.createElement("summary");
+        edDetails.appendChild(edSummary);
+        edDetails.classList.add("cardlist-accordion");
         var keyEd = (0, editor_1.singleTextFieldEditor)(entry.key);
         keyEd.element.style.display = "inline-block";
-        edCont.appendChild(keyEd.element);
+        edSummary.appendChild(keyEd.element);
         return {
-            element: edCont,
+            element: edDetails,
             menuToState: () => {
                 return {
                     key: keyEd.menuToState()
@@ -2286,7 +2295,10 @@ function setDeckJSON(deckSlug, deckBlob) {
     }).catch((e) => console.log(`ERROR WRITING DECK: ${e}`));
 }
 function deleteDeck(deckSlug) {
-    deckFolderP().then((h) => h.removeEntry(deckSlug));
+    deckFolderP().then((h) => {
+        h.removeEntry(deckSlug);
+        console.log(getDeckSlugs());
+    });
 }
 
 
@@ -2637,10 +2649,6 @@ class ClozeSpacedRepGen extends spaced_repetition_general_1.AbstractAsyncSpacedR
             if (c.auxdata.invalid)
                 tf1.style.backgroundColor = "#ffeeee";
             var cardInfo = document.createElement("a");
-            cardInfo.style.color = "lightgray";
-            cardInfo.style.marginLeft = "10px";
-            cardInfo.style.marginRight = "10px";
-            cardInfo.style.verticalAlign = "middle";
             if (c.intervalMinutes == 0) {
                 cardInfo.textContent = "not studied";
             }
@@ -3018,6 +3026,7 @@ class ModularSpacedRepGen extends spaced_repetition_general_1.AbstractAsyncSpace
         return (0, utils_1.trivialPromise)(fl);
     }
     makeEditor(st) {
+        var _this = this;
         var contDiv = document.createElement("div");
         var infoWidget = (0, shared_sr_menu_components_1.infoWidgetSR)(this.gen, st);
         var studyingEditor = (0, shared_sr_menu_components_1.studyingEditorSR)(st);
@@ -3057,22 +3066,51 @@ class ModularSpacedRepGen extends spaced_repetition_general_1.AbstractAsyncSpace
                 cardInfo.textContent = `due ${(0, utils_1.getSRFutureDateInfo)(c.due)}`;
             }
             ed.element.appendChild(cardInfo);
+            var cardMenuToState = () => {
+                return {
+                    guid: c.guid,
+                    content: {
+                        cardType: c.content.cardType,
+                        cardEntry: ed.menuToState(),
+                        cardData: null,
+                        tags: tagsEd.menuToState().split(",").filter((t) => t.length > 0)
+                    },
+                    due: c.due,
+                    intervalMinutes: c.intervalMinutes,
+                    auxdata: c.auxdata
+                };
+            };
+            var cardMenuToPreview = () => {
+                var cardState = cardMenuToState();
+                return _this.gen.nextCardAsyncPreprocessing({
+                    data: cardState,
+                    context: {
+                        cardsLeft: 0,
+                        isPractice: false
+                    }
+                }, st);
+            };
+            var cardPreviewCont = document.createElement("div");
+            var previewBtn = (0, utils_1.iconButton)("eyeball.png", () => {
+                var cardDataPromise = cardMenuToPreview();
+                cardDataPromise.then((d) => {
+                    console.log(_this);
+                    var cardPreviewDivPromise = _this.gen.generateCardAsync(st, d);
+                    console.log(d);
+                    cardPreviewDivPromise.then((cardPreviewDiv) => {
+                        console.log(cardPreviewDiv);
+                        cardPreviewCont.innerHTML = "";
+                        cardPreviewDiv.el.classList.add("flashcard");
+                        cardPreviewDiv.el.classList.add("flashcard-preview");
+                        cardPreviewCont.appendChild(cardPreviewDiv.el);
+                    });
+                });
+            });
+            ed.element.appendChild(previewBtn);
+            ed.element.appendChild(cardPreviewCont);
             return {
                 element: ed.element,
-                menuToState: () => {
-                    return {
-                        guid: c.guid,
-                        content: {
-                            cardType: c.content.cardType,
-                            cardEntry: ed.menuToState(),
-                            cardData: null,
-                            tags: tagsEd.menuToState().split(",").filter((t) => t.length > 0)
-                        },
-                        due: c.due,
-                        intervalMinutes: c.intervalMinutes,
-                        auxdata: c.auxdata
-                    };
-                }
+                menuToState: cardMenuToState
             };
         }
         var cardSettingsGroups = {};
@@ -3174,6 +3212,7 @@ exports.defaultSimpleSRSettings = {
     doTwoSided: true,
     readCorrectAnswers: false,
     speechSettings: (0, speech_1.defaultSpeechSettings)(),
+    substitutions: [],
     filterSettings: text_filters_1.defaultTextFilterSettings,
     pushcardQueue: (0, pushcard_queue_1.defaultPushcardQueue)()
 };
@@ -3264,7 +3303,10 @@ class SimpleSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGe
     nextCardPreprocessing(card, st) {
         // Clone the card so we don't mess with its state in the deck
         var card = JSON.parse(JSON.stringify(card));
+        var subber = (0, utils_1.makeSubber)(st.settings.substitutions);
         if (card.data !== undefined) {
+            card.data.content.prompt = card.data.content.prompt.map(subber);
+            card.data.content.answers = card.data.content.answers.map(subber);
             card = this.applyCardTemplating(card);
             if (card.data.content.twoSided && st.settings.doTwoSided) {
                 card.data.content.reversed = (Math.random() < 0.5);
@@ -3348,6 +3390,9 @@ class SimpleSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGe
         var twoSidedCont = document.createElement("div");
         twoSidedCont.appendChild(twoSidedEditor.element);
         var filterEditor = (0, text_filters_1.textFilterSelectionMenu)(settings.filterSettings);
+        var subsEditor = (0, editor_1.multipleEditors)(settings.substitutions, () => ["", ""], editor_1.doubleTextFieldEditor);
+        subsEditor.element = (0, utils_1.hideDetails)(subsEditor.element, "Card substitution settings");
+        filterEditor.element.appendChild(subsEditor.element);
         var pcqEditor = (0, pushcard_queue_1.makePCQEditor)(settings.pushcardQueue);
         [
             studyingEditor.element,
@@ -3386,10 +3431,6 @@ class SimpleSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGe
             edDetails.appendChild(twoSideEd.element);
             var cardInfo = document.createElement("a");
             cardInfo.classList.add("sr-card-due-date");
-            cardInfo.style.color = "lightgray";
-            cardInfo.style.marginLeft = "10px";
-            cardInfo.style.marginRight = "10px";
-            cardInfo.style.verticalAlign = "middle";
             if (c.intervalMinutes == 0) {
                 cardInfo.textContent = "not studied";
             }
@@ -3488,6 +3529,7 @@ class SimpleSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGe
                         incorrectFactor: incorrectFactor.menuToState(),
                         readCorrectAnswers: speechCheckbox.menuToState(),
                         speechSettings: speechEditor.menuToState(),
+                        substitutions: subsEditor.menuToState(),
                         filterSettings: filterEditor.menuToState(),
                         pushcardQueue: pcq,
                         inactiveTags: omitTagsEditor.menuToState().split(','),
@@ -4391,6 +4433,8 @@ exports.hideLoadingIcon = hideLoadingIcon;
 exports.iconButton = iconButton;
 exports.recursiveRepairJSON = recursiveRepairJSON;
 exports.recursiveRepairEachValueJSON = recursiveRepairEachValueJSON;
+exports.makeSubber = makeSubber;
+exports.hideDetails = hideDetails;
 // https://stackoverflow.com/questions/6860853/generate-random-string-for-div-id
 function guidGenerator() {
     var S4 = function () {
@@ -4511,6 +4555,24 @@ function recursiveRepairEachValueJSON(objDict, defaultObj, omitKeys = []) {
         objDict[k] = recursiveRepairJSON(objDict[k], defaultObj, omitKeys);
     }
     return objDict;
+}
+function makeSubber(subs) {
+    var reSubs = subs.map((r) => [new RegExp(r[0]), r[1]]);
+    return function (s) {
+        for (var i in reSubs) {
+            var r = reSubs[i];
+            s = s.replace(r[0], r[1]);
+        }
+        return s;
+    };
+}
+function hideDetails(el, summary) {
+    var detailsEl = document.createElement("details");
+    var summaryEl = document.createElement("summary");
+    summaryEl.textContent = summary;
+    detailsEl.appendChild(summaryEl);
+    detailsEl.appendChild(el);
+    return detailsEl;
 }
 
 

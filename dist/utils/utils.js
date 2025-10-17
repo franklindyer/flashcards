@@ -13,6 +13,8 @@ exports.hideLoadingIcon = hideLoadingIcon;
 exports.iconButton = iconButton;
 exports.recursiveRepairJSON = recursiveRepairJSON;
 exports.recursiveRepairEachValueJSON = recursiveRepairEachValueJSON;
+exports.makeSubber = makeSubber;
+exports.hideDetails = hideDetails;
 // https://stackoverflow.com/questions/6860853/generate-random-string-for-div-id
 function guidGenerator() {
     var S4 = function () {
@@ -133,4 +135,22 @@ function recursiveRepairEachValueJSON(objDict, defaultObj, omitKeys = []) {
         objDict[k] = recursiveRepairJSON(objDict[k], defaultObj, omitKeys);
     }
     return objDict;
+}
+function makeSubber(subs) {
+    var reSubs = subs.map((r) => [new RegExp(r[0]), r[1]]);
+    return function (s) {
+        for (var i in reSubs) {
+            var r = reSubs[i];
+            s = s.replace(r[0], r[1]);
+        }
+        return s;
+    };
+}
+function hideDetails(el, summary) {
+    var detailsEl = document.createElement("details");
+    var summaryEl = document.createElement("summary");
+    summaryEl.textContent = summary;
+    detailsEl.appendChild(summaryEl);
+    detailsEl.appendChild(el);
+    return detailsEl;
 }

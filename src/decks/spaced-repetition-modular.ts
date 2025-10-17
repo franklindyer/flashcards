@@ -267,6 +267,8 @@ export class ModularSpacedRepGen
 
     makeEditor(st: SpacedRepState<SRModularContent, SRModularAuxData, SRModularSettings>):
         StateEditor<SpacedRepState<SRModularContent, SRModularAuxData, SRModularSettings>> {
+        var _this = this;
+
         var contDiv = document.createElement("div");
 
         var infoWidget = infoWidgetSR((<any>this).gen, st);
@@ -317,7 +319,7 @@ export class ModularSpacedRepGen
             ed.element.appendChild(cardInfo);
 
             var cardMenuToState = () => {
-                return {
+                return <SpacedRepCard<SRModularContent, SRModularAuxData>>{
                     guid: c.guid,
                     content: {
                         cardType: c.content.cardType,
@@ -331,9 +333,9 @@ export class ModularSpacedRepGen
                 };
             };
 
-            /* var cardMenuToPreview = () => {
+            var cardMenuToPreview = () => {
                 var cardState = <any>cardMenuToState();
-                return (<any>this).gen.nextCardAsyncPreprocessing({
+                return (<any>_this).gen.nextCardAsyncPreprocessing({
                     data: cardState,
                     context: {
                         cardsLeft: 0,
@@ -346,18 +348,23 @@ export class ModularSpacedRepGen
             var previewBtn = iconButton("eyeball.png", () => {
                 var cardDataPromise = cardMenuToPreview();
                 cardDataPromise.then((d: any) => {
-                    var cardPreviewDiv = (<any>this).gen.generateCard(
+                    console.log(_this);
+                    var cardPreviewDivPromise = (<any>_this).gen.generateCardAsync(
                         st,
-                        cardMenuToPreview()
+                        d
                     );
-                    cardPreviewCont.innerHTML = ""; 
-                    cardPreviewDiv.el.classList.add("flashcard");
-                    cardPreviewDiv.el.classList.add("flashcard-preview");
-                    cardPreviewCont.appendChild(cardPreviewDiv.el); 
+                    console.log(d);
+                    cardPreviewDivPromise.then((cardPreviewDiv: any) => {
+                        console.log(cardPreviewDiv);
+                        cardPreviewCont.innerHTML = ""; 
+                        cardPreviewDiv.el.classList.add("flashcard");
+                        cardPreviewDiv.el.classList.add("flashcard-preview");
+                        cardPreviewCont.appendChild(cardPreviewDiv.el); 
+                    });
                 });
             });
             ed.element.appendChild(previewBtn);
-            ed.element.appendChild(cardPreviewCont); */
+            ed.element.appendChild(cardPreviewCont);
 
             return {
                 element: ed.element,

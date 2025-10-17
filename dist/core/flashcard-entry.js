@@ -37,16 +37,17 @@ class SimpleCardType extends FlashcardType {
     processEntry(entry, settings) {
         var reversed = entry.twoSided && (Math.random() < 0.5);
         var spoken = reversed && (Math.random() < 0.5);
+        var subber = (0, utils_1.makeSubber)(settings.substitutions);
         var tpPrompt = [];
         var tpAnswers = [];
         var ctx = {};
         for (var i in Object.keys(entry.prompt)) {
-            var res = (0, random_templating_1.randomizeStringSub)(entry.prompt[i], ctx);
+            var res = (0, random_templating_1.randomizeStringSub)(subber(entry.prompt[i]), ctx);
             ctx = res[1];
             tpPrompt.push(res[0]);
         }
         for (var i in Object.keys(entry.answer)) {
-            var res = (0, random_templating_1.randomizeStringSub)(entry.answer[i], ctx);
+            var res = (0, random_templating_1.randomizeStringSub)(subber(entry.answer[i]), ctx);
             ctx = res[1];
             tpAnswers.push(res[0]);
         }
@@ -142,13 +143,17 @@ class SimpleCardType extends FlashcardType {
         var ssCont = document.createElement("div");
         ssCont.appendChild(ssEditor.element);
         contDiv.appendChild(ssCont);
+        var subsEditor = (0, editor_1.multipleEditors)(settings.substitutions, () => ["", ""], editor_1.doubleTextFieldEditor);
+        subsEditor.element = (0, utils_1.hideDetails)(subsEditor.element, "Card substitution settings");
+        contDiv.appendChild(subsEditor.element);
         return {
             element: contDiv,
             menuToState: () => {
                 return {
                     doTwoSided: twoSidedEditor.menuToState(),
                     doReadAloud: readAloudEditor.menuToState(),
-                    speechSettings: ssEditor.menuToState()
+                    speechSettings: ssEditor.menuToState(),
+                    substitutions: subsEditor.menuToState()
                 };
             }
         };
@@ -167,7 +172,8 @@ class SimpleCardType extends FlashcardType {
         return {
             doTwoSided: true,
             doReadAloud: true,
-            speechSettings: (0, speech_1.defaultSpeechSettings)()
+            speechSettings: (0, speech_1.defaultSpeechSettings)(),
+            substitutions: []
         };
     }
 }
@@ -244,12 +250,15 @@ class ClozeCardType extends FlashcardType {
     }
     // abstract makeEntryEditor(entry: E): StateEditor<E>;
     makeEntryEditor(entry) {
-        var edCont = document.createElement("div");
+        var edDetails = document.createElement("details");
+        var edSummary = document.createElement("summary");
+        edDetails.appendChild(edSummary);
+        edDetails.classList.add("cardlist-accordion");
         var keyEd = (0, editor_1.singleTextFieldEditor)(entry.key);
         keyEd.element.style.display = "inline-block";
-        edCont.appendChild(keyEd.element);
+        edSummary.appendChild(keyEd.element);
         return {
-            element: edCont,
+            element: edDetails,
             menuToState: () => {
                 return {
                     key: keyEd.menuToState()

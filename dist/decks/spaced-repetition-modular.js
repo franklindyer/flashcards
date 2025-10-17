@@ -146,6 +146,7 @@ class ModularSpacedRepGen extends spaced_repetition_general_1.AbstractAsyncSpace
         return (0, utils_1.trivialPromise)(fl);
     }
     makeEditor(st) {
+        var _this = this;
         var contDiv = document.createElement("div");
         var infoWidget = (0, shared_sr_menu_components_1.infoWidgetSR)(this.gen, st);
         var studyingEditor = (0, shared_sr_menu_components_1.studyingEditorSR)(st);
@@ -185,22 +186,51 @@ class ModularSpacedRepGen extends spaced_repetition_general_1.AbstractAsyncSpace
                 cardInfo.textContent = `due ${(0, utils_1.getSRFutureDateInfo)(c.due)}`;
             }
             ed.element.appendChild(cardInfo);
+            var cardMenuToState = () => {
+                return {
+                    guid: c.guid,
+                    content: {
+                        cardType: c.content.cardType,
+                        cardEntry: ed.menuToState(),
+                        cardData: null,
+                        tags: tagsEd.menuToState().split(",").filter((t) => t.length > 0)
+                    },
+                    due: c.due,
+                    intervalMinutes: c.intervalMinutes,
+                    auxdata: c.auxdata
+                };
+            };
+            var cardMenuToPreview = () => {
+                var cardState = cardMenuToState();
+                return _this.gen.nextCardAsyncPreprocessing({
+                    data: cardState,
+                    context: {
+                        cardsLeft: 0,
+                        isPractice: false
+                    }
+                }, st);
+            };
+            var cardPreviewCont = document.createElement("div");
+            var previewBtn = (0, utils_1.iconButton)("eyeball.png", () => {
+                var cardDataPromise = cardMenuToPreview();
+                cardDataPromise.then((d) => {
+                    console.log(_this);
+                    var cardPreviewDivPromise = _this.gen.generateCardAsync(st, d);
+                    console.log(d);
+                    cardPreviewDivPromise.then((cardPreviewDiv) => {
+                        console.log(cardPreviewDiv);
+                        cardPreviewCont.innerHTML = "";
+                        cardPreviewDiv.el.classList.add("flashcard");
+                        cardPreviewDiv.el.classList.add("flashcard-preview");
+                        cardPreviewCont.appendChild(cardPreviewDiv.el);
+                    });
+                });
+            });
+            ed.element.appendChild(previewBtn);
+            ed.element.appendChild(cardPreviewCont);
             return {
                 element: ed.element,
-                menuToState: () => {
-                    return {
-                        guid: c.guid,
-                        content: {
-                            cardType: c.content.cardType,
-                            cardEntry: ed.menuToState(),
-                            cardData: null,
-                            tags: tagsEd.menuToState().split(",").filter((t) => t.length > 0)
-                        },
-                        due: c.due,
-                        intervalMinutes: c.intervalMinutes,
-                        auxdata: c.auxdata
-                    };
-                }
+                menuToState: cardMenuToState
             };
         }
         var cardSettingsGroups = {};

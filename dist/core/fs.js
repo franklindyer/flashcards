@@ -26,5 +26,8 @@ function setDeckJSON(deckSlug, deckBlob) {
     }).catch((e) => console.log(`ERROR WRITING DECK: ${e}`));
 }
 function deleteDeck(deckSlug) {
-    deckFolderP().then((h) => h.removeEntry(deckSlug));
+    deckFolderP().then((h) => {
+        h.removeEntry(deckSlug);
+        console.log(getDeckSlugs());
+    });
 }

@@ -385,12 +385,15 @@ export class ClozeCardType extends FlashcardType<ClozeCardEntry, ClozeCardData, 
 
     // abstract makeEntryEditor(entry: E): StateEditor<E>;
     makeEntryEditor(entry: ClozeCardEntry): StateEditor<ClozeCardEntry> {
-        var edCont = document.createElement("div");
+        var edDetails = document.createElement("details");
+        var edSummary = document.createElement("summary");
+        edDetails.appendChild(edSummary);
+        edDetails.classList.add("cardlist-accordion");
         var keyEd = singleTextFieldEditor(entry.key);
         keyEd.element.style.display = "inline-block";
-        edCont.appendChild(keyEd.element);
+        edSummary.appendChild(keyEd.element);
         return {
-            element: edCont,
+            element: edDetails,
             menuToState: () => {
                 return {
                     key: keyEd.menuToState()

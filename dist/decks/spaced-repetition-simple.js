@@ -22,6 +22,7 @@ exports.defaultSimpleSRSettings = {
     doTwoSided: true,
     readCorrectAnswers: false,
     speechSettings: (0, speech_1.defaultSpeechSettings)(),
+    substitutions: [],
     filterSettings: text_filters_1.defaultTextFilterSettings,
     pushcardQueue: (0, pushcard_queue_1.defaultPushcardQueue)()
 };
@@ -112,7 +113,10 @@ class SimpleSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGe
     nextCardPreprocessing(card, st) {
         // Clone the card so we don't mess with its state in the deck
         var card = JSON.parse(JSON.stringify(card));
+        var subber = (0, utils_1.makeSubber)(st.settings.substitutions);
         if (card.data !== undefined) {
+            card.data.content.prompt = card.data.content.prompt.map(subber);
+            card.data.content.answers = card.data.content.answers.map(subber);
             card = this.applyCardTemplating(card);
             if (card.data.content.twoSided && st.settings.doTwoSided) {
                 card.data.content.reversed = (Math.random() < 0.5);
@@ -196,6 +200,9 @@ class SimpleSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGe
         var twoSidedCont = document.createElement("div");
         twoSidedCont.appendChild(twoSidedEditor.element);
         var filterEditor = (0, text_filters_1.textFilterSelectionMenu)(settings.filterSettings);
+        var subsEditor = (0, editor_1.multipleEditors)(settings.substitutions, () => ["", ""], editor_1.doubleTextFieldEditor);
+        subsEditor.element = (0, utils_1.hideDetails)(subsEditor.element, "Card substitution settings");
+        filterEditor.element.appendChild(subsEditor.element);
         var pcqEditor = (0, pushcard_queue_1.makePCQEditor)(settings.pushcardQueue);
         [
             studyingEditor.element,
@@ -234,10 +241,6 @@ class SimpleSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGe
             edDetails.appendChild(twoSideEd.element);
             var cardInfo = document.createElement("a");
             cardInfo.classList.add("sr-card-due-date");
-            cardInfo.style.color = "lightgray";
-            cardInfo.style.marginLeft = "10px";
-            cardInfo.style.marginRight = "10px";
-            cardInfo.style.verticalAlign = "middle";
             if (c.intervalMinutes == 0) {
                 cardInfo.textContent = "not studied";
             }
@@ -336,6 +339,7 @@ class SimpleSpacedRepGen extends spaced_repetition_general_1.AbstractSpacedRepGe
                         incorrectFactor: incorrectFactor.menuToState(),
                         readCorrectAnswers: speechCheckbox.menuToState(),
                         speechSettings: speechEditor.menuToState(),
+                        substitutions: subsEditor.menuToState(),
                         filterSettings: filterEditor.menuToState(),
                         pushcardQueue: pcq,
                         inactiveTags: omitTagsEditor.menuToState().split(','),

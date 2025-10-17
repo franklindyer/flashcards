@@ -228,10 +228,6 @@ class ClozeSpacedRepGen extends spaced_repetition_general_1.AbstractAsyncSpacedR
             if (c.auxdata.invalid)
                 tf1.style.backgroundColor = "#ffeeee";
             var cardInfo = document.createElement("a");
-            cardInfo.style.color = "lightgray";
-            cardInfo.style.marginLeft = "10px";
-            cardInfo.style.marginRight = "10px";
-            cardInfo.style.verticalAlign = "middle";
             if (c.intervalMinutes == 0) {
                 cardInfo.textContent = "not studied";
             }

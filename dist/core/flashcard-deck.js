@@ -36,8 +36,8 @@ function loadAllDecks() {
     return deckSlugsP.then((slugs) => Promise.all(slugs.map(loadDeckIfExists)));
 }
 function eraseDeck(deckSlug) {
-    (0, fs_1.deleteDeck)(deckSlug);
     delete exports.gDeckRegistry[deckSlug];
+    (0, fs_1.deleteDeck)(deckSlug);
 }
 /* Setup general-purpose menus */
 function menuSetup(deckSlug) {

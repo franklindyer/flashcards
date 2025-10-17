@@ -75,6 +75,7 @@ button {
     align-items: center;
     font-size: 10vw;
     position: relative;
+    overflow: auto;
 }
 
 .flashcard-slide-in, .flashcard-slide-out {
@@ -239,6 +240,7 @@ hr {
     padding-bottom: 2px;
     padding-right: 2px;
     margin: 2px;
+    min-width: 70%;
 }
 
 .cardlist-accordion summary div input {
