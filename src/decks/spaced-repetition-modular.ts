@@ -303,7 +303,8 @@ export class ModularSpacedRepGen
             StateEditor<SpacedRepCard<SRModularContent, SRModularAuxData>> {
             var cardType = c.content.cardType;
             var cardEntry = c.content.cardEntry;
-            var ed = gCardTypeRegistry[cardType].makeEntryEditor(c.content.cardEntry);
+            var cardTypeClass = gCardTypeRegistry[cardType];
+            var ed = cardTypeClass.makeEntryEditor(c.content.cardEntry);
 
             var tagsEd = singleTextFieldEditor(c.content.tags.join(','));
             (<HTMLInputElement>tagsEd.element).placeholder = "tags...";
@@ -364,8 +365,21 @@ export class ModularSpacedRepGen
                 });
             });
             ed.element.appendChild(previewBtn);
-            ed.element.appendChild(cardPreviewCont);
 
+            var listenBtn = iconButton("speaker.png", () => {
+                var cardDataPromise = cardMenuToPreview();
+                var ss = speechEditor.menuToState();
+                cardDataPromise.then((c: any) => {
+                    console.log(c);
+                    var d = c.data.content.cardData;
+                    utter(cardTypeClass.getSpeakableText(d), ss.voice, ss.rate, ss.pitch, () => {});
+                });
+            });
+            ed.element.appendChild(listenBtn);
+            
+           
+            ed.element.appendChild(cardPreviewCont);
+ 
             return {
                 element: ed.element,
                 menuToState: cardMenuToState
