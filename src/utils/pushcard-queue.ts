@@ -11,7 +11,7 @@ import {
 export type PushcardQueue = {
     url: string,
     key: string,
-    index: number,
+    epoch: number,
     pending: any[],
     accepted: any[]
 };
@@ -20,7 +20,7 @@ export function defaultPushcardQueue(): PushcardQueue {
     return {
         url: "",
         key: "",
-        index: 0,
+        epoch: 0,
         pending: [],
         accepted: []
     };
@@ -28,7 +28,7 @@ export function defaultPushcardQueue(): PushcardQueue {
 
 function pullCards(pcq: PushcardQueue): Promise<PushcardQueue> {
     if (pcq.url.length == 0) {
-        pcq.index = 0;
+        pcq.epoch = 0;
         pcq.pending = [];
         return trivialPromise(pcq);
     }
@@ -43,13 +43,13 @@ function pullCards(pcq: PushcardQueue): Promise<PushcardQueue> {
         })
     }).then((r) => r.json())
       .then((r) => {
-        var serverIndex = r.index;
         var results = r.results;
-        var deltaIndex = r.index - pcq.index;
-        pcq.index = serverIndex;
-        if (deltaIndex > 0) {
-            pcq.pending = results.slice(0, deltaIndex).concat(pcq.pending);
+        results = results.filter((r: any) => r.epoch > pcq.epoch);
+        if (results.length > 0) {
+            pcq.epoch = Math.max(...results.map((r: any) => r.epoch));
         }
+        console.log(results);
+        pcq.pending = pcq.pending.concat(results);
         return pcq;
     })
 }
@@ -76,11 +76,12 @@ export function makePCQEditor(pcq: PushcardQueue): StateEditor<PushcardQueue> {
     var yesNoEds: StateEditor<number>[] = [];
 
     function refreshSuggestions(pcqNew: PushcardQueue) {
+        console.log(pcq.epoch);
         suggestions = [];
         yesNoEds = [];
         pcq.url = urlEditor.menuToState();
         pcq.key = keyEditor.menuToState();
-        pcq.index = pcqNew.index;
+        pcq.epoch = pcqNew.epoch;
         pcq.pending = pcqNew.pending;
         suggestionsDiv.innerHTML = "";
         for (var i in pcq.pending) {

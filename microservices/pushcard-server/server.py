@@ -3,6 +3,7 @@ import json
 import os
 import random
 import string
+import time
 
 from multiprocessing import Lock
 from flask import Flask, abort, request, abort, jsonify, render_template
@@ -30,15 +31,14 @@ def is_json(s):
 def add_to_queue(qkey, s):
     s = s[:QUEUE_MAX_ITEM_SIZE]
     if not qkey in QUEUE_DICT:
-        QUEUE_DICT[qkey] = (0, [])
-    qs, q = QUEUE_DICT[qkey]
+        QUEUE_DICT[qkey] = []
+    q = QUEUE_DICT[qkey]
     if s in q:
         return
     with QUEUE_LOCK:
         q = [s] + q
         q = q[:QUEUE_MAX_SIZE]
-        qs += 1
-        QUEUE_DICT[qkey] = (qs, q)
+        QUEUE_DICT[qkey] = q
 
 def get_from_queue(qkey):
     return QUEUE_DICT.get(qkey)
@@ -60,7 +60,11 @@ def put_data():
     summary = j.get('summary')
     if pk != PASSKEY:
         return abort(403)
-    add_to_queue(key, json.dumps({ "summary": summary, "data": json.loads(data) }))
+    add_to_queue(key, json.dumps({ 
+        "summary": summary, 
+        "data": json.loads(data),
+        "epoch": int(time.time())
+    }))
     resp = jsonify(success=True)
     return resp
 
@@ -74,8 +78,7 @@ def get_data():
         return abort(404)
     else:
         return jsonify({
-            "index": res[0],
-            "results": [json.loads(r) for r in res[1]]
+            "results": [json.loads(r) for r in res]
         })
 
 from waitress import serve
