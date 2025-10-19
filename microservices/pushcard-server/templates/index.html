@@ -9,6 +9,11 @@ textarea {
     width: 500px;
     height: 300px;
 }
+
+button {
+    margin-left: 10px;
+    margin-right: 10px;
+}
 </style>
 <script>
 function isValidJSON(s) {
@@ -50,6 +55,26 @@ function submitQueueItem() {
     });
 }
 
+function deleteQueueItem(h) {
+    var key = document.getElementById("key-input").value;
+    var passkey = document.getElementById("passkey-input").value;
+
+    fetch("/delete", {
+        method: "POST",
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            key: key,
+            passkey: passkey,
+            hash: h
+        })
+    }).then((r) => {
+        refreshQueueItems();
+    });
+}
+
 function refreshQueueItems() {
     var key = document.getElementById("key-input").value;
     fetch("/get", {
@@ -74,6 +99,11 @@ function refreshQueueItems() {
                 var li = document.createElement("li");
                 li.textContent = entry.summary;
                 ul.appendChild(li);
+                
+                var deleteBtn = document.createElement("button");
+                deleteBtn.textContent = "delete";
+                deleteBtn.onclick = ((h) => (() => deleteQueueItem(h)))(entry.hash);
+                li.appendChild(deleteBtn);
             }
         }
     )

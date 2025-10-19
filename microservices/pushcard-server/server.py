@@ -1,4 +1,5 @@
 import datetime
+import hashlib
 import json
 import os
 import random
@@ -14,7 +15,7 @@ cors = CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
 
 QUEUE_MAX_SIZE = 30
-QUEUE_MAX_ITEM_SIZE = 200
+QUEUE_MAX_ITEM_SIZE = 1000
 QUEUE_DICT = {}
 QUEUE_LOCK = Lock()
 PASSKEY = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(30))
@@ -40,6 +41,12 @@ def add_to_queue(qkey, s):
         q = q[:QUEUE_MAX_SIZE]
         QUEUE_DICT[qkey] = q
 
+def delete_from_queue(qkey, h):
+    if not qkey in QUEUE_DICT:
+        return
+    with QUEUE_LOCK:
+        QUEUE_DICT[qkey] = [x for x in QUEUE_DICT[qkey] if json.loads(x)["hash"] != h] 
+
 def get_from_queue(qkey):
     return QUEUE_DICT.get(qkey)
 
@@ -63,7 +70,8 @@ def put_data():
     add_to_queue(key, json.dumps({ 
         "summary": summary, 
         "data": json.loads(data),
-        "epoch": int(time.time())
+        "epoch": int(time.time()),
+        "hash": hashlib.shake_128(data.encode('utf-8')).hexdigest(4)
     }))
     resp = jsonify(success=True)
     return resp
@@ -80,6 +88,19 @@ def get_data():
         return jsonify({
             "results": [json.loads(r) for r in res]
         })
+
+@app.route("/delete", methods=["GET", "POST"])
+@cross_origin()
+def delete_data():
+    j = request.json
+    pk = j.get('passkey')
+    key = j.get('key')
+    h = j.get('hash')
+    if pk != PASSKEY:
+        return abort(403)
+    delete_from_queue(key, h)
+    resp = jsonify(success=True)
+    return resp
 
 from waitress import serve
 serve(app, host="0.0.0.0", port=8080)
