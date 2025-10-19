@@ -78,4 +78,7 @@ def get_data():
             "results": [json.loads(r) for r in res[1]]
         })
 
-app.run(host="0.0.0.0", port=8080)
+from waitress import serve
+serve(app, host="0.0.0.0", port=8080)
+
+# app.run(host="0.0.0.0", port=8080)

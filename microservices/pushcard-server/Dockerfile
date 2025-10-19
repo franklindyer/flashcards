@@ -14,4 +14,5 @@ COPY templates/* templates/
 
 EXPOSE 8080 
 
-ENTRYPOINT ["waitress-serve", "--host", "0.0.0.0", "--call", "server:app"]
+# ENTRYPOINT ["waitress-serve", "--host", "0.0.0.0", "--call", "server:app"]
+ENTRYPOINT ["python3", "server.py"]
