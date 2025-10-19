@@ -140,4 +140,5 @@ def get_cloze():
     # response.headers.add('Access-Control-Allow-Origin', '*')
     return response
 
-app.run(host="0.0.0.0", port=8080)
+from waitress import serve
+serve(app, host="0.0.0.0", port=8080)
