@@ -20,6 +20,13 @@ PASSKEY = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in
 
 print(f"Server passkey: {PASSKEY}", flush=True)
 
+def is_json(s):
+  try:
+    json.loads(s)
+  except ValueError as e:
+    return False
+  return True
+
 def add_to_queue(qkey, s):
     s = s[:QUEUE_MAX_ITEM_SIZE]
     if not qkey in QUEUE_DICT:
@@ -48,6 +55,8 @@ def put_data():
     key = j.get('key')
     pk = j.get('passkey')
     data = j.get('data')
+    if not is_json(data):
+        return abort(500)
     summary = j.get('summary')
     if pk != PASSKEY:
         return abort(403)
