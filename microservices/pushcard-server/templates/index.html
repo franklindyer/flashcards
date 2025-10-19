@@ -124,4 +124,12 @@ function refreshQueueItems() {
         <ul id="queue-item-list">
         </ul>
     </div>
+    
+<script>
+var textInput = document.getElementById("value-input");
+textInput.value = localStorage.getItem("textarea");
+textInput.oninput = (e) => {
+    localStorage.setItem("textarea", textInput.value);
+}
+</script>    
 </body>
