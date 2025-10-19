@@ -11,11 +11,28 @@ textarea {
 }
 </style>
 <script>
+function isValidJSON(s) {
+    try {
+        JSON.parse(s);
+        return true;
+    } catch (e) {
+        return false;
+    }
+}
+
 function submitQueueItem() {
     var key = document.getElementById("key-input").value;
     var passkey = document.getElementById("passkey-input").value;
     var summary = document.getElementById("summary-input").value;
-    var value = document.getElementById("value-input").value;
+    var valueInput = document.getElementById("value-input");
+    var value = valueInput.value;
+
+    if (!isValidJSON(value)) {
+        valueInput.style.backgroundColor = "#ffdddd";
+        return;
+    }
+    valueInput.style.backgroundColor = "white"; 
+
     fetch("/put", {
         method: "POST",
         headers: {

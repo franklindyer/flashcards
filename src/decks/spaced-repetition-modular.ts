@@ -370,7 +370,6 @@ export class ModularSpacedRepGen
                 var cardDataPromise = cardMenuToPreview();
                 var ss = speechEditor.menuToState();
                 cardDataPromise.then((c: any) => {
-                    console.log(c);
                     var d = c.data.content.cardData;
                     utter(cardTypeClass.getSpeakableText(d), ss.voice, ss.rate, ss.pitch, () => {});
                 });
