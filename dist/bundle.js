@@ -3053,7 +3053,8 @@ class ModularSpacedRepGen extends spaced_repetition_general_1.AbstractAsyncSpace
         function makeCardEditor(c) {
             var cardType = c.content.cardType;
             var cardEntry = c.content.cardEntry;
-            var ed = flashcard_entry_1.gCardTypeRegistry[cardType].makeEntryEditor(c.content.cardEntry);
+            var cardTypeClass = flashcard_entry_1.gCardTypeRegistry[cardType];
+            var ed = cardTypeClass.makeEntryEditor(c.content.cardEntry);
             var tagsEd = (0, editor_1.singleTextFieldEditor)(c.content.tags.join(','));
             tagsEd.element.placeholder = "tags...";
             ed.element.appendChild(tagsEd.element);
@@ -3107,6 +3108,15 @@ class ModularSpacedRepGen extends spaced_repetition_general_1.AbstractAsyncSpace
                 });
             });
             ed.element.appendChild(previewBtn);
+            var listenBtn = (0, utils_1.iconButton)("speaker.png", () => {
+                var cardDataPromise = cardMenuToPreview();
+                var ss = speechEditor.menuToState();
+                cardDataPromise.then((c) => {
+                    var d = c.data.content.cardData;
+                    (0, speech_1.utter)(cardTypeClass.getSpeakableText(d), ss.voice, ss.rate, ss.pitch, () => { });
+                });
+            });
+            ed.element.appendChild(listenBtn);
             ed.element.appendChild(cardPreviewCont);
             return {
                 element: ed.element,
@@ -3951,14 +3961,14 @@ function defaultPushcardQueue() {
     return {
         url: "",
         key: "",
-        index: 0,
+        epoch: 0,
         pending: [],
         accepted: []
     };
 }
 function pullCards(pcq) {
     if (pcq.url.length == 0) {
-        pcq.index = 0;
+        pcq.epoch = 0;
         pcq.pending = [];
         return (0, utils_1.trivialPromise)(pcq);
     }
@@ -3973,13 +3983,13 @@ function pullCards(pcq) {
         })
     }).then((r) => r.json())
         .then((r) => {
-        var serverIndex = r.index;
         var results = r.results;
-        var deltaIndex = r.index - pcq.index;
-        pcq.index = serverIndex;
-        if (deltaIndex > 0) {
-            pcq.pending = results.slice(0, deltaIndex).concat(pcq.pending);
+        results = results.filter((r) => r.epoch > pcq.epoch);
+        if (results.length > 0) {
+            pcq.epoch = Math.max(...results.map((r) => r.epoch));
         }
+        console.log(results);
+        pcq.pending = pcq.pending.concat(results);
         return pcq;
     });
 }
@@ -4003,11 +4013,12 @@ function makePCQEditor(pcq) {
     var suggestions = [];
     var yesNoEds = [];
     function refreshSuggestions(pcqNew) {
+        console.log(pcq.epoch);
         suggestions = [];
         yesNoEds = [];
         pcq.url = urlEditor.menuToState();
         pcq.key = keyEditor.menuToState();
-        pcq.index = pcqNew.index;
+        pcq.epoch = pcqNew.epoch;
         pcq.pending = pcqNew.pending;
         suggestionsDiv.innerHTML = "";
         for (var i in pcq.pending) {

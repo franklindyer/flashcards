@@ -8,14 +8,14 @@ function defaultPushcardQueue() {
     return {
         url: "",
         key: "",
-        index: 0,
+        epoch: 0,
         pending: [],
         accepted: []
     };
 }
 function pullCards(pcq) {
     if (pcq.url.length == 0) {
-        pcq.index = 0;
+        pcq.epoch = 0;
         pcq.pending = [];
         return (0, utils_1.trivialPromise)(pcq);
     }
@@ -30,13 +30,13 @@ function pullCards(pcq) {
         })
     }).then((r) => r.json())
         .then((r) => {
-        var serverIndex = r.index;
         var results = r.results;
-        var deltaIndex = r.index - pcq.index;
-        pcq.index = serverIndex;
-        if (deltaIndex > 0) {
-            pcq.pending = results.slice(0, deltaIndex).concat(pcq.pending);
+        results = results.filter((r) => r.epoch > pcq.epoch);
+        if (results.length > 0) {
+            pcq.epoch = Math.max(...results.map((r) => r.epoch));
         }
+        console.log(results);
+        pcq.pending = pcq.pending.concat(results);
         return pcq;
     });
 }
@@ -60,11 +60,12 @@ function makePCQEditor(pcq) {
     var suggestions = [];
     var yesNoEds = [];
     function refreshSuggestions(pcqNew) {
+        console.log(pcq.epoch);
         suggestions = [];
         yesNoEds = [];
         pcq.url = urlEditor.menuToState();
         pcq.key = keyEditor.menuToState();
-        pcq.index = pcqNew.index;
+        pcq.epoch = pcqNew.epoch;
         pcq.pending = pcqNew.pending;
         suggestionsDiv.innerHTML = "";
         for (var i in pcq.pending) {

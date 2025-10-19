@@ -173,7 +173,8 @@ class ModularSpacedRepGen extends spaced_repetition_general_1.AbstractAsyncSpace
         function makeCardEditor(c) {
             var cardType = c.content.cardType;
             var cardEntry = c.content.cardEntry;
-            var ed = flashcard_entry_1.gCardTypeRegistry[cardType].makeEntryEditor(c.content.cardEntry);
+            var cardTypeClass = flashcard_entry_1.gCardTypeRegistry[cardType];
+            var ed = cardTypeClass.makeEntryEditor(c.content.cardEntry);
             var tagsEd = (0, editor_1.singleTextFieldEditor)(c.content.tags.join(','));
             tagsEd.element.placeholder = "tags...";
             ed.element.appendChild(tagsEd.element);
@@ -227,6 +228,15 @@ class ModularSpacedRepGen extends spaced_repetition_general_1.AbstractAsyncSpace
                 });
             });
             ed.element.appendChild(previewBtn);
+            var listenBtn = (0, utils_1.iconButton)("speaker.png", () => {
+                var cardDataPromise = cardMenuToPreview();
+                var ss = speechEditor.menuToState();
+                cardDataPromise.then((c) => {
+                    var d = c.data.content.cardData;
+                    (0, speech_1.utter)(cardTypeClass.getSpeakableText(d), ss.voice, ss.rate, ss.pitch, () => { });
+                });
+            });
+            ed.element.appendChild(listenBtn);
             ed.element.appendChild(cardPreviewCont);
             return {
                 element: ed.element,
