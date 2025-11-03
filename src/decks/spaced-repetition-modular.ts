@@ -86,6 +86,7 @@ export type SRModularSettings = {
     incorrectFactor: number,
     inactiveTags: string[],
     readCorrectAnswers: boolean,
+    preventReversedNewCards: boolean,
     speechSettings: SpeechSettings,
     filterSettings: TextFilterSettings
 }
@@ -97,6 +98,7 @@ export const defaultSRModularSettings = {
     incorrectFactor: 0.5,
     inactiveTags: [],
     readCorrectAnswers: false,
+    preventReversedNewCards: false,
     speechSettings: defaultSpeechSettings(),
     filterSettings: defaultTextFilterSettings
 }
@@ -234,12 +236,12 @@ export class ModularSpacedRepGen
         card: SpacedRepCardPhysical<SRModularContent, SRModularAuxData>,
         st: SpacedRepState<SRModularContent, SRModularAuxData, SRModularSettings>
     ): Promise<SpacedRepCardPhysical<SRModularContent, SRModularAuxData>> {
-        if (card.data === undefined)
-            return trivialPromise(card);
+        if (card.data === undefined) { return trivialPromise(card); }
 
         var cardType = card.data!.content.cardType;
         var cardEntry = card.data!.content.cardEntry;
-        var dp = gCardTypeRegistry[cardType].processEntry(cardEntry, st.settings.cardTypeSettings[cardType]);
+        var context = { preventReversedCard: card.data!.intervalMinutes == 0 && st.settings.preventReversedNewCards };
+        var dp = gCardTypeRegistry[cardType].processEntry(cardEntry, st.settings.cardTypeSettings[cardType], context);
     
         return dp.then((d) => {
             card.data!.content.cardData = d;
@@ -290,6 +292,8 @@ export class ModularSpacedRepGen
         var speechDiv = document.createElement("div");
         speechDiv.appendChild(speechCheckbox.element);
         speechDiv.appendChild(speechEditor.element);
+
+        var preventReversedNewCardsCheckbox = boolEditor("Don't reverse two-sided cards during initial study", st.settings.preventReversedNewCards);
 
         var omitTagsEditor = singleTextFieldEditor(st.settings.inactiveTags.join(','));
         (<HTMLInputElement>omitTagsEditor.element).placeholder = "comma-separated tags...";
@@ -429,6 +433,7 @@ export class ModularSpacedRepGen
             correctFactor.element,
             incorrectFactor.element,
             omitTagsCont,
+            preventReversedNewCardsCheckbox.element,
             speechDiv,
             filterEditor.element
         ].concat(cardEditorGroups.map((ed) => ed.element)).map((el) => {
@@ -446,6 +451,7 @@ export class ModularSpacedRepGen
                     correctFactor: correctFactor.menuToState(),
                     incorrectFactor: incorrectFactor.menuToState(),
                     readCorrectAnswers: speechCheckbox.menuToState(),
+                    preventReversedNewCards: preventReversedNewCardsCheckbox.menuToState(),
                     speechSettings: speechEditor.menuToState(),
                     filterSettings: filterEditor.menuToState(),
                     inactiveTags: omitTagsEditor.menuToState().split(",")
