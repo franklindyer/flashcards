@@ -48,7 +48,7 @@ export abstract class FlashcardType<E, D, S> {
     }
 
     abstract preprocessEntry(entry: E, settings: S): void;
-    abstract processEntry(entry: E, settings: S): Promise<D>;
+    abstract processEntry(entry: E, settings: S, context: any): Promise<D>;
     abstract getSearchableText(entry: E): string;
     abstract getSpeakableText(data: D): string;
     abstract generateCard(data: D, settings: S): Flashcard;
@@ -102,9 +102,10 @@ export class SimpleCardType extends FlashcardType<SimpleCardEntry, SimpleCardDat
         return;
     }
 
-    // abstract processEntry(entry: E, settings: S): Promise<D>;
-    processEntry(entry: SimpleCardEntry, settings: SimpleCardSettings): Promise<SimpleCardData> {
-        var reversed = entry.twoSided && (Math.random() < 0.5);
+    // abstract processEntry(entry: E, settings: S, context: any): Promise<D>;
+    processEntry(entry: SimpleCardEntry, settings: SimpleCardSettings, context: any): Promise<SimpleCardData> {
+        var preventReversedCard = context.preventReversedCard;
+        var reversed = !preventReversedCard && entry.twoSided && (Math.random() < 0.5);
         var spoken = reversed && (Math.random() < 0.5);
 
         var subber = makeSubber(settings.substitutions);
@@ -325,8 +326,8 @@ export class ClozeCardType extends FlashcardType<ClozeCardEntry, ClozeCardData, 
         this.cache.addKey(entry.key, (k) => this.fetchCloze(entry.key, settings));
     }
 
-    // abstract processEntry(entry: E, settings: S): Promise<D>;
-    processEntry(entry: ClozeCardEntry, settings: ClozeCardSettings): Promise<ClozeCardData> {
+    // abstract processEntry(entry: E, settings: S, context: any): Promise<D>;
+    processEntry(entry: ClozeCardEntry, settings: ClozeCardSettings, context: any): Promise<ClozeCardData> {
         return this.cache.getKey(
             entry.key,
             (k) => this.fetchCloze(entry.key, settings)    
