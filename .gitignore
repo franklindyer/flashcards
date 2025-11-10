@@ -6,3 +6,4 @@ node_modules/**
 **/__pycache__
 **/sync-data
 microservices/cloze-server/db
+dist
