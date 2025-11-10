@@ -106,7 +106,7 @@ export class SimpleCardType extends FlashcardType<SimpleCardEntry, SimpleCardDat
     processEntry(entry: SimpleCardEntry, settings: SimpleCardSettings, context: any): Promise<SimpleCardData> {
         var preventReversedCard = context.preventReversedCard;
         var reversed = !preventReversedCard && entry.twoSided && (Math.random() < 0.5);
-        var canBeSpoken = entry.readAloud && settings.doReadAloud;
+        var canBeSpoken = settings.doReadAloud && entry.readAloud;
         var spoken = reversed && canBeSpoken && (Math.random() < 0.5);
 
         var subber = makeSubber(settings.substitutions);
