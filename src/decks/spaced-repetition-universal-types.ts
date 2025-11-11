@@ -96,7 +96,6 @@ export type SRUniversalSettings = {
     inactiveTags: string[],
     readCorrectAnswers: boolean,
     preventReversedNewCards: boolean,
-    speechSettings: SpeechSettings,
     filterSettings: TextFilterSettings
 }
 

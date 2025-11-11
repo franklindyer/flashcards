@@ -31,7 +31,8 @@ import {
 import {
     defaultSpeechSettings,
     speechSettingsEditor,
-    SpeechSettings
+    SpeechSettings,
+    utter
 } from "utils/speech"
 import {
     Flashcard
@@ -58,6 +59,24 @@ export abstract class FlashcardType<E, D, S> {
 
     abstract getDefaultEntry(): E;
     abstract getDefaultSettings(): S;
+
+    getMaybeSetting(key: string, settings: S): any {
+        if (key in <Object>settings) {
+            return (<any>settings)[key];
+        } else {
+            return null;
+        }
+    }
+
+    speakCard(data: D, settings: S, resolve: () => void): void {
+        var ss = this.getMaybeSetting("speechSettings", settings);
+        if (ss == null) {
+            console.log("SPEECH SETTINGS NOT FOUND");
+            resolve();
+        } else {
+            utter(this.getSpeakableText(data), ss.voice, ss.rate, ss.pitch, resolve);
+        }
+    }
 }
 
 export function registerFlashcardType(ft: FlashcardType<any, any, any>) {

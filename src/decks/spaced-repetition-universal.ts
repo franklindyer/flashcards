@@ -210,10 +210,13 @@ export class UniversalSpacedRepGen
         resolve: () => void
     ): void {
         var cardVirtual = card.virtual!;
+        var cardTypeSettings = st.settings.cardTypeSettings[cardVirtual.cardType];
         if (st.settings.readCorrectAnswers) {
-            var ss = st.settings.speechSettings;
-            var spokenAnswer = gCardTypeRegistry[cardVirtual.cardType].getSpeakableText(card.processed);
-            utter(spokenAnswer, ss.voice, ss.rate, ss.pitch, resolve);
+            gCardTypeRegistry[cardVirtual.cardType].speakCard(
+                card.processed,
+                cardTypeSettings,
+                resolve
+            );
         } else {
             resolve();
         }
@@ -454,10 +457,8 @@ export class UniversalSpacedRepGen
         omitTagsCont.appendChild(omitTagsEditor.element);
 
         var speechCheckbox = boolEditor("Speak correct answers using text-to-speech?", st.settings.readCorrectAnswers);
-        var speechEditor = speechSettingsEditor(st.settings.speechSettings);
         var speechDiv = document.createElement("div");
         speechDiv.appendChild(speechCheckbox.element);
-        speechDiv.appendChild(speechEditor.element);
 
         var preventReversedNewCardsCheckbox = boolEditor("Don't reverse two-sided cards during initial study", st.settings.preventReversedNewCards);
 
@@ -505,7 +506,7 @@ export class UniversalSpacedRepGen
             var cardMenuToPreview = () => {
                 var cardState = <any>cardMenuToState();
                 return (<any>_this).gen.nextCardAsyncPreprocessing({
-                    data: cardState,
+                    virtual: cardState,
                     context: {
                         cardsLeft: 0,
                         isPractice: false
@@ -536,10 +537,10 @@ export class UniversalSpacedRepGen
 
             var listenBtn = iconButton("speaker.png", () => {
                 var cardDataPromise = cardMenuToPreview();
-                var ss = speechEditor.menuToState();
+                var cardTypeSettings = st.settings.cardTypeSettings[c.cardType];
                 cardDataPromise.then((c: any) => {
-                    var d = c.data.cardData;
-                    utter(cardTypeClass.getSpeakableText(d), ss.voice, ss.rate, ss.pitch, () => {});
+                    var d = c.processed;
+                    cardTypeClass.speakCard(d, cardTypeSettings, () => {});
                 });
             });
             ed.element.appendChild(listenBtn);
@@ -616,7 +617,6 @@ export class UniversalSpacedRepGen
                     incorrectFactor: incorrectFactor.menuToState(),
                     readCorrectAnswers: speechCheckbox.menuToState(),
                     preventReversedNewCards: preventReversedNewCardsCheckbox.menuToState(),
-                    speechSettings: speechEditor.menuToState(),
                     filterSettings: filterEditor.menuToState(),
                     inactiveTags: omitTagsEditor.menuToState().split(",")
                 },
