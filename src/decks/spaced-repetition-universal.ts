@@ -256,7 +256,7 @@ export class UniversalSpacedRepGen
         } 
     }
 
-    updateAuxData(
+    updateStats(
         card: SRUniversalCardPhysical, 
         settings: SRUniversalSettings,
         correct: FlashcardResult
@@ -274,7 +274,26 @@ export class UniversalSpacedRepGen
         st: SRUniversalState,
         correct: FlashcardResult
     ): SRUniversalCardVirtual {
-        return null!; // TODO
+        // Physical card data may be affected by templating or other modifications, so must get card data from deck by its GUID
+        var cardVirtual = st.cards[card.virtual!.guid];
+        if (card.context.isPractice) {
+            return cardVirtual;
+        }
+        var isNew = cardVirtual.intervalMinutes == 0;
+
+        var newStats = this.updateStats(card, st.settings, correct);
+        cardVirtual.stats = newStats;
+        var newInterval = this.updateInterval(card, st.settings, correct);
+        cardVirtual.intervalMinutes = newInterval;
+
+        // Interval > 0 implies the card is no longer new
+        // Only reschedule the card if it was answered correctly
+        if (correct == FlashcardResult.Correct && newInterval > 0) {
+            cardVirtual.due = this.getDate();
+            cardVirtual.due.setHours(cardVirtual.due!.getHours() + cardVirtual.intervalMinutes/60);
+        }
+
+        return cardVirtual;
     }
 
     updateStateAsync(
