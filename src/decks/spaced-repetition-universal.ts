@@ -71,13 +71,13 @@ export type SRUniversalCardVirtual = {
     intervalMinutes: number,
     cardType: string,
     cardEntry: any,
-    cardData?: any,
     tags: string[],
     stats: SRUniversalStats
 }
 
 export type SRUniversalCardPhysical = {
     virtual?: SRUniversalCardVirtual,
+    processed?: any,
     context: {
         cardsLeft: number,
         isPractice: boolean
@@ -252,10 +252,10 @@ export class UniversalSpacedRepGen
         attempt: string,
         resolve: () => void
     ): void {
-        var cardData = card.virtual!;
+        var cardVirtual = card.virtual!;
         if (st.settings.readCorrectAnswers) {
             var ss = st.settings.speechSettings;
-            var spokenAnswer = gCardTypeRegistry[cardData.cardType].getSpeakableText(cardData.cardData);
+            var spokenAnswer = gCardTypeRegistry[cardVirtual.cardType].getSpeakableText(card.processed);
             utter(spokenAnswer, ss.voice, ss.rate, ss.pitch, resolve);
         } else {
             resolve();
@@ -304,6 +304,7 @@ export class UniversalSpacedRepGen
     ): SRUniversalCardVirtual {
         // Physical card data may be affected by templating or other modifications, so must get card data from deck by its GUID
         var cardVirtual = st.cards[card.virtual!.guid];
+
         if (card.context.isPractice) {
             return cardVirtual;
         }
@@ -410,7 +411,7 @@ export class UniversalSpacedRepGen
             return trivialPromise(false);
         }
         var cardType = card.virtual!.cardType;
-        var cardData = card.virtual!.cardData;
+        var cardData = card.processed!;
         var tf = (s: string) => applyTextFilter(s, st.settings.filterSettings);
         return gCardTypeRegistry[cardType].checkAnswer(answer, cardData, st.settings.cardTypeSettings[cardType], tf);
     }
@@ -440,7 +441,7 @@ export class UniversalSpacedRepGen
         var dp = gCardTypeRegistry[cardType].processEntry(cardEntry, st.settings.cardTypeSettings[cardType], context);
     
         return dp.then((d) => {
-            card.virtual!.cardData = d;
+            card.processed = d;
             return card;
         })
     }
@@ -449,7 +450,7 @@ export class UniversalSpacedRepGen
         st: SRUniversalState,
         card: SRUniversalCardPhysical 
     ): Promise<Flashcard> {
-        if (card.virtual === undefined || card.virtual.cardData === undefined) {
+        if (card.virtual === undefined || card.processed === undefined) {
             return trivialPromise(renderCard("noanswer-template",
                 "No cards left to study."
             ));
@@ -457,8 +458,8 @@ export class UniversalSpacedRepGen
         
         var cardType = card.virtual!.cardType;
         var cardEntry = card.virtual!.cardEntry;
-        var cardData = card.virtual!.cardData;
-        var fl = gCardTypeRegistry[cardType].generateCard(cardData, st.settings.cardTypeSettings[cardType]);
+        var cardProcessed = card.processed;
+        var fl = gCardTypeRegistry[cardType].generateCard(cardProcessed, st.settings.cardTypeSettings[cardType]);
         fl.el.appendChild(makeCardsLeftSpan(card));
         return trivialPromise(fl);
     }
