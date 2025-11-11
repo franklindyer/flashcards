@@ -87,11 +87,11 @@ export type SRUniversalCardPhysical = {
     virtual?: SRUniversalCardVirtual,
     context: {
         cardsLeft: number,
-        isPractice: boolean,
-    },
+        isPractice: boolean
+    }
 }
 
-export enum SRStudying = {
+export enum SRStudying {
     NewCards = 1,
     DueCards,
     RandomCards
@@ -247,7 +247,7 @@ export class UniversalSpacedRepGen
         card: SRUniversalCardPhysical, 
         settings: SRUniversalSettings,
         correct: FlashcardResult
-    ): SRModularAuxData {
+    ): SRUniversalStats {
         if (correct == FlashcardResult.Correct) {
             card.virtual!.auxdata.streak += 1;
         } else if (correct == FlashcardResult.Incorrect) {
@@ -260,7 +260,7 @@ export class UniversalSpacedRepGen
         card: SRUniversalCardPhysical,
         st: SRUniversalState,
         correct: FlashcardResult
-    ): {
+    ): SRUniversalCardVirtual {
         return null!; // TODO
     }
 
