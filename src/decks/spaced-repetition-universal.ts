@@ -54,6 +54,8 @@ import {
     emptySRQueue,
     SRNewQueue,
     chooseNext,
+    filterNewQueue,
+    incorporateLast
 } from "utils/spaced-repetition-newqueue"
 import {
     gCardTypeRegistry,
@@ -301,7 +303,21 @@ export class UniversalSpacedRepGen
         card: SRUniversalCardPhysical,
         result: FlashcardResult
     ): Promise<SRUniversalState> {
-        return null!; // TODO
+        if (result == FlashcardResult.Unanswered || st.studying == SRStudying.RandomCards) {
+            return trivialPromise(st);
+        }
+
+        var cardGuid = card.virtual!.guid;
+        var cardNewState = this.updateCard(card, st, result);
+
+        // If card is still new, stick it back in the queue
+        if (st.studying == SRStudying.NewCards) {
+            st.newQ = incorporateLast(st.newQ, cardGuid, this.cardIsNew(cardNewState));
+        }
+        st.newQ = filterNewQueue(st.newQ, (id: string) => this.cardIsEnabled(st.cards[id], st));
+
+        st.cards[cardGuid] = cardNewState;
+        return trivialPromise(st);
     }
 
     getNextCardAsync(st: SRUniversalState): Promise<SRUniversalCardPhysical> {
