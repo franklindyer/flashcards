@@ -19,94 +19,72 @@ modules by path ./node_modules/ 146 KiB
   + 4 modules
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts
-./src/decks/spaced-repetition-universal.ts 132:4-9
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(132,5)
-      TS2322: Type 'IDictionary<SpacedRepCard<never, { streak: number; }>>' is not assignable to type 'IDictionary<SRUniversalCardVirtual>'.
-  Type 'SpacedRepCard<never, { streak: number; }>' is missing the following properties from type 'SRUniversalCardVirtual': cardType, cardEntry, tags, stats
+./src/decks/spaced-repetition-universal.ts 148:8-15
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(148,9)
+      TS2353: Object literal may only specify known properties, and 'auxdata' does not exist in type 'SRUniversalCardVirtual'.
  @ ./src/setup.ts 10:0-44
  @ ./src/index.ts 3:0-18
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts
-./src/decks/spaced-repetition-universal.ts 138:80-96
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(138,81)
-      TS2304: Cannot find name 'SRModularAuxData'.
- @ ./src/setup.ts 10:0-44
- @ ./src/index.ts 3:0-18
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts
-./src/decks/spaced-repetition-universal.ts 141:8-15
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(141,9)
-      TS2739: Type '{ cardType: string; cardEntry: any; tags: never[]; }' is missing the following properties from type 'SRUniversalCardVirtual': guid, due, intervalMinutes, stats
- @ ./src/setup.ts 10:0-44
- @ ./src/index.ts 3:0-18
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts
-./src/decks/spaced-repetition-universal.ts 164:37-58
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(164,38)
+./src/decks/spaced-repetition-universal.ts 165:37-58
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(165,38)
       TS2304: Cannot find name 'defaultSRModularState'.
  @ ./src/setup.ts 10:0-44
  @ ./src/index.ts 3:0-18
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts
-./src/decks/spaced-repetition-universal.ts 204:21-28
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(204,22)
+./src/decks/spaced-repetition-universal.ts 205:21-28
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(205,22)
       TS2339: Property 'content' does not exist on type 'SRUniversalCardVirtual'.
  @ ./src/setup.ts 10:0-44
  @ ./src/index.ts 3:0-18
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts
-./src/decks/spaced-repetition-universal.ts 204:40-41
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(204,41)
+./src/decks/spaced-repetition-universal.ts 205:40-41
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(205,41)
       TS7006: Parameter 't' implicitly has an 'any' type.
  @ ./src/setup.ts 10:0-44
  @ ./src/index.ts 3:0-18
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts
-./src/decks/spaced-repetition-universal.ts 217:58-65
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(217,59)
+./src/decks/spaced-repetition-universal.ts 218:58-65
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(218,59)
       TS2339: Property 'content' does not exist on type 'SRUniversalCardVirtual'.
  @ ./src/setup.ts 10:0-44
  @ ./src/index.ts 3:0-18
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts
-./src/decks/spaced-repetition-universal.ts 217:102-109
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(217,103)
+./src/decks/spaced-repetition-universal.ts 218:102-109
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(218,103)
       TS2339: Property 'content' does not exist on type 'SRUniversalCardVirtual'.
  @ ./src/setup.ts 10:0-44
  @ ./src/index.ts 3:0-18
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts
-./src/decks/spaced-repetition-universal.ts 232:58-65
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(232,59)
+./src/decks/spaced-repetition-universal.ts 233:58-65
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(233,59)
       TS2339: Property 'auxdata' does not exist on type 'SRUniversalCardVirtual'.
  @ ./src/setup.ts 10:0-44
  @ ./src/index.ts 3:0-18
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts
-./src/decks/spaced-repetition-universal.ts 252:26-33
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(252,27)
+./src/decks/spaced-repetition-universal.ts 253:26-33
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(253,27)
       TS2339: Property 'auxdata' does not exist on type 'SRUniversalCardVirtual'.
  @ ./src/setup.ts 10:0-44
  @ ./src/index.ts 3:0-18
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts
-./src/decks/spaced-repetition-universal.ts 254:26-33
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(254,27)
+./src/decks/spaced-repetition-universal.ts 255:26-33
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(255,27)
       TS2339: Property 'auxdata' does not exist on type 'SRUniversalCardVirtual'.
  @ ./src/setup.ts 10:0-44
  @ ./src/index.ts 3:0-18
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts
-./src/decks/spaced-repetition-universal.ts 256:29-36
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(256,30)
+./src/decks/spaced-repetition-universal.ts 257:29-36
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(257,30)
       TS2339: Property 'auxdata' does not exist on type 'SRUniversalCardVirtual'.
- @ ./src/setup.ts 10:0-44
- @ ./src/index.ts 3:0-18
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts
-./src/decks/spaced-repetition-universal.ts 287:37-44
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(287,38)
-      TS2339: Property 'content' does not exist on type 'SRUniversalCardVirtual'.
  @ ./src/setup.ts 10:0-44
  @ ./src/index.ts 3:0-18
 
@@ -118,71 +96,85 @@ ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spa
  @ ./src/index.ts 3:0-18
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts
-./src/decks/spaced-repetition-universal.ts 297:32-39
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(297,33)
+./src/decks/spaced-repetition-universal.ts 289:37-44
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(289,38)
       TS2339: Property 'content' does not exist on type 'SRUniversalCardVirtual'.
  @ ./src/setup.ts 10:0-44
  @ ./src/index.ts 3:0-18
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts
-./src/decks/spaced-repetition-universal.ts 301:32-39
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(301,33)
+./src/decks/spaced-repetition-universal.ts 298:32-39
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(298,33)
       TS2339: Property 'content' does not exist on type 'SRUniversalCardVirtual'.
  @ ./src/setup.ts 10:0-44
  @ ./src/index.ts 3:0-18
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts
-./src/decks/spaced-repetition-universal.ts 312:37-44
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(312,38)
+./src/decks/spaced-repetition-universal.ts 302:32-39
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(302,33)
       TS2339: Property 'content' does not exist on type 'SRUniversalCardVirtual'.
  @ ./src/setup.ts 10:0-44
  @ ./src/index.ts 3:0-18
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts
-./src/decks/spaced-repetition-universal.ts 313:38-45
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(313,39)
+./src/decks/spaced-repetition-universal.ts 313:37-44
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(313,38)
       TS2339: Property 'content' does not exist on type 'SRUniversalCardVirtual'.
  @ ./src/setup.ts 10:0-44
  @ ./src/index.ts 3:0-18
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts
-./src/decks/spaced-repetition-universal.ts 318:26-33
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(318,27)
+./src/decks/spaced-repetition-universal.ts 314:38-45
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(314,39)
       TS2339: Property 'content' does not exist on type 'SRUniversalCardVirtual'.
  @ ./src/setup.ts 10:0-44
  @ ./src/index.ts 3:0-18
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts
-./src/decks/spaced-repetition-universal.ts 327:55-62
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(327,56)
+./src/decks/spaced-repetition-universal.ts 319:26-33
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(319,27)
       TS2339: Property 'content' does not exist on type 'SRUniversalCardVirtual'.
  @ ./src/setup.ts 10:0-44
  @ ./src/index.ts 3:0-18
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts
-./src/decks/spaced-repetition-universal.ts 333:37-44
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(333,38)
+./src/decks/spaced-repetition-universal.ts 328:55-62
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(328,56)
       TS2339: Property 'content' does not exist on type 'SRUniversalCardVirtual'.
  @ ./src/setup.ts 10:0-44
  @ ./src/index.ts 3:0-18
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts
-./src/decks/spaced-repetition-universal.ts 334:38-45
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(334,39)
+./src/decks/spaced-repetition-universal.ts 334:37-44
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(334,38)
       TS2339: Property 'content' does not exist on type 'SRUniversalCardVirtual'.
  @ ./src/setup.ts 10:0-44
  @ ./src/index.ts 3:0-18
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts
-./src/decks/spaced-repetition-universal.ts 335:37-44
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(335,38)
+./src/decks/spaced-repetition-universal.ts 335:38-45
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(335,39)
       TS2339: Property 'content' does not exist on type 'SRUniversalCardVirtual'.
  @ ./src/setup.ts 10:0-44
  @ ./src/index.ts 3:0-18
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts
-./src/decks/spaced-repetition-universal.ts 347:55-57
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(347,56)
+./src/decks/spaced-repetition-universal.ts 336:37-44
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(336,38)
+      TS2339: Property 'content' does not exist on type 'SRUniversalCardVirtual'.
+ @ ./src/setup.ts 10:0-44
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts
+./src/decks/spaced-repetition-universal.ts 338:26-43
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(338,27)
+      TS2304: Cannot find name 'makeCardsLeftSpan'.
+ @ ./src/setup.ts 10:0-44
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts
+./src/decks/spaced-repetition-universal.ts 348:55-57
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(348,56)
       TS2345: Argument of type 'SRUniversalState' is not assignable to parameter of type 'SpacedRepState<unknown, unknown, SRUniversalSettings>'.
   Types of property 'cards' are incompatible.
     Type 'IDictionary<SRUniversalCardVirtual>' is not assignable to type 'IDictionary<SpacedRepCard<unknown, unknown>>'.
@@ -191,8 +183,8 @@ ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spa
  @ ./src/index.ts 3:0-18
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts
-./src/decks/spaced-repetition-universal.ts 348:46-48
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(348,47)
+./src/decks/spaced-repetition-universal.ts 349:46-48
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(349,47)
       TS2345: Argument of type 'SRUniversalState' is not assignable to parameter of type 'SpacedRepState<unknown, unknown, SRUniversalSettings>'.
   Types of property 'cards' are incompatible.
     Type 'IDictionary<SRUniversalCardVirtual>' is not assignable to type 'IDictionary<SpacedRepCard<unknown, unknown>>'.
@@ -201,60 +193,79 @@ ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spa
  @ ./src/index.ts 3:0-18
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts
-./src/decks/spaced-repetition-universal.ts 377:73-89
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(377,74)
+./src/decks/spaced-repetition-universal.ts 378:35-48
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(378,36)
+      TS2304: Cannot find name 'SpacedRepCard'.
+ @ ./src/setup.ts 10:0-44
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts
+./src/decks/spaced-repetition-universal.ts 378:73-89
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(378,74)
       TS2304: Cannot find name 'SRModularAuxData'.
  @ ./src/setup.ts 10:0-44
  @ ./src/index.ts 3:0-18
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts
-./src/decks/spaced-repetition-universal.ts 378:62-78
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(378,63)
+./src/decks/spaced-repetition-universal.ts 379:24-37
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(379,25)
+      TS2304: Cannot find name 'SpacedRepCard'.
+ @ ./src/setup.ts 10:0-44
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts
+./src/decks/spaced-repetition-universal.ts 379:62-78
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(379,63)
       TS2304: Cannot find name 'SRModularAuxData'.
  @ ./src/setup.ts 10:0-44
  @ ./src/index.ts 3:0-18
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts
-./src/decks/spaced-repetition-universal.ts 398:62-78
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(398,63)
+./src/decks/spaced-repetition-universal.ts 399:24-37
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(399,25)
+      TS2304: Cannot find name 'SpacedRepCard'.
+ @ ./src/setup.ts 10:0-44
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts
+./src/decks/spaced-repetition-universal.ts 399:62-78
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(399,63)
       TS2304: Cannot find name 'SRModularAuxData'.
  @ ./src/setup.ts 10:0-44
  @ ./src/index.ts 3:0-18
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts
-./src/decks/spaced-repetition-universal.ts 464:80-96
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(464,81)
+./src/decks/spaced-repetition-universal.ts 465:42-55
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(465,43)
+      TS2304: Cannot find name 'SpacedRepCard'.
+ @ ./src/setup.ts 10:0-44
+ @ ./src/index.ts 3:0-18
+
+ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts
+./src/decks/spaced-repetition-universal.ts 465:80-96
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(465,81)
       TS2304: Cannot find name 'SRModularAuxData'.
  @ ./src/setup.ts 10:0-44
  @ ./src/index.ts 3:0-18
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts
-./src/decks/spaced-repetition-universal.ts 468:16-78
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(468,17)
-      TS2345: Argument of type 'SRUniversalCardVirtual[]' is not assignable to parameter of type 'SpacedRepCard<SRUniversalCardVirtual, SRModularAuxData>[]'.
-  Type 'SRUniversalCardVirtual' is missing the following properties from type 'SpacedRepCard<SRUniversalCardVirtual, SRModularAuxData>': content, auxdata
- @ ./src/setup.ts 10:0-44
- @ ./src/index.ts 3:0-18
-
-ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts
-./src/decks/spaced-repetition-universal.ts 468:56-63
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(468,57)
+./src/decks/spaced-repetition-universal.ts 469:56-63
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(469,57)
       TS2339: Property 'content' does not exist on type 'SRUniversalCardVirtual'.
  @ ./src/setup.ts 10:0-44
  @ ./src/index.ts 3:0-18
 
 ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts
-./src/decks/spaced-repetition-universal.ts 517:12-23
-[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(517,13)
+./src/decks/spaced-repetition-universal.ts 518:12-23
+[tsl] ERROR in /Users/franklindyer/Documents/dev/snippets/web-flashcards/src/decks/spaced-repetition-universal.ts(518,13)
       TS2322: Type '() => { studying: SpacedRepStudying; settings: { cardTypeSettings: IDictionary<any>; initialHours: number; correctFactor: number; incorrectFactor: number; ... 4 more ...; inactiveTags: string[]; }; newQ: { ...; }; cards: IDictionary<...>; }' is not assignable to type '() => SRUniversalState'.
   Call signature return types '{ studying: SpacedRepStudying; settings: { cardTypeSettings: IDictionary<any>; initialHours: number; correctFactor: number; incorrectFactor: number; ... 4 more ...; inactiveTags: string[]; }; newQ: { ...; }; cards: IDictionary<...>; }' and 'SRUniversalState' are incompatible.
-    The types of 'cards' are incompatible between these types.
-      Type 'IDictionary<SpacedRepCard<SRUniversalCardVirtual, SRModularAuxData>>' is not assignable to type 'IDictionary<SRUniversalCardVirtual>'.
-        Type 'SpacedRepCard<SRUniversalCardVirtual, SRModularAuxData>' is missing the following properties from type 'SRUniversalCardVirtual': cardType, cardEntry, tags, stats
+    The types of 'studying' are incompatible between these types.
+      Type 'SpacedRepStudying' is not assignable to type 'SRStudying'.
  @ ./src/setup.ts 10:0-44
  @ ./src/index.ts 3:0-18
 
-32 errors have detailed information that is not shown.
+34 errors have detailed information that is not shown.
 Use 'stats.errorDetails: true' resp. '--stats-error-details' to show it.
 
-webpack 5.97.1 compiled with 32 errors in 1190 ms
+webpack 5.97.1 compiled with 34 errors in 1206 ms
