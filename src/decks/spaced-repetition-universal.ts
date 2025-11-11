@@ -41,10 +41,6 @@ import {
     multipleEditors
 } from "core/editor"
 import {
-    infoWidgetSR,
-    studyingEditorSR
-} from "utils/shared-sr-menu-components"
-import {
     renderCard
 } from "core/flashcard-template"
 import {
@@ -61,6 +57,8 @@ import {
     gCardTypeRegistry,
     FlashcardType
 } from "core/flashcard-entry"
+
+/* --- CORE SPACED REPETITION TYPES --- */
 
 export type SRUniversalStats = {
     created: Date,
@@ -110,6 +108,8 @@ export type SRUniversalState = {
     studying: SRStudying,
     settings: SRUniversalSettings
 }
+
+/* --- USEFUL UTILITIES FOR DEFINING SR DECK --- */
 
 export const defaultSRUniversalSettings = {
     cardTypeSettings: {},
@@ -164,6 +164,32 @@ function makeCardsLeftSpan(card: SRUniversalCardPhysical) {
         infoText.textContent = `${card.context.cardsLeft} cards remaining`;
     }
     return infoText;
+}
+
+function infoWidgetSR(
+    totalCards: number,
+    newCards: number,
+    dueCards: number
+): HTMLElement {
+
+    var contDiv = document.createElement("div");
+    contDiv.classList.add("deck-menu-submenu");
+    var totP = document.createElement("p");
+    totP.textContent = `Total cards: ${totalCards}`;
+
+    var newP = document.createElement("p");
+    newP.textContent = `New cards: ${newCards}`;
+    newP.style.color = "#9999ee";
+    newP.style.fontWeight = "bold";
+
+    var dueP = document.createElement("p");
+    dueP.textContent = `Due cards: ${dueCards}`;
+    dueP.style.color = "#ee9999";
+    dueP.style.fontWeight = "bold";
+
+    [totP, newP, dueP].map((el) => contDiv.appendChild(el));
+
+    return contDiv;
 }
 
 export class UniversalSpacedRepGen
@@ -443,7 +469,15 @@ export class UniversalSpacedRepGen
 
         var contDiv = document.createElement("div");
 
-        // var infoWidget = infoWidgetSR((<any>this).gen, st); TODO
+        var totCards = Object.keys(st.cards).length;
+        var newCards = Object.keys(st.cards).filter((i) => (<any>this).gen.cardIsNew(st.cards[i]) && (<any>this).gen.cardIsEnabled(st.cards[i], st)).length;
+        var dueCards = Object.keys(st.cards).filter((i) => (<any>this).gen.cardIsDue(st.cards[i]) && (<any>this).gen.cardIsEnabled(st.cards[i], st)).length;
+        var infoWidget = infoWidgetSR(
+            totCards,
+            newCards,
+            dueCards
+        );
+
         var studyingEditor = radioEditor(
             st.studying,
             [SRStudying.NewCards, SRStudying.DueCards, SRStudying.RandomCards],
@@ -598,7 +632,7 @@ export class UniversalSpacedRepGen
         }       
  
         [
-            // infoWidget, TODO
+            infoWidget, 
             studyingEditor.element,
             initHoursEditor.element,
             newQueueSizeEditor.element,
