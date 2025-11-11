@@ -52,7 +52,8 @@ import {
 } from "core/flashcard-deck"
 import {
     emptySRQueue,
-    SRNewQueue
+    SRNewQueue,
+    chooseNext,
 } from "utils/spaced-repetition-newqueue"
 import {
     gCardTypeRegistry,
@@ -285,7 +286,58 @@ export class UniversalSpacedRepGen
     }
 
     getNextCardAsync(st: SRUniversalState): Promise<SRUniversalCardPhysical> {
-        return null!; // TODO
+        var inds = Object.keys(st.cards);
+        var newInds = this.getNew(st);
+        var dueInds = this.getDue(st);
+        var emptyCard = this.nextCardAsyncPreprocessing({
+            virtual: undefined,
+            context: { cardsLeft: 0, isPractice: false }
+        }, st);
+        switch (st.studying) {
+            case SRStudying.NewCards:
+                var newGuid = chooseNext(st.newQ, newInds);
+                if (newGuid === undefined) {
+                    return emptyCard;     
+                }
+                return this.nextCardAsyncPreprocessing({
+                    virtual: st.cards[newGuid],
+                    context: {
+                        cardsLeft: newInds.length,
+                        isPractice: false
+                    }
+                }, st);
+            case SRStudying.DueCards:
+                if (dueInds.length == 0) {
+                    return emptyCard;
+                }
+                var dueInd = dueInds[Math.floor(Math.random() * dueInds.length)];
+                return this.nextCardAsyncPreprocessing({
+                    virtual: st.cards[dueInd],
+                    context: {
+                        cardsLeft: dueInds.length,
+                        isPractice: false
+                    }
+                }, st);
+            case SRStudying.RandomCards:
+                if (inds.length == 0) {
+                    return emptyCard;
+                }
+                var ind = inds[Math.floor(Math.random() * inds.length)];
+                return this.nextCardAsyncPreprocessing({
+                    virtual: st.cards[ind],
+                    context: {
+                        cardsLeft: 0,
+                        isPractice: true
+                    }
+                }, st); 
+        }
+        return this.nextCardAsyncPreprocessing({
+            virtual: undefined,
+            context: {
+                cardsLeft: 0,
+                isPractice: false
+            }
+        }, st);
     }
 
     checkAnswerAsync(
