@@ -407,6 +407,8 @@ export class ClozeCardType extends FlashcardType<ClozeCardEntry, ClozeCardData, 
 
     // abstract makeSettingsEditor(settings: S): StateEditor<S>;
     makeSettingsEditor(settings: ClozeCardSettings): StateEditor<ClozeCardSettings> {
+        var clozeSettingsDiv = document.createElement("div");
+
         var clozeServerDiv = document.createElement("div");
         clozeServerDiv.classList.add("deck-menu-submenu"); 
         var clozeServerUrlEditor = singleTextFieldEditor(settings.clozeServerUrl)
@@ -421,10 +423,12 @@ export class ClozeCardType extends FlashcardType<ClozeCardEntry, ClozeCardData, 
         clozeServerDiv.appendChild(clozeSourceLangEditor.element);
         clozeServerDiv.appendChild(clozeTargetLangEditor.element);
         clozeServerDiv.appendChild(clozeGroupsEditor.element);
-        clozeServerDiv.appendChild(ssEditor.element);
+
+        clozeSettingsDiv.appendChild(clozeServerDiv);
+        clozeSettingsDiv.appendChild(ssEditor.element);
 
         return {
-            element: clozeServerDiv,
+            element: clozeSettingsDiv,
             menuToState: () => {
                 return {
                     clozeServerUrl: clozeServerUrlEditor.menuToState(),
