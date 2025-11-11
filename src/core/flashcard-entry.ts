@@ -31,7 +31,8 @@ import {
 import {
     defaultSpeechSettings,
     speechSettingsEditor,
-    SpeechSettings
+    SpeechSettings,
+    utter
 } from "utils/speech"
 import {
     Flashcard
@@ -58,6 +59,24 @@ export abstract class FlashcardType<E, D, S> {
 
     abstract getDefaultEntry(): E;
     abstract getDefaultSettings(): S;
+
+    getMaybeSetting(key: string, settings: S): any {
+        if (key in <Object>settings) {
+            return (<any>settings)[key];
+        } else {
+            return null;
+        }
+    }
+
+    speakCard(data: D, settings: S, resolve: () => void): void {
+        var ss = this.getMaybeSetting("speechSettings", settings);
+        if (ss == null) {
+            console.log("SPEECH SETTINGS NOT FOUND");
+            resolve();
+        } else {
+            utter(this.getSpeakableText(data), ss.voice, ss.rate, ss.pitch, resolve);
+        }
+    }
 }
 
 export function registerFlashcardType(ft: FlashcardType<any, any, any>) {
@@ -296,7 +315,8 @@ export type ClozeCardSettings = {
     clozeServerUrl: string,
     sourceLangs: string[],
     targetLang: string,
-    clozeGroups: string[]
+    clozeGroups: string[],
+    speechSettings: SpeechSettings,
 }
 
 export class ClozeCardType extends FlashcardType<ClozeCardEntry, ClozeCardData, ClozeCardSettings> {
@@ -406,25 +426,35 @@ export class ClozeCardType extends FlashcardType<ClozeCardEntry, ClozeCardData, 
 
     // abstract makeSettingsEditor(settings: S): StateEditor<S>;
     makeSettingsEditor(settings: ClozeCardSettings): StateEditor<ClozeCardSettings> {
+        var clozeSettingsDiv = document.createElement("div");
+
         var clozeServerDiv = document.createElement("div");
         clozeServerDiv.classList.add("deck-menu-submenu"); 
         var clozeServerUrlEditor = singleTextFieldEditor(settings.clozeServerUrl)
         var clozeSourceLangEditor = singleTextFieldEditor(settings.sourceLangs.join(','));
         var clozeTargetLangEditor = singleTextFieldEditor(settings.targetLang);
         var clozeGroupsEditor = singleTextFieldEditor(settings.clozeGroups.join(','));
-        (<HTMLInputElement>clozeGroupsEditor.element).placeholder = "allowed groups..."; 
+        (<HTMLInputElement>clozeGroupsEditor.element).placeholder = "allowed groups...";
+
+        var ssEditor = speechSettingsEditor(settings.speechSettings);
+
         clozeServerDiv.appendChild(clozeServerUrlEditor.element);
         clozeServerDiv.appendChild(clozeSourceLangEditor.element);
         clozeServerDiv.appendChild(clozeTargetLangEditor.element);
         clozeServerDiv.appendChild(clozeGroupsEditor.element);
+
+        clozeSettingsDiv.appendChild(clozeServerDiv);
+        clozeSettingsDiv.appendChild(ssEditor.element);
+
         return {
-            element: clozeServerDiv,
+            element: clozeSettingsDiv,
             menuToState: () => {
                 return {
                     clozeServerUrl: clozeServerUrlEditor.menuToState(),
                     sourceLangs: clozeSourceLangEditor.menuToState().split(','),
                     targetLang: clozeTargetLangEditor.menuToState(),
-                    clozeGroups: clozeGroupsEditor.menuToState().split(',').filter((g) => g.length > 0)
+                    clozeGroups: clozeGroupsEditor.menuToState().split(',').filter((g) => g.length > 0),
+                    speechSettings: ssEditor.menuToState()
                 }
             }
         }
@@ -443,7 +473,8 @@ export class ClozeCardType extends FlashcardType<ClozeCardEntry, ClozeCardData, 
             clozeServerUrl: "",
             sourceLangs: [],
             targetLang: "",
-            clozeGroups: []
+            clozeGroups: [],
+            speechSettings: defaultSpeechSettings()
         }
     }
 }

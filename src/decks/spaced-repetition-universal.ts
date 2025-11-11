@@ -19,15 +19,6 @@ import {
     FlashcardResult
 } from "core/flashcard-generator"
 import {
-    AbstractAsyncSpacedRepGen,
-    SpacedRepState,
-    SpacedRepCard,
-    SpacedRepCardPhysical,
-    SpacedRepStudying,
-    makeSpacedRepCardDict,
-    makeCardsLeftSpan
-} from "decks/spaced-repetition-general"
-import {
     utter,
     speechSettingsEditor,
     defaultSpeechSettings,
@@ -50,10 +41,6 @@ import {
     multipleEditors
 } from "core/editor"
 import {
-    infoWidgetSR,
-    studyingEditorSR
-} from "utils/shared-sr-menu-components"
-import {
     renderCard
 } from "core/flashcard-template"
 import {
@@ -61,37 +48,27 @@ import {
 } from "core/flashcard-deck"
 import {
     emptySRQueue,
-    SRNewQueue
+    SRNewQueue,
+    chooseNext,
+    filterNewQueue,
+    incorporateLast
 } from "utils/spaced-repetition-newqueue"
 import {
     gCardTypeRegistry,
     FlashcardType
 } from "core/flashcard-entry"
+import {
+    SRUniversalStats,
+    SRUniversalCardVirtual,
+    SRUniversalCardPhysical,
+    SRStudying,
+    SRUniversalSettings,
+    SRUniversalState
+} from "decks/spaced-repetition-universal-types"
 
-export type SRModularContent = {
-    cardType: string,
-    cardEntry: any,
-    cardData?: any,
-    tags: string[]
-}
+/* --- USEFUL UTILITIES FOR DEFINING SR DECK --- */
 
-export type SRModularAuxData = {
-    streak: number
-}
-
-export type SRModularSettings = {
-    cardTypeSettings: IDictionary<any>,
-    initialHours: number,
-    correctFactor: number,
-    incorrectFactor: number,
-    inactiveTags: string[],
-    readCorrectAnswers: boolean,
-    preventReversedNewCards: boolean,
-    speechSettings: SpeechSettings,
-    filterSettings: TextFilterSettings
-}
-
-export const defaultSRModularSettings = {
+export const defaultSRUniversalSettings = {
     cardTypeSettings: {},
     initialHours: 8,
     correctFactor: 1.5,
@@ -103,36 +80,86 @@ export const defaultSRModularSettings = {
     filterSettings: defaultTextFilterSettings
 }
 
-export const defaultSRModularState: SpacedRepState<SRModularContent, SRModularAuxData, SRModularSettings> = {
-    cards: makeSpacedRepCardDict([], () => { return { streak: 0 }; }),
+export function makeSRCardDict(cards: SRUniversalCardVirtual[])
+    : IDictionary<SRUniversalCardVirtual> {
+    var cardDict: IDictionary<SRUniversalCardVirtual> = {};
+    for (var i in cards) {
+        var c = cards[i];
+        cardDict[c.guid] = c;
+    }
+    return cardDict;
+}
+
+export const defaultSRUniversalState: SRUniversalState = { 
+    cards: {},
     newQ: emptySRQueue(10),
-    studying: SpacedRepStudying.NewCards,
-    settings: defaultSRModularSettings
+    studying: SRStudying.NewCards,
+    settings: defaultSRUniversalSettings
 };
 
-function makeEmptyCard(cardType: string): SpacedRepCard<SRModularContent, SRModularAuxData> {
+function makeEmptyCard(cardType: string): SRUniversalCardVirtual {
     return {
         guid: guidGenerator(),
-        content: {
-            cardType: cardType,
-            cardEntry: gCardTypeRegistry[cardType].getDefaultEntry(),
-            tags: []
-        },
+        cardType: cardType,
+        cardEntry: gCardTypeRegistry[cardType].getDefaultEntry(),
+        tags: [],
         due: new Date(),
         intervalMinutes: 0,
-        auxdata: {
+        stats: {
+            created: new Date(),
             streak: 0
         }
     }
 }
 
-export class ModularSpacedRepGen
-    extends AbstractAsyncSpacedRepGen<SRModularContent, SRModularAuxData, SRModularSettings> {
+function makeCardsLeftSpan(card: SRUniversalCardPhysical) {
+    var infoText = document.createElement("span");
+    infoText.classList.add("cards-left-span");
+    if (card.context.isPractice) {  
+        infoText.textContent = "This is a practice card. It will not affect your progress.";
+    } else {
+        infoText.textContent = `${card.context.cardsLeft} cards remaining`;
+    }
+    return infoText;
+}
 
-    getGenName(): string { return "modular-spaced-repetition"; }
+function infoWidgetSR(
+    totalCards: number,
+    newCards: number,
+    dueCards: number
+): HTMLElement {
+
+    var contDiv = document.createElement("div");
+    contDiv.classList.add("deck-menu-submenu");
+    var totP = document.createElement("p");
+    totP.textContent = `Total cards: ${totalCards}`;
+
+    var newP = document.createElement("p");
+    newP.textContent = `New cards: ${newCards}`;
+    newP.style.color = "#9999ee";
+    newP.style.fontWeight = "bold";
+
+    var dueP = document.createElement("p");
+    dueP.textContent = `Due cards: ${dueCards}`;
+    dueP.style.color = "#ee9999";
+    dueP.style.fontWeight = "bold";
+
+    [totP, newP, dueP].map((el) => contDiv.appendChild(el));
+
+    return contDiv;
+}
+
+export class UniversalSpacedRepGen
+    extends FlashcardGen<SRUniversalState, SRUniversalCardPhysical> {
+
+    getGenName(): string { return "universal-spaced-repetition"; }
+
+    // mock-up datetime function for unit testing purposes
+    getDate: () => Date = () => new Date();
+    setDate(newDt: Date) { this.getDate = () => newDt; }
 
     repairDeckState(st: any): any {
-        st = recursiveRepairJSON(st, defaultSRModularState, ["cards", "cardTypeSettings"]);
+        st = recursiveRepairJSON(st, defaultSRUniversalState, ["cards", "cardTypeSettings"]);
         // st.cards = recursiveRepairEachValueJSON(st.cards, Object.values(defaultSRModularState.cards)[0]);
         if (st.settings.cardTypeSettings === undefined) {
             st.settings.cardTypeSettings = {};
@@ -152,37 +179,58 @@ export class ModularSpacedRepGen
         return st;
     }
 
-    cardIsEnabled(
-        card: SpacedRepCard<SRModularContent, SRModularAuxData>,
-        st: SpacedRepState<SRModularContent, SRModularAuxData, SRModularSettings>
-    ): boolean {
-        return !card.content.tags.some((t) => st.settings.inactiveTags.includes(t));
+    cardIsDue(card: SRUniversalCardVirtual) {
+        return (card.intervalMinutes > 0 && new Date(card.due).valueOf() < this.getDate().valueOf());
     }
 
+    cardIsNew(card: SRUniversalCardVirtual) {
+        return (card.intervalMinutes == 0);
+    }
+
+    getDue(st: SRUniversalState): string[] {
+        return Object.keys(st.cards).filter((k) => this.cardIsDue(st.cards[k]) && this.cardIsEnabled(st.cards[k], st));
+    }
+
+    getNew(st: SRUniversalState): string[] {
+        return Object.keys(st.cards).filter((k) => this.cardIsNew(st.cards[k]) && this.cardIsEnabled(st.cards[k], st));
+    }
+
+    cardIsEnabled(
+        card: SRUniversalCardVirtual, 
+        st: SRUniversalState 
+    ): boolean {
+        return !card.tags.some((t) => st.settings.inactiveTags.includes(t));
+    }
+
+    // A pure effect that should be triggered when a card is finally answered correctly
     correctEffect(
-        st: SpacedRepState<SRModularContent, SRModularAuxData, SRModularSettings>,
-        card: SpacedRepCardPhysical<SRModularContent, SRModularAuxData>,
+        st: SRUniversalState,
+        card: SRUniversalCardPhysical, 
         attempt: string,
         resolve: () => void
     ): void {
-        var cardData = card.data!;
+        var cardVirtual = card.virtual!;
+        var cardTypeSettings = st.settings.cardTypeSettings[cardVirtual.cardType];
         if (st.settings.readCorrectAnswers) {
-            var ss = st.settings.speechSettings;
-            var spokenAnswer = gCardTypeRegistry[cardData.content.cardType].getSpeakableText(cardData.content.cardData);
-            utter(spokenAnswer, ss.voice, ss.rate, ss.pitch, resolve);
+            gCardTypeRegistry[cardVirtual.cardType].speakCard(
+                card.processed,
+                cardTypeSettings,
+                resolve
+            );
         } else {
             resolve();
         }
     }
 
+    // Update a card's interval based on settings and the attempt's success/failure
     updateInterval(
-        card: SpacedRepCardPhysical<SRModularContent, SRModularAuxData>,
-        settings: SRModularSettings,
+        card: SRUniversalCardPhysical,
+        settings: SRUniversalSettings,
         correct: FlashcardResult
     ): number {
-        var cardData = card.data!;
+        var cardData = card.virtual!;
         if (correct == FlashcardResult.Correct) {
-            if (cardData.intervalMinutes == 0 && cardData.auxdata.streak >= 3) {
+            if (cardData.intervalMinutes == 0 && cardData.stats.streak >= 3) {
                 return settings.initialHours * 60;
             } else if (cardData.intervalMinutes != 0) {
                 return cardData.intervalMinutes * settings.correctFactor;
@@ -196,89 +244,206 @@ export class ModularSpacedRepGen
         } 
     }
 
-    updateAuxData(
-        card: SpacedRepCardPhysical<SRModularContent, SRModularAuxData>,
-        settings: SRModularSettings,
+    updateStats(
+        card: SRUniversalCardPhysical, 
+        settings: SRUniversalSettings,
         correct: FlashcardResult
-    ): SRModularAuxData {
+    ): SRUniversalStats {
         if (correct == FlashcardResult.Correct) {
-            card.data!.auxdata.streak += 1;
+            card.virtual!.stats.streak += 1;
         } else if (correct == FlashcardResult.Incorrect) {
-            card.data!.auxdata.streak = 0;
+            card.virtual!.stats.streak = 0;
         } 
-        return card.data!.auxdata;
+        return card.virtual!.stats;
+    }
+
+    updateCard(
+        card: SRUniversalCardPhysical,
+        st: SRUniversalState,
+        correct: FlashcardResult
+    ): SRUniversalCardVirtual {
+        // Physical card data may be affected by templating or other modifications, so must get card data from deck by its GUID
+        var cardVirtual = st.cards[card.virtual!.guid];
+
+        if (card.context.isPractice) {
+            return cardVirtual;
+        }
+        var isNew = cardVirtual.intervalMinutes == 0;
+
+        var newStats = this.updateStats(card, st.settings, correct);
+        cardVirtual.stats = newStats;
+        var newInterval = this.updateInterval(card, st.settings, correct);
+        cardVirtual.intervalMinutes = newInterval;
+
+        // Interval > 0 implies the card is no longer new
+        // Only reschedule the card if it was answered correctly
+        if (correct == FlashcardResult.Correct && newInterval > 0) {
+            cardVirtual.due = this.getDate();
+            cardVirtual.due.setHours(cardVirtual.due!.getHours() + cardVirtual.intervalMinutes/60);
+        }
+
+        return cardVirtual;
+    }
+
+    updateStateAsync(
+        st: SRUniversalState,
+        card: SRUniversalCardPhysical,
+        result: FlashcardResult
+    ): Promise<SRUniversalState> {
+        if (result == FlashcardResult.Unanswered || st.studying == SRStudying.RandomCards) {
+            return trivialPromise(st);
+        }
+
+        var cardGuid = card.virtual!.guid;
+        var cardNewState = this.updateCard(card, st, result);
+
+        // If card is still new, stick it back in the queue
+        if (st.studying == SRStudying.NewCards) {
+            st.newQ = incorporateLast(st.newQ, cardGuid, this.cardIsNew(cardNewState));
+        }
+        st.newQ = filterNewQueue(st.newQ, (id: string) => this.cardIsEnabled(st.cards[id], st));
+
+        st.cards[cardGuid] = cardNewState;
+        return trivialPromise(st);
+    }
+
+    getNextCardAsync(st: SRUniversalState): Promise<SRUniversalCardPhysical> {
+        var inds = Object.keys(st.cards);
+        var newInds = this.getNew(st);
+        var dueInds = this.getDue(st);
+        var emptyCard = this.nextCardAsyncPreprocessing({
+            virtual: undefined,
+            context: { cardsLeft: 0, isPractice: false }
+        }, st);
+        switch (st.studying) {
+            case SRStudying.NewCards:
+                var newGuid = chooseNext(st.newQ, newInds);
+                if (newGuid === undefined) {
+                    return emptyCard;     
+                }
+                return this.nextCardAsyncPreprocessing({
+                    virtual: st.cards[newGuid],
+                    context: {
+                        cardsLeft: newInds.length,
+                        isPractice: false
+                    }
+                }, st);
+            case SRStudying.DueCards:
+                if (dueInds.length == 0) {
+                    return emptyCard;
+                }
+                var dueInd = dueInds[Math.floor(Math.random() * dueInds.length)];
+                return this.nextCardAsyncPreprocessing({
+                    virtual: st.cards[dueInd],
+                    context: {
+                        cardsLeft: dueInds.length,
+                        isPractice: false
+                    }
+                }, st);
+            case SRStudying.RandomCards:
+                if (inds.length == 0) {
+                    return emptyCard;
+                }
+                var ind = inds[Math.floor(Math.random() * inds.length)];
+                return this.nextCardAsyncPreprocessing({
+                    virtual: st.cards[ind],
+                    context: {
+                        cardsLeft: 0,
+                        isPractice: true
+                    }
+                }, st); 
+        }
+        return this.nextCardAsyncPreprocessing({
+            virtual: undefined,
+            context: {
+                cardsLeft: 0,
+                isPractice: false
+            }
+        }, st);
     }
 
     checkAnswerAsync(
         answer: string,
-        st: SpacedRepState<SRModularContent, SRModularAuxData, SRModularSettings>,
-        card: SpacedRepCardPhysical<SRModularContent, SRModularAuxData>
+        st: SRUniversalState, 
+        card: SRUniversalCardPhysical 
     ): Promise<boolean> {
-        if (card.data === undefined) {
+        if (card.virtual === undefined) {
             return trivialPromise(false);
         }
-        var cardType = card.data!.content.cardType;
-        var cardData = card.data!.content.cardData;
+        var cardType = card.virtual!.cardType;
+        var cardData = card.processed!;
         var tf = (s: string) => applyTextFilter(s, st.settings.filterSettings);
         return gCardTypeRegistry[cardType].checkAnswer(answer, cardData, st.settings.cardTypeSettings[cardType], tf);
     }
 
     preprocessAllCards(
-        st: SpacedRepState<SRModularContent, SRModularAuxData, SRModularSettings>
+        st: SRUniversalState 
     ): void {
         this.getNew(st).map((k) => {
-            var c = st.cards[k].content;
+            var c = st.cards[k];
             gCardTypeRegistry[c.cardType].preprocessEntry(c.cardEntry, st.settings.cardTypeSettings[c.cardType]);
         });
         this.getDue(st).map((k) => {
-            var c = st.cards[k].content;
+            var c = st.cards[k];
             gCardTypeRegistry[c.cardType].preprocessEntry(c.cardEntry, st.settings.cardTypeSettings[c.cardType]);
         });
     }
 
     nextCardAsyncPreprocessing(
-        card: SpacedRepCardPhysical<SRModularContent, SRModularAuxData>,
-        st: SpacedRepState<SRModularContent, SRModularAuxData, SRModularSettings>
-    ): Promise<SpacedRepCardPhysical<SRModularContent, SRModularAuxData>> {
-        if (card.data === undefined) { return trivialPromise(card); }
+        card: SRUniversalCardPhysical,
+        st: SRUniversalState 
+    ): Promise<SRUniversalCardPhysical> {
+        if (card.virtual === undefined) { return trivialPromise(card); }
 
-        var cardType = card.data!.content.cardType;
-        var cardEntry = card.data!.content.cardEntry;
-        var context = { preventReversedCard: card.data!.intervalMinutes == 0 && st.settings.preventReversedNewCards };
+        var cardType = card.virtual!.cardType;
+        var cardEntry = card.virtual!.cardEntry;
+        var context = { preventReversedCard: card.virtual!.intervalMinutes == 0 && st.settings.preventReversedNewCards };
         var dp = gCardTypeRegistry[cardType].processEntry(cardEntry, st.settings.cardTypeSettings[cardType], context);
     
         return dp.then((d) => {
-            card.data!.content.cardData = d;
+            card.processed = d;
             return card;
         })
     }
 
     generateCardAsync(
-        st: SpacedRepState<SRModularContent, SRModularAuxData, SRModularSettings>,
-        card: SpacedRepCardPhysical<SRModularContent, SRModularAuxData>
+        st: SRUniversalState,
+        card: SRUniversalCardPhysical 
     ): Promise<Flashcard> {
-        if (card.data === undefined || card.data.content.cardData === undefined) {
+        if (card.virtual === undefined || card.processed === undefined) {
             return trivialPromise(renderCard("noanswer-template",
                 "No cards left to study."
             ));
         } 
         
-        var cardType = card.data!.content.cardType;
-        var cardEntry = card.data!.content.cardEntry;
-        var cardData = card.data!.content.cardData;
-        var fl = gCardTypeRegistry[cardType].generateCard(cardData, st.settings.cardTypeSettings[cardType]);
+        var cardType = card.virtual!.cardType;
+        var cardEntry = card.virtual!.cardEntry;
+        var cardProcessed = card.processed;
+        var fl = gCardTypeRegistry[cardType].generateCard(cardProcessed, st.settings.cardTypeSettings[cardType]);
         fl.el.appendChild(makeCardsLeftSpan(card));
         return trivialPromise(fl);
     }
 
-    makeEditor(st: SpacedRepState<SRModularContent, SRModularAuxData, SRModularSettings>):
-        StateEditor<SpacedRepState<SRModularContent, SRModularAuxData, SRModularSettings>> {
+    makeEditor(st: SRUniversalState):
+        StateEditor<SRUniversalState> {
         var _this = this;
 
         var contDiv = document.createElement("div");
 
-        var infoWidget = infoWidgetSR((<any>this).gen, st);
-        var studyingEditor = studyingEditorSR(st);
+        var totCards = Object.keys(st.cards).length;
+        var newCards = Object.keys(st.cards).filter((i) => (<any>this).gen.cardIsNew(st.cards[i]) && (<any>this).gen.cardIsEnabled(st.cards[i], st)).length;
+        var dueCards = Object.keys(st.cards).filter((i) => (<any>this).gen.cardIsDue(st.cards[i]) && (<any>this).gen.cardIsEnabled(st.cards[i], st)).length;
+        var infoWidget = infoWidgetSR(
+            totCards,
+            newCards,
+            dueCards
+        );
+
+        var studyingEditor = radioEditor(
+            st.studying,
+            [SRStudying.NewCards, SRStudying.DueCards, SRStudying.RandomCards],
+            ["Study new cards", "Study due cards", "Practice random cards"]
+        );
         var newQueueSizeEditor = scrollNumberEditor("Max new cards to study at once: ", st.newQ.maxNewCards, 1, 100, 1);
 
         var initHoursEditor = scrollNumberEditor("Initial interval (hours): ", st.settings.initialHours, 1, 240, 1);
@@ -292,10 +457,8 @@ export class ModularSpacedRepGen
         omitTagsCont.appendChild(omitTagsEditor.element);
 
         var speechCheckbox = boolEditor("Speak correct answers using text-to-speech?", st.settings.readCorrectAnswers);
-        var speechEditor = speechSettingsEditor(st.settings.speechSettings);
         var speechDiv = document.createElement("div");
         speechDiv.appendChild(speechCheckbox.element);
-        speechDiv.appendChild(speechEditor.element);
 
         var preventReversedNewCardsCheckbox = boolEditor("Don't reverse two-sided cards during initial study", st.settings.preventReversedNewCards);
 
@@ -307,14 +470,14 @@ export class ModularSpacedRepGen
 
         var filterEditor = textFilterSelectionMenu(st.settings.filterSettings);
 
-        function makeCardEditor(c: SpacedRepCard<SRModularContent, SRModularAuxData>):
-            StateEditor<SpacedRepCard<SRModularContent, SRModularAuxData>> {
-            var cardType = c.content.cardType;
-            var cardEntry = c.content.cardEntry;
+        function makeCardEditor(c: SRUniversalCardVirtual):
+            StateEditor<SRUniversalCardVirtual> {
+            var cardType = c.cardType;
+            var cardEntry = c.cardEntry;
             var cardTypeClass = gCardTypeRegistry[cardType];
-            var ed = cardTypeClass.makeEntryEditor(c.content.cardEntry);
+            var ed = cardTypeClass.makeEntryEditor(c.cardEntry);
 
-            var tagsEd = singleTextFieldEditor(c.content.tags.join(','));
+            var tagsEd = singleTextFieldEditor(c.tags.join(','));
             (<HTMLInputElement>tagsEd.element).placeholder = "tags...";
             ed.element.appendChild(tagsEd.element);
 
@@ -328,24 +491,22 @@ export class ModularSpacedRepGen
             ed.element.appendChild(cardInfo);
 
             var cardMenuToState = () => {
-                return <SpacedRepCard<SRModularContent, SRModularAuxData>>{
+                return <SRUniversalCardVirtual>{
                     guid: c.guid,
-                    content: {
-                        cardType: c.content.cardType,
-                        cardEntry: ed.menuToState(),
-                        cardData: null,
-                        tags: tagsEd.menuToState().split(",").filter((t) => t.length > 0)
-                    },
+                    cardType: c.cardType,
+                    cardEntry: ed.menuToState(),
+                    cardData: null,
+                    tags: tagsEd.menuToState().split(",").filter((t) => t.length > 0),
                     due: c.due,
                     intervalMinutes: c.intervalMinutes,
-                    auxdata: c.auxdata
+                    stats: c.stats
                 };
             };
 
             var cardMenuToPreview = () => {
                 var cardState = <any>cardMenuToState();
                 return (<any>_this).gen.nextCardAsyncPreprocessing({
-                    data: cardState,
+                    virtual: cardState,
                     context: {
                         cardsLeft: 0,
                         isPractice: false
@@ -376,10 +537,10 @@ export class ModularSpacedRepGen
 
             var listenBtn = iconButton("speaker.png", () => {
                 var cardDataPromise = cardMenuToPreview();
-                var ss = speechEditor.menuToState();
+                var cardTypeSettings = st.settings.cardTypeSettings[c.cardType];
                 cardDataPromise.then((c: any) => {
-                    var d = c.data.content.cardData;
-                    utter(cardTypeClass.getSpeakableText(d), ss.voice, ss.rate, ss.pitch, () => {});
+                    var d = c.processed;
+                    cardTypeClass.speakCard(d, cardTypeSettings, () => {});
                 });
             });
             ed.element.appendChild(listenBtn);
@@ -394,15 +555,15 @@ export class ModularSpacedRepGen
         }
        
         var cardSettingsGroups: IDictionary<StateEditor<any>> = {}; 
-        var cardEditorGroups: StateEditor<SpacedRepCard<SRModularContent, SRModularAuxData>[]>[] = [];
+        var cardEditorGroups: StateEditor<SRUniversalCardVirtual[]>[] = [];
         for (var i in Object.keys(gCardTypeRegistry)) {
             var t = Object.keys(gCardTypeRegistry)[i];
             var cardsEditor = ((t) => multipleEditors(
-                Object.values(st.cards).filter((c) => c.content.cardType == t),
+                Object.values(st.cards).filter((c) => c.cardType == t),
                 () => makeEmptyCard(t), 
                 makeCardEditor,
                 true,
-                (s, cd) => gCardTypeRegistry[t].getSearchableText(cd.content.cardEntry).includes(s)
+                (s, cd) => gCardTypeRegistry[t].getSearchableText(cd.cardEntry).includes(s)
             ))(t);
             var cardsEditorCont = document.createElement("div");
             var cardsEditorDetails = document.createElement("details");
@@ -430,7 +591,7 @@ export class ModularSpacedRepGen
         }       
  
         [
-            infoWidget,
+            infoWidget, 
             studyingEditor.element,
             initHoursEditor.element,
             newQueueSizeEditor.element,
@@ -456,7 +617,6 @@ export class ModularSpacedRepGen
                     incorrectFactor: incorrectFactor.menuToState(),
                     readCorrectAnswers: speechCheckbox.menuToState(),
                     preventReversedNewCards: preventReversedNewCardsCheckbox.menuToState(),
-                    speechSettings: speechEditor.menuToState(),
                     filterSettings: filterEditor.menuToState(),
                     inactiveTags: omitTagsEditor.menuToState().split(",")
                 },
@@ -472,9 +632,9 @@ export class ModularSpacedRepGen
 }
 
 registerDeckType(
-    new ModularSpacedRepGen(),
-    "modular-spaced-repetition-deck",
-    "Modular spaced repetition deck",
-    defaultSRModularState,
-    "#ffffdd"
+    new UniversalSpacedRepGen(),
+    "universal-spaced-repetition-deck",
+    "Universal spaced repetition deck",
+    defaultSRUniversalState,
+    "#eaa9fc"
 );
