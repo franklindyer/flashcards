@@ -57,57 +57,14 @@ import {
     gCardTypeRegistry,
     FlashcardType
 } from "core/flashcard-entry"
-
-/* --- CORE SPACED REPETITION TYPES --- */
-
-export type SRUniversalStats = {
-    created: Date,
-    streak: number,
-}
-
-export type SRUniversalCardVirtual = {
-    guid: string,
-    due: Date,
-    intervalMinutes: number,
-    cardType: string,
-    cardEntry: any,
-    tags: string[],
-    stats: SRUniversalStats
-}
-
-export type SRUniversalCardPhysical = {
-    virtual?: SRUniversalCardVirtual,
-    processed?: any,
-    context: {
-        cardsLeft: number,
-        isPractice: boolean
-    }
-}
-
-export enum SRStudying {
-    NewCards = 1,
-    DueCards,
-    RandomCards
-}
-
-export type SRUniversalSettings = {
-    cardTypeSettings: IDictionary<any>,
-    initialHours: number,
-    correctFactor: number,
-    incorrectFactor: number,
-    inactiveTags: string[],
-    readCorrectAnswers: boolean,
-    preventReversedNewCards: boolean,
-    speechSettings: SpeechSettings,
-    filterSettings: TextFilterSettings
-}
-
-export type SRUniversalState = {
-    cards: IDictionary<SRUniversalCardVirtual>,
-    newQ: SRNewQueue,
-    studying: SRStudying,
-    settings: SRUniversalSettings
-}
+import {
+    SRUniversalStats,
+    SRUniversalCardVirtual,
+    SRUniversalCardPhysical,
+    SRStudying,
+    SRUniversalSettings,
+    SRUniversalState
+} from "decks/spaced-repetition-universal-types"
 
 /* --- USEFUL UTILITIES FOR DEFINING SR DECK --- */
 
