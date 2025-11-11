@@ -296,7 +296,8 @@ export type ClozeCardSettings = {
     clozeServerUrl: string,
     sourceLangs: string[],
     targetLang: string,
-    clozeGroups: string[]
+    clozeGroups: string[],
+    speechSettings: SpeechSettings,
 }
 
 export class ClozeCardType extends FlashcardType<ClozeCardEntry, ClozeCardData, ClozeCardSettings> {
@@ -412,11 +413,16 @@ export class ClozeCardType extends FlashcardType<ClozeCardEntry, ClozeCardData, 
         var clozeSourceLangEditor = singleTextFieldEditor(settings.sourceLangs.join(','));
         var clozeTargetLangEditor = singleTextFieldEditor(settings.targetLang);
         var clozeGroupsEditor = singleTextFieldEditor(settings.clozeGroups.join(','));
-        (<HTMLInputElement>clozeGroupsEditor.element).placeholder = "allowed groups..."; 
+        (<HTMLInputElement>clozeGroupsEditor.element).placeholder = "allowed groups...";
+
+        var ssEditor = speechSettingsEditor(settings.speechSettings);
+
         clozeServerDiv.appendChild(clozeServerUrlEditor.element);
         clozeServerDiv.appendChild(clozeSourceLangEditor.element);
         clozeServerDiv.appendChild(clozeTargetLangEditor.element);
         clozeServerDiv.appendChild(clozeGroupsEditor.element);
+        clozeServerDiv.appendChild(ssEditor.element);
+
         return {
             element: clozeServerDiv,
             menuToState: () => {
@@ -424,7 +430,8 @@ export class ClozeCardType extends FlashcardType<ClozeCardEntry, ClozeCardData, 
                     clozeServerUrl: clozeServerUrlEditor.menuToState(),
                     sourceLangs: clozeSourceLangEditor.menuToState().split(','),
                     targetLang: clozeTargetLangEditor.menuToState(),
-                    clozeGroups: clozeGroupsEditor.menuToState().split(',').filter((g) => g.length > 0)
+                    clozeGroups: clozeGroupsEditor.menuToState().split(',').filter((g) => g.length > 0),
+                    speechSettings: ssEditor.menuToState()
                 }
             }
         }
@@ -443,7 +450,8 @@ export class ClozeCardType extends FlashcardType<ClozeCardEntry, ClozeCardData, 
             clozeServerUrl: "",
             sourceLangs: [],
             targetLang: "",
-            clozeGroups: []
+            clozeGroups: [],
+            speechSettings: defaultSpeechSettings()
         }
     }
 }

@@ -142,6 +142,10 @@ export class ModularSpacedRepGen
             if (!Object.keys(st.settings.cardTypeSettings).includes(cardType)) {
                 st.settings.cardTypeSettings[cardType] 
                     = gCardTypeRegistry[cardType].getDefaultSettings();
+            } else {
+                var currentSettings = st.settings.cardTypeSettings[cardType]
+                var repairedSettings = recursiveRepairJSON(currentSettings, gCardTypeRegistry[cardType].getDefaultSettings());
+                st.settings.cardTypeSettings[cardType] = repairedSettings;
             }
         }
         this.preprocessAllCards(st);
