@@ -11,7 +11,9 @@ import {
     swappingTextEditor,
     singleTextFieldEditor,
     multipleEditors,
-    doubleTextFieldEditor
+    doubleTextFieldEditor,
+    textAreaEditor,
+    htmlEditor
 } from "core/editor"
 import {
     TextFilterSettings,
@@ -37,6 +39,13 @@ import {
 import {
     Flashcard
 } from "core/flashcard"
+import {
+    renderString
+} from "nunjucks"
+import {
+    njSimpleCard,
+    njClozeCard
+} from "utils/nj-templates"
 
 export const gCardTypeRegistry: IDictionary<FlashcardType<any, any, any>> = {};
 
@@ -52,7 +61,7 @@ export abstract class FlashcardType<E, D, S> {
     abstract processEntry(entry: E, settings: S, context: any): Promise<D>;
     abstract getSearchableText(entry: E): string;
     abstract getSpeakableText(data: D): string;
-    abstract generateCard(data: D, settings: S): Flashcard;
+    abstract generateCard(data: D, settings: S, externalParams: IDictionary<any>): Flashcard;
     abstract checkAnswer(answer: string, data: D, settings: S, tf: (s: string) => string): Promise<boolean>;
     abstract makeEntryEditor(entry: E): StateEditor<E>;
     abstract makeSettingsEditor(settings: S): StateEditor<S>;
@@ -105,7 +114,8 @@ export type SimpleCardSettings = {
     doTwoSided: boolean,
     doReadAloud: boolean,
     speechSettings: SpeechSettings,
-    substitutions: [string, string][]
+    substitutions: [string, string][],
+    template: string
 }
 
 export class SimpleCardType extends FlashcardType<SimpleCardEntry, SimpleCardData, SimpleCardSettings> {
@@ -164,8 +174,8 @@ export class SimpleCardType extends FlashcardType<SimpleCardEntry, SimpleCardDat
             return data.answer[0];
     }
 
-    // abstract generateCard(data: D, settings: S): Flashcard;
-    generateCard(data: SimpleCardData, settings: SimpleCardSettings): Flashcard {
+    // abstract generateCard(data: D, settings: S, externalParams: IDictionary<any>): Flashcard;
+    generateCard(data: SimpleCardData, settings: SimpleCardSettings, externalParams: IDictionary<any> = {}): Flashcard {
         var a = document.createElement("div");
         var prompt = "";
         var answers: string[] = [];
@@ -184,9 +194,21 @@ export class SimpleCardType extends FlashcardType<SimpleCardEntry, SimpleCardDat
         }
 
         var fontSize = 100.0/(10.0*Math.log(10+prompt.length));
-        a.style.fontSize = `${fontSize}vw`;
-        a.textContent = prompt;
-        return new Flashcard(a, hint);
+        
+        var templateArgs = {
+            prompts: data.prompt,
+            fontSize: fontSize,
+            reversed: data.reversed,
+            spoken: data.spoken
+        };
+        templateArgs = Object.assign({}, templateArgs, externalParams);
+        var tpl = settings.template;
+        var el = <HTMLElement>(new DOMParser().parseFromString(renderString(tpl, templateArgs), "text/html").body.firstChild);
+
+        // a.style.fontSize = `${fontSize}vw`;
+        // a.textContent = prompt;
+        // return new Flashcard(a, hint);
+        return new Flashcard(el, hint);
     }
 
     // abstract checkAnswer(answer: string, data: D, settings: S): Promise<boolean>;
@@ -258,6 +280,14 @@ export class SimpleCardType extends FlashcardType<SimpleCardEntry, SimpleCardDat
         subsEditor.element = hideDetails(subsEditor.element, "Card substitution settings");
         contDiv.appendChild(subsEditor.element);
 
+        var tplDetails = document.createElement("details");
+        var tplSummary = document.createElement("summary");
+        tplSummary.textContent = "Card template";
+        var tplEditor = htmlEditor(settings.template);
+        tplDetails.appendChild(tplSummary);
+        tplDetails.appendChild(tplEditor.element);
+        contDiv.appendChild(tplDetails);
+
         return {
             element: contDiv,
             menuToState: () => {
@@ -265,7 +295,8 @@ export class SimpleCardType extends FlashcardType<SimpleCardEntry, SimpleCardDat
                     doTwoSided: twoSidedEditor.menuToState(),
                     doReadAloud: readAloudEditor.menuToState(),
                     speechSettings: ssEditor.menuToState(),
-                    substitutions: subsEditor.menuToState()
+                    substitutions: subsEditor.menuToState(),
+                    template: tplEditor.menuToState() 
                 };
             }
         }
@@ -287,7 +318,8 @@ export class SimpleCardType extends FlashcardType<SimpleCardEntry, SimpleCardDat
             doTwoSided: true,
             doReadAloud: true,
             speechSettings: defaultSpeechSettings(),
-            substitutions: []
+            substitutions: [],
+            template: njSimpleCard
         };
     }
 }
@@ -386,8 +418,8 @@ export class ClozeCardType extends FlashcardType<ClozeCardEntry, ClozeCardData, 
             return "";
     }
 
-    // abstract generateCard(data: D, settings: S): Flashcard;
-    generateCard(data: ClozeCardData, settings: ClozeCardSettings): Flashcard {
+    // abstract generateCard(data: D, settings: S, externalParams: IDictionary<any>): Flashcard;
+    generateCard(data: ClozeCardData, settings: ClozeCardSettings, externalParams: IDictionary<any> = {}): Flashcard {
         if (!data.valid) {
             return renderCard("noanswer-template", `Could not get puzzle for card "${data.key}".`)
         }

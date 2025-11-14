@@ -4,6 +4,8 @@ import {
     guidGenerator
 } from "utils/utils"
 
+import * as ace from 'brace';
+
 export type StateEditor<s> = {
     element: HTMLElement,
     menuToState: () => s
@@ -121,6 +123,28 @@ export function doubleTextFieldEditor(txts: [string, string]): StateEditor<[stri
     editor.element.appendChild(children[0].element);
     editor.element.appendChild(children[1].element);
     return editor;
+}
+
+export function htmlEditor(content: string): StateEditor<string> {
+    var htmlEd = document.createElement("div");
+    var ed = ace.edit(htmlEd);
+    ed.setValue(content);
+    htmlEd.style.height = "100px";
+    htmlEd.style.width = "70%";
+    return {
+        element: htmlEd,
+        menuToState: () => ed.getValue()
+    }
+}
+
+export function textAreaEditor(txt: string): StateEditor<string> {
+    var textarea = document.createElement("textarea");
+    textarea.classList.add("menu-textarea");
+    textarea.value = txt;
+    return {
+        element: textarea,
+        menuToState: () => textarea.value
+    };
 }
 
 export function optionsEditor<a>(st: a, opts: a[], labels: (x: a) => string): StateEditor<a> {

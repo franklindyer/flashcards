@@ -112,17 +112,6 @@ function makeEmptyCard(cardType: string): SRUniversalCardVirtual {
     }
 }
 
-function makeCardsLeftSpan(card: SRUniversalCardPhysical) {
-    var infoText = document.createElement("span");
-    infoText.classList.add("cards-left-span");
-    if (card.context.isPractice) {  
-        infoText.textContent = "This is a practice card. It will not affect your progress.";
-    } else {
-        infoText.textContent = `${card.context.cardsLeft} cards remaining`;
-    }
-    return infoText;
-}
-
 function infoWidgetSR(
     totalCards: number,
     newCards: number,
@@ -419,8 +408,7 @@ export class UniversalSpacedRepGen
         var cardType = card.virtual!.cardType;
         var cardEntry = card.virtual!.cardEntry;
         var cardProcessed = card.processed;
-        var fl = gCardTypeRegistry[cardType].generateCard(cardProcessed, st.settings.cardTypeSettings[cardType]);
-        fl.el.appendChild(makeCardsLeftSpan(card));
+        var fl = gCardTypeRegistry[cardType].generateCard(cardProcessed, st.settings.cardTypeSettings[cardType], card.context);
         return trivialPromise(fl);
     }
 
