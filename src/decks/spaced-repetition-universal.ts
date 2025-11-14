@@ -41,8 +41,11 @@ import {
     multipleEditors
 } from "core/editor"
 import {
-    renderCard
-} from "core/flashcard-template"
+    njNoCardsLeft
+} from "utils/nj-templates"
+import {
+    renderString
+} from "nunjucks"
 import {
     registerDeckType
 } from "core/flashcard-deck"
@@ -400,9 +403,8 @@ export class UniversalSpacedRepGen
         card: SRUniversalCardPhysical 
     ): Promise<Flashcard> {
         if (card.virtual === undefined || card.processed === undefined) {
-            return trivialPromise(renderCard("noanswer-template",
-                "No cards left to study."
-            ));
+            var htmlString = renderString(njNoCardsLeft, {});
+            var el = <HTMLElement>(new DOMParser().parseFromString(htmlString, "text/html").body.firstChild);
         } 
         
         var cardType = card.virtual!.cardType;
