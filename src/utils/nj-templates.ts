@@ -4,11 +4,15 @@ import {
 
 export const njSimpleCard: string = `\
 <div style="font-size: {{ fontSize }}vw;">
-    {{ prompts[0] }}
-    {% if isPractice %}
-    <span class="cards-left-span">This is a practice card and will not affect progress.</span>
+    {% if spoken %}
+        <img src="/speaker.png" class="transcription-audio-button" alt="{{ prompts[0] }}" />
     {% else %}
-    <span class="cards-left-span">{{ cardsLeft }} cards left</span>
+        {{ prompts[0] }}
+    {% endif %}
+    {% if isPractice %}
+        <span class="cards-left-span">This is a practice card and will not affect progress.</span>
+    {% else %}
+        <span class="cards-left-span">{{ cardsLeft }} cards left</span>
     {% endif %}
 </div>
 `;

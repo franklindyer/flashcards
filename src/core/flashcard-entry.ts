@@ -34,7 +34,8 @@ import {
     defaultSpeechSettings,
     speechSettingsEditor,
     SpeechSettings,
-    utter
+    utter,
+    makeAudioButtons
 } from "utils/speech"
 import {
     Flashcard
@@ -181,17 +182,9 @@ export class SimpleCardType extends FlashcardType<SimpleCardEntry, SimpleCardDat
         var answers: string[] = [];
         var hint = "";
         
-        if (data.spoken) {
-            return renderCard("transcript-template", {
-                spokenText: data.prompt[0],
-                hintText: data.answer[0],
-                speechSettings: settings.speechSettings 
-           })
-        } else {
-            prompt = data.prompt[0];
-            answers = data.answer;
-            hint = data.answer[0];
-        }
+        prompt = data.prompt[0];
+        answers = data.answer;
+        hint = data.answer[0];
 
         var fontSize = 100.0/(10.0*Math.log(10+prompt.length));
         
@@ -204,6 +197,7 @@ export class SimpleCardType extends FlashcardType<SimpleCardEntry, SimpleCardDat
         templateArgs = Object.assign({}, templateArgs, externalParams);
         var tpl = settings.template;
         var el = <HTMLElement>(new DOMParser().parseFromString(renderString(tpl, templateArgs), "text/html").body.firstChild);
+        el = makeAudioButtons(el, settings.speechSettings);
 
         return new Flashcard(el, hint);
     }
