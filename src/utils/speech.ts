@@ -81,7 +81,7 @@ export function speechSettingsEditor(ss: SpeechSettings): StateEditor<SpeechSett
 }
 
 export function makeAudioButtons(el: HTMLElement, ss: SpeechSettings): HTMLElement {
-    var btns = el.querySelectorAll(".transcription-audio-button");
+    var btns = el.querySelectorAll(".read-aloud-button");
     btns.forEach((btn) => {
         (<any>btn).onclick = (e: any) => {
             utter(e.target.alt, ss.voice, ss.rate, ss.pitch);

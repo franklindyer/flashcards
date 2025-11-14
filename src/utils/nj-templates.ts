@@ -5,7 +5,7 @@ import {
 export const njSimpleCard: string = `\
 <div style="font-size: {{ fontSize }}vw;">
     {% if spoken %}
-        <img src="/speaker.png" class="transcription-audio-button" alt="{{ prompts[0] }}" />
+        <img src="/speaker.png" class="read-aloud-button" alt="{{ prompts[0] }}" />
     {% else %}
         {{ prompts[0] }}
     {% endif %}
