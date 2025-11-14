@@ -290,7 +290,7 @@ export class UniversalSpacedRepGen
         var cardNewState = this.updateCard(card, st, result);
 
         // If card is still new, stick it back in the queue
-        if (st.studying == SRStudying.NewCards) {
+        if (card.context.studying === "new") {
             st.newQ = incorporateLast(st.newQ, cardGuid, this.cardIsNew(cardNewState));
         }
         st.newQ = filterNewQueue(st.newQ, (id: string) => this.cardIsEnabled(st.cards[id], st));
@@ -305,51 +305,63 @@ export class UniversalSpacedRepGen
         var dueInds = this.getDue(st);
         var emptyCard = this.nextCardAsyncPreprocessing({
             virtual: undefined,
-            context: { cardsLeft: 0, isPractice: false }
+            context: { cardsLeft: 0, isPractice: false, studying: "" }
         }, st);
-        switch (st.studying) {
-            case SRStudying.NewCards:
-                var newGuid = chooseNext(st.newQ, newInds);
-                if (newGuid === undefined) {
-                    return emptyCard;     
+
+        if (inds.length == 0) {
+            return emptyCard;
+        }
+
+        if ((st.studying == SRStudying.NewCards) || 
+                (st.studying == SRStudying.NewThenDueCards && newInds.length > 0) ||
+                (st.studying == SRStudying.DueThenNewCards && dueInds.length == 0)) {
+            var newGuid = chooseNext(st.newQ, newInds);
+            if (newGuid === undefined) {
+                return emptyCard;     
+            }
+            return this.nextCardAsyncPreprocessing({
+                virtual: st.cards[newGuid],
+                context: {
+                    cardsLeft: newInds.length,
+                    isPractice: false,
+                    studying: "new"
                 }
-                return this.nextCardAsyncPreprocessing({
-                    virtual: st.cards[newGuid],
-                    context: {
-                        cardsLeft: newInds.length,
-                        isPractice: false
-                    }
-                }, st);
-            case SRStudying.DueCards:
-                if (dueInds.length == 0) {
-                    return emptyCard;
+            }, st);
+        } else if ((st.studying == SRStudying.DueCards) ||
+                    (st.studying == SRStudying.DueThenNewCards) ||
+                    (st.studying == SRStudying.NewThenDueCards && newInds.length == 0)) {
+            if (dueInds.length == 0) {
+                return emptyCard;
+            }
+            var dueInd = dueInds[Math.floor(Math.random() * dueInds.length)];
+            return this.nextCardAsyncPreprocessing({
+                virtual: st.cards[dueInd],
+                context: {
+                    cardsLeft: dueInds.length,
+                    isPractice: false,
+                    studying: "due"
                 }
-                var dueInd = dueInds[Math.floor(Math.random() * dueInds.length)];
-                return this.nextCardAsyncPreprocessing({
-                    virtual: st.cards[dueInd],
-                    context: {
-                        cardsLeft: dueInds.length,
-                        isPractice: false
-                    }
-                }, st);
-            case SRStudying.RandomCards:
-                if (inds.length == 0) {
-                    return emptyCard;
+            }, st);
+        } else if (st.studying == SRStudying.RandomCards) {
+            if (inds.length == 0) {
+                return emptyCard;
+            }
+            var ind = inds[Math.floor(Math.random() * inds.length)];
+            return this.nextCardAsyncPreprocessing({
+                virtual: st.cards[ind],
+                context: {
+                    cardsLeft: 0,
+                    isPractice: true,
+                    studying: "random"
                 }
-                var ind = inds[Math.floor(Math.random() * inds.length)];
-                return this.nextCardAsyncPreprocessing({
-                    virtual: st.cards[ind],
-                    context: {
-                        cardsLeft: 0,
-                        isPractice: true
-                    }
-                }, st); 
+            }, st); 
         }
         return this.nextCardAsyncPreprocessing({
             virtual: undefined,
             context: {
                 cardsLeft: 0,
-                isPractice: false
+                isPractice: false,
+                studying: ""
             }
         }, st);
     }
@@ -405,6 +417,7 @@ export class UniversalSpacedRepGen
         if (card.virtual === undefined || card.processed === undefined) {
             var htmlString = renderString(njNoCardsLeft, {});
             var el = <HTMLElement>(new DOMParser().parseFromString(htmlString, "text/html").body.firstChild);
+            return trivialPromise(new Flashcard(el, ""));
         } 
         
         var cardType = card.virtual!.cardType;
@@ -431,8 +444,8 @@ export class UniversalSpacedRepGen
 
         var studyingEditor = radioEditor(
             st.studying,
-            [SRStudying.NewCards, SRStudying.DueCards, SRStudying.RandomCards],
-            ["Study new cards", "Study due cards", "Practice random cards"]
+            [SRStudying.NewCards, SRStudying.DueCards, SRStudying.RandomCards, SRStudying.DueThenNewCards, SRStudying.NewThenDueCards],
+            ["Study new cards", "Study due cards", "Practice random cards", "Study due cards, then new cards", "Study due cards, then new cards"]
         );
         var newQueueSizeEditor = scrollNumberEditor("Max new cards to study at once: ", st.newQ.maxNewCards, 1, 100, 1);
 

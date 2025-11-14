@@ -78,14 +78,17 @@ export type SRUniversalCardPhysical = {
     processed?: any,
     context: {
         cardsLeft: number,
-        isPractice: boolean
+        isPractice: boolean,
+        studying: string
     }
 }
 
 export enum SRStudying {
     NewCards = 1,
     DueCards,
-    RandomCards
+    RandomCards,
+    DueThenNewCards,
+    NewThenDueCards
 }
 
 export type SRUniversalSettings = {
