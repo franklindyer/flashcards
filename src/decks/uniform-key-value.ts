@@ -78,7 +78,7 @@ var kvDefaultState: KVFlashcardState = {
     deck: [
         ["cat", "gato"],
         ["dog", "perro"],
-        ["el perro runs", "el perro corre"],
+        ["the dog runs", "el perro corre"],
     ],
     history: []
 };
