@@ -205,9 +205,6 @@ export class SimpleCardType extends FlashcardType<SimpleCardEntry, SimpleCardDat
         var tpl = settings.template;
         var el = <HTMLElement>(new DOMParser().parseFromString(renderString(tpl, templateArgs), "text/html").body.firstChild);
 
-        // a.style.fontSize = `${fontSize}vw`;
-        // a.textContent = prompt;
-        // return new Flashcard(a, hint);
         return new Flashcard(el, hint);
     }
 
@@ -349,6 +346,7 @@ export type ClozeCardSettings = {
     targetLang: string,
     clozeGroups: string[],
     speechSettings: SpeechSettings,
+    template: string
 }
 
 export class ClozeCardType extends FlashcardType<ClozeCardEntry, ClozeCardData, ClozeCardSettings> {
@@ -420,16 +418,26 @@ export class ClozeCardType extends FlashcardType<ClozeCardEntry, ClozeCardData, 
 
     // abstract generateCard(data: D, settings: S, externalParams: IDictionary<any>): Flashcard;
     generateCard(data: ClozeCardData, settings: ClozeCardSettings, externalParams: IDictionary<any> = {}): Flashcard {
-        if (!data.valid) {
-            return renderCard("noanswer-template", `Could not get puzzle for card "${data.key}".`)
+        var fontSize = 5;
+        if (data.valid) {
+            var fontSize = 900.0/(10.0*Math.log(10+data.cloze!.prompt.length)); 
         }
-        var fl = renderCard("cloze-template", {
-            group: data.cloze!.group,
-            guid: "",
-            upper: data.cloze!.prompt,
-            lower: data.cloze!.translation
-        });
-        return fl;
+
+        var prompt = data.cloze!.prompt.replaceAll(/\{\{([^\{\}]+)\}\}/g, ""); 
+
+        var templateArgs = {
+            key: data.key,
+            puzzleFound: data.valid,
+            prompt: prompt, 
+            translation: data.cloze!.translation,
+            source: data.cloze!.group,
+            fontSize: fontSize,
+        };
+        templateArgs = Object.assign({}, templateArgs, externalParams);
+        var tpl = settings.template;
+        var el = <HTMLElement>(new DOMParser().parseFromString(renderString(tpl, templateArgs), "text/html").body.firstChild);
+
+        return new Flashcard(el, data.cloze!.answer);
     }
 
     // abstract checkAnswer(answer: string, data: D, settings: S, tf: (s: string) => string): Promise<boolean>;
@@ -478,6 +486,14 @@ export class ClozeCardType extends FlashcardType<ClozeCardEntry, ClozeCardData, 
         clozeSettingsDiv.appendChild(clozeServerDiv);
         clozeSettingsDiv.appendChild(ssEditor.element);
 
+        var tplDetails = document.createElement("details");
+        var tplSummary = document.createElement("summary");
+        tplSummary.textContent = "Card template";
+        var tplEditor = htmlEditor(settings.template);
+        tplDetails.appendChild(tplSummary);
+        tplDetails.appendChild(tplEditor.element);
+        clozeSettingsDiv.appendChild(tplDetails);
+
         return {
             element: clozeSettingsDiv,
             menuToState: () => {
@@ -486,7 +502,8 @@ export class ClozeCardType extends FlashcardType<ClozeCardEntry, ClozeCardData, 
                     sourceLangs: clozeSourceLangEditor.menuToState().split(','),
                     targetLang: clozeTargetLangEditor.menuToState(),
                     clozeGroups: clozeGroupsEditor.menuToState().split(',').filter((g) => g.length > 0),
-                    speechSettings: ssEditor.menuToState()
+                    speechSettings: ssEditor.menuToState(),
+                    template: tplEditor.menuToState()
                 }
             }
         }
@@ -506,7 +523,8 @@ export class ClozeCardType extends FlashcardType<ClozeCardEntry, ClozeCardData, 
             sourceLangs: [],
             targetLang: "",
             clozeGroups: [],
-            speechSettings: defaultSpeechSettings()
+            speechSettings: defaultSpeechSettings(),
+            template: njClozeCard
         }
     }
 }
