@@ -129,8 +129,8 @@ export function htmlEditor(content: string): StateEditor<string> {
     var htmlEd = document.createElement("div");
     var ed = ace.edit(htmlEd);
     ed.setValue(content);
-    htmlEd.style.height = "100px";
-    htmlEd.style.width = "70%";
+    htmlEd.style.height = "200px";
+    htmlEd.style.width = "90%";
     return {
         element: htmlEd,
         menuToState: () => ed.getValue()

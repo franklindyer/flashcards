@@ -21,7 +21,7 @@ export const njClozeCard: string = `\
     </p>
     <hr>
     <p style="display: block;">
-        {{ translation  }}
+        {{ translation }}
     </p>
     <span class="cloze-puzzle-attribution">
         {{ source }}
