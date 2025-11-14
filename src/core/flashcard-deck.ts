@@ -122,7 +122,7 @@ function importExportSetup<S>(deckSlug: string, setDeck: (s: S) => void) {
     }
 
     exportBtn.onclick = (e) => {
-        downloadText(deckSlug, JSON.stringify(gDeckRegistry[deckSlug])); 
+        downloadText(deckSlug, JSON.stringify(gDeckRegistry[deckSlug], null, "\t")); 
     } 
 }
 
