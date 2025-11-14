@@ -423,7 +423,7 @@ export class ClozeCardType extends FlashcardType<ClozeCardEntry, ClozeCardData, 
             var fontSize = 900.0/(10.0*Math.log(10+data.cloze!.prompt.length)); 
         }
 
-        var prompt = data.cloze!.prompt.replaceAll(/\{\{([^\{\}]+)\}\}/g, ""); 
+        var prompt = data.cloze!.prompt.replaceAll(/\{\{([^\{\}]+)\}\}/g, "___"); 
 
         var templateArgs = {
             key: data.key,
