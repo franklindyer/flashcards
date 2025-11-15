@@ -445,7 +445,7 @@ export class UniversalSpacedRepGen
         var studyingEditor = radioEditor(
             st.studying,
             [SRStudying.NewCards, SRStudying.DueCards, SRStudying.RandomCards, SRStudying.DueThenNewCards, SRStudying.NewThenDueCards],
-            ["Study new cards", "Study due cards", "Practice random cards", "Study due cards, then new cards", "Study due cards, then new cards"]
+            ["Study new cards", "Study due cards", "Practice random cards", "Study due cards, then new cards", "Study new cards, then due cards"]
         );
         var newQueueSizeEditor = scrollNumberEditor("Max new cards to study at once: ", st.newQ.maxNewCards, 1, 100, 1);
 
