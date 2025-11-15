@@ -13,7 +13,8 @@ import {
     multipleEditors,
     doubleTextFieldEditor,
     textAreaEditor,
-    htmlEditor
+    htmlEditor,
+    scrollNumberEditor
 } from "core/editor"
 import {
     TextFilterSettings,
@@ -114,6 +115,8 @@ export type SimpleCardData = {
 export type SimpleCardSettings = {
     doTwoSided: boolean,
     doReadAloud: boolean,
+    probReversed: number,
+    probSpoken: number,
     speechSettings: SpeechSettings,
     substitutions: [string, string][],
     template: string
@@ -135,9 +138,9 @@ export class SimpleCardType extends FlashcardType<SimpleCardEntry, SimpleCardDat
     // abstract processEntry(entry: E, settings: S, context: any): Promise<D>;
     processEntry(entry: SimpleCardEntry, settings: SimpleCardSettings, context: any): Promise<SimpleCardData> {
         var preventReversedCard = context.preventReversedCard;
-        var reversed = !preventReversedCard && entry.twoSided && (Math.random() < 0.5);
+        var reversed = !preventReversedCard && entry.twoSided && (Math.random() < settings.probReversed);
         var canBeSpoken = settings.doReadAloud && entry.readAloud;
-        var spoken = reversed && canBeSpoken && (Math.random() < 0.5);
+        var spoken = reversed && canBeSpoken && (Math.random() < settings.probSpoken);
 
         var subber = makeSubber(settings.substitutions);
         var tpPrompt = [];
@@ -248,15 +251,25 @@ export class SimpleCardType extends FlashcardType<SimpleCardEntry, SimpleCardDat
     makeSettingsEditor(settings: SimpleCardSettings): StateEditor<SimpleCardSettings> {
         var contDiv = document.createElement("div");
 
+        var reverseDetails = document.createElement("details");
+        var reverseSummary = document.createElement("summary");
+        reverseSummary.textContent = "Two-sided card settings";
+        contDiv.appendChild(reverseDetails);
+        reverseDetails.appendChild(reverseSummary);
         var twoSidedEditor = boolEditor("Study both sides of two-sided cards?", settings.doTwoSided);
         var twoSidedCont = document.createElement("div");
         twoSidedCont.appendChild(twoSidedEditor.element);
-        contDiv.appendChild(twoSidedCont);
+        reverseDetails.appendChild(twoSidedCont);
 
         var readAloudEditor = boolEditor("Read aloud two-sided cards with setting enabled?", settings.doReadAloud);
         var readAloudCont = document.createElement("div");
         readAloudCont.appendChild(readAloudEditor.element);
-        contDiv.appendChild(readAloudCont);
+        reverseDetails.appendChild(readAloudCont);
+
+        var pReversedEditor = scrollNumberEditor("Probability of card being reversed", settings.probReversed, 0.1, 0.9, 0.1);
+        var pSpokenEditor = scrollNumberEditor("Probability of a reversed card using audio", settings.probSpoken, 0.1, 1.0, 0.1); 
+        reverseDetails.appendChild(pReversedEditor.element);
+        reverseDetails.appendChild(pSpokenEditor.element);
 
         var ssEditor = speechSettingsEditor(settings.speechSettings);
         var ssCont = document.createElement("div")
@@ -285,6 +298,8 @@ export class SimpleCardType extends FlashcardType<SimpleCardEntry, SimpleCardDat
                 return {
                     doTwoSided: twoSidedEditor.menuToState(),
                     doReadAloud: readAloudEditor.menuToState(),
+                    probReversed: pReversedEditor.menuToState(),
+                    probSpoken: pSpokenEditor.menuToState(), 
                     speechSettings: ssEditor.menuToState(),
                     substitutions: subsEditor.menuToState(),
                     template: tplEditor.menuToState() 
@@ -308,6 +323,8 @@ export class SimpleCardType extends FlashcardType<SimpleCardEntry, SimpleCardDat
         return {
             doTwoSided: true,
             doReadAloud: true,
+            probReversed: 0.5,
+            probSpoken: 0.5,
             speechSettings: defaultSpeechSettings(),
             substitutions: [],
             template: njSimpleCard
