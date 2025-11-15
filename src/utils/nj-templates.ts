@@ -18,7 +18,7 @@ export const njSimpleCard: string = `\
     {% if isPractice %}
         <span class="cards-left-span">This is a practice card and will not affect progress.</span>
     {% else %}
-        <span class="cards-left-span">{{ cardsLeft }} cards left</span>
+        <span class="cards-left-span">{{ cardsLeft }} {{ studying }} cards left</span>
     {% endif %}
 </div>
 `;
@@ -43,7 +43,7 @@ export const njClozeCard: string = `\
     {% if isPractice %}
     <span class="cards-left-span">This is a practice card and will not affect progress.</span>
     {% else %}
-    <span class="cards-left-span">{{ cardsLeft }} cards left</span>
+    <span class="cards-left-span">{{ cardsLeft }} {{ studying }} cards left</span>
     {% endif %}
 </div>
 `;
