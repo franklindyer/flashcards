@@ -5,6 +5,10 @@ import {
     Flashcard
 } from "core/flashcard"
 
+import {
+    renderString
+} from "nunjucks"
+
 export abstract class FlashcardTemplate<D> {
     abstract getName(): string;
     abstract render(data: D): Flashcard;

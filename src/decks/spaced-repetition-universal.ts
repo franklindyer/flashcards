@@ -41,8 +41,11 @@ import {
     multipleEditors
 } from "core/editor"
 import {
-    renderCard
-} from "core/flashcard-template"
+    njNoCardsLeft
+} from "utils/nj-templates"
+import {
+    renderString
+} from "nunjucks"
 import {
     registerDeckType
 } from "core/flashcard-deck"
@@ -110,17 +113,6 @@ function makeEmptyCard(cardType: string): SRUniversalCardVirtual {
             streak: 0
         }
     }
-}
-
-function makeCardsLeftSpan(card: SRUniversalCardPhysical) {
-    var infoText = document.createElement("span");
-    infoText.classList.add("cards-left-span");
-    if (card.context.isPractice) {  
-        infoText.textContent = "This is a practice card. It will not affect your progress.";
-    } else {
-        infoText.textContent = `${card.context.cardsLeft} cards remaining`;
-    }
-    return infoText;
 }
 
 function infoWidgetSR(
@@ -298,7 +290,7 @@ export class UniversalSpacedRepGen
         var cardNewState = this.updateCard(card, st, result);
 
         // If card is still new, stick it back in the queue
-        if (st.studying == SRStudying.NewCards) {
+        if (card.context.studying === "new") {
             st.newQ = incorporateLast(st.newQ, cardGuid, this.cardIsNew(cardNewState));
         }
         st.newQ = filterNewQueue(st.newQ, (id: string) => this.cardIsEnabled(st.cards[id], st));
@@ -313,51 +305,63 @@ export class UniversalSpacedRepGen
         var dueInds = this.getDue(st);
         var emptyCard = this.nextCardAsyncPreprocessing({
             virtual: undefined,
-            context: { cardsLeft: 0, isPractice: false }
+            context: { cardsLeft: 0, isPractice: false, studying: "" }
         }, st);
-        switch (st.studying) {
-            case SRStudying.NewCards:
-                var newGuid = chooseNext(st.newQ, newInds);
-                if (newGuid === undefined) {
-                    return emptyCard;     
+
+        if (inds.length == 0) {
+            return emptyCard;
+        }
+
+        if ((st.studying == SRStudying.NewCards) || 
+                (st.studying == SRStudying.NewThenDueCards && newInds.length > 0) ||
+                (st.studying == SRStudying.DueThenNewCards && dueInds.length == 0)) {
+            var newGuid = chooseNext(st.newQ, newInds);
+            if (newGuid === undefined) {
+                return emptyCard;     
+            }
+            return this.nextCardAsyncPreprocessing({
+                virtual: st.cards[newGuid],
+                context: {
+                    cardsLeft: newInds.length,
+                    isPractice: false,
+                    studying: "new"
                 }
-                return this.nextCardAsyncPreprocessing({
-                    virtual: st.cards[newGuid],
-                    context: {
-                        cardsLeft: newInds.length,
-                        isPractice: false
-                    }
-                }, st);
-            case SRStudying.DueCards:
-                if (dueInds.length == 0) {
-                    return emptyCard;
+            }, st);
+        } else if ((st.studying == SRStudying.DueCards) ||
+                    (st.studying == SRStudying.DueThenNewCards) ||
+                    (st.studying == SRStudying.NewThenDueCards && newInds.length == 0)) {
+            if (dueInds.length == 0) {
+                return emptyCard;
+            }
+            var dueInd = dueInds[Math.floor(Math.random() * dueInds.length)];
+            return this.nextCardAsyncPreprocessing({
+                virtual: st.cards[dueInd],
+                context: {
+                    cardsLeft: dueInds.length,
+                    isPractice: false,
+                    studying: "due"
                 }
-                var dueInd = dueInds[Math.floor(Math.random() * dueInds.length)];
-                return this.nextCardAsyncPreprocessing({
-                    virtual: st.cards[dueInd],
-                    context: {
-                        cardsLeft: dueInds.length,
-                        isPractice: false
-                    }
-                }, st);
-            case SRStudying.RandomCards:
-                if (inds.length == 0) {
-                    return emptyCard;
+            }, st);
+        } else if (st.studying == SRStudying.RandomCards) {
+            if (inds.length == 0) {
+                return emptyCard;
+            }
+            var ind = inds[Math.floor(Math.random() * inds.length)];
+            return this.nextCardAsyncPreprocessing({
+                virtual: st.cards[ind],
+                context: {
+                    cardsLeft: 0,
+                    isPractice: true,
+                    studying: "random"
                 }
-                var ind = inds[Math.floor(Math.random() * inds.length)];
-                return this.nextCardAsyncPreprocessing({
-                    virtual: st.cards[ind],
-                    context: {
-                        cardsLeft: 0,
-                        isPractice: true
-                    }
-                }, st); 
+            }, st); 
         }
         return this.nextCardAsyncPreprocessing({
             virtual: undefined,
             context: {
                 cardsLeft: 0,
-                isPractice: false
+                isPractice: false,
+                studying: ""
             }
         }, st);
     }
@@ -411,16 +415,15 @@ export class UniversalSpacedRepGen
         card: SRUniversalCardPhysical 
     ): Promise<Flashcard> {
         if (card.virtual === undefined || card.processed === undefined) {
-            return trivialPromise(renderCard("noanswer-template",
-                "No cards left to study."
-            ));
+            var htmlString = renderString(njNoCardsLeft, {});
+            var el = <HTMLElement>(new DOMParser().parseFromString(htmlString, "text/html").body.firstChild);
+            return trivialPromise(new Flashcard(el, ""));
         } 
         
         var cardType = card.virtual!.cardType;
         var cardEntry = card.virtual!.cardEntry;
         var cardProcessed = card.processed;
-        var fl = gCardTypeRegistry[cardType].generateCard(cardProcessed, st.settings.cardTypeSettings[cardType]);
-        fl.el.appendChild(makeCardsLeftSpan(card));
+        var fl = gCardTypeRegistry[cardType].generateCard(cardProcessed, st.settings.cardTypeSettings[cardType], card.context);
         return trivialPromise(fl);
     }
 
@@ -441,8 +444,8 @@ export class UniversalSpacedRepGen
 
         var studyingEditor = radioEditor(
             st.studying,
-            [SRStudying.NewCards, SRStudying.DueCards, SRStudying.RandomCards],
-            ["Study new cards", "Study due cards", "Practice random cards"]
+            [SRStudying.NewCards, SRStudying.DueCards, SRStudying.RandomCards, SRStudying.DueThenNewCards, SRStudying.NewThenDueCards],
+            ["Study new cards", "Study due cards", "Practice random cards", "Study due cards, then new cards", "Study new cards, then due cards"]
         );
         var newQueueSizeEditor = scrollNumberEditor("Max new cards to study at once: ", st.newQ.maxNewCards, 1, 100, 1);
 

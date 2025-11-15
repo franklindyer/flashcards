@@ -11,7 +11,10 @@ import {
     swappingTextEditor,
     singleTextFieldEditor,
     multipleEditors,
-    doubleTextFieldEditor
+    doubleTextFieldEditor,
+    textAreaEditor,
+    htmlEditor,
+    scrollNumberEditor
 } from "core/editor"
 import {
     TextFilterSettings,
@@ -32,11 +35,19 @@ import {
     defaultSpeechSettings,
     speechSettingsEditor,
     SpeechSettings,
-    utter
+    utter,
+    makeAudioButtons
 } from "utils/speech"
 import {
     Flashcard
 } from "core/flashcard"
+import {
+    renderString
+} from "nunjucks"
+import {
+    njSimpleCard,
+    njClozeCard
+} from "utils/nj-templates"
 
 export const gCardTypeRegistry: IDictionary<FlashcardType<any, any, any>> = {};
 
@@ -52,7 +63,7 @@ export abstract class FlashcardType<E, D, S> {
     abstract processEntry(entry: E, settings: S, context: any): Promise<D>;
     abstract getSearchableText(entry: E): string;
     abstract getSpeakableText(data: D): string;
-    abstract generateCard(data: D, settings: S): Flashcard;
+    abstract generateCard(data: D, settings: S, externalParams: IDictionary<any>): Flashcard;
     abstract checkAnswer(answer: string, data: D, settings: S, tf: (s: string) => string): Promise<boolean>;
     abstract makeEntryEditor(entry: E): StateEditor<E>;
     abstract makeSettingsEditor(settings: S): StateEditor<S>;
@@ -104,8 +115,11 @@ export type SimpleCardData = {
 export type SimpleCardSettings = {
     doTwoSided: boolean,
     doReadAloud: boolean,
+    probReversed: number,
+    probSpoken: number,
     speechSettings: SpeechSettings,
-    substitutions: [string, string][]
+    substitutions: [string, string][],
+    template: string
 }
 
 export class SimpleCardType extends FlashcardType<SimpleCardEntry, SimpleCardData, SimpleCardSettings> {
@@ -124,9 +138,9 @@ export class SimpleCardType extends FlashcardType<SimpleCardEntry, SimpleCardDat
     // abstract processEntry(entry: E, settings: S, context: any): Promise<D>;
     processEntry(entry: SimpleCardEntry, settings: SimpleCardSettings, context: any): Promise<SimpleCardData> {
         var preventReversedCard = context.preventReversedCard;
-        var reversed = !preventReversedCard && entry.twoSided && (Math.random() < 0.5);
+        var reversed = !preventReversedCard && entry.twoSided && (Math.random() < settings.probReversed);
         var canBeSpoken = settings.doReadAloud && entry.readAloud;
-        var spoken = reversed && canBeSpoken && (Math.random() < 0.5);
+        var spoken = reversed && canBeSpoken && (Math.random() < settings.probSpoken);
 
         var subber = makeSubber(settings.substitutions);
         var tpPrompt = [];
@@ -164,29 +178,31 @@ export class SimpleCardType extends FlashcardType<SimpleCardEntry, SimpleCardDat
             return data.answer[0];
     }
 
-    // abstract generateCard(data: D, settings: S): Flashcard;
-    generateCard(data: SimpleCardData, settings: SimpleCardSettings): Flashcard {
+    // abstract generateCard(data: D, settings: S, externalParams: IDictionary<any>): Flashcard;
+    generateCard(data: SimpleCardData, settings: SimpleCardSettings, externalParams: IDictionary<any> = {}): Flashcard {
         var a = document.createElement("div");
         var prompt = "";
         var answers: string[] = [];
         var hint = "";
         
-        if (data.spoken) {
-            return renderCard("transcript-template", {
-                spokenText: data.prompt[0],
-                hintText: data.answer[0],
-                speechSettings: settings.speechSettings 
-           })
-        } else {
-            prompt = data.prompt[0];
-            answers = data.answer;
-            hint = data.answer[0];
-        }
+        prompt = data.prompt[0];
+        answers = data.answer;
+        hint = data.answer[0];
 
         var fontSize = 100.0/(10.0*Math.log(10+prompt.length));
-        a.style.fontSize = `${fontSize}vw`;
-        a.textContent = prompt;
-        return new Flashcard(a, hint);
+        
+        var templateArgs = {
+            prompts: data.prompt,
+            fontSize: fontSize,
+            reversed: data.reversed,
+            spoken: data.spoken
+        };
+        templateArgs = Object.assign({}, templateArgs, externalParams);
+        var tpl = settings.template;
+        var el = <HTMLElement>(new DOMParser().parseFromString(renderString(tpl, templateArgs), "text/html").body.firstChild);
+        el = makeAudioButtons(el, settings.speechSettings);
+
+        return new Flashcard(el, hint);
     }
 
     // abstract checkAnswer(answer: string, data: D, settings: S): Promise<boolean>;
@@ -235,15 +251,25 @@ export class SimpleCardType extends FlashcardType<SimpleCardEntry, SimpleCardDat
     makeSettingsEditor(settings: SimpleCardSettings): StateEditor<SimpleCardSettings> {
         var contDiv = document.createElement("div");
 
+        var reverseDetails = document.createElement("details");
+        var reverseSummary = document.createElement("summary");
+        reverseSummary.textContent = "Two-sided card settings";
+        contDiv.appendChild(reverseDetails);
+        reverseDetails.appendChild(reverseSummary);
         var twoSidedEditor = boolEditor("Study both sides of two-sided cards?", settings.doTwoSided);
         var twoSidedCont = document.createElement("div");
         twoSidedCont.appendChild(twoSidedEditor.element);
-        contDiv.appendChild(twoSidedCont);
+        reverseDetails.appendChild(twoSidedCont);
 
         var readAloudEditor = boolEditor("Read aloud two-sided cards with setting enabled?", settings.doReadAloud);
         var readAloudCont = document.createElement("div");
         readAloudCont.appendChild(readAloudEditor.element);
-        contDiv.appendChild(readAloudCont);
+        reverseDetails.appendChild(readAloudCont);
+
+        var pReversedEditor = scrollNumberEditor("Probability of card being reversed", settings.probReversed, 0.1, 0.9, 0.1);
+        var pSpokenEditor = scrollNumberEditor("Probability of a reversed card using audio", settings.probSpoken, 0.1, 1.0, 0.1); 
+        reverseDetails.appendChild(pReversedEditor.element);
+        reverseDetails.appendChild(pSpokenEditor.element);
 
         var ssEditor = speechSettingsEditor(settings.speechSettings);
         var ssCont = document.createElement("div")
@@ -258,14 +284,25 @@ export class SimpleCardType extends FlashcardType<SimpleCardEntry, SimpleCardDat
         subsEditor.element = hideDetails(subsEditor.element, "Card substitution settings");
         contDiv.appendChild(subsEditor.element);
 
+        var tplDetails = document.createElement("details");
+        var tplSummary = document.createElement("summary");
+        tplSummary.textContent = "Card template";
+        var tplEditor = htmlEditor(settings.template);
+        tplDetails.appendChild(tplSummary);
+        tplDetails.appendChild(tplEditor.element);
+        contDiv.appendChild(tplDetails);
+
         return {
             element: contDiv,
             menuToState: () => {
                 return {
                     doTwoSided: twoSidedEditor.menuToState(),
                     doReadAloud: readAloudEditor.menuToState(),
+                    probReversed: pReversedEditor.menuToState(),
+                    probSpoken: pSpokenEditor.menuToState(), 
                     speechSettings: ssEditor.menuToState(),
-                    substitutions: subsEditor.menuToState()
+                    substitutions: subsEditor.menuToState(),
+                    template: tplEditor.menuToState() 
                 };
             }
         }
@@ -286,8 +323,11 @@ export class SimpleCardType extends FlashcardType<SimpleCardEntry, SimpleCardDat
         return {
             doTwoSided: true,
             doReadAloud: true,
+            probReversed: 0.5,
+            probSpoken: 0.5,
             speechSettings: defaultSpeechSettings(),
-            substitutions: []
+            substitutions: [],
+            template: njSimpleCard
         };
     }
 }
@@ -317,6 +357,7 @@ export type ClozeCardSettings = {
     targetLang: string,
     clozeGroups: string[],
     speechSettings: SpeechSettings,
+    template: string
 }
 
 export class ClozeCardType extends FlashcardType<ClozeCardEntry, ClozeCardData, ClozeCardSettings> {
@@ -386,18 +427,28 @@ export class ClozeCardType extends FlashcardType<ClozeCardEntry, ClozeCardData, 
             return "";
     }
 
-    // abstract generateCard(data: D, settings: S): Flashcard;
-    generateCard(data: ClozeCardData, settings: ClozeCardSettings): Flashcard {
-        if (!data.valid) {
-            return renderCard("noanswer-template", `Could not get puzzle for card "${data.key}".`)
+    // abstract generateCard(data: D, settings: S, externalParams: IDictionary<any>): Flashcard;
+    generateCard(data: ClozeCardData, settings: ClozeCardSettings, externalParams: IDictionary<any> = {}): Flashcard {
+        var fontSize = 5;
+        if (data.valid) {
+            var fontSize = 900.0/(10.0*Math.log(10+data.cloze!.prompt.length)); 
         }
-        var fl = renderCard("cloze-template", {
-            group: data.cloze!.group,
-            guid: "",
-            upper: data.cloze!.prompt,
-            lower: data.cloze!.translation
-        });
-        return fl;
+
+        var prompt = data.cloze!.prompt.replaceAll(/\{\{([^\{\}]+)\}\}/g, "___"); 
+
+        var templateArgs = {
+            key: data.key,
+            puzzleFound: data.valid,
+            prompt: prompt, 
+            translation: data.cloze!.translation,
+            source: data.cloze!.group,
+            fontSize: fontSize,
+        };
+        templateArgs = Object.assign({}, templateArgs, externalParams);
+        var tpl = settings.template;
+        var el = <HTMLElement>(new DOMParser().parseFromString(renderString(tpl, templateArgs), "text/html").body.firstChild);
+
+        return new Flashcard(el, data.cloze!.answer);
     }
 
     // abstract checkAnswer(answer: string, data: D, settings: S, tf: (s: string) => string): Promise<boolean>;
@@ -446,6 +497,14 @@ export class ClozeCardType extends FlashcardType<ClozeCardEntry, ClozeCardData, 
         clozeSettingsDiv.appendChild(clozeServerDiv);
         clozeSettingsDiv.appendChild(ssEditor.element);
 
+        var tplDetails = document.createElement("details");
+        var tplSummary = document.createElement("summary");
+        tplSummary.textContent = "Card template";
+        var tplEditor = htmlEditor(settings.template);
+        tplDetails.appendChild(tplSummary);
+        tplDetails.appendChild(tplEditor.element);
+        clozeSettingsDiv.appendChild(tplDetails);
+
         return {
             element: clozeSettingsDiv,
             menuToState: () => {
@@ -454,7 +513,8 @@ export class ClozeCardType extends FlashcardType<ClozeCardEntry, ClozeCardData, 
                     sourceLangs: clozeSourceLangEditor.menuToState().split(','),
                     targetLang: clozeTargetLangEditor.menuToState(),
                     clozeGroups: clozeGroupsEditor.menuToState().split(',').filter((g) => g.length > 0),
-                    speechSettings: ssEditor.menuToState()
+                    speechSettings: ssEditor.menuToState(),
+                    template: tplEditor.menuToState()
                 }
             }
         }
@@ -474,7 +534,8 @@ export class ClozeCardType extends FlashcardType<ClozeCardEntry, ClozeCardData, 
             sourceLangs: [],
             targetLang: "",
             clozeGroups: [],
-            speechSettings: defaultSpeechSettings()
+            speechSettings: defaultSpeechSettings(),
+            template: njClozeCard
         }
     }
 }
