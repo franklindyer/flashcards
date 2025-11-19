@@ -105,6 +105,7 @@ function makeEmptyCard(cardType: string): SRUniversalCardVirtual {
         guid: guidGenerator(),
         cardType: cardType,
         cardEntry: gCardTypeRegistry[cardType].getDefaultEntry(),
+        extraInfo: "",
         tags: [],
         due: new Date(),
         intervalMinutes: 0,
@@ -166,6 +167,11 @@ export class UniversalSpacedRepGen
                 var repairedSettings = recursiveRepairJSON(currentSettings, gCardTypeRegistry[cardType].getDefaultSettings());
                 st.settings.cardTypeSettings[cardType] = repairedSettings;
             }
+        }
+        for (var i in Object.keys(st.cards)) {
+            var guid = Object.keys(st.cards)[i];
+            if (!("extraInfo" in st.cards[guid]) || st.cards[guid].extraInfo === null)
+                st.cards[guid].extraInfo = "";
         }
         this.preprocessAllCards(st);
         return st;
@@ -423,7 +429,10 @@ export class UniversalSpacedRepGen
         var cardType = card.virtual!.cardType;
         var cardEntry = card.virtual!.cardEntry;
         var cardProcessed = card.processed;
-        var fl = gCardTypeRegistry[cardType].generateCard(cardProcessed, st.settings.cardTypeSettings[cardType], card.context);
+        var contextDict: IDictionary<any> = { ...card.context };
+        contextDict["extra"] = card.virtual.extraInfo;
+
+        var fl = gCardTypeRegistry[cardType].generateCard(cardProcessed, st.settings.cardTypeSettings[cardType], contextDict);
         return trivialPromise(fl);
     }
 
@@ -480,6 +489,11 @@ export class UniversalSpacedRepGen
             var cardTypeClass = gCardTypeRegistry[cardType];
             var ed = cardTypeClass.makeEntryEditor(c.cardEntry);
 
+            var extraInfoEd = singleTextFieldEditor(c.extraInfo);
+            (<HTMLInputElement>extraInfoEd.element).placeholder = "extra info...";
+            extraInfoEd.element.style.width = "70%";
+            ed.element.appendChild(extraInfoEd.element);
+
             var tagsEd = singleTextFieldEditor(c.tags.join(','));
             (<HTMLInputElement>tagsEd.element).placeholder = "tags...";
             ed.element.appendChild(tagsEd.element);
@@ -499,6 +513,7 @@ export class UniversalSpacedRepGen
                     cardType: c.cardType,
                     cardEntry: ed.menuToState(),
                     cardData: null,
+                    extraInfo: extraInfoEd.menuToState(),
                     tags: tagsEd.menuToState().split(",").filter((t) => t.length > 0),
                     due: c.due,
                     intervalMinutes: c.intervalMinutes,

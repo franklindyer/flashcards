@@ -70,6 +70,7 @@ export type SRUniversalCardVirtual = {
     cardType: string,
     cardEntry: any,
     tags: string[],
+    extraInfo: string,
     stats: SRUniversalStats
 }
 
