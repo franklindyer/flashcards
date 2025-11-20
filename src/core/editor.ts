@@ -347,7 +347,7 @@ export function multipleEditors<a>(
         var undelBtn = document.createElement("button");
         statePartDiv.appendChild(delBtn);
         statePartDiv.appendChild(undelBtn);
-        listDiv.prepend(statePartDiv);
+        listDiv.appendChild(statePartDiv);
         statePartDivs.push(statePartDiv);
 
         delBtn.classList.add("menu-remove-card-button");
@@ -369,7 +369,20 @@ export function multipleEditors<a>(
             includedInds.push(i);
         }
     }
-    addBtn.onclick = (e) => { addNewStatePart(empty()); };
+
+    var remakeEntries = () => {
+        console.log("REMAKING");
+        var numAdded = 0;
+        listDiv.innerHTML = "";
+        for (var i = children.length-1; i >= 0; i--) {
+            statePartEditorFactory(i);
+            numAdded++;
+            if (numAdded >= maxEntries) 
+                break;
+        }
+    };
+
+    addBtn.onclick = (e) => { addNewStatePart(empty()); remakeEntries(); };
     editor.element.appendChild(addBtn);
 
     if (includeSearch) {
@@ -392,13 +405,16 @@ export function multipleEditors<a>(
     }
 
     editor.element.appendChild(listDiv);
-    var numAdded = 0;
-    for (var i = ls.length-1; i >= 0; i--) {
-        statePartEditorFactory(i);
-        numAdded++;
-        if (numAdded >= maxEntries) 
-            break;
-    }
+
+    remakeEntries();
+
+//    var numAdded = 0;
+//    for (var i = ls.length-1; i >= 0; i--) {
+//        statePartEditorFactory(i);
+//        numAdded++;
+//        if (numAdded >= maxEntries) 
+//            break;
+//    }
 
     return editor;
 }
