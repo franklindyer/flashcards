@@ -18,9 +18,7 @@ export function emptySRQueue(maxNewCards: number) {
 export function chooseNext(q: SRNewQueue, allOpts: string[]): string | undefined {
     var newOpts = allOpts.filter((k) => !q.newQueue.includes(k));
     
-    if (q.newQueue.length < q.maxNewCards && newOpts.length > 0) {
-        return newOpts[Math.floor(Math.random() * newOpts.length)];
-    } else if (q.newQueue.length > 0) {
+    if (q.newQueue.length > 0) {
         return q.newQueue[0];
     } else {
         return undefined;
@@ -46,5 +44,22 @@ export function incorporateLast(
 
 export function filterNewQueue(q: SRNewQueue, fxn: (id: string) => boolean) {
     q.newQueue = q.newQueue.filter(fxn);
+    return q;
+}
+
+export function refillNewQueue(
+    q: SRNewQueue, 
+    allOpts: string[],
+    refillOnlyWhenEmpty: boolean = false): SRNewQueue {
+    var cardsNeeded = q.maxNewCards - q.newQueue.length;
+    if (refillOnlyWhenEmpty && q.newQueue.length > 0) {
+        cardsNeeded = 0;
+    }
+    if (cardsNeeded == 0) {
+        return q;
+    }
+    var cardsAdding = Math.min(allOpts.length, cardsNeeded);
+    var nextCards = allOpts.slice(0, cardsAdding);
+    nextCards.forEach((s) => q.newQueue.push(s));
     return q;
 }

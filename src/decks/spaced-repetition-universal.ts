@@ -54,7 +54,8 @@ import {
     SRNewQueue,
     chooseNext,
     filterNewQueue,
-    incorporateLast
+    incorporateLast,
+    refillNewQueue
 } from "utils/spaced-repetition-newqueue"
 import {
     gCardTypeRegistry,
@@ -173,7 +174,12 @@ export class UniversalSpacedRepGen
             if (!("extraInfo" in st.cards[guid]) || st.cards[guid].extraInfo === null)
                 st.cards[guid].extraInfo = "";
         }
+
         this.preprocessAllCards(st);
+
+        // Fill the new queue, in case it isn't full yet
+        st.newQ = refillNewQueue(st.newQ, this.getNew(st), true);
+
         return st;
     }
 
@@ -300,6 +306,7 @@ export class UniversalSpacedRepGen
             st.newQ = incorporateLast(st.newQ, cardGuid, this.cardIsNew(cardNewState));
         }
         st.newQ = filterNewQueue(st.newQ, (id: string) => this.cardIsEnabled(st.cards[id], st));
+        st.newQ = refillNewQueue(st.newQ, this.getNew(st), true);
 
         st.cards[cardGuid] = cardNewState;
         return trivialPromise(st);
