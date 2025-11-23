@@ -77,6 +77,7 @@ export const defaultSRUniversalSettings = {
     initialHours: 8,
     correctFactor: 1.5,
     incorrectFactor: 0.5,
+    fillQOnlyWhenEmpty: true,
     inactiveTags: [],
     readCorrectAnswers: false,
     preventReversedNewCards: false,
@@ -464,6 +465,7 @@ export class UniversalSpacedRepGen
             ["Study new cards", "Study due cards", "Practice random cards", "Study due cards, then new cards", "Study new cards, then due cards"]
         );
         var newQueueSizeEditor = scrollNumberEditor("Max new cards to study at once: ", st.newQ.maxNewCards, 1, 100, 1);
+        var newQueueChunkingEditor = boolEditor("Only refill new card queue once each batch is finished?", st.settings.fillQOnlyWhenEmpty);
 
         var initHoursEditor = scrollNumberEditor("Initial interval (hours): ", st.settings.initialHours, 1, 240, 1);
         var correctFactor = scrollNumberEditor("Correct factor: ", st.settings.correctFactor, 1, 10, 0.1);
@@ -620,6 +622,7 @@ export class UniversalSpacedRepGen
             studyingEditor.element,
             initHoursEditor.element,
             newQueueSizeEditor.element,
+            newQueueChunkingEditor.element,
             correctFactor.element,
             incorrectFactor.element,
             omitTagsCont,
@@ -640,6 +643,7 @@ export class UniversalSpacedRepGen
                     initialHours: initHoursEditor.menuToState(),
                     correctFactor: correctFactor.menuToState(),
                     incorrectFactor: incorrectFactor.menuToState(),
+                    fillQOnlyWhenEmpty: newQueueChunkingEditor.menuToState(),
                     readCorrectAnswers: speechCheckbox.menuToState(),
                     preventReversedNewCards: preventReversedNewCardsCheckbox.menuToState(),
                     filterSettings: filterEditor.menuToState(),
