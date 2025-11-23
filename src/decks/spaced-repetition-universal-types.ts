@@ -70,6 +70,7 @@ export type SRUniversalCardVirtual = {
     cardType: string,
     cardEntry: any,
     tags: string[],
+    extraInfo: string,
     stats: SRUniversalStats
 }
 
@@ -96,6 +97,7 @@ export type SRUniversalSettings = {
     initialHours: number,
     correctFactor: number,
     incorrectFactor: number,
+    fillQOnlyWhenEmpty: boolean,
     inactiveTags: string[],
     readCorrectAnswers: boolean,
     preventReversedNewCards: boolean,

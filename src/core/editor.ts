@@ -308,7 +308,8 @@ export function multipleEditors<a>(
     empty: () => a, 
     ed: (st: a) => StateEditor<a>,
     includeSearch: boolean = false,
-    searchFxn: (s: string, st: a) => boolean = (s: string, x: a) => true): 
+    searchFxn: (s: string, st: a) => boolean = (s: string, x: a) => true,
+    maxEntries: number = 30): 
     StateEditor<a[]> {
     var children: StateEditor<a>[] = [];
     var includedInds: number[] = [];
@@ -323,11 +324,21 @@ export function multipleEditors<a>(
     addBtn.textContent = "Add another";
     var listDiv = document.createElement("div");
     var statePartDivs: HTMLElement[] = [];
-    var statePartEditorFactory = (statePart: a) => {
-        var newEditor = ed(statePart);
-        children.push(newEditor);
+
+    var addNewStatePart = (sp: a) => {
+        var newEditor = ed(sp);
+        children.push(newEditor); 
         var ind = children.length - 1;
         includedInds.push(ind);
+    } 
+
+    for (var i = 0; i < ls.length; i++) {
+        var statePart = ls[i];
+        addNewStatePart(statePart);
+    }
+
+    var statePartEditorFactory = (i: number) => {
+        var newEditor = children[i];
         var statePartDiv = document.createElement("div");
         statePartDiv.appendChild(newEditor.element);
         newEditor.element.style.display = "inline-block";
@@ -336,7 +347,7 @@ export function multipleEditors<a>(
         var undelBtn = document.createElement("button");
         statePartDiv.appendChild(delBtn);
         statePartDiv.appendChild(undelBtn);
-        listDiv.prepend(statePartDiv);
+        listDiv.appendChild(statePartDiv);
         statePartDivs.push(statePartDiv);
 
         delBtn.classList.add("menu-remove-card-button");
@@ -345,7 +356,7 @@ export function multipleEditors<a>(
             delBtn.style.display = "none";
             undelBtn.style.display = "inline-block";
             statePartDiv.style.backgroundColor = "#ffdddd";
-            includedInds = includedInds.filter((i) => i !== ind);
+            includedInds = includedInds.filter((j) => i !== j);
         }
 
         undelBtn.style.display = "none";
@@ -355,32 +366,55 @@ export function multipleEditors<a>(
             undelBtn.style.display = "none";
             delBtn.style.display = "inline-block";
             statePartDiv.style.backgroundColor = window.getComputedStyle(statePartDiv.parentElement!).backgroundColor;
-            includedInds.push(ind);
+            includedInds.push(i);
         }
     }
-    addBtn.onclick = (e) => { statePartEditorFactory(empty()); };
+
+    var remakeEntries = () => {
+        console.log("REMAKING");
+        var numAdded = 0;
+        listDiv.innerHTML = "";
+        for (var i = children.length-1; i >= 0; i--) {
+            statePartEditorFactory(i);
+            numAdded++;
+            if (numAdded >= maxEntries) 
+                break;
+        }
+    };
+
+    addBtn.onclick = (e) => { addNewStatePart(empty()); remakeEntries(); };
     editor.element.appendChild(addBtn);
 
     if (includeSearch) {
         var searchBar = document.createElement("input");
         searchBar.placeholder = "Search...";
         searchBar.oninput = (e) => {
-            for (var i in children) {
+            var numAdded = 0;
+            listDiv.innerHTML = "";
+            for (var i = children.length-1; i >= 0; i--) {
                 var ed = children[i];
                 if (searchFxn(searchBar.value, ed.menuToState())) {
-                    statePartDivs[i].style.display = "block";
-                } else {
-                    statePartDivs[i].style.display = "none";
+                    numAdded++;
+                    statePartEditorFactory(i);
                 }
+                if (numAdded >= maxEntries)
+                    break;
             }        
         }
         editor.element.appendChild(searchBar);
     }
 
     editor.element.appendChild(listDiv);
-    for (var i in ls) {
-        statePartEditorFactory(ls[i])
-    }
+
+    remakeEntries();
+
+//    var numAdded = 0;
+//    for (var i = ls.length-1; i >= 0; i--) {
+//        statePartEditorFactory(i);
+//        numAdded++;
+//        if (numAdded >= maxEntries) 
+//            break;
+//    }
 
     return editor;
 }

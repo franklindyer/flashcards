@@ -54,7 +54,8 @@ import {
     SRNewQueue,
     chooseNext,
     filterNewQueue,
-    incorporateLast
+    incorporateLast,
+    refillNewQueue
 } from "utils/spaced-repetition-newqueue"
 import {
     gCardTypeRegistry,
@@ -76,6 +77,7 @@ export const defaultSRUniversalSettings = {
     initialHours: 8,
     correctFactor: 1.5,
     incorrectFactor: 0.5,
+    fillQOnlyWhenEmpty: true,
     inactiveTags: [],
     readCorrectAnswers: false,
     preventReversedNewCards: false,
@@ -105,6 +107,7 @@ function makeEmptyCard(cardType: string): SRUniversalCardVirtual {
         guid: guidGenerator(),
         cardType: cardType,
         cardEntry: gCardTypeRegistry[cardType].getDefaultEntry(),
+        extraInfo: "",
         tags: [],
         due: new Date(),
         intervalMinutes: 0,
@@ -167,7 +170,17 @@ export class UniversalSpacedRepGen
                 st.settings.cardTypeSettings[cardType] = repairedSettings;
             }
         }
+        for (var i in Object.keys(st.cards)) {
+            var guid = Object.keys(st.cards)[i];
+            if (!("extraInfo" in st.cards[guid]) || st.cards[guid].extraInfo === null)
+                st.cards[guid].extraInfo = "";
+        }
+
         this.preprocessAllCards(st);
+
+        // Fill the new queue, in case it isn't full yet
+        st.newQ = refillNewQueue(st.newQ, this.getNew(st), true);
+
         return st;
     }
 
@@ -294,6 +307,7 @@ export class UniversalSpacedRepGen
             st.newQ = incorporateLast(st.newQ, cardGuid, this.cardIsNew(cardNewState));
         }
         st.newQ = filterNewQueue(st.newQ, (id: string) => this.cardIsEnabled(st.cards[id], st));
+        st.newQ = refillNewQueue(st.newQ, this.getNew(st), true);
 
         st.cards[cardGuid] = cardNewState;
         return trivialPromise(st);
@@ -423,7 +437,10 @@ export class UniversalSpacedRepGen
         var cardType = card.virtual!.cardType;
         var cardEntry = card.virtual!.cardEntry;
         var cardProcessed = card.processed;
-        var fl = gCardTypeRegistry[cardType].generateCard(cardProcessed, st.settings.cardTypeSettings[cardType], card.context);
+        var contextDict: IDictionary<any> = { ...card.context };
+        contextDict["extra"] = card.virtual.extraInfo;
+
+        var fl = gCardTypeRegistry[cardType].generateCard(cardProcessed, st.settings.cardTypeSettings[cardType], contextDict);
         return trivialPromise(fl);
     }
 
@@ -448,6 +465,7 @@ export class UniversalSpacedRepGen
             ["Study new cards", "Study due cards", "Practice random cards", "Study due cards, then new cards", "Study new cards, then due cards"]
         );
         var newQueueSizeEditor = scrollNumberEditor("Max new cards to study at once: ", st.newQ.maxNewCards, 1, 100, 1);
+        var newQueueChunkingEditor = boolEditor("Only refill new card queue once each batch is finished?", st.settings.fillQOnlyWhenEmpty);
 
         var initHoursEditor = scrollNumberEditor("Initial interval (hours): ", st.settings.initialHours, 1, 240, 1);
         var correctFactor = scrollNumberEditor("Correct factor: ", st.settings.correctFactor, 1, 10, 0.1);
@@ -480,6 +498,11 @@ export class UniversalSpacedRepGen
             var cardTypeClass = gCardTypeRegistry[cardType];
             var ed = cardTypeClass.makeEntryEditor(c.cardEntry);
 
+            var extraInfoEd = singleTextFieldEditor(c.extraInfo);
+            (<HTMLInputElement>extraInfoEd.element).placeholder = "extra info...";
+            extraInfoEd.element.style.width = "70%";
+            ed.element.appendChild(extraInfoEd.element);
+
             var tagsEd = singleTextFieldEditor(c.tags.join(','));
             (<HTMLInputElement>tagsEd.element).placeholder = "tags...";
             ed.element.appendChild(tagsEd.element);
@@ -499,6 +522,7 @@ export class UniversalSpacedRepGen
                     cardType: c.cardType,
                     cardEntry: ed.menuToState(),
                     cardData: null,
+                    extraInfo: extraInfoEd.menuToState(),
                     tags: tagsEd.menuToState().split(",").filter((t) => t.length > 0),
                     due: c.due,
                     intervalMinutes: c.intervalMinutes,
@@ -598,6 +622,7 @@ export class UniversalSpacedRepGen
             studyingEditor.element,
             initHoursEditor.element,
             newQueueSizeEditor.element,
+            newQueueChunkingEditor.element,
             correctFactor.element,
             incorrectFactor.element,
             omitTagsCont,
@@ -618,6 +643,7 @@ export class UniversalSpacedRepGen
                     initialHours: initHoursEditor.menuToState(),
                     correctFactor: correctFactor.menuToState(),
                     incorrectFactor: incorrectFactor.menuToState(),
+                    fillQOnlyWhenEmpty: newQueueChunkingEditor.menuToState(),
                     readCorrectAnswers: speechCheckbox.menuToState(),
                     preventReversedNewCards: preventReversedNewCardsCheckbox.menuToState(),
                     filterSettings: filterEditor.menuToState(),
