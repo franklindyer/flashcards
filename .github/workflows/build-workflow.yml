@@ -1,0 +1,42 @@
+name: CI/CD build workflow
+
+on:
+  push:
+    branches: [develop]
+
+  pull_request:
+    branches: [develop]
+
+  workflow_dispatch:
+
+jobs:
+  build-flashcards:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -l {0}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up conda environment
+        uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-name: flashcards-dev
+          init-shell: bash
+          condarc: |
+            channel_priority: strict
+            channels:
+                - conda-forge
+
+      - name: Install dependencies
+        run: |
+          conda install -y --file dev-spec.txt
+          npm install --save @types/jest
+
+      - name: Build flashcards
+        env:
+           CHECK_IMAGES: False
+        run: |
+          make build
+
