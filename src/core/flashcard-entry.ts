@@ -188,7 +188,7 @@ export class SimpleCardType extends FlashcardType<SimpleCardEntry, SimpleCardDat
         
         prompt = data.prompt[0];
         answers = data.answer;
-        hint = data.answer[0];
+        hint = data.answer.join(' | ');
 
         var fontSize = 100.0/(10.0*Math.log(10+prompt.length));
         
