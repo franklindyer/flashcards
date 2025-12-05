@@ -4,10 +4,10 @@ clean:
 docs: clean
 	mkdir -p dist
 	mkdir dist/docs
-	./build_docs
+	cp docs/conf.py dist/docs/conf.py
+	sphinx-build -M html "./docs" "./dist/docs"
 
 build: docs 
-	mkdir -p dist
 	tsc --target es2022
 	cp src/*.html dist/
 	cp src/static/style/*.css dist/
