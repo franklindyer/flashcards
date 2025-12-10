@@ -1,3 +1,5 @@
+<img src="docs/_static/pfeil-logo-lavender-transparent.png">
+
 # Pfeil
 
 This is a simple app for studying things with flashcards, particularly foreign languages.
