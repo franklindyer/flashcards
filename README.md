@@ -1,9 +1,6 @@
-# Flashcards
+# Pfeil
 
-TODO:
-
-- come up with a snappy name for this app
-- add an introduction to the app here, maybe copied from site docs?
+This is a simple app for studying things with flashcards, particularly foreign languages.
 
 ## Development
 
@@ -13,8 +10,8 @@ The site and all of its assets are served out of the flat directory `dist`.
 
 Install all packages listed in `dev-spec.txt`. This is easy with a package manager such as [Miniconda](https://www.anaconda.com/docs/getting-started/miniconda/main). The process of creating a dev environment using Miniconda is like so:
 ```
-conda create -y -n flashcards-dev --file dev-spec.txt
-conda activate flashcards-dev
+conda create -y -c conda-forge -n pfeil-dev --file dev-spec.txt
+conda activate pfeil-dev
 ```
 
 Install the custom types by running:
