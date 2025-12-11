@@ -51,6 +51,14 @@ import {
 
 export const gCardTypeRegistry: IDictionary<FlashcardType<any, any, any>> = {};
 
+// TODO: new typescript type with settings (TTS, filtering, etc.)
+
+export type UniversalCardSettings = {
+    doReadAloud: boolean,
+    speechSettings: SpeechSettings,
+    substitutions: [string, string][],
+}
+
 export abstract class FlashcardType<E, D, S> {
     getTypeName(): string {
         throw new Error("getTypeName not implemented!");
@@ -358,7 +366,7 @@ export type ClozeCardSettings = {
     targetLang: string,
     clozeGroups: string[],
     speechSettings: SpeechSettings,
-    template: string
+    template: string // TODO: this should stay specific to each card type
 }
 
 export class ClozeCardType extends FlashcardType<ClozeCardEntry, ClozeCardData, ClozeCardSettings> {
