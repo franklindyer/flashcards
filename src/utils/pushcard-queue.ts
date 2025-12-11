@@ -4,8 +4,7 @@ import {
 import {
     StateEditor,
     singleTextFieldEditor,
-    acceptDeclineEditor,
-    multipleEditors
+    acceptDeclineEditor
 } from "core/editor"
 
 export type PushcardQueue = {

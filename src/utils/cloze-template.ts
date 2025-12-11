@@ -1,7 +1,4 @@
 import {
-    trivialPromise
-} from "utils/utils"
-import {
     Flashcard
 } from "core/flashcard"
 import {

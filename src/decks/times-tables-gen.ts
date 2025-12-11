@@ -12,8 +12,6 @@ import {
     scrollNumberEditor
 } from "core/editor"
 import {
-    gDeckRegistry,
-    gDeckTypeRegistry,
     registerDeckType
 } from "core/flashcard-deck"
 

@@ -1,62 +1,12 @@
 import {
-    IDictionary,
-    guidGenerator,
-    makeDict,
-    trivialPromise,
-    getSRFutureDateInfo,
-    recursiveRepairJSON,
-    recursiveRepairEachValueJSON,
-    iconButton
+    IDictionary
 } from "utils/utils"
 import {
-    Preloader
-} from "utils/generic-preloader"
-import {
-    Flashcard
-} from "core/flashcard"
-import {
-    FlashcardGen,
-    FlashcardResult
-} from "core/flashcard-generator"
-import {
-    utter,
-    speechSettingsEditor,
-    defaultSpeechSettings,
-    SpeechSettings
-} from "utils/speech"
-import {
     TextFilterSettings,
-    applyTextFilter,
-    textFilterSelectionMenu,
-    defaultTextFilterSettings
 } from "utils/text-filters"
 import {
-    StateEditor,
-    boolEditor,
-    scrollNumberEditor,
-    singleTextFieldEditor,
-    radioEditor,
-    combineEditors,
-    swappingTextEditor,
-    multipleEditors
-} from "core/editor"
-import {
-    renderCard
-} from "core/flashcard-template"
-import {
-    registerDeckType
-} from "core/flashcard-deck"
-import {
-    emptySRQueue,
-    SRNewQueue,
-    chooseNext,
-    filterNewQueue,
-    incorporateLast
+    SRNewQueue
 } from "utils/spaced-repetition-newqueue"
-import {
-    gCardTypeRegistry,
-    FlashcardType
-} from "core/flashcard-entry"
 
 export type SRUniversalStats = {
     created: Date,

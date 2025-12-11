@@ -6,7 +6,6 @@ import {
 } from "core/flashcard"
 import {
     FlashcardTemplate,
-    gTemplateRegistry,
     registerTemplate
 } from "core/flashcard-template"
 

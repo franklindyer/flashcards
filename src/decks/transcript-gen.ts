@@ -1,20 +1,13 @@
 import {
-    IDictionary,
-    guidGenerator
-} from "utils/utils"
-import {
     Flashcard
 } from "core/flashcard"
 import {
-    FlashcardResult,
-    FlashcardGen
+    FlashcardResult
 } from "core/flashcard-generator"
 import {
     FlashcardSyncGen
 } from "core/flashcard-sync-generator"
 import {
-    gDeckTypeRegistry,
-    gDeckRegistry,
     registerDeckType
 } from "core/flashcard-deck"
 import {
@@ -30,9 +23,6 @@ import {
 } from "utils/speech"
 import {
     StateEditor,
-    makeTranslationEditor,
-    multipleEditors,
-    singleTextFieldEditor,
     fileUploadEditor
 } from "core/editor"
 

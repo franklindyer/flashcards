@@ -1,6 +1,5 @@
 import {
     IDictionary,
-    guidGenerator,
     trivialPromise,
     hideDetails,
     makeSubber
@@ -12,19 +11,9 @@ import {
     singleTextFieldEditor,
     multipleEditors,
     doubleTextFieldEditor,
-    textAreaEditor,
     htmlEditor,
     scrollNumberEditor
 } from "core/editor"
-import {
-    TextFilterSettings,
-    applyTextFilter,
-    textFilterSelectionMenu,
-    defaultTextFilterSettings
-} from "utils/text-filters"
-import {
-    renderCard 
-} from "core/flashcard-template"
 import {
     randomizeStringSub
 } from "utils/random-templating"

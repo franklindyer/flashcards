@@ -3,9 +3,6 @@ import {
     guidGenerator
 } from "utils/utils"
 import {
-    setDeckJSON
-} from "./fs"
-import {
     FlashcardDeck,
     runDeck,
     gDeckTypeRegistry,
@@ -15,9 +12,6 @@ import {
     setDeck,
     eraseDeck
 } from "core/flashcard-deck"
-import {
-    FlashcardGen
-} from "core/flashcard-generator"
 import {
     singleTextFieldEditor,
     StateEditor
