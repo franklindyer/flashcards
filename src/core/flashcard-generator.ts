@@ -1,5 +1,4 @@
 import {
-    guidGenerator,
     showLoadingIcon,
     hideLoadingIcon
 } from "utils/utils"

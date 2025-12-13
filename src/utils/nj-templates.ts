@@ -1,7 +1,3 @@
-import {
-    renderString
-} from "nunjucks"
-
 export const njNoCardsLeft: string = `\
 <div style="font-size: 5vw;">
    No cards left to study. 

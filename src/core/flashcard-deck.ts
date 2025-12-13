@@ -1,6 +1,5 @@
 import {
     IDictionary,
-    guidGenerator,
     downloadText
 } from "utils/utils"
 import {

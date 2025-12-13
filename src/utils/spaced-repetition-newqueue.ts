@@ -1,8 +1,3 @@
-import {
-    IDictionary,
-    shuffleArr
-} from "utils/utils"
-
 export type SRNewQueue = {
     maxNewCards: number,
     newQueue: string[],

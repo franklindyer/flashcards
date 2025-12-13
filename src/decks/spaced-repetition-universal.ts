@@ -5,12 +5,8 @@ import {
     trivialPromise,
     getSRFutureDateInfo,
     recursiveRepairJSON,
-    recursiveRepairEachValueJSON,
     iconButton
 } from "utils/utils"
-import {
-    Preloader
-} from "utils/generic-preloader"
 import {
     Flashcard
 } from "core/flashcard"
@@ -19,13 +15,9 @@ import {
     FlashcardResult
 } from "core/flashcard-generator"
 import {
-    utter,
-    speechSettingsEditor,
-    defaultSpeechSettings,
-    SpeechSettings
+    defaultSpeechSettings
 } from "utils/speech"
 import {
-    TextFilterSettings,
     applyTextFilter,
     textFilterSelectionMenu,
     defaultTextFilterSettings
@@ -36,8 +28,6 @@ import {
     scrollNumberEditor,
     singleTextFieldEditor,
     radioEditor,
-    combineEditors,
-    swappingTextEditor,
     multipleEditors
 } from "core/editor"
 import {
@@ -51,15 +41,13 @@ import {
 } from "core/flashcard-deck"
 import {
     emptySRQueue,
-    SRNewQueue,
     chooseNext,
     filterNewQueue,
     incorporateLast,
     refillNewQueue
 } from "utils/spaced-repetition-newqueue"
 import {
-    gCardTypeRegistry,
-    FlashcardType
+    gCardTypeRegistry
 } from "core/flashcard-entry"
 import {
     SRUniversalStats,

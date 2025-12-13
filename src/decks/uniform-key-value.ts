@@ -1,20 +1,13 @@
 import {
-    IDictionary,
-    guidGenerator
-} from "utils/utils"
-import {
     Flashcard
 } from "core/flashcard"
 import {
-    FlashcardResult,
-    FlashcardGen
+    FlashcardResult
 } from "core/flashcard-generator"
 import {
     FlashcardSyncGen
 } from "core/flashcard-sync-generator"
 import {
-    gDeckTypeRegistry,
-    gDeckRegistry,
     registerDeckType
 } from "core/flashcard-deck"
 import {
@@ -25,8 +18,7 @@ import {
 } from "utils/basic-template"
 import {
     StateEditor,
-    makeTranslationEditor,
-    multipleEditors
+    makeTranslationEditor
 } from "core/editor"
 
 export type KVFlashcardState = {
