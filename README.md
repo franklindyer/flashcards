@@ -1,4 +1,4 @@
-<img src="docs/_static/pfeil-logo-lavender-transparent.png">
+<img src="docs/_static/logos/pfeil-logo-lavender-transparent.png">
 
 # Pfeil
 
