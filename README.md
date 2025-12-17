@@ -1,4 +1,4 @@
-<img src="docs/_static/pfeil-logo-lavender-transparent.png">
+<img src="docs/_static/logos/pfeil-logo-lavender-transparent.png">
 
 # Pfeil
 
@@ -10,18 +10,12 @@ The site and all of its assets are served out of the flat directory `dist`.
 
 ### Creating an instance of the site
 
-Install all packages listed in `dev-spec.txt`. This is easy with a package manager such as [Miniconda](https://www.anaconda.com/docs/getting-started/miniconda/main). The process of creating a dev environment using Miniconda is like so:
+Sourcing the `create-pfeil-env.sh` script will create a development environment for you using [Miniconda](https://www.anaconda.com/docs/getting-started/miniconda/main):
 ```
-conda create -y -c conda-forge -n pfeil-dev --file dev-spec.txt
-conda activate pfeil-dev
-```
-
-Install the custom types by running:
-```
-npm install --save @types/jest
+source create-pfeil-env.sh
 ```
 
-Then, run:
+Once you are in the `pfeil-dev` environment, you can run
 ```
 make build
 ``` 
