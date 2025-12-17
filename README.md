@@ -2,7 +2,7 @@
 
 # Pfeil
 
-This is a simple app for studying things with flashcards, particularly foreign languages.
+This is a simple app for studying things with flashcards, particularly foreign languages. The stable(ish) version of the site is hosted [here](https://flashcardapp.org/) and the dev version is available [here](https://dev.flashcardapp.org/). The dev version has the latest features, but is somewhat less stable, so please export and backup your decks often!
 
 ## Development
 
