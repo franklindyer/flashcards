@@ -164,14 +164,14 @@ When using two-sided cards in a {ref}`spaced-rep-deck`, this setting will disabl
 `Max new cards to study at once`:  
 This setting will determine the size of the set of new cards you want to study before moving to the next set. This is handy if you add a large number of new cards at once, as studying them all concurrently can be challenging.
 
-`Initial interval`:   
-(FRANKLIN)
+`Initial interval`:  
+The initial interval of a new spaced repetition card. That is, the amount of time between when it is studied for the first time (as a new card) between when it comes due for the first time.   
 
 `Correct factor`:   
-(FRANKLIN)
+The factor by which a card's interval is multiplied when it is answered correctly. Should be greater than 1, so that correctly answered cards are pushed off further and further into the future.
 
 `Incorrect factor`:   
-(FRANKLIN)
+The factor by which a card's interval is multiplied when it is answered incorrectly. Should be less than 1, so that incorrectly answered cards become due more quickly and are studied more often.
 
 # If something breaks
 There is no stable release of Pfeil yet, so things are sometimes wonky, broken, or unintuitive. If you find a bug and wish to report it, please create an issue on [GitHub](https://github.com/franklindyer/flashcards). Pfeil was designed to be open-source, so you are welcome to submit a pull request with a fix yourself, if you'd like! Otherwise, we will try to re-create the bug and fix it when we have a chance. 
