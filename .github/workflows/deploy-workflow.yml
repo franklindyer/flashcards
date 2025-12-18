@@ -30,28 +30,21 @@ jobs:
         run: |
           conda install -y --file dev-spec.txt
           npm install --save @types/jest
+          npm install nunjucks
 
-      - name: Build documentation
-        env:
-           CHECK_IMAGES: False
+      - name: Build and commit documentation
         run: |
-          make build
-
-      - name: Apply and commit updates
-        run: |
-          git clone https://github.com/franklindyer/flashcards.git deploy-dev
-          cd deploy-dev
           # Configure git using GitHub Actions credentials.
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add -f /dist
-          git commit -m "Update documentation" -a || true
+          make build
+          git add -f dist
+          git commit -m "Update documentation" dist || true
 
       - name: Push Changes
         uses: ad-m/github-push-action@master
         with:
           branch: deploy-dev
-          directory: dist
           github_token: ${{ secrets.GITHUB_TOKEN }}
           force: true
 
