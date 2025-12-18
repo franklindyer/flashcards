@@ -14,7 +14,8 @@ import {
 } from "core/flashcard-deck"
 import {
     singleTextFieldEditor,
-    StateEditor
+    StateEditor,
+    boolEditor
 } from "core/editor"
 import {
     promptForSyncCreds,
@@ -27,15 +28,16 @@ function generateDeckNameEditor(deck: FlashcardDeck<any>): StateEditor<Flashcard
     var colorEditor = singleTextFieldEditor(deck.view.color); 
     var closeBtn = document.createElement("button");
     closeBtn.textContent = "Save";
+    var doSyncEditor = boolEditor("Sync deck with server?", deck.doSync);
     var deckIdA= document.createElement("A");
     deckIdA.textContent = `Internal deck ID: ${deck.slug}`
     var contDiv = document.createElement("div");
     [
         nicknameEditor.element, 
-        colorEditor.element, 
-        closeBtn,
-        document.createElement("br"),
-        deckIdA
+        colorEditor.element,
+        doSyncEditor.element,
+        deckIdA,
+        closeBtn
     ].map((el) => contDiv.appendChild(el));
     contDiv.onclick = (e) => {
         e.cancelBubble = true;
@@ -46,6 +48,7 @@ function generateDeckNameEditor(deck: FlashcardDeck<any>): StateEditor<Flashcard
         menuToState: () => {
             deck.name = nicknameEditor.menuToState();
             deck.view.color = colorEditor.menuToState();
+            deck.doSync = doSyncEditor.menuToState();
             contDiv.remove();
             return deck;
         }
