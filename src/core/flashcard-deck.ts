@@ -30,6 +30,7 @@ export type FlashcardDeck<S> = {
     slug: string,
     type: string,
     view: FlashcardDeckView,
+    lastSaved: Date,
     state: S
 }
 
@@ -44,6 +45,7 @@ export function setDeck(deckSlug: string, deckString: string, callback: () => vo
 }
 
 export function saveDeck(deckSlug: string, callback: () => void) {
+    gDeckRegistry[deckSlug].lastSaved = new Date();
     setDeckJSON(deckSlug, JSON.stringify(gDeckRegistry[deckSlug])).then((_) => callback());
 }
 
@@ -179,6 +181,7 @@ export function registerDeckType<S, D>(
         slug: defaultSlug,
         type: gen.getGenName(),
         state: defaultState,
+        lastSaved: new Date(),
         view: {
             color: colorCode
         }
