@@ -15,7 +15,8 @@ def get_filepath(key, file_id):
     print(file_id, flush=True)
     if key not in KEYS:
         return None
-    keydir = os.path.join("/data", key)
+    keyPrefix = key[:8]
+    keydir = os.path.join("/data", keyPrefix)
     if not os.path.isdir(keydir):
         os.mkdir(keydir)
     filename = os.path.join(keydir, file_id)

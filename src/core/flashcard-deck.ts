@@ -15,7 +15,8 @@ import {
     deleteDeck
 } from "./fs"
 import {
-    syncUploadDeck
+    syncUploadDeck,
+    syncDownloadDeck
 } from "./synchronization"
 
 export type FlashcardDeckType<S, D> = {
@@ -145,16 +146,33 @@ export function runDeck(deckSlug: string) {
     var setState = (state: any) => {
         gDeckRegistry[deckSlug].state = state;
     }
-    
-    menuSetup(deckSlug);
-    importExportSetup(deckSlug, (s: any) => {
-        gDeckRegistry[deckSlug] = s;
-        saveDeck(deckSlug, () => {
-            runDeck(deckSlug); 
-        })
-    });
+    var setDeck = (deck: any) => {
+        gDeckRegistry[deck.slug] = deck;
+    }
 
-    decktype.gen.runLoop(getState, setState, () => saveDeck(deckSlug, () => {}));
+    var finishRunningDeck = () => {
+        menuSetup(deckSlug);
+        importExportSetup(deckSlug, (s: any) => {
+            gDeckRegistry[deckSlug] = s;
+            saveDeck(deckSlug, () => {
+                runDeck(deckSlug); 
+            })
+        });
+
+        decktype.gen.runLoop(getState, setState, () => saveDeck(deckSlug, () => {}));
+    }; 
+
+    if (gDeckRegistry[deckSlug].doSync) {
+        console.log("DOING SYNC");
+        syncDownloadDeck(
+            deckSlug,
+            gDeckRegistry[deckSlug].lastSaved,
+            setDeck,
+            finishRunningDeck
+        );
+    } else {
+        finishRunningDeck()
+    }
 }
 
 export function setLastDeck(deckSlug: string) {

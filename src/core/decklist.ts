@@ -124,7 +124,8 @@ export function generateDecklistMenu(
     addRemoteBtn.textContent = "Add external deck";
     addRemoteBtn.onclick = (e) => {
         var deckslug = prompt("Enter the ID of the deck you would like to download.") || "";
-        syncDownloadDeck(deckslug, (s: string) => { console.log(s); setDeck(deckslug, s, () => {
+        var defaultDate = new Date("1970-01-01T00:00:00Z");
+        syncDownloadDeck(deckslug, defaultDate, (s: string) => { console.log(s); setDeck(deckslug, s, () => {
             generateDecklistMenu(decklist, onfinish);
         }); });
     };
@@ -179,28 +180,6 @@ export function generateDecklistMenu(
             generateDecklistMenu(decklist, onfinish);
         })(decklist[k]);
         
-        var deckUploadBtn = document.createElement("button");
-        deckUploadBtn.title = "Upload deck to server";
-        deckUploadBtn.classList.add("deck-editor-button");
-        deckUploadBtn.innerHTML = "<img src='upcloud.png'/>";
-        deckUploadBtn.onclick = ((dk) => (e) => {
-            syncUploadDeck(dk);
-            e.cancelBubble = true;
-            if (e.stopPropagation) e.stopPropagation();
-        })(decklist[k]);
-        
-        var deckDownloadBtn = document.createElement("button");
-        deckDownloadBtn.title = "Download deck from server";
-        deckDownloadBtn.classList.add("deck-editor-button");
-            deckDownloadBtn.innerHTML = "<img src='downcloud.png'/>";
-        deckDownloadBtn.onclick = ((k) => (e) => {
-            syncDownloadDeck(k, (s: string) => { setDeck(k, s, () => {}); });
-            e.cancelBubble = true;
-            if (e.stopPropagation) e.stopPropagation();
-        })(k);
-
-        deckDiv.appendChild(deckUploadBtn);
-        deckDiv.appendChild(deckDownloadBtn);
         deckDiv.appendChild(deckEditBtn);
         deckDiv.appendChild(deckDeleteBtn);
         decklistEditor.appendChild(deckDiv);

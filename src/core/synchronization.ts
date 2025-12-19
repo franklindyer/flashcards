@@ -86,7 +86,7 @@ export function syncUploadDeck(deck: FlashcardDeck<any>, doAlert: boolean = fals
     );
 }
 
-export function syncDownloadDeck(slug: string, setDeck: (deckstr: string) => void): void {
+export function syncDownloadDeck(slug: string, lastSavedLocal: Date, setDeck: (deckstr: string) => void, resolve: () => void = () => {}): void {
     var badCallback = () => alert("Could not download deck. Ensure your sync server is set up and that the deck ID is correct.");
     var host = getHostname();
     validateSyncCreds(
@@ -101,16 +101,28 @@ export function syncDownloadDeck(slug: string, setDeck: (deckstr: string) => voi
                     body: JSON.stringify({ host: host, key: key, id: slug })
                 }).then(res => res.json())
                   .then(res => {
-                        if (confirm("Are you sure you want to download this deck? Any local version will be overwritten.")) { 
+                        var lastSavedRemote = new Date(JSON.parse(res['data']).lastSaved);
+                        var remoteIsMoreRecent = lastSavedRemote > lastSavedLocal;
+                        if (remoteIsMoreRecent && confirm("Are you sure you want to download this deck? Any local version will be overwritten.")) { 
                             setDeck(res['data']);
                             alert("Deck downloaded successfully.");
+                            resolve();
+                        } else {
+                            resolve();
                         } 
                   })
-                  .catch(res => badCallback());
+                  .catch(res => {
+                    badCallback();
+                    resolve();
+                  });
             } catch (e) {
                 badCallback();
+                resolve();
             }
         },
-        () => badCallback()
+        () => {
+            badCallback();
+            resolve();
+        }
     );
 }
