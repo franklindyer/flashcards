@@ -14,6 +14,9 @@ import {
     setDeckJSON,
     deleteDeck
 } from "./fs"
+import {
+    syncUploadDeck
+} from "./synchronization"
 
 export type FlashcardDeckType<S, D> = {
     slug: string,
@@ -47,6 +50,9 @@ export function setDeck(deckSlug: string, deckString: string, callback: () => vo
 
 export function saveDeck(deckSlug: string, callback: () => void) {
     gDeckRegistry[deckSlug].lastSaved = new Date();
+    if (gDeckRegistry[deckSlug].doSync) {
+        syncUploadDeck(gDeckRegistry[deckSlug]);
+    }
     setDeckJSON(deckSlug, JSON.stringify(gDeckRegistry[deckSlug])).then((_) => callback());
 }
 

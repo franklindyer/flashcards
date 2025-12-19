@@ -61,7 +61,7 @@ export function promptForSyncCreds() {
     );
 }
 
-export function syncUploadDeck(deck: FlashcardDeck<any>): void {
+export function syncUploadDeck(deck: FlashcardDeck<any>, doAlert: boolean = false): void {
     var badCallback = () => alert("Could not upload deck. Ensure your sync server is set up.");
     var host = getHostname();
     validateSyncCreds(
@@ -73,7 +73,10 @@ export function syncUploadDeck(deck: FlashcardDeck<any>): void {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({ host: host, key: key, id: deck.slug, data: JSON.stringify(deck) })
-                }).then(res => alert("Deck uploaded successfully."))
+                }).then(res => {
+                    if (doAlert)
+                        alert("Deck uploaded successfully.")
+                })
                   .catch(res => badCallback());
             } catch (e) {
                 badCallback();
