@@ -10,6 +10,7 @@ RUN mkdir /data
 COPY requirements.txt requirements.txt
 RUN pip3 install -r requirements.txt
 
+COPY utils.py utils.py
 COPY server.py server.py
 
 EXPOSE 8080 

@@ -125,7 +125,7 @@ export function generateDecklistMenu(
     addRemoteBtn.onclick = (e) => {
         var deckslug = prompt("Enter the ID of the deck you would like to download.") || "";
         var defaultDate = new Date("1970-01-01T00:00:00Z");
-        syncDownloadDeck(deckslug, defaultDate, (s: string) => { console.log(s); setDeck(deckslug, s, () => {
+        syncDownloadDeck(deckslug, defaultDate, (s: string) => { setDeck(deckslug, s, () => {
             generateDecklistMenu(decklist, onfinish);
         }); });
     };

@@ -5,6 +5,8 @@ import {
     FlashcardDeck
 } from "core/flashcard-deck"
 
+const CONFIRM_DOWNLOAD_MSG = "A more recent version of this deck was found on the sync server. Do you want to download it, overwriting your current copy of the deck?";
+
 export function getHostname() {
     var host = localStorage.getItem("host");
     if (host === null) {
@@ -64,6 +66,7 @@ export function promptForSyncCreds() {
 export function syncUploadDeck(deck: FlashcardDeck<any>, doAlert: boolean = false): void {
     var badCallback = () => alert("Could not upload deck. Ensure your sync server is set up.");
     var host = getHostname();
+    
     validateSyncCreds(
         (remote, key) => {
             try {
@@ -72,7 +75,7 @@ export function syncUploadDeck(deck: FlashcardDeck<any>, doAlert: boolean = fals
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ host: host, key: key, id: deck.slug, data: JSON.stringify(deck) })
+                    body: JSON.stringify({ host: host, key: key, id: deck.slug, data: deck })
                 }).then(res => {
                     if (doAlert)
                         alert("Deck uploaded successfully.")
@@ -86,9 +89,10 @@ export function syncUploadDeck(deck: FlashcardDeck<any>, doAlert: boolean = fals
     );
 }
 
-export function syncDownloadDeck(slug: string, lastSavedLocal: Date, setDeck: (deckstr: string) => void, resolve: () => void = () => {}): void {
+export function syncDownloadDeck(slug: string, lastSavedLocal: Date, setDeck: (deckstr: string, resolve: () => void) => void, resolve: () => void = () => {}): void {
     var badCallback = () => alert("Could not download deck. Ensure your sync server is set up and that the deck ID is correct.");
     var host = getHostname();
+
     validateSyncCreds(
         (remote, key) => {
             try {
@@ -101,13 +105,18 @@ export function syncDownloadDeck(slug: string, lastSavedLocal: Date, setDeck: (d
                     body: JSON.stringify({ host: host, key: key, id: slug })
                 }).then(res => res.json())
                   .then(res => {
-                        var lastSavedRemote = new Date(JSON.parse(res['data']).lastSaved);
+                        console.log(res);
+                        var lastSavedRemote = new Date(res['data'].lastSaved);
+                        console.log(lastSavedRemote);
+                        console.log(lastSavedLocal);
                         var remoteIsMoreRecent = lastSavedRemote > lastSavedLocal;
-                        if (remoteIsMoreRecent && confirm("Are you sure you want to download this deck? Any local version will be overwritten.")) { 
-                            setDeck(res['data']);
-                            alert("Deck downloaded successfully.");
-                            resolve();
+                        if (remoteIsMoreRecent && confirm(CONFIRM_DOWNLOAD_MSG)) { 
+                            setDeck(JSON.stringify(res['data']), () => {
+                                alert("Deck downloaded successfully.");
+                                resolve();
+                            });
                         } else {
+                            console.log("REMOTE IS NOT MORE RECENT THAN LOCAL");
                             resolve();
                         } 
                   })
@@ -116,6 +125,7 @@ export function syncDownloadDeck(slug: string, lastSavedLocal: Date, setDeck: (d
                     resolve();
                   });
             } catch (e) {
+                console.log(e);
                 badCallback();
                 resolve();
             }
