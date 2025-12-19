@@ -52,13 +52,16 @@ export function validateSyncCreds(goodCallback: (r: string, k: string) => void, 
     }
 }
 
-export function promptForSyncCreds() {
+export function promptForSyncCreds(successCallback: (r: string, k: string) => void = (_: string, __: string) => {}) {
     var remote = window.prompt("Enter the URL of your synchronization server.") || "";
     var key = window.prompt("Enter your key with the synchronization server.") || "";
     setRemote(remote);
     setSyncKey(key);
     validateSyncCreds(
-        (_, __) => alert("Successfully paired with synchronization server."),
+        (_, __) => {
+            alert("Successfully paired with synchronization server.");
+            successCallback(remote, key);
+        },
         () => alert("Error attempting to connect to synchronization server. Try again.")
     );
 }

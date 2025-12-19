@@ -20,7 +20,8 @@ import {
 import {
     promptForSyncCreds,
     syncUploadDeck,
-    syncDownloadDeck
+    syncDownloadDeck,
+    validateSyncCreds
 } from "./synchronization"
 
 function generateDeckNameEditor(deck: FlashcardDeck<any>): StateEditor<FlashcardDeck<any>> {
@@ -115,10 +116,31 @@ export function generateDecklistMenu(
     decklistEditor.appendChild(importDeckBtn);
     decklistEditor.appendChild(document.createElement("br"));
 
+    var syncServerDiv = document.createElement("div")
+    syncServerDiv.style.display = "none";
+    var updateSyncServerDiv = (r: string, s: string) => {
+        syncServerDiv.innerHTML = "";
+        syncServerDiv.style.display = "block";
+        var remoteP = document.createElement("a");
+        var keyP = document.createElement("a");
+        remoteP.innerHTML = `Sync server URL: <code>${r}</code>`;
+        keyP.innerHTML = `Sync server user key: <code>${k.slice(0, 8)}...</code>`;
+        syncServerDiv.appendChild(remoteP);
+        syncServerDiv.appendChild(document.createElement("br"));
+        syncServerDiv.appendChild(keyP);
+    };
+
     var syncServerBtn = document.createElement("button");
     syncServerBtn.textContent = "Setup sync server";
-    syncServerBtn.onclick = promptForSyncCreds;
+    syncServerBtn.onclick = (e) => {
+        promptForSyncCreds(updateSyncServerDiv);
+    };
     decklistEditor.appendChild(syncServerBtn);   
+
+    validateSyncCreds(
+        updateSyncServerDiv,
+        () => {}
+    );    
 
     var addRemoteBtn = document.createElement("button");
     addRemoteBtn.textContent = "Add external deck";
@@ -130,6 +152,7 @@ export function generateDecklistMenu(
         }); });
     };
     decklistEditor.appendChild(addRemoteBtn);
+    decklistEditor.appendChild(syncServerDiv);   
 
     Object.keys(decklist).sort(); 
     for (var k in decklist) {

@@ -15,5 +15,5 @@ COPY server.py server.py
 
 EXPOSE 8080 
 
-# CMD ["python3", "server.py", "8080"]
-ENTRYPOINT ["waitress-serve", "--host", "0.0.0.0", "--call", "server:app"]
+CMD ["python3", "server.py"]
+# ENTRYPOINT ["waitress-serve", "--host", "--port=8080", "0.0.0.0", "--call", "server:app"]
