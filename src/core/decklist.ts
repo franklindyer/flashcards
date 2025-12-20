@@ -14,12 +14,14 @@ import {
 } from "core/flashcard-deck"
 import {
     singleTextFieldEditor,
-    StateEditor
+    StateEditor,
+    boolEditor
 } from "core/editor"
 import {
     promptForSyncCreds,
     syncUploadDeck,
-    syncDownloadDeck
+    syncDownloadDeck,
+    validateSyncCreds
 } from "./synchronization"
 
 function generateDeckNameEditor(deck: FlashcardDeck<any>): StateEditor<FlashcardDeck<any>> {
@@ -27,15 +29,16 @@ function generateDeckNameEditor(deck: FlashcardDeck<any>): StateEditor<Flashcard
     var colorEditor = singleTextFieldEditor(deck.view.color); 
     var closeBtn = document.createElement("button");
     closeBtn.textContent = "Save";
+    var doSyncEditor = boolEditor("Sync deck with server?", deck.doSync);
     var deckIdA= document.createElement("A");
     deckIdA.textContent = `Internal deck ID: ${deck.slug}`
     var contDiv = document.createElement("div");
     [
         nicknameEditor.element, 
-        colorEditor.element, 
-        closeBtn,
-        document.createElement("br"),
-        deckIdA
+        colorEditor.element,
+        doSyncEditor.element,
+        deckIdA,
+        closeBtn
     ].map((el) => contDiv.appendChild(el));
     contDiv.onclick = (e) => {
         e.cancelBubble = true;
@@ -46,6 +49,7 @@ function generateDeckNameEditor(deck: FlashcardDeck<any>): StateEditor<Flashcard
         menuToState: () => {
             deck.name = nicknameEditor.menuToState();
             deck.view.color = colorEditor.menuToState();
+            deck.doSync = doSyncEditor.menuToState();
             contDiv.remove();
             return deck;
         }
@@ -112,20 +116,43 @@ export function generateDecklistMenu(
     decklistEditor.appendChild(importDeckBtn);
     decklistEditor.appendChild(document.createElement("br"));
 
+    var syncServerDiv = document.createElement("div")
+    syncServerDiv.style.display = "none";
+    var updateSyncServerDiv = (r: string, s: string) => {
+        syncServerDiv.innerHTML = "";
+        syncServerDiv.style.display = "block";
+        var remoteP = document.createElement("a");
+        var keyP = document.createElement("a");
+        remoteP.innerHTML = `Sync server URL: <code>${r}</code>`;
+        keyP.innerHTML = `Sync server user key: <code>${k.slice(0, 8)}...</code>`;
+        syncServerDiv.appendChild(remoteP);
+        syncServerDiv.appendChild(document.createElement("br"));
+        syncServerDiv.appendChild(keyP);
+    };
+
     var syncServerBtn = document.createElement("button");
     syncServerBtn.textContent = "Setup sync server";
-    syncServerBtn.onclick = promptForSyncCreds;
+    syncServerBtn.onclick = (e) => {
+        promptForSyncCreds(updateSyncServerDiv);
+    };
     decklistEditor.appendChild(syncServerBtn);   
+
+    validateSyncCreds(
+        updateSyncServerDiv,
+        () => {}
+    );    
 
     var addRemoteBtn = document.createElement("button");
     addRemoteBtn.textContent = "Add external deck";
     addRemoteBtn.onclick = (e) => {
         var deckslug = prompt("Enter the ID of the deck you would like to download.") || "";
-        syncDownloadDeck(deckslug, (s: string) => { console.log(s); setDeck(deckslug, s, () => {
+        var defaultDate = new Date("1970-01-01T00:00:00Z");
+        syncDownloadDeck(deckslug, defaultDate, (s: string) => { setDeck(deckslug, s, () => {
             generateDecklistMenu(decklist, onfinish);
         }); });
     };
     decklistEditor.appendChild(addRemoteBtn);
+    decklistEditor.appendChild(syncServerDiv);   
 
     Object.keys(decklist).sort(); 
     for (var k in decklist) {
@@ -176,28 +203,6 @@ export function generateDecklistMenu(
             generateDecklistMenu(decklist, onfinish);
         })(decklist[k]);
         
-        var deckUploadBtn = document.createElement("button");
-        deckUploadBtn.title = "Upload deck to server";
-        deckUploadBtn.classList.add("deck-editor-button");
-        deckUploadBtn.innerHTML = "<img src='upcloud.png'/>";
-        deckUploadBtn.onclick = ((dk) => (e) => {
-            syncUploadDeck(dk);
-            e.cancelBubble = true;
-            if (e.stopPropagation) e.stopPropagation();
-        })(decklist[k]);
-        
-        var deckDownloadBtn = document.createElement("button");
-        deckDownloadBtn.title = "Download deck from server";
-        deckDownloadBtn.classList.add("deck-editor-button");
-            deckDownloadBtn.innerHTML = "<img src='downcloud.png'/>";
-        deckDownloadBtn.onclick = ((k) => (e) => {
-            syncDownloadDeck(k, (s: string) => { setDeck(k, s, () => {}); });
-            e.cancelBubble = true;
-            if (e.stopPropagation) e.stopPropagation();
-        })(k);
-
-        deckDiv.appendChild(deckUploadBtn);
-        deckDiv.appendChild(deckDownloadBtn);
         deckDiv.appendChild(deckEditBtn);
         deckDiv.appendChild(deckDeleteBtn);
         decklistEditor.appendChild(deckDiv);

@@ -1,4 +1,4 @@
-import {
+import{
     IDictionary,
     downloadText
 } from "utils/utils"
@@ -14,6 +14,10 @@ import {
     setDeckJSON,
     deleteDeck
 } from "./fs"
+import {
+    syncUploadDeck,
+    syncDownloadDeck
+} from "./synchronization"
 
 export type FlashcardDeckType<S, D> = {
     slug: string,
@@ -30,6 +34,8 @@ export type FlashcardDeck<S> = {
     slug: string,
     type: string,
     view: FlashcardDeckView,
+    lastSaved: Date,
+    doSync: boolean,
     state: S
 }
 
@@ -44,6 +50,10 @@ export function setDeck(deckSlug: string, deckString: string, callback: () => vo
 }
 
 export function saveDeck(deckSlug: string, callback: () => void) {
+    gDeckRegistry[deckSlug].lastSaved = new Date();
+    if (gDeckRegistry[deckSlug].doSync) {
+        syncUploadDeck(gDeckRegistry[deckSlug]);
+    }
     setDeckJSON(deckSlug, JSON.stringify(gDeckRegistry[deckSlug])).then((_) => callback());
 }
 
@@ -125,27 +135,47 @@ function importExportSetup<S>(deckSlug: string, setDeck: (s: S) => void) {
     } 
 }
 
-export function runDeck(deckSlug: string) {
-    setLastDeck(deckSlug);
-    document.getElementById("flashcard-container")!.innerHTML = "";
-
-    var decktype = gDeckTypeRegistry[gDeckRegistry[deckSlug].type];
-    gDeckRegistry[deckSlug].state = decktype.gen.repairDeckState(gDeckRegistry[deckSlug].state)
-
-    var getState = () => gDeckRegistry[deckSlug].state;
-    var setState = (state: any) => {
-        gDeckRegistry[deckSlug].state = state;
+export function updateDeckFromRemote(deckSlug: string, resolve: () => void) {
+    if (gDeckRegistry[deckSlug].doSync) {
+        syncDownloadDeck(
+            deckSlug,
+            new Date(gDeckRegistry[deckSlug].lastSaved),
+            (deckStr: string, resolve2: () => void) => {
+                setDeck(deckSlug, deckStr, resolve2);
+            },
+            resolve
+        )
+    } else {
+        resolve();
     }
-    
-    menuSetup(deckSlug);
-    importExportSetup(deckSlug, (s: any) => {
-        gDeckRegistry[deckSlug] = s;
-        saveDeck(deckSlug, () => {
-            runDeck(deckSlug); 
-        })
-    });
+}
 
-    decktype.gen.runLoop(getState, setState, () => saveDeck(deckSlug, () => {}));
+export function runDeck(deckSlug: string, forceSync: boolean = false) {
+    var getState = () => gDeckRegistry[deckSlug].state;
+    var setState = (s: any) => {
+        gDeckRegistry[deckSlug].state = s;
+    };
+
+    updateDeckFromRemote(
+        deckSlug,
+        () => {
+            setLastDeck(deckSlug);
+            document.getElementById("flashcard-container")!.innerHTML = "";
+
+            var decktype = gDeckTypeRegistry[gDeckRegistry[deckSlug].type];
+            gDeckRegistry[deckSlug].state = decktype.gen.repairDeckState(gDeckRegistry[deckSlug].state)
+
+            menuSetup(deckSlug);
+            importExportSetup(deckSlug, (s: any) => {
+                gDeckRegistry[deckSlug] = s;
+                saveDeck(deckSlug, () => {
+                    runDeck(deckSlug); 
+                })
+            });
+
+            decktype.gen.runLoop(getState, setState, () => saveDeck(deckSlug, () => {}));
+        } 
+    )    
 }
 
 export function setLastDeck(deckSlug: string) {
@@ -179,6 +209,8 @@ export function registerDeckType<S, D>(
         slug: defaultSlug,
         type: gen.getGenName(),
         state: defaultState,
+        lastSaved: new Date(),
+        doSync: false,
         view: {
             color: colorCode
         }
