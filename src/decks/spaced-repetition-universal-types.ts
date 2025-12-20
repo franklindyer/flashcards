@@ -5,6 +5,9 @@ import {
     TextFilterSettings,
 } from "utils/text-filters"
 import {
+    PushcardQueue
+} from "utils/pushcard-queue"
+import {
     SRNewQueue
 } from "utils/spaced-repetition-newqueue"
 
@@ -51,7 +54,8 @@ export type SRUniversalSettings = {
     inactiveTags: string[],
     readCorrectAnswers: boolean,
     preventReversedNewCards: boolean,
-    filterSettings: TextFilterSettings
+    filterSettings: TextFilterSettings,
+    pushcardQueue: PushcardQueue
 }
 
 export type SRUniversalState = {
