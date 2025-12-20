@@ -96,6 +96,13 @@ export function syncDownloadDeck(slug: string, lastSavedLocal: Date, setDeck: (d
     var badCallback = () => alert("Could not download deck. Ensure your sync server is set up and that the deck ID is correct.");
     var host = getHostname();
 
+    // To prevent unnecessary lag, don't pull unless this deck was last saved over 2 minutes ago
+    var timeSinceLastSave = ((new Date()).getTime() - lastSavedLocal.getTime()) / 1000;
+    if (timeSinceLastSave < 120) {
+        resolve();
+        return;
+    }
+
     validateSyncCreds(
         (remote, key) => {
             try {

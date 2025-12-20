@@ -50,6 +50,11 @@ import {
     gCardTypeRegistry
 } from "core/flashcard-entry"
 import {
+    PushcardQueue,
+    makePCQEditor,
+    defaultPushcardQueue
+} from "utils/pushcard-queue"
+import {
     SRUniversalStats,
     SRUniversalCardVirtual,
     SRUniversalCardPhysical,
@@ -70,7 +75,8 @@ export const defaultSRUniversalSettings = {
     readCorrectAnswers: false,
     preventReversedNewCards: false,
     speechSettings: defaultSpeechSettings(),
-    filterSettings: defaultTextFilterSettings
+    filterSettings: defaultTextFilterSettings,
+    pushcardQueue: defaultPushcardQueue()
 }
 
 export function makeSRCardDict(cards: SRUniversalCardVirtual[])
@@ -479,6 +485,8 @@ export class UniversalSpacedRepGen
 
         var filterEditor = textFilterSelectionMenu(st.settings.filterSettings);
 
+        var pcqEditor = makePCQEditor(st.settings.pushcardQueue);
+
         function makeCardEditor(c: SRUniversalCardVirtual):
             StateEditor<SRUniversalCardVirtual> {
             var cardType = c.cardType;
@@ -616,7 +624,8 @@ export class UniversalSpacedRepGen
             omitTagsCont,
             preventReversedNewCardsCheckbox.element,
             speechDiv,
-            filterEditor.element
+            filterEditor.element,
+            pcqEditor.element
         ].concat(cardEditorGroups.map((ed) => ed.element)).map((el) => {
             el.classList.add("deck-menu-submenu");
             contDiv.appendChild(el);
@@ -624,25 +633,35 @@ export class UniversalSpacedRepGen
 
         return {
             element: contDiv,
-            menuToState: () => { return {
-                studying: studyingEditor.menuToState(),
-                settings: {
-                    cardTypeSettings: getAllCardSettings(), 
-                    initialHours: initHoursEditor.menuToState(),
-                    correctFactor: correctFactor.menuToState(),
-                    incorrectFactor: incorrectFactor.menuToState(),
-                    fillQOnlyWhenEmpty: newQueueChunkingEditor.menuToState(),
-                    readCorrectAnswers: speechCheckbox.menuToState(),
-                    preventReversedNewCards: preventReversedNewCardsCheckbox.menuToState(),
-                    filterSettings: filterEditor.menuToState(),
-                    inactiveTags: omitTagsEditor.menuToState().split(",")
-                },
-                newQ: emptySRQueue(newQueueSizeEditor.menuToState()),
-                cards: makeDict(
-                    cardEditorGroups.map((e) => e.menuToState()).flat(1), 
-                    (c) => c.guid
-                ),
-            }}
+            menuToState: () => { 
+                var pcq = pcqEditor.menuToState();
+                var pushedCards = pcq.accepted.map((j) => {
+                    var c = makeEmptyCard(j.cardType);
+                    c.cardEntry = {...c.cardEntry, ...j.cardEntry};
+                    return c;
+                });
+                pcq.accepted = [];
+                return {
+                    studying: studyingEditor.menuToState(),
+                    settings: {
+                        cardTypeSettings: getAllCardSettings(), 
+                        initialHours: initHoursEditor.menuToState(),
+                        correctFactor: correctFactor.menuToState(),
+                        incorrectFactor: incorrectFactor.menuToState(),
+                        fillQOnlyWhenEmpty: newQueueChunkingEditor.menuToState(),
+                        readCorrectAnswers: speechCheckbox.menuToState(),
+                        preventReversedNewCards: preventReversedNewCardsCheckbox.menuToState(),
+                        filterSettings: filterEditor.menuToState(),
+                        inactiveTags: omitTagsEditor.menuToState().split(","),
+                        pushcardQueue: pcqEditor.menuToState()
+                    },
+                    newQ: emptySRQueue(newQueueSizeEditor.menuToState()),
+                    cards: makeDict(
+                        pushedCards.concat(cardEditorGroups.map((e) => e.menuToState()).flat(1)), 
+                        (c) => c.guid
+                    ),
+                }
+            }
         };
     }
 
