@@ -8,6 +8,8 @@ import {
     setupDecklistMenu
 } from "core/decklist"
 
+import "menus/menus";
+
 import "decks/times-tables-gen";
 import "decks/uniform-key-value";
 import "decks/spaced-repetition-universal";

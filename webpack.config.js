@@ -23,6 +23,7 @@ module.exports = {
         core: path.resolve(process.cwd(), 'src/core/'),
         utils: path.resolve(process.cwd(), 'src/utils/'),
         decks: path.resolve(process.cwd(), 'src/decks/'),
+        menus: path.resolve(process.cwd(), 'src/menus/'),
     }
   },
   output: {
