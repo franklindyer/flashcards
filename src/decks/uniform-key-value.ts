@@ -20,6 +20,9 @@ import {
     StateEditor,
     makeTranslationEditor
 } from "core/editor"
+import {
+    MenuComponent
+} from "menus/menus"
 
 export type KVFlashcardState = {
     deck: BasicCardData[],
@@ -49,17 +52,8 @@ export class KVFlashcardGen extends FlashcardSyncGen<KVFlashcardState, BasicCard
         return renderCard("basic-template", data);
     }
 
-    makeEditor(state: KVFlashcardState): StateEditor<KVFlashcardState> {
-        var transEd = makeTranslationEditor(state.deck, (x: string) => true);
-        return {
-            element: transEd.element,
-            menuToState: () => {
-                return {
-                    deck: transEd.menuToState(),
-                    history: state.history
-                };
-            }
-        }
+    makeEditor(state: KVFlashcardState): MenuComponent<KVFlashcardState> {
+        return null!;
     }
 
     correctEffect(_: KVFlashcardState, __: BasicCardData, ___: string, resolve: () => void) { resolve() };

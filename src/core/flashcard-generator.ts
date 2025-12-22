@@ -6,6 +6,9 @@ import {
     StateEditor
 } from "core/editor"
 import {
+    MenuComponent    
+} from "menus/menus"
+import {
     Flashcard
 } from "core/flashcard"
 
@@ -34,7 +37,7 @@ export abstract class FlashcardGen<S, D> {
     abstract generateCardAsync(state: S, data: D): Promise<Flashcard>;
     abstract checkAnswerAsync(answer: string, state: S, data: D): Promise<boolean>;
 
-    abstract makeEditor(s: S): StateEditor<S>;
+    abstract makeEditor(s: S): MenuComponent<S>;
 
     // Should not attempt to change the deck's state
     abstract correctEffect(state: S, cardData: D, attempt: string, resolve: () => void): void;   

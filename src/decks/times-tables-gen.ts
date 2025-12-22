@@ -12,6 +12,9 @@ import {
     scrollNumberEditor
 } from "core/editor"
 import {
+    MenuComponent
+} from "menus/menus"
+import {
     registerDeckType
 } from "core/flashcard-deck"
 
@@ -75,41 +78,8 @@ export class TimesTableGen
         return (answer === (c.factor1 * c.factor2).toString());
     }
 
-    makeEditor(st: TimesTableState): StateEditor<TimesTableState> {
-        var minEd = scrollNumberEditor("Minimum factor:", st.minNum, 0, 100, 1);
-        var maxEd = scrollNumberEditor("Maximum factor:", st.maxNum, 0, 100, 1);
-       
-        var wrongDiv = document.createElement("div");
-        wrongDiv.style.backgroundColor = "#ffdddd";
-        wrongDiv.classList.add("deck-menu-submenu");
-        var wrongList = document.createElement("ul");
-        var wrongHdr = document.createElement("b");
-        wrongHdr.textContent = "You have not gotten any cards wrong yet.";
-        for (var i in Object.keys(st.recentlyIncorrect)) {
-            var fct = st.recentlyIncorrect[i];
-            var li = document.createElement("li");
-            li.textContent = `${fct[0]} × ${fct[1]} = ${fct[0] * fct[1]}`;
-            wrongList.appendChild(li);
-            wrongHdr.textContent = "You have gotten the following cards wrong:"
-        }
-        wrongDiv.appendChild(wrongHdr);
-        wrongDiv.appendChild(wrongList);
-        
-        var edDiv = document.createElement("div");
-        edDiv.appendChild(minEd.element);
-        edDiv.appendChild(maxEd.element);
-        edDiv.appendChild(wrongDiv);
-        
-        return {
-            element: edDiv,
-            menuToState: () => {
-                return {
-                    minNum: minEd.menuToState(),
-                    maxNum: maxEd.menuToState(),
-                    recentlyIncorrect: st.recentlyIncorrect
-                };
-            }
-        };
+    makeEditor(st: TimesTableState): MenuComponent<TimesTableState> {
+        return null!;
     }
 
 }
