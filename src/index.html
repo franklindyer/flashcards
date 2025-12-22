@@ -15,6 +15,21 @@
         <button id="import-deck-button">Import deck</button>
         <input id="answer-hint" class="answer-text-box" type="text" disabled/>
         <input id="answer-input" class="answer-text-box" type="text"/>
+
+        <br><br>
+
+        <div id="test-menu" is="menu-lazy-list" search="text1,text2" max="5">
+            <button class="menu-add-another-button">Add another</button>
+            <input type="text" class="menu-search-bar" placeholder="search text..." />
+            <div class="menu-list-entries" />
+            <div class="menu-list-default-entry" is="menu-group">
+                <input is="menu-textbox" name="text1" />
+                <input is="menu-textbox" name="text2" />
+                <button class="menu-remove-entry-button">remove</button>
+                <button class="menu-restore-entry-button">restore</button>
+            </div>
+        </div>
+
     </div>
     <div id="flashcard-deck-editor-overlay" class="fullscreen-overlay">
         <button id="flashcard-deck-editor-close">Save and close</button>

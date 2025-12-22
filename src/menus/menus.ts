@@ -177,7 +177,7 @@ class ListEntryComponent<a> extends HTMLDivElement
 }
 
 class ListComponent<a> extends HTMLDivElement
-                       implements MenuComponent<a[]>{
+                       implements MenuComponent<a[]> {
     defaultEntry?: HTMLElement;
     entriesDiv: HTMLDivElement = document.createElement("div");
 
@@ -235,6 +235,120 @@ class ListComponent<a> extends HTMLDivElement
    
 }
 
+class LazyListComponent<a> extends HTMLDivElement
+                           implements MenuComponent<a[]> {
+    defaultElement?: HTMLElement;
+    searchBar?: HTMLInputElement;
+    entriesDiv?: HTMLDivElement; 
+    shownEntries: [number, HTMLElement][] = [];
+
+    st: a[] = [];
+    includedEntries: number[] = [];
+    maxElements: number = 0;
+    searchableFields: string[] = [];
+
+    constructor() {
+        super();
+    }
+
+    connectedCallback() {
+        var _this = this;
+
+        this.maxElements = parseInt(this.getAttribute("max") || "10");
+        this.searchableFields = (this.getAttribute("search") || "").split(",");
+
+        var addAnotherButton = this.querySelector("button.menu-add-another-button"); 
+        if (addAnotherButton) {
+            (<HTMLElement>addAnotherButton).onclick = (e) => {
+                _this.includedEntries.push(_this.st.length);
+                _this.st.push((<any>this.defaultElement).getState());
+                console.log(this.st);
+                _this.rerunSearch();
+            }
+        }
+
+        this.searchBar = <HTMLInputElement>this.querySelector("input.menu-search-bar");
+        this.searchBar.onchange = (e) => {
+             _this.rerunSearch();
+        };
+
+        this.entriesDiv = this.querySelector("div.menu-list-entries")!;
+        this.defaultElement = this.querySelector(".menu-list-default-entry")!;
+        console.log(this.defaultElement);
+        this.defaultElement.remove();
+    }
+
+    fieldName() {
+        return this.getAttribute("name")!;
+    }
+
+    getState() {
+        this.saveChanges();
+        return [...this.includedEntries.map((i) => this.st[i])];
+    }
+
+    setState(ls: a[]) {
+        this.st = ls;
+        this.includedEntries = Array.from(Array(this.st.length).keys());
+        this.shownEntries = [];
+        this.rerunSearch();
+    }
+
+    saveChanges() {
+        this.shownEntries.forEach((r) => {
+            this.st[r[0]] = (<any>r[1]).getState();
+        });
+    }
+
+    rerunSearch() {
+        this.saveChanges();
+
+        var _this = this;
+        var q = this.searchBar!.value;
+
+        var selectedEntries = Array.from(Array(this.st.length).keys());
+        selectedEntries = selectedEntries.filter((i) => _this.searchableFields.some((fld) => (<any>_this.st[i])[fld].includes(q)));
+        selectedEntries = [...selectedEntries].reverse();
+        selectedEntries = selectedEntries.slice(0, this.maxElements);
+
+        console.log(this.includedEntries);
+
+        this.entriesDiv!.innerHTML = "";
+        this.shownEntries = [];
+        selectedEntries.forEach((i) => {
+            var entry = this.st[i];
+            var listEntryMenu = <HTMLElement>_this.defaultElement!.cloneNode(true);
+            (<any>listEntryMenu).setState(entry);
+            this.entriesDiv!.appendChild(listEntryMenu);
+
+            var removeBtn = (<any>listEntryMenu).querySelector("button.menu-remove-entry-button")!;
+            var restoreBtn = (<any>listEntryMenu).querySelector("button.menu-restore-entry-button")!;
+            removeBtn.onclick = ((i) => (e: any) => {
+                _this.includedEntries = [...this.includedEntries.filter((j) => i != j)];
+                removeBtn.style.display = "none";
+                restoreBtn.style.display = "inline-block";
+                (<HTMLElement>listEntryMenu).classList.add("list-entry-component-removed");
+            })(i);
+            restoreBtn.onclick = ((i) => (e: any) => {
+                if (!_this.includedEntries.includes(i)) _this.includedEntries.push(i);
+                restoreBtn.style.display = "none";
+                removeBtn.style.display = "inline-block";
+                (<HTMLElement>listEntryMenu).classList.remove("list-entry-component-removed");
+            })(i);
+            
+            if (i in this.includedEntries) {
+                restoreBtn.click();
+            } else {
+                removeBtn.click();
+            }
+
+            this.shownEntries.push([i, listEntryMenu]);
+        });
+        
+        console.log(this.includedEntries);
+    }
+}
+
 window.customElements.define("menu-checkbox", CheckboxComponent, { extends: "input" });
 window.customElements.define("menu-textbox", TextboxComponent, { extends: "input" });
 window.customElements.define("menu-number", NumberComponent, { extends: "input" });
@@ -242,3 +356,4 @@ window.customElements.define("menu-select", SelectComponent, { extends: "select"
 window.customElements.define("menu-group", GroupingComponent, { extends: "div" });
 window.customElements.define("menu-list-entry", ListEntryComponent, { extends: "div" });
 window.customElements.define("menu-list", ListComponent, { extends: "div" });
+window.customElements.define("menu-lazy-list", LazyListComponent, { extends: "div" });
