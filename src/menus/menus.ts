@@ -1,5 +1,6 @@
 import {
-    recursiveRepairJSON
+    recursiveRepairJSON,
+    querySelectorTopLevel
 } from "utils/utils"
 
 export interface MenuComponent<a> {
@@ -106,12 +107,14 @@ class GroupingComponent extends HTMLDivElement
 
     getState() {
         var stateObj: any = {};
-        var menuEls: Element[] = [...this.querySelectorAll("[is^='menu-']")];
-        var menuTopEls = [...menuEls.filter((el) => !menuEls.some((el2) => el2 != el && el2.contains(el)))];
+        var menuTopEls = querySelectorTopLevel(this, "[is^='menu-']");
         menuTopEls.forEach((el) => {
             stateObj[el.getAttribute("name")!] = (<any>el).getState();
         });
-        return recursiveRepairJSON(stateObj, this.lastSetState);
+        if (this.lastSetState !== undefined) {
+            stateObj = recursiveRepairJSON(stateObj, this.lastSetState);
+        }
+        return stateObj;
     }
 
     setState(s: any) {
@@ -143,10 +146,14 @@ class ListEntryComponent<a> extends HTMLDivElement
             _this.removeEntry = !_this.removeEntry;
             if (_this.removeEntry) {
                 removeBtn.textContent = "restore";
+                this.classList.add("list-entry-component-removed");
             } else {
                 removeBtn.textContent = "remove";
+                this.classList.remove("list-entry-component-removed");
             }
         };
+        removeBtn.style.display = "inline-block";
+        this.appendChild(removeBtn);
     }
     
     fieldName() {
@@ -154,7 +161,7 @@ class ListEntryComponent<a> extends HTMLDivElement
     }
 
     getState() {
-        var menuElement = this.querySelectorAll("[is^='menu-']");
+        var menuElement = this.querySelector("[is^='menu-']");
         if (this.removeEntry) {
             return [];
         } else {
@@ -176,9 +183,7 @@ class ListComponent<a> extends HTMLDivElement
 
     constructor() {
         super();
-    }
-    
-    connectedCallback() {
+
         this.defaultEntry = this.querySelector("[is^='menu-']")!;
         this.innerHTML = "";
         
@@ -189,11 +194,16 @@ class ListComponent<a> extends HTMLDivElement
         var addEntryButton = document.createElement("button");
         addEntryButton.textContent = "Add another";
         addEntryButton.onclick = (e) => {
-            _this.entriesDiv.appendChild(_this.defaultEntry!.cloneNode(true));
+            var listEntry = new ListEntryComponent<a>();
+            listEntry.setAttribute("is", "menu-list-entry");
+            var listEntryMenu = _this.defaultEntry!.cloneNode(true);
+            listEntry.appendChild(listEntryMenu);
+            _this.entriesDiv.prepend(listEntry);
         };
         
         this.appendChild(addEntryButton);
         this.appendChild(this.entriesDiv);
+
     }
     
     fieldName() {
@@ -202,7 +212,8 @@ class ListComponent<a> extends HTMLDivElement
 
     getState() {
         var fullList: a[] = [];
-        [...this.entriesDiv.children].forEach((el: Element) => {
+        var menuTopEls = querySelectorTopLevel(this.entriesDiv, "[is^='menu-']");
+        [...menuTopEls].forEach((el: Element) => {
             fullList = fullList.concat((<any>el).getState());
         });
         return fullList;
@@ -217,8 +228,6 @@ class ListComponent<a> extends HTMLDivElement
             listEntry.setAttribute("is", "menu-list-entry");
             var listEntryMenu = _this.defaultEntry!.cloneNode(true);
             listEntry.appendChild(listEntryMenu);
-            console.log(listEntry);
-            console.log(st);
             listEntry.setState([st]);
             this.entriesDiv.appendChild(listEntry); 
         });

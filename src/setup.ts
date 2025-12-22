@@ -11,7 +11,7 @@ import {
 import "menus/menus";
 
 import "decks/times-tables-gen";
-// import "decks/uniform-key-value";
+import "decks/uniform-key-value";
 // import "decks/spaced-repetition-universal";
 
 import "utils/basic-template";

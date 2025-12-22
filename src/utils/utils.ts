@@ -155,3 +155,9 @@ export function hideDetails(el: HTMLElement, summary: string) {
     detailsEl.appendChild(el);
     return detailsEl;
 }
+
+export function querySelectorTopLevel(el: HTMLElement, query: string) {
+    var allMatches = [...el.querySelectorAll(query)];
+    var allMatchesTop = [...allMatches.filter((el2) => !allMatches.some((el3) => el3 != el2 && el3.contains(el2)))];
+    return allMatchesTop;
+}

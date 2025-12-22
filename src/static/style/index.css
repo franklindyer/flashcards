@@ -292,6 +292,10 @@ hr {
     padding: 1px;
 }
 
+.list-entry-component-removed {
+    background-color: #ffbbbb;
+}
+
 .sr-card-due-date {
     display: inline-block;
     color: lightgray;

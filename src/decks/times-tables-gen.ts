@@ -83,7 +83,6 @@ export class TimesTableGen
 
     makeEditor(st: TimesTableState): MenuComponent<TimesTableState> {
         var contDiv = document.createElement("div");
-        console.log(st.recentlyIncorrect);
         var menuTpl: string = `
             <div is="menu-group">
                 <div>
