@@ -1,3 +1,7 @@
+import {
+    recursiveRepairJSON
+} from "utils/utils"
+
 export interface MenuComponent<a> {
     fieldName(): string;
     getState(): a;
@@ -90,6 +94,8 @@ class SelectComponent extends HTMLSelectElement
 
 class GroupingComponent extends HTMLDivElement
                         implements MenuComponent<any> {
+    lastSetState: any;
+
     constructor() {
         super();
     }
@@ -105,10 +111,11 @@ class GroupingComponent extends HTMLDivElement
         menuTopEls.forEach((el) => {
             stateObj[el.getAttribute("name")!] = (<any>el).getState();
         });
-        return stateObj;
+        return recursiveRepairJSON(stateObj, this.lastSetState);
     }
 
     setState(s: any) {
+        this.lastSetState = s;
         var menuEls = [...this.querySelectorAll("[is^='menu-']")];
         menuEls.forEach((el) => {
             var entryName = el.getAttribute("name")!;

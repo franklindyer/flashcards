@@ -79,7 +79,17 @@ export class TimesTableGen
     }
 
     makeEditor(st: TimesTableState): MenuComponent<TimesTableState> {
-        return null!;
+        var contDiv = document.createElement("div");
+        var menuTpl: string = `
+            <div is="menu-group">
+                <input is="menu-number" name="minNum" />
+                <input is="menu-number" name="maxNum" />
+            </div>
+        `;
+        contDiv.innerHTML = menuTpl;
+        var menu = <MenuComponent<TimesTableState>><any>contDiv.children[0];
+        menu.setState(st);
+        return menu;
     }
 
 }
