@@ -12,6 +12,9 @@ import {
     scrollNumberEditor
 } from "core/editor"
 import {
+    renderString
+} from "nunjucks"
+import {
     MenuComponent
 } from "menus/menus"
 import {
@@ -80,13 +83,27 @@ export class TimesTableGen
 
     makeEditor(st: TimesTableState): MenuComponent<TimesTableState> {
         var contDiv = document.createElement("div");
+        console.log(st.recentlyIncorrect);
         var menuTpl: string = `
             <div is="menu-group">
-                <input is="menu-number" name="minNum" />
-                <input is="menu-number" name="maxNum" />
+                <div>
+                    <input id="min-num-input" is="menu-number" name="minNum" />
+                    <label for="min-num-input">Minimum factor value</label>
+                </div>
+                <div>
+                    <input id="max-num-input" is="menu-number" name="maxNum" />
+                    <label for="max-num-input">Maximum factor value</label>
+                </div>
+                <h3>Questions recently answered incorrectly:</h3>
+                <ul>
+                    {% for r in st.recentlyIncorrect %}
+                    <ul>{{ r[0] }} × {{ r[1] }} = {{ r[0]*r[1] }}</ul>
+                    {% endfor %}
+                </ul>            
             </div>
         `;
-        contDiv.innerHTML = menuTpl;
+        var menuHTML = renderString(menuTpl, { st: st });
+        contDiv.innerHTML = menuHTML;
         var menu = <MenuComponent<TimesTableState>><any>contDiv.children[0];
         menu.setState(st);
         return menu;
