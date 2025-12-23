@@ -18,16 +18,27 @@
 
         <br><br>
 
-        <div id="test-menu" is="menu-lazy-list" search="text1,text2" max="5">
-            <button class="menu-add-another-button">Add another</button>
-            <input type="text" class="menu-search-bar" placeholder="search text..." />
-            <div class="menu-list-entries" />
-            <div class="menu-list-default-entry" is="menu-group">
-                <input is="menu-textbox" name="text1" />
-                <input is="menu-textbox" name="text2" />
-                <button class="menu-remove-entry-button">remove</button>
-                <button class="menu-restore-entry-button">restore</button>
+        <div id="test-menu" is="menu-deep-json">
+            <div is="menu-lazy-list" search="text1,text2" max="5" name="my-lazy-list">
+                <button class="menu-add-another-button">Add another</button>
+                <input type="text" class="menu-search-bar" placeholder="search text..." />
+                <div class="menu-list-entries"></div>
+                <div class="menu-list-default-entry" is="menu-group">
+                    <input is="menu-textbox" name="text1" />
+                    <input is="menu-textbox" name="text2" />
+                    <button class="menu-remove-entry-button">remove</button>
+                    <button class="menu-restore-entry-button">restore</button>
+                </div>
             </div>
+            <input is="menu-checkbox" name="a" />
+            <input is="menu-checkbox" name="b" />
+            <input is="menu-checkbox" name="c.a" />
+            <input is="menu-checkbox" name="c.b" />
+            <input is="menu-checkbox" name="c.c" />
+            <input is="menu-checkbox" name="d.a.a" />
+            <input is="menu-checkbox" name="d.a.b" />
+            <input is="menu-checkbox" name="d.b.a" />
+            <input is="menu-checkbox" name="d.b.b" />
         </div>
 
     </div>

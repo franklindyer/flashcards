@@ -1,6 +1,7 @@
 import {
     recursiveRepairJSON,
-    querySelectorTopLevel
+    querySelectorTopLevel,
+    getDeepKey
 } from "utils/utils"
 
 export interface MenuComponent<a> {
@@ -245,6 +246,7 @@ class LazyListComponent<a> extends HTMLDivElement
     defaultElement?: HTMLElement;
     searchBar?: HTMLInputElement;
     entriesDiv?: HTMLDivElement; 
+    addAnotherButton?: HTMLDivElement; 
     shownEntries: [number, HTMLElement][] = [];
 
     st: a[] = [];
@@ -257,30 +259,37 @@ class LazyListComponent<a> extends HTMLDivElement
     }
 
     connectedCallback() {
-        var _this = this;
+    }
 
+    findChildren() {
+        var _this = this;
         this.maxElements = parseInt(this.getAttribute("max") || "10");
         this.searchableFields = (this.getAttribute("search") || "").split(",");
-
-        var addAnotherButton = this.querySelector("button.menu-add-another-button"); 
-        if (addAnotherButton) {
-            (<HTMLElement>addAnotherButton).onclick = (e) => {
-                _this.includedEntries.push(_this.st.length);
-                _this.st.push((<any>this.defaultElement).getState());
-                console.log(this.st);
+        if (!this.addAnotherButton) {
+            this.addAnotherButton = this.querySelector("button.menu-add-another-button")!;
+            if (this.addAnotherButton) {
+                (<HTMLElement>this.addAnotherButton).onclick = (e) => {
+                    _this.includedEntries.push(_this.st.length);
+                    _this.st.push((<any>this.defaultElement).getState());
+                    console.log(this.st);
+                    _this.rerunSearch();
+                }
+            }
+        }
+        if (!this.searchBar) {
+            this.searchBar = <HTMLInputElement>this.querySelector("input.menu-search-bar");
+            this.searchBar.onchange = (e) => {
                 _this.rerunSearch();
             }
         }
-
-        this.searchBar = <HTMLInputElement>this.querySelector("input.menu-search-bar");
-        this.searchBar.onchange = (e) => {
-             _this.rerunSearch();
-        };
-
-        this.entriesDiv = this.querySelector("div.menu-list-entries")!;
-        this.defaultElement = this.querySelector(".menu-list-default-entry")!;
-        console.log(this.defaultElement);
-        this.defaultElement.remove();
+        console.log(this.searchBar);
+        if (!this.entriesDiv) {
+            this.entriesDiv = this.querySelector("div.menu-list-entries")!;
+        }
+        if (!this.defaultElement) {
+            this.defaultElement = this.querySelector(".menu-list-default-entry")!;
+            this.defaultElement.remove();
+        }
     }
 
     fieldName() {
@@ -293,6 +302,7 @@ class LazyListComponent<a> extends HTMLDivElement
     }
 
     setState(ls: a[]) {
+        console.log("SETTING STATE");
         this.st = ls;
         this.includedEntries = Array.from(Array(this.st.length).keys());
         this.shownEntries = [];
@@ -306,17 +316,24 @@ class LazyListComponent<a> extends HTMLDivElement
     }
 
     rerunSearch() {
+        this.findChildren();
         this.saveChanges();
 
+        console.log("RERUNNING SEARCH");
+
         var _this = this;
+        if (!this.searchBar) {
+            console.log("NO SEARCH BAR FOUND");
+            return;
+        }
         var q = this.searchBar!.value;
 
         var selectedEntries = Array.from(Array(this.st.length).keys());
-        selectedEntries = selectedEntries.filter((i) => _this.searchableFields.some((fld) => (<any>_this.st[i])[fld].includes(q)));
+        console.log([...selectedEntries.map((i) => [..._this.searchableFields.map((fld) => getDeepKey(_this.st[i], fld.split(".")))])])
+        selectedEntries = selectedEntries.filter((i) => _this.searchableFields.some((fld) => JSON.stringify(getDeepKey(_this.st[i], fld.split("."))).includes(q)));
         selectedEntries = [...selectedEntries].reverse();
         selectedEntries = selectedEntries.slice(0, this.maxElements);
-
-        console.log(this.includedEntries);
+        console.log(selectedEntries);
 
         this.entriesDiv!.innerHTML = "";
         this.shownEntries = [];

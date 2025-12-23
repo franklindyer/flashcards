@@ -86,7 +86,7 @@ export function iconButton(imgUrl: string, effect: () => void): HTMLElement {
     return btn;
 }
 
-export function recursiveRepairJSON(obj: any, defaultObj: any, omitKeys: string[] = []) {
+export function recursiveRepairJSON(obj: any, defaultObj: any, omitKeys: string[] = [], doPruning: boolean = true) {
     if (typeof obj === 'string' || obj instanceof String)
         return obj;
 
@@ -108,17 +108,17 @@ export function recursiveRepairJSON(obj: any, defaultObj: any, omitKeys: string[
         if (Array.isArray(obj[k])) {
             if (defaultObj[k].length > 0) {
                 for (var j in obj[k]) {
-                    obj[k][j] = recursiveRepairJSON(obj[k][j], defaultObj[k][0], omitKeys);
+                    obj[k][j] = recursiveRepairJSON(obj[k][j], defaultObj[k][0], omitKeys, doPruning);
                 }
             }
         } else if (typeof obj[k] === "object") {
-            obj[k] = recursiveRepairJSON(obj[k], defaultObj[k], omitKeys);
+            obj[k] = recursiveRepairJSON(obj[k], defaultObj[k], omitKeys, doPruning);
         }
     }
    
     for (var i in objKeys) {
         var k = objKeys[i];
-        if (!(k in defaultObj)) {
+        if (doPruning && !(k in defaultObj)) {
             delete obj[k];
         }
     }
@@ -134,6 +134,31 @@ export function recursiveRepairEachValueJSON(objDict: any, defaultObj: any, omit
         objDict[k] = recursiveRepairJSON(objDict[k], defaultObj, omitKeys);
     }
     return objDict;
+}
+
+export function getDeepKey(objDict: any, keys: string[]) {
+    if (keys.length == 0) {
+        return objDict;
+    } else if (keys.length == 1) {
+        return objDict[keys[0]];
+    } else {
+        return getDeepKey(objDict[keys[0]], keys.slice(1, keys.length))
+    }
+}
+
+export function setDeepKey(objDict: any, keys: string[], value: any) {
+    if (keys.length == 0) {
+        return objDict;
+    } else if (keys.length == 1) {
+        objDict[keys[0]] = value;
+        return objDict;
+    } else {
+        if (!(keys[0] in objDict)) {
+             objDict[keys[0]] = {};
+        }
+        objDict[keys[0]] = setDeepKey(objDict[keys[0]], keys.slice(1, keys.length), value);
+        return objDict;
+    }
 }
 
 export function makeSubber(subs: [string, string][]): (s: string) => string {

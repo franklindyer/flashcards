@@ -34,6 +34,9 @@ import {
     MenuComponent
 } from "menus/menus"
 import {
+    SRCardMenu
+} from "menus/sr-card-menus"
+import {
     njNoCardsLeft
 } from "utils/nj-templates"
 import {
@@ -63,7 +66,8 @@ import {
     SRUniversalCardPhysical,
     SRStudying,
     SRUniversalSettings,
-    SRUniversalState
+    SRUniversalState,
+    makeEmptyCard
 } from "decks/spaced-repetition-universal-types"
 
 /* --- USEFUL UTILITIES FOR DEFINING SR DECK --- */
@@ -98,22 +102,6 @@ export const defaultSRUniversalState: SRUniversalState = {
     studying: SRStudying.NewCards,
     settings: defaultSRUniversalSettings
 };
-
-function makeEmptyCard(cardType: string): SRUniversalCardVirtual {
-    return {
-        guid: guidGenerator(),
-        cardType: cardType,
-        cardEntry: gCardTypeRegistry[cardType].getDefaultEntry(),
-        extraInfo: "",
-        tags: [],
-        due: new Date(),
-        intervalMinutes: 0,
-        stats: {
-            created: new Date(),
-            streak: 0
-        }
-    }
-}
 
 function infoWidgetSR(
     totalCards: number,
@@ -466,6 +454,8 @@ export class UniversalSpacedRepGen
                     <label for="preventReversedNewCards">Don't reverse new cards during initial study</label> <br />
                     <input is="menu-checkbox" name="readCorrectAnswers"/>
                     <label for="readCorrectAnswers">Speak correct answers using text-to-speech</label> <br />
+                    <input is="menu-textbox" name="inactiveTags"/>
+                    <label for="inactiveTags">Deactivated tags</label> <br />
                     <div is="menu-group" name="filterSettings">
                         <input is="menu-checkbox" name="noPunctuation"/>
                         <label for="noPunctuation">Ignore punctuation</label> <br />
@@ -484,6 +474,32 @@ export class UniversalSpacedRepGen
                         <input is="menu-checkbox" name="removeSqDelimited"/>
                         <label for="removeSqDelimited">Ignore substrings enclosed in [square brackets]</label> <br />
                     </div>
+
+                    <div is="menu-group" name="cardTypeSettings">
+                        <div>
+                            <h3>Simple two-sided card</h3>
+                            <div is="menu-group" name="simple-card">
+                            </div>
+                            <div is="menu-lazy-list" name="simpleCards" search="cardEntry.prompt,cardEntry.answer">
+                                <button class="menu-add-another-button">Add another</button>
+                                <input type="text" class="menu-search-bar" placeholder="search cards..." />
+                                <div class="menu-list-entries"></div>
+                                <div class="menu-list-default-entry" is="menu-sr-card" cardtype="simple-card">
+                                    <input is="menu-textbox" name="cardEntry.prompt" />
+                                    <input is="menu-textbox" name="cardEntry.answer" />
+                                    <input is="menu-checkbox" name="cardEntry.twoSided" />
+                                    <input is="menu-checkbox" name="cardEntry.readAloud" />
+                                    <button class="menu-remove-entry-button">remove</button>
+                                    <button class="menu-restore-entry-button">restore</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <h3>Cloze cards</h3>
+                            <div is="menu-group" name="cloze-card">
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div> 
         `;
@@ -492,9 +508,22 @@ export class UniversalSpacedRepGen
         var menu = <MenuComponent<SRUniversalState>><any>contDiv.children[0];
 
         (<any>menu).preProc = (st: any) => {
+            st.settings.inactiveTags = st.settings.inactiveTags.join(",");
+            st.settings.cardTypeSettings.simpleCards 
+                = [...Object.values(st.cards).filter((c: any) => c.cardType == "simple-card")];
+            st.settings.cardTypeSettings.clozeCards 
+                = [...Object.values(st.cards).filter((c: any) => c.cardType == "cloze-card")];
+            console.log(st);
             return st;
         };
         (<any>menu).postProc = (st: any) => {
+            st.settings.inactiveTags = st.settings.inactiveTags.split(",");
+            st.cards = [];
+            st.cards = st.cards.concat(st.settings.cardTypeSettings["simpleCards"]);
+            st.cards = st.cards.concat(st.settings.cardTypeSettings["clozeCards"]);
+            st.cards = makeSRCardDict(st.cards);
+            delete st.settings.cardTypeSettings["simpleCards"];
+            delete st.settings.cardTypeSettings["clozeCards"];
             return st;
         };
 
