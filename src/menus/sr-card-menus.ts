@@ -19,12 +19,14 @@ export class SRCardMenu extends DeepJSONComponent {
 
         this.preprocMap = {
             "cardEntry.prompt": (ls: string[]) => ls.join("|"),
-            "cardEntry.answer": (ls: string[]) => ls.join("|")
+            "cardEntry.answer": (ls: string[]) => ls.join("|"),
+            "tags": (ls: string[]) => ls.join(",")
         }
 
         this.postprocMap = {
             "cardEntry.prompt": (ls: string) => ls.split("|"),
-            "cardEntry.answer": (ls: string) => ls.split("|")
+            "cardEntry.answer": (ls: string) => ls.split("|"),
+            "tags": (ls: string) => ls.split(",")
         }
     }
 }

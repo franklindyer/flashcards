@@ -489,6 +489,8 @@ export class UniversalSpacedRepGen
                                     <input is="menu-textbox" name="cardEntry.answer" />
                                     <input is="menu-checkbox" name="cardEntry.twoSided" />
                                     <input is="menu-checkbox" name="cardEntry.readAloud" />
+                                    <input is="menu-textbox" name="tags" placeholder="tags..." />
+                                    <input is="menu-textbox" name="extraInfo" placeholder="extra info..." />
                                     <button class="menu-remove-entry-button">remove</button>
                                     <button class="menu-restore-entry-button">restore</button>
                                 </div>
