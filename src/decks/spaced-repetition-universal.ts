@@ -442,7 +442,64 @@ export class UniversalSpacedRepGen
     }
 
     makeEditor(st: SRUniversalState): MenuComponent<SRUniversalState> {
-        return null!;
+        var contDiv = document.createElement("div");
+        var menuTpl = `
+            <div is="menu-group">
+                <label for="studying">Studying cards in the order:</label>
+                <select is="menu-select" name="studying">
+                    <option value=1>New cards</option>
+                    <option value=2>Due cards</option>
+                    <option value=3>Random practice cards</option>
+                    <option value=4>Due then new cards</option>
+                    <option value=5>New then due cards</option>
+                </select>
+                <div is="menu-group" name="settings">
+                    <input is="menu-number" name="initialHours" min=1 max=1024 step=1/>
+                    <label for="initialHours">Initial interval (hours)</label> <br />
+                    <input is="menu-number" name="correctFactor" min="1" max="10" step="0.1"/>
+                    <label for="correctFactor">Correct factor</label> <br />
+                    <input is="menu-number" name="incorrectFactor" min="0.1" max="1" step="0.01"/>
+                    <label for="incorrectFactor">Incorrect factor</label> <br />
+                    <input is="menu-checkbox" name="fillQOnlyWhenEmpty"/>
+                    <label for="fillQOnlyWhenEmpty">Refill new queue only when it is empty</label> <br />
+                    <input is="menu-checkbox" name="preventReversedNewCards"/>
+                    <label for="preventReversedNewCards">Don't reverse new cards during initial study</label> <br />
+                    <input is="menu-checkbox" name="readCorrectAnswers"/>
+                    <label for="readCorrectAnswers">Speak correct answers using text-to-speech</label> <br />
+                    <div is="menu-group" name="filterSettings">
+                        <input is="menu-checkbox" name="noPunctuation"/>
+                        <label for="noPunctuation">Ignore punctuation</label> <br />
+                        <input is="menu-checkbox" name="noCaps"/>
+                        <label for="noCaps">Ignore capitalization</label> <br />
+                        <input is="menu-checkbox" name="smartQuotes"/>
+                        <label for="smartQuotes">Ignore smart quotes</label> <br />
+                        <input is="menu-checkbox" name="doubleSpaces"/>
+                        <label for="doubleSpaces">Ignore multiple spaces in a row</label> <br />
+                        <input is="menu-checkbox" name="trimSpaces"/>
+                        <label for="trimSpaces">Ignore leading and trailing spaces</label> <br />
+                        <input is="menu-checkbox" name="nfc"/>
+                        <label for="nfc">NFC-normalize Unicode text</label> <br />
+                        <input is="menu-checkbox" name="removeParenDelimited"/>
+                        <label for="removeParenDelimited">Ignore substrings enclosed in (parentheses)</label> <br />
+                        <input is="menu-checkbox" name="removeSqDelimited"/>
+                        <label for="removeSqDelimited">Ignore substrings enclosed in [square brackets]</label> <br />
+                    </div>
+                </div>
+            </div> 
+        `;
+        var menuHTML = renderString(menuTpl, { st: st });
+        contDiv.innerHTML = menuHTML;
+        var menu = <MenuComponent<SRUniversalState>><any>contDiv.children[0];
+
+        (<any>menu).preProc = (st: any) => {
+            return st;
+        };
+        (<any>menu).postProc = (st: any) => {
+            return st;
+        };
+
+        menu.setState(st);
+        return menu;
     }
 
 }

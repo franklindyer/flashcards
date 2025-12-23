@@ -97,6 +97,9 @@ class GroupingComponent extends HTMLDivElement
                         implements MenuComponent<any> {
     lastSetState: any;
 
+    preProc: (x: any) => any = (x: any) => x;
+    postProc: (x: any) => any = (x: any) => x;
+
     constructor() {
         super();
     }
@@ -114,10 +117,12 @@ class GroupingComponent extends HTMLDivElement
         if (this.lastSetState !== undefined) {
             stateObj = recursiveRepairJSON(stateObj, this.lastSetState);
         }
+        stateObj = this.postProc(stateObj);
         return stateObj;
     }
 
     setState(s: any) {
+        s = this.preProc(s);
         this.lastSetState = s;
         var menuEls = [...this.querySelectorAll("[is^='menu-']")];
         menuEls.forEach((el) => {
