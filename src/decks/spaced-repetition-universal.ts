@@ -567,11 +567,27 @@ export class UniversalSpacedRepGen
                                     <button class="menu-prelisten-card-button">listen</button>
                                     <button class="menu-remove-entry-button">remove</button>
                                     <button class="menu-restore-entry-button">restore</button>
-                                    <div class="flashcard flashcard-preview"></div>
+                                    <div class="flashcard-container"></div>
                                 </div>
                             </div>
                         </div>
-
+                        <div>
+                            <h3>Suggested 3rd-party cards</h3>
+                            <div is="menu-pushcard" name="pushcardQueue">
+                                <input is="menu-textbox" class="menu-pushcard-server-url" />
+                                <input is="menu-textbox" class="menu-pushcard-server-key" />
+                                <button class="menu-pushcard-refresh-button">Refresh</button>
+                                <div class="menu-pushcard-entries-div"></div>
+                                <div class="menu-pushcard-default-entry">
+                                    <b class="menu-pushcard-entry-label"></b>
+                                    <select is="menu-select" class="menu-pushcard-accept-select">
+                                        <option value="pending">Choose to accept or reject...</option>
+                                        <option value="accept">Accept</option>
+                                        <option value="reject">Reject</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
                         </div>
                     </div>
                 </div>
@@ -629,7 +645,6 @@ export class UniversalSpacedRepGen
             };
 
             var swapperBtn = el.querySelector(".menu-swapper-button");
-            console.log(swapperBtn);
             if (swapperBtn) {
                 var promptMenu = el.querySelector("[name='cardEntry.prompt']")!;
                 var answerMenu = el.querySelector("[name='cardEntry.answer']")!;
@@ -644,6 +659,8 @@ export class UniversalSpacedRepGen
         simpleCardsMenu.entryCallback = cardPreviewCallback;
         clozeCardsMenu.entryCallback = cardPreviewCallback;
 
+        (<any>menu).querySelector(".menu-pushcard-refresh-button")!.click();
+
         (<any>menu).preProc = (st: any) => {
             st.settings.inactiveTags = st.settings.inactiveTags.join(",");
             st.settings.cardTypeSettings.simpleCards 
@@ -654,7 +671,6 @@ export class UniversalSpacedRepGen
                 = st.settings.cardTypeSettings["cloze-card"].sourceLangs.join(",");
             st.settings.cardTypeSettings["cloze-card"].clozeGroups
                 = st.settings.cardTypeSettings["cloze-card"].clozeGroups.join(",");
-            console.log(st);
             return st;
         };
         (<any>menu).postProc = (st: any) => {
@@ -662,6 +678,8 @@ export class UniversalSpacedRepGen
             st.cards = [];
             st.cards = st.cards.concat(st.settings.cardTypeSettings["simpleCards"]);
             st.cards = st.cards.concat(st.settings.cardTypeSettings["clozeCards"]);
+            st.cards = st.cards.concat([...st.settings.pushcardQueue.accepted.map((j: any) => recursiveRepairJSON(j.data, makeEmptyCard(j.data.cardType)))]);
+            st.settings.pushcardQueue.accepted = [];
             st.cards = makeSRCardDict(st.cards);
             delete st.settings.cardTypeSettings["simpleCards"];
             delete st.settings.cardTypeSettings["clozeCards"];
