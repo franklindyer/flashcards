@@ -517,6 +517,7 @@ export class UniversalSpacedRepGen
                                 <div class="menu-list-entries"></div>
                                 <div class="menu-list-default-entry" is="menu-sr-card" cardtype="simple-card">
                                     <input is="menu-textbox" name="cardEntry.prompt" />
+                                    <button class="menu-swapper-button">↔</button>
                                     <input is="menu-textbox" name="cardEntry.answer" />
                                     <input is="menu-checkbox" name="cardEntry.twoSided" />
                                     <input is="menu-checkbox" name="cardEntry.readAloud" />
@@ -625,8 +626,19 @@ export class UniversalSpacedRepGen
                     var cardTypeSettings = menu.getState().settings.cardTypeSettings[cs.virtual.cardType];
                     cardTypeClass.speakCard(cs.processed, cardTypeSettings, () => {});
                 });
-            }
+            };
 
+            var swapperBtn = el.querySelector(".menu-swapper-button");
+            console.log(swapperBtn);
+            if (swapperBtn) {
+                var promptMenu = el.querySelector("[name='cardEntry.prompt']")!;
+                var answerMenu = el.querySelector("[name='cardEntry.answer']")!;
+                swapperBtn.onclick = (e: any) => {
+                    var aux = promptMenu.value;
+                    promptMenu.value = answerMenu.value;
+                    answerMenu.value = aux; 
+                };
+            }
         };
 
         simpleCardsMenu.entryCallback = cardPreviewCallback;
