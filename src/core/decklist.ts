@@ -82,6 +82,7 @@ export function generateDecklistMenu(
         newDeck.slug = guidGenerator();
         st.push(newDeck);
         menu.setState(st);
+        saveDeck(st.slug, () => {});
     };
 
     importDeckButton.onclick = (e: any) => {
@@ -99,6 +100,7 @@ export function generateDecklistMenu(
                 var st = menu.getState();
                 st.push(importedDeck);
                 menu.setState(st);
+                saveDeck(st.slug, () => {});
             };
             reader.readAsText(file, "UTF-8");
         };
@@ -130,6 +132,7 @@ export function generateDecklistMenu(
             var st = menu.getState();
             st.push(JSON.parse(s));
             menu.setState(st);
+            saveDeck(deckslug, () => {});
         });
     };
 
