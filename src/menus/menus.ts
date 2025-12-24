@@ -286,6 +286,8 @@ class LazyListComponent<a> extends HTMLDivElement
     maxElements: number = 0;
     searchableFields: string[] = [];
 
+    entryCallback: (el: HTMLElement) => void = (el) => {};
+
     constructor() {
         super();
     }
@@ -388,7 +390,8 @@ class LazyListComponent<a> extends HTMLDivElement
                 removeBtn.click();
             }
 
-            this.shownEntries.push([i, listEntryMenu]);
+            _this.entryCallback(listEntryMenu);
+            _this.shownEntries.push([i, listEntryMenu]);
         });
         
     }

@@ -421,6 +421,8 @@ export class UniversalSpacedRepGen
     }
 
     makeEditor(st: SRUniversalState): MenuComponent<SRUniversalState> {
+        var _this = this;
+
         var contDiv = document.createElement("div");
         var menuTpl = `
             <div is="menu-group">
@@ -520,8 +522,11 @@ export class UniversalSpacedRepGen
                                     <input is="menu-checkbox" name="cardEntry.readAloud" />
                                     <input is="menu-textbox" name="tags" placeholder="tags..." />
                                     <input is="menu-textbox" name="extraInfo" placeholder="extra info..." />
+                                    <button class="menu-preview-card-button">view</button>
+                                    <button class="menu-prelisten-card-button">listen</button>
                                     <button class="menu-remove-entry-button">remove</button>
                                     <button class="menu-restore-entry-button">restore</button>
+                                    <div class="flashcard-container"></div>
                                 </div>
                             </div>
                         </div>
@@ -557,8 +562,11 @@ export class UniversalSpacedRepGen
                                     <input is="menu-textbox" name="cardEntry.key" />
                                     <input is="menu-textbox" name="tags" placeholder="tags..." />
                                     <input is="menu-textbox" name="extraInfo" placeholder="extra info..." />
+                                    <button class="menu-preview-card-button">view</button>
+                                    <button class="menu-prelisten-card-button">listen</button>
                                     <button class="menu-remove-entry-button">remove</button>
                                     <button class="menu-restore-entry-button">restore</button>
+                                    <div class="flashcard flashcard-preview"></div>
                                 </div>
                             </div>
                         </div>
@@ -574,6 +582,55 @@ export class UniversalSpacedRepGen
         });
         contDiv.innerHTML = menuHTML;
         var menu = <MenuComponent<SRUniversalState>><any>contDiv.children[0];
+
+        var simpleCardsMenu = (<any>menu).querySelector("[name='simpleCards']")!;
+        var clozeCardsMenu = (<any>menu).querySelector("[name='clozeCards']")!;
+
+        var cardPreviewState = (guid: string) => {
+            return (<any>_this).gen.nextCardAsyncPreprocessing({
+                virtual: menu.getState().cards[guid],
+                context: {
+                    cardsLeft: 0,
+                    isPractice: false
+                }
+            }, menu.getState());
+        }
+
+        var cardPreviewCallback = (el: any) => {
+            var guid = el.getState().guid;
+            var previewDiv = el.querySelector(".flashcard-container");
+            previewDiv.style.display = "none";
+            var previewBtn = el.querySelector(".menu-preview-card-button")!;
+            var prelistenBtn = el.querySelector(".menu-prelisten-card-button")!;
+            previewBtn.onclick = (e: any) => {
+                var cardStatePromise = cardPreviewState(guid);
+                cardStatePromise.then((cs: any) => {
+                    var cardDivPromise = (<any>_this).gen.generateCardAsync(
+                        menu.getState(),
+                        cs
+                    );
+                    cardDivPromise.then((cp: Flashcard) => {
+                        cp.el.classList.add("flashcard");
+                        cp.el.classList.add("flashcard-preview");
+                        previewDiv.innerHTML = "";
+                        previewDiv.style.display = "block";
+                        previewDiv.appendChild(cp.el);
+                    });
+                });
+            };
+            prelistenBtn.onclick = (e: any) => {
+                var cardStatePromise = cardPreviewState(guid);
+                cardStatePromise.then((cs: any) => {
+                    var cardTypeClass = gCardTypeRegistry[cs.virtual.cardType];
+                    var cardTypeSettings = menu.getState().settings.cardTypeSettings[cs.virtual.cardType];
+                    cardTypeClass.speakCard(cs.processed, cardTypeSettings, () => {});
+                });
+            }
+
+        };
+
+        simpleCardsMenu.entryCallback = cardPreviewCallback;
+        clozeCardsMenu.entryCallback = cardPreviewCallback;
 
         (<any>menu).preProc = (st: any) => {
             st.settings.inactiveTags = st.settings.inactiveTags.join(",");
