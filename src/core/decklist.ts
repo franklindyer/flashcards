@@ -3,6 +3,9 @@ import {
     guidGenerator
 } from "utils/utils"
 import {
+    renderString
+} from "nunjucks"
+import {
     FlashcardDeck,
     runDeck,
     gDeckTypeRegistry,
@@ -64,9 +67,18 @@ export function generateDecklistMenu(
         decklist: IDictionary<FlashcardDeck<any>>,
         onfinish: (st: IDictionary<FlashcardDeck<any>>) => void) {
     var contDiv = document.createElement("div");
-    var menuHTML = `
+    console.log(gDeckTypeRegistry);
+    var menuTpl = `
         <div is="menu-list">
             <button class="menu-add-another-button">Create new deck</button>
+            <select class="menu-options-decktype">
+                {% for dt in decktypes %}
+                <option value="{{ dt }}">{{ deckDefaultRegistry[dt].name }}</option>
+                {% endfor %}
+            </select> <br />
+            <button class="menu-import-file-button">Import deck from file</button> <br />
+            <button class="menu-setup-sync-server">Setup sync server</button>
+            <button class="menu-import-remote-button">Import deck from server</button> <br />
             <div class="menu-list-entries"></div>
             <div class="menu-list-default-entry deck-editor-entry" is="menu-deep-json">
                 <div class="decklist-edit-div">
@@ -86,8 +98,50 @@ export function generateDecklistMenu(
             </div>
         </div>       
     `;
+    var menuHTML = renderString(menuTpl, {
+        decktypes: Object.keys(gDeckTypeRegistry),
+        deckDefaultRegistry: gDeckDefaultRegistry
+    });
     contDiv.innerHTML = menuHTML;
     var menu = <any>contDiv.children[0];
+
+    var newDeckButton = <any>menu.querySelector(".menu-add-another-button");
+    var deckTypeSelect = <any>menu.querySelector(".menu-options-decktype");
+    var importDeckButton = <any>menu.querySelector(".menu-import-file-button");
+    var syncSetupButton = <any>menu.querySelector(".menu-setup-sync-server");
+    var syncDeckButton = <any>menu.querySelector(".menu-import-remote-button");
+
+    newDeckButton.onclick = (e: any) => {
+        var st = menu.getState();
+        var decktype = deckTypeSelect.value;
+        var newDeck = <any>JSON.parse(JSON.stringify(gDeckDefaultRegistry[decktype]));
+        newDeck.slug = guidGenerator();
+        st.push(newDeck);
+        menu.setState(st);
+    };
+
+    importDeckButton.onclick = (e: any) => {
+        var fileUploadInput = document.createElement("input");
+        fileUploadInput.type = "file";
+        fileUploadInput.onchange = (e: any) => {
+            var files = (<HTMLInputElement>fileUploadInput).files;
+            if (files == null) return;
+            var file = files[0];
+            if (file == null) return;
+            var reader = new FileReader();
+            reader.onload = (e: any) => {
+                var importedDeck = JSON.parse(<string>e.target!.result);
+                importedDeck.slug = guidGenerator();
+                setDeck(importedDeck.slug, JSON.stringify(importedDeck), () => {
+                    saveDeck(importedDeck.slug, () => {
+                        generateDecklistMenu(decklist, onfinish);
+                    })
+                });
+            };
+            reader.readAsText(file, "UTF-8");
+        };
+        fileUploadInput.click();
+    };
 
     menu.entryCallback = (el: HTMLElement) => {
         var deckView = <any>el.querySelector(".decklist-view-div")!;
@@ -114,7 +168,6 @@ export function generateDecklistMenu(
             var id = (<any>el).getState().slug;
             var newDecklist = menu.getState();
             var newDeckdict = Object.fromEntries(newDecklist.map((x: any) => [x.slug, x]));
-            console.log(newDeckdict);
             decklistOverlay.style.display = "none";
             onfinish(newDeckdict);
             saveDeck(id, () => runDeck(id));
@@ -289,6 +342,11 @@ export function setupDecklistMenu() {
         var decklistOverlay = <HTMLElement>document.getElementById("flashcard-decklist-overlay");
         generateDecklistMenu(gDeckRegistry, (newDeckRegistry) => {
             [...Object.values(newDeckRegistry)].forEach((d) => gDeckRegistry[d.slug] = d);
+            [...Object.keys(gDeckRegistry)].forEach((k) => {
+                if (!(k in newDeckRegistry)) {
+                    eraseDeck(k); 
+                }
+            });
         });
         decklistOverlay.style.display = "block";
         

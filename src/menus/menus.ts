@@ -228,15 +228,12 @@ class ListComponent<a> extends HTMLDivElement
     constructor() {
         super();
 
-        this.defaultEntry = this.querySelector("[is^='menu-']")!;
-        this.innerHTML = "";
-        
-        this.entriesDiv = document.createElement("div");
-        this.entriesDiv.classList.add("menu-list-entries-div");
+        this.defaultEntry = this.querySelector(".menu-list-default-entry")!;
+        this.defaultEntry.remove();
+        var addEntryButton = <HTMLButtonElement>this.querySelector("button.menu-add-another-button")!; 
+        this.entriesDiv = <HTMLDivElement>this.querySelector(".menu-list-entries")!;
         
         var _this = this;
-        var addEntryButton = document.createElement("button");
-        addEntryButton.textContent = "Add another";
         addEntryButton.onclick = (e) => {
             var listEntry = new ListEntryComponent<a>();
             listEntry.setAttribute("is", "menu-list-entry");
@@ -244,10 +241,6 @@ class ListComponent<a> extends HTMLDivElement
             listEntry.appendChild(listEntryMenu);
             _this.entriesDiv.prepend(listEntry);
         };
-        
-        this.appendChild(addEntryButton);
-        this.appendChild(this.entriesDiv);
-
     }
     
     fieldName() {
