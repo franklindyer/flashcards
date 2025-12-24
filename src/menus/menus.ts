@@ -3,6 +3,7 @@ import {
     querySelectorTopLevel,
     getDeepKey
 } from "utils/utils"
+import * as ace from 'brace';
 
 export interface MenuComponent<a> {
     fieldName(): string;
@@ -50,6 +51,35 @@ class TextboxComponent extends HTMLInputElement
     setState(s: string) {
         this.value = s;
     }
+}
+
+class TextfieldComponent extends HTMLDivElement
+                                 implements MenuComponent<string> {
+    ed: any;
+    constructor() {
+        super();
+    }
+
+    getEditor() {
+        if (!this.ed) {
+            this.ed = ace.edit(this);
+            this.classList.add("menu-ace-textfield");
+        }
+        return this.ed;
+    }
+
+    fieldName() {
+        return this.getAttribute("name")!;
+    }
+
+    getState() {
+        return this.getEditor().getValue();
+    }
+
+    setState(s: string) {
+        this.getEditor().setValue(s);
+    }
+
 }
 
 class NumberComponent extends HTMLInputElement
@@ -271,7 +301,6 @@ class LazyListComponent<a> extends HTMLDivElement
                 (<HTMLElement>this.addAnotherButton).onclick = (e) => {
                     _this.includedEntries.push(_this.st.length);
                     _this.st.push((<any>this.defaultElement).getState());
-                    console.log(this.st);
                     _this.rerunSearch();
                 }
             }
@@ -282,7 +311,6 @@ class LazyListComponent<a> extends HTMLDivElement
                 _this.rerunSearch();
             }
         }
-        console.log(this.searchBar);
         if (!this.entriesDiv) {
             this.entriesDiv = this.querySelector("div.menu-list-entries")!;
         }
@@ -302,7 +330,6 @@ class LazyListComponent<a> extends HTMLDivElement
     }
 
     setState(ls: a[]) {
-        console.log("SETTING STATE");
         this.st = ls;
         this.includedEntries = Array.from(Array(this.st.length).keys());
         this.shownEntries = [];
@@ -319,21 +346,16 @@ class LazyListComponent<a> extends HTMLDivElement
         this.findChildren();
         this.saveChanges();
 
-        console.log("RERUNNING SEARCH");
-
         var _this = this;
         if (!this.searchBar) {
-            console.log("NO SEARCH BAR FOUND");
             return;
         }
         var q = this.searchBar!.value;
 
         var selectedEntries = Array.from(Array(this.st.length).keys());
-        console.log([...selectedEntries.map((i) => [..._this.searchableFields.map((fld) => getDeepKey(_this.st[i], fld.split(".")))])])
         selectedEntries = selectedEntries.filter((i) => _this.searchableFields.some((fld) => JSON.stringify(getDeepKey(_this.st[i], fld.split("."))).includes(q)));
         selectedEntries = [...selectedEntries].reverse();
         selectedEntries = selectedEntries.slice(0, this.maxElements);
-        console.log(selectedEntries);
 
         this.entriesDiv!.innerHTML = "";
         this.shownEntries = [];
@@ -367,12 +389,12 @@ class LazyListComponent<a> extends HTMLDivElement
             this.shownEntries.push([i, listEntryMenu]);
         });
         
-        console.log(this.includedEntries);
     }
 }
 
 window.customElements.define("menu-checkbox", CheckboxComponent, { extends: "input" });
 window.customElements.define("menu-textbox", TextboxComponent, { extends: "input" });
+window.customElements.define("menu-textfield", TextfieldComponent, { extends: "div" });
 window.customElements.define("menu-number", NumberComponent, { extends: "input" });
 window.customElements.define("menu-select", SelectComponent, { extends: "select" });
 window.customElements.define("menu-group", GroupingComponent, { extends: "div" });

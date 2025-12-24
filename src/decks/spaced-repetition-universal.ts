@@ -15,6 +15,7 @@ import {
     FlashcardResult
 } from "core/flashcard-generator"
 import {
+    gSynth,
     defaultSpeechSettings
 } from "utils/speech"
 import {
@@ -478,7 +479,45 @@ export class UniversalSpacedRepGen
                     <div is="menu-group" name="cardTypeSettings">
                         <div>
                             <h3>Simple two-sided card</h3>
-                            <div is="menu-group" name="simple-card">
+                            <div is="menu-deep-json" name="simple-card">
+                                <details>
+                                    <summary>Two-sided card settings</summary>
+                                    <input is="menu-checkbox" name="doTwoSided" />
+                                    <label for="doTwoSided">Quiz on cards back-to-front sometimes</label> <br />
+                                    <input is="menu-checkbox" name="doReadAloud" />
+                                    <label for="doReadAloud">Read aloud back-to-front cards for which the setting is enabled</label> <br />
+                                    <input is="menu-number" name="probReversed" min="0" max="1" step="0.01" />
+                                    <label for="probReversed">Probability of card being reversed</label> <br />
+                                    <input is="menu-number" name="probSpoken" min="0" max="1" step="0.01" />
+                                    <label for="probSpoken">Probability of a reversed card being spoken</label> <br />
+                                </details>
+                                <details>
+                                    <summary>Text-to-speech settings</summary>
+                                    <input is="menu-number" name="speechSettings.rate" min="0" max="2" step="0.05" />
+                                    <label for="speechSettings.rate">Speech rate</label> <br />
+                                    <input is="menu-number" name="speechSettings.pitch" min="0" max="2" step="0.05" />
+                                    <label for="speechSettings.pitch">Speech pitch</label> <br />
+                                    <select is="menu-select" name="voice">
+                                        {% for v in ttsVoices %}
+                                        <option value="{{ v }}">{{ v }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </details>
+                                <details>
+                                    <summary>Text substitutions</summary>
+                                    <div is="menu-list" name="substitutions">
+                                        <button class="menu-add-another-button">Add another</button>
+                                        <div class="menu-list-entries"></div>
+                                        <div class="menu-list-default-entry" is="menu-group">
+                                            <input is="menu-textbox" name="0" />
+                                            <input is="menu-textbox" name="1" />
+                                        </div>
+                                    </div>
+                                </details>
+                                <details>
+                                    <summary>Card template</summary>
+                                    <div is="menu-textfield" name="template"></tpl>
+                                </details>
                             </div>
                             <div is="menu-lazy-list" name="simpleCards" search="cardEntry.prompt,cardEntry.answer">
                                 <button class="menu-add-another-button">Add another</button>
@@ -498,14 +537,51 @@ export class UniversalSpacedRepGen
                         </div>
                         <div>
                             <h3>Cloze cards</h3>
-                            <div is="menu-group" name="cloze-card">
+                            <div is="menu-deep-json" name="cloze-card">
+                                <input is="menu-textbox" name="clozeServerUrl" placeholder="cloze server URL..." />
+                                <input is="menu-textbox" name="sourceLangs" placeholder="source langs..." />
+                                <input is="menu-textbox" name="targetLang" placeholder="target lang..." />
+                                <input is="menu-textbox" name="clozeGroups" placeholder="puzzle groups..." />
+                                <details>
+                                    <summary>Text-to-speech settings</summary>
+                                    <input is="menu-number" name="speechSettings.rate" min="0" max="2" step="0.05" />
+                                    <label for="speechSettings.rate">Speech rate</label> <br />
+                                    <input is="menu-number" name="speechSettings.pitch" min="0" max="2" step="0.05" />
+                                    <label for="speechSettings.pitch">Speech pitch</label> <br />
+                                    <select is="menu-select" name="voice">
+                                        {% for v in ttsVoices %}
+                                        <option value="{{ v }}">{{ v }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </details>
+                                <details>
+                                    <summary>Card template</summary>
+                                    <div is="menu-textfield" name="template"></tpl>
+                                </details>
                             </div>
+                            <div is="menu-lazy-list" name="clozeCards" search="cardEntry.key">
+                                <button class="menu-add-another-button">Add another</button>
+                                <input type="text" class="menu-search-bar" placeholder="search cards..." />
+                                <div class="menu-list-entries"></div>
+                                <div class="menu-list-default-entry" is="menu-sr-card" cardtype="simple-card">
+                                    <input is="menu-textbox" name="cardEntry.key" />
+                                    <input is="menu-textbox" name="tags" placeholder="tags..." />
+                                    <input is="menu-textbox" name="extraInfo" placeholder="extra info..." />
+                                    <button class="menu-remove-entry-button">remove</button>
+                                    <button class="menu-restore-entry-button">restore</button>
+                                </div>
+                            </div>
+                        </div>
+
                         </div>
                     </div>
                 </div>
             </div> 
         `;
-        var menuHTML = renderString(menuTpl, { st: st });
+        var menuHTML = renderString(menuTpl, { 
+            st: st,
+            ttsVoices: [...gSynth().getVoices().map((v) => v.name)] 
+        });
         contDiv.innerHTML = menuHTML;
         var menu = <MenuComponent<SRUniversalState>><any>contDiv.children[0];
 
@@ -515,6 +591,10 @@ export class UniversalSpacedRepGen
                 = [...Object.values(st.cards).filter((c: any) => c.cardType == "simple-card")];
             st.settings.cardTypeSettings.clozeCards 
                 = [...Object.values(st.cards).filter((c: any) => c.cardType == "cloze-card")];
+            st.settings.cardTypeSettings["cloze-card"].sourceLangs
+                = st.settings.cardTypeSettings["cloze-card"].sourceLangs.join(",");
+            st.settings.cardTypeSettings["cloze-card"].clozeGroups
+                = st.settings.cardTypeSettings["cloze-card"].clozeGroups.join(",");
             console.log(st);
             return st;
         };
@@ -526,6 +606,12 @@ export class UniversalSpacedRepGen
             st.cards = makeSRCardDict(st.cards);
             delete st.settings.cardTypeSettings["simpleCards"];
             delete st.settings.cardTypeSettings["clozeCards"];
+            st.settings.cardTypeSettings["cloze-card"].sourceLangs
+                = st.settings.cardTypeSettings["cloze-card"].sourceLangs.length == 0
+                    ? [] : st.settings.cardTypeSettings["cloze-card"].sourceLangs.split(",")
+            st.settings.cardTypeSettings["cloze-card"].clozeGroups
+                = st.settings.cardTypeSettings["cloze-card"].clozeGroups.length == 0
+                    ? [] : st.settings.cardTypeSettings["cloze-card"].clozeGroups.split(",");
             return st;
         };
 

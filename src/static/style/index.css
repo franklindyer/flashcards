@@ -304,6 +304,11 @@ hr {
     vertical-align: middle;
 }
 
+.menu-ace-textfield {
+    height: 200px;
+    width: 90%;
+}
+
 // Animation for loading icon
 
 .lds-spinner,
