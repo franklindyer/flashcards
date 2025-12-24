@@ -3,9 +3,6 @@ import {
     hideLoadingIcon
 } from "utils/utils"
 import {
-    StateEditor
-} from "core/editor"
-import {
     MenuComponent    
 } from "menus/menus"
 import {

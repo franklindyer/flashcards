@@ -20,17 +20,8 @@ import {
 } from "utils/speech"
 import {
     applyTextFilter,
-    textFilterSelectionMenu,
     defaultTextFilterSettings
 } from "utils/text-filters"
-import {
-    StateEditor,
-    boolEditor,
-    scrollNumberEditor,
-    singleTextFieldEditor,
-    radioEditor,
-    multipleEditors
-} from "core/editor"
 import {
     MenuComponent
 } from "menus/menus"
@@ -58,7 +49,6 @@ import {
 } from "core/flashcard-entry"
 import {
     PushcardQueue,
-    makePCQEditor,
     defaultPushcardQueue
 } from "utils/pushcard-queue"
 import {

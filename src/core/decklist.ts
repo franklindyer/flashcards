@@ -16,11 +16,6 @@ import {
     eraseDeck
 } from "core/flashcard-deck"
 import {
-    singleTextFieldEditor,
-    StateEditor,
-    boolEditor
-} from "core/editor"
-import {
     MenuComponent
 } from "menus/menus"
 import {
@@ -29,39 +24,6 @@ import {
     syncDownloadDeck,
     validateSyncCreds
 } from "./synchronization"
-
-function generateDeckNameEditor(deck: FlashcardDeck<any>): StateEditor<FlashcardDeck<any>> {
-    var nicknameEditor = singleTextFieldEditor(deck.name);
-    var colorEditor = singleTextFieldEditor(deck.view.color); 
-    var closeBtn = document.createElement("button");
-    closeBtn.textContent = "Save";
-    var doSyncEditor = boolEditor("Sync deck with server?", deck.doSync);
-    var deckIdA= document.createElement("A");
-    deckIdA.textContent = `Internal deck ID: ${deck.slug}`
-    var contDiv = document.createElement("div");
-    [
-        nicknameEditor.element, 
-        colorEditor.element,
-        doSyncEditor.element,
-        deckIdA,
-        closeBtn
-    ].map((el) => contDiv.appendChild(el));
-    contDiv.onclick = (e) => {
-        e.cancelBubble = true;
-        if (e.stopPropagation) e.stopPropagation();
-    };
-    var ed = {
-        element: contDiv,
-        menuToState: () => {
-            deck.name = nicknameEditor.menuToState();
-            deck.view.color = colorEditor.menuToState();
-            deck.doSync = doSyncEditor.menuToState();
-            contDiv.remove();
-            return deck;
-        }
-    }
-    return ed;
-}
 
 export function generateDecklistMenu(
         decklist: IDictionary<FlashcardDeck<any>>,

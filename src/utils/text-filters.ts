@@ -1,8 +1,3 @@
-import {
-    StateEditor,
-    boolEditor
-} from "core/editor"
-
 export type TextFilterSettings = {
     removeParenDelimited: boolean,
     removeSqDelimited: boolean,
@@ -90,49 +85,4 @@ export function applyTextFilter(str: string, tfs: TextFilterSettings) {
     return str;
 }
 
-export function textFilterSelectionMenu(tfs: TextFilterSettings): StateEditor<TextFilterSettings> {
-    tfs = repairTextFilterSettings(tfs);
-    
-    var container = document.createElement("div");
-    var accordion = document.createElement("details");
-    var accordionSummary = document.createElement("summary");
-    accordionSummary.textContent = "Text filter settings";
-    accordion.appendChild(accordionSummary);
-    container.appendChild(accordion);
-    
-    var noPunctuationEd = boolEditor("Ignore punctuation", tfs.noPunctuation);
-    var noCapsEd = boolEditor("Ignore capitalization", tfs.noCaps);
-    var smartQuotesEd = boolEditor("Ignore smart quotes", tfs.smartQuotes);
-    var doubleSpacesEd = boolEditor("Ignore multiple spaces", tfs.doubleSpaces);
-    var trimSpacesEd = boolEditor("Ignore leading and trailing spaces", tfs.trimSpaces);
-    var nfcEd = boolEditor("NFC-normalize unicode text", tfs.nfc);
-    var removeParenEd = boolEditor("Ignore substrings enclosed in (parentheses)", tfs.removeParenDelimited);
-    var removeSqEd = boolEditor("Ignore substrings enclosed in [square brackets]", tfs.removeSqDelimited);
 
-    [
-        noPunctuationEd.element,
-        noCapsEd.element,
-        smartQuotesEd.element,
-        doubleSpacesEd.element,
-        trimSpacesEd.element,
-        nfcEd.element,
-        removeParenEd.element,
-        removeSqEd.element
-    ].map((el) => accordion.appendChild(el));
-
-    return {
-        element: container,
-        menuToState: () => {
-            return {
-                removeParenDelimited: removeParenEd.menuToState(),
-                removeSqDelimited: removeSqEd.menuToState(),
-                noPunctuation: noPunctuationEd.menuToState(),
-                noCaps: noCapsEd.menuToState(),
-                smartQuotes: smartQuotesEd.menuToState(),
-                doubleSpaces: doubleSpacesEd.menuToState(),
-                trimSpaces: trimSpacesEd.menuToState(),
-                nfc: nfcEd.menuToState()
-            };
-        }
-    };
-}

@@ -1,11 +1,6 @@
 import {
     trivialPromise
 } from "utils/utils"
-import {
-    StateEditor,
-    singleTextFieldEditor,
-    acceptDeclineEditor
-} from "core/editor"
 
 export type PushcardQueue = {
     url: string,
@@ -51,67 +46,4 @@ function pullCards(pcq: PushcardQueue): Promise<PushcardQueue> {
         pcq.pending = pcq.pending.concat(results);
         return pcq;
     })
-}
-
-export function makePCQEditor(pcq: PushcardQueue): StateEditor<PushcardQueue> {
-    var contDiv = document.createElement("div");
-    var titleDiv = document.createElement("h3");
-    titleDiv.textContent = "Suggested third-party cards";
-    contDiv.appendChild(titleDiv);
-    contDiv.classList.add("deck-menu-submenu");
-    var urlEditor = singleTextFieldEditor(pcq.url);
-    (<HTMLInputElement>urlEditor.element).placeholder = "url of server...";
-    var keyEditor = singleTextFieldEditor(pcq.key);
-    (<HTMLInputElement>keyEditor.element).placeholder = "name of queue...";
-    contDiv.appendChild(urlEditor.element);
-    contDiv.appendChild(keyEditor.element);
-    var refreshBtn = document.createElement("button");
-    refreshBtn.textContent = "Refresh";
-    contDiv.appendChild(refreshBtn);
-
-    var suggestionsDiv = document.createElement("div");
-    contDiv.appendChild(suggestionsDiv);
-    var suggestions: any[] = [];
-    var yesNoEds: StateEditor<number>[] = [];
-
-    function refreshSuggestions(pcqNew: PushcardQueue) {
-        console.log(pcq.epoch);
-        suggestions = [];
-        yesNoEds = [];
-        pcq.url = urlEditor.menuToState();
-        pcq.key = keyEditor.menuToState();
-        pcq.epoch = pcqNew.epoch;
-        pcq.pending = pcqNew.pending;
-        suggestionsDiv.innerHTML = "";
-        for (var i in pcq.pending) {
-            var opt = pcq.pending[i];
-            var cardData = opt.data;
-            var cardSummary = opt.summary;
-            var yesNoEd = acceptDeclineEditor(cardData, cardSummary);
-            suggestions.push(opt);
-            yesNoEds.push(yesNoEd);
-            suggestionsDiv.appendChild(yesNoEd.element);
-        }
-    }
-
-    refreshSuggestions(pcq);
-    pullCards(pcq).then(refreshSuggestions);
-    refreshBtn.onclick = (e) => { pullCards(pcq).then(refreshSuggestions); };
-
-    return {
-        element: contDiv,
-        menuToState: () => {
-            pcq.url = urlEditor.menuToState();
-            pcq.key = keyEditor.menuToState();
-            pcq.pending = [];
-            pcq.accepted = [];
-            for (var i in suggestions) {
-                var sugg = suggestions[i];
-                var ed = yesNoEds[i];
-                if (ed.menuToState() == 0) pcq.pending.push(sugg);
-                if (ed.menuToState() == 1) pcq.accepted.push(sugg.data);
-            }
-            return pcq;
-        }
-    }
 }
