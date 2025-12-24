@@ -114,6 +114,7 @@ export function generateDecklistMenu(
             var id = (<any>el).getState().slug;
             var newDecklist = menu.getState();
             var newDeckdict = Object.fromEntries(newDecklist.map((x: any) => [x.slug, x]));
+            console.log(newDeckdict);
             decklistOverlay.style.display = "none";
             onfinish(newDeckdict);
             saveDeck(id, () => runDeck(id));
@@ -286,7 +287,9 @@ export function setupDecklistMenu() {
     var decksBtn = <HTMLElement>document.getElementById("deck-list-button");
     decksBtn.onclick = (e: Event) => {
         var decklistOverlay = <HTMLElement>document.getElementById("flashcard-decklist-overlay");
-        generateDecklistMenu(gDeckRegistry, (_) => {});
+        generateDecklistMenu(gDeckRegistry, (newDeckRegistry) => {
+            [...Object.values(newDeckRegistry)].forEach((d) => gDeckRegistry[d.slug] = d);
+        });
         decklistOverlay.style.display = "block";
         
     };
