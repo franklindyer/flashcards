@@ -18,6 +18,9 @@ import {
     boolEditor
 } from "core/editor"
 import {
+    MenuComponent
+} from "menus/menus"
+import {
     promptForSyncCreds,
     syncUploadDeck,
     syncDownloadDeck,
@@ -58,6 +61,75 @@ function generateDeckNameEditor(deck: FlashcardDeck<any>): StateEditor<Flashcard
 }
 
 export function generateDecklistMenu(
+        decklist: IDictionary<FlashcardDeck<any>>,
+        onfinish: (st: IDictionary<FlashcardDeck<any>>) => void) {
+    var contDiv = document.createElement("div");
+    var menuHTML = `
+        <div is="menu-list">
+            <button class="menu-add-another-button">Create new deck</button>
+            <div class="menu-list-entries"></div>
+            <div class="menu-list-default-entry deck-editor-entry" is="menu-deep-json">
+                <div class="decklist-edit-div">
+                    <input is="menu-textbox" name="name" />
+                    <input is="menu-textbox" name="view.color" />
+                    <input is="menu-checkbox" name="doSync" />
+                    <label for="doSync">Sync deck with server?</label> <br />
+                    <input is="menu-textbox" name="slug" disabled/>
+                    <button class="decklist-save-button">Save</button>
+                </div>
+                <div class="decklist-view-div">
+                    <b class="decklist-view-title"></b>
+                    <button class="decklist-study-button deck-editor-button">study</button>
+                    <button class="decklist-edit-button deck-editor-button">edit</button>
+                    <button class="decklist-delete-button menu-list-remove-button deck-editor-button">delete</button>
+                </div>
+            </div>
+        </div>       
+    `;
+    contDiv.innerHTML = menuHTML;
+    var menu = <any>contDiv.children[0];
+
+    menu.entryCallback = (el: HTMLElement) => {
+        var deckView = <any>el.querySelector(".decklist-view-div")!;
+        var deckEditor = <any>el.querySelector(".decklist-edit-div")!;
+        var nameInput = <any>el.querySelector("[name='name']")!;
+        var nameView = <any>el.querySelector(".decklist-view-title")!;
+        var colorInput = <any>el.querySelector("[name='view.color']")!;
+        var studyButton = <any>el.querySelector(".decklist-study-button")!;
+        var saveButton = <any>el.querySelector(".decklist-save-button")!;
+        var editButton = <any>el.querySelector(".decklist-edit-button")!;
+        var updateDeckView = () => {
+            nameView.textContent = nameInput.value;
+            el.style.backgroundColor = colorInput.value;
+            deckEditor.style.display = "none";
+            deckView.style.display = "block"; 
+        };
+        var editDeck = () => {
+            deckEditor.style.display = "block";
+            deckView.style.display = "none"; 
+        };
+        saveButton.onclick = updateDeckView;
+        editButton.onclick = editDeck;
+        studyButton.onclick = () => {
+            var id = (<any>el).getState().slug;
+            var newDecklist = menu.getState();
+            var newDeckdict = Object.fromEntries(newDecklist.map((x: any) => [x.slug, x]));
+            decklistOverlay.style.display = "none";
+            onfinish(newDeckdict);
+            saveDeck(id, () => runDeck(id));
+        };
+        updateDeckView();
+    };
+
+    menu.setState([...Object.values(gDeckRegistry)]);    
+
+    var decklistEditor = <HTMLElement>document.getElementById("flashcard-decklist-editor");
+    decklistEditor.innerHTML = "";
+    var decklistOverlay = <HTMLElement>document.getElementById("flashcard-decklist-overlay");
+    decklistEditor.appendChild(menu);
+}
+
+/* export function generateDecklistMenu(
     decklist: IDictionary<FlashcardDeck<any>>,
     onfinish: (st: IDictionary<FlashcardDeck<any>>) => void) {
 
@@ -208,7 +280,7 @@ export function generateDecklistMenu(
         decklistEditor.appendChild(deckDiv);
 
     }
-}
+} */
 
 export function setupDecklistMenu() {
     var decksBtn = <HTMLElement>document.getElementById("deck-list-button");

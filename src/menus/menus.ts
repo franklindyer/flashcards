@@ -168,28 +168,33 @@ class GroupingComponent extends HTMLDivElement
 
 class ListEntryComponent<a> extends HTMLDivElement
                             implements MenuComponent<a[]> {
+    removeBtn?: HTMLElement;
     removeEntry: boolean = false;
 
     constructor() {
         super();
     }
     
-    connectedCallback() {
-        var removeBtn = document.createElement("button");
-        removeBtn.textContent = "remove";
+    lazyInit() {
+        if (this.removeBtn) return;
+        this.removeBtn = this.querySelector(".menu-list-remove-button")!;
+        if (!this.removeBtn) {
+            this.removeBtn = document.createElement("button");
+            this.removeBtn.textContent = "delete";
+            this.appendChild(this.removeBtn);
+        }
         var _this = this;
-        removeBtn.onclick = (e) => {
+        (<any>this.removeBtn).onclick = (e: any) => {
             _this.removeEntry = !_this.removeEntry;
             if (_this.removeEntry) {
-                removeBtn.textContent = "restore";
+                _this.removeBtn!.textContent = "restore";
                 this.classList.add("list-entry-component-removed");
             } else {
-                removeBtn.textContent = "remove";
+                _this.removeBtn!.textContent = "delete";
                 this.classList.remove("list-entry-component-removed");
             }
         };
-        removeBtn.style.display = "inline-block";
-        this.appendChild(removeBtn);
+        (<any>this.removeBtn).style.display = "inline-block";
     }
     
     fieldName() {
@@ -206,6 +211,7 @@ class ListEntryComponent<a> extends HTMLDivElement
     }
 
     setState(ls: a[]) {
+        this.lazyInit();
         var menuElement = this.querySelector("[is^='menu-']");
         (<any>menuElement).setState(ls[0]);
     }
@@ -216,6 +222,8 @@ class ListComponent<a> extends HTMLDivElement
                        implements MenuComponent<a[]> {
     defaultEntry?: HTMLElement;
     entriesDiv: HTMLDivElement = document.createElement("div");
+
+    entryCallback: (el: HTMLElement) => void = (el) => {};
 
     constructor() {
         super();
@@ -265,6 +273,7 @@ class ListComponent<a> extends HTMLDivElement
             var listEntryMenu = _this.defaultEntry!.cloneNode(true);
             listEntry.appendChild(listEntryMenu);
             listEntry.setState([st]);
+            _this.entryCallback(<HTMLElement>listEntryMenu);
             this.entriesDiv.appendChild(listEntry); 
         });
     }
