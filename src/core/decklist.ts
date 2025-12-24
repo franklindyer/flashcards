@@ -79,6 +79,7 @@ export function generateDecklistMenu(
             <button class="menu-import-file-button">Import deck from file</button> <br />
             <button class="menu-setup-sync-server">Setup sync server</button>
             <button class="menu-import-remote-button">Import deck from server</button> <br />
+            <div class="menu-sync-server-info-div"></div>
             <div class="menu-list-entries"></div>
             <div class="menu-list-default-entry deck-editor-entry" is="menu-deep-json">
                 <div class="decklist-edit-div">
@@ -110,6 +111,7 @@ export function generateDecklistMenu(
     var importDeckButton = <any>menu.querySelector(".menu-import-file-button");
     var syncSetupButton = <any>menu.querySelector(".menu-setup-sync-server");
     var syncDeckButton = <any>menu.querySelector(".menu-import-remote-button");
+    var syncInfoDiv = <any>menu.querySelector(".menu-sync-server-info-div");
 
     newDeckButton.onclick = (e: any) => {
         var st = menu.getState();
@@ -132,15 +134,41 @@ export function generateDecklistMenu(
             reader.onload = (e: any) => {
                 var importedDeck = JSON.parse(<string>e.target!.result);
                 importedDeck.slug = guidGenerator();
-                setDeck(importedDeck.slug, JSON.stringify(importedDeck), () => {
-                    saveDeck(importedDeck.slug, () => {
-                        generateDecklistMenu(decklist, onfinish);
-                    })
-                });
+                var st = menu.getState();
+                st.push(importedDeck);
+                menu.setState(st);
             };
             reader.readAsText(file, "UTF-8");
         };
         fileUploadInput.click();
+    };
+
+    syncInfoDiv.style.display = "none";
+    var updateSyncServerDiv = (r: string, s: string) => {
+        syncInfoDiv.style.display = "block";
+        syncInfoDiv.innerHTML = `
+            <a>Sync server URL: <code>${r}</code></a> <br />
+            <a>Sync server user key: <code>${s.slice(0, 8)}...</code></a>
+        `;
+    };
+
+    syncSetupButton.onclick = (e: any) => {
+        promptForSyncCreds(updateSyncServerDiv);
+    };
+
+    validateSyncCreds(
+        updateSyncServerDiv,
+        () => {}
+    );    
+
+    syncDeckButton.onclick = (e: any) => {
+        var deckslug = prompt("Enter the ID of the deck you would like to download.") || "";
+        var defaultDate = new Date("1970-01-01T00:00:00Z");
+        syncDownloadDeck(deckslug, defaultDate, (s: string) => {
+            var st = menu.getState();
+            st.push(JSON.parse(s));
+            menu.setState(st);
+        });
     };
 
     menu.entryCallback = (el: HTMLElement) => {
@@ -170,7 +198,8 @@ export function generateDecklistMenu(
             var newDeckdict = Object.fromEntries(newDecklist.map((x: any) => [x.slug, x]));
             decklistOverlay.style.display = "none";
             onfinish(newDeckdict);
-            saveDeck(id, () => runDeck(id));
+            runDeck(id);
+            // saveDeck(id, () => runDeck(id));
         };
         updateDeckView();
     };
