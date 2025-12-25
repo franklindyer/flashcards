@@ -663,18 +663,26 @@ export class UniversalSpacedRepGen
 
         (<any>menu).preProc = (st: any) => {
             st.settings.inactiveTags = st.settings.inactiveTags.join(",");
+            var cardsList = [...Object.values(st.cards)];
             st.settings.cardTypeSettings.simpleCards 
                 = [...Object.values(st.cards).filter((c: any) => c.cardType == "simple-card")];
             st.settings.cardTypeSettings.clozeCards 
                 = [...Object.values(st.cards).filter((c: any) => c.cardType == "cloze-card")];
+            st.settings.cardTypeSettings.simpleCards.sort(
+                (c1: any, c2: any) => (c1.stats.created < c2.stats.created) ? -1 : 1
+            );            
+
             st.settings.cardTypeSettings["cloze-card"].sourceLangs
                 = st.settings.cardTypeSettings["cloze-card"].sourceLangs.join(",");
+            
             st.settings.cardTypeSettings["cloze-card"].clozeGroups
                 = st.settings.cardTypeSettings["cloze-card"].clozeGroups.join(",");
+            
             return st;
         };
         (<any>menu).postProc = (st: any) => {
-            st.settings.inactiveTags = st.settings.inactiveTags.split(",");
+            st.settings.inactiveTags = st.settings.inactiveTags.length == 0
+                ? [] : st.settings.inactiveTags.length.split(",");
             st.cards = [];
             st.cards = st.cards.concat(st.settings.cardTypeSettings["simpleCards"]);
             st.cards = st.cards.concat(st.settings.cardTypeSettings["clozeCards"]);

@@ -26,7 +26,7 @@ export class SRCardMenu extends DeepJSONComponent {
         this.postprocMap = {
             "cardEntry.prompt": (ls: string) => ls.split("|"),
             "cardEntry.answer": (ls: string) => ls.split("|"),
-            "tags": (ls: string) => ls.split(",")
+            "tags": (ls: string) => ls.length == 0 ? [] : ls.split(",")
         }
     }
 }
