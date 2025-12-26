@@ -682,7 +682,7 @@ export class UniversalSpacedRepGen
         };
         (<any>menu).postProc = (st: any) => {
             st.settings.inactiveTags = st.settings.inactiveTags.length == 0
-                ? [] : st.settings.inactiveTags.length.split(",");
+                ? [] : st.settings.inactiveTags.split(",");
             st.cards = [];
             st.cards = st.cards.concat(st.settings.cardTypeSettings["simpleCards"]);
             st.cards = st.cards.concat(st.settings.cardTypeSettings["clozeCards"]);
