@@ -559,7 +559,7 @@ export class UniversalSpacedRepGen
                                 <button class="menu-add-another-button">Add another</button>
                                 <input type="text" class="menu-search-bar" placeholder="search cards..." />
                                 <div class="menu-list-entries"></div>
-                                <div class="menu-list-default-entry" is="menu-sr-card" cardtype="simple-card">
+                                <div class="menu-list-default-entry" is="menu-sr-card" cardtype="cloze-card">
                                     <input is="menu-textbox" name="cardEntry.key" />
                                     <input is="menu-textbox" name="tags" placeholder="tags..." />
                                     <input is="menu-textbox" name="extraInfo" placeholder="extra info..." />
