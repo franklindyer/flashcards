@@ -516,6 +516,7 @@ export class UniversalSpacedRepGen
                                 <input type="text" class="menu-search-bar" placeholder="search cards..." />
                                 <div class="menu-list-entries"></div>
                                 <div class="menu-list-default-entry" is="menu-sr-card" cardtype="simple-card">
+                                    <input is="menu-textbox" name="guid" value="" style="display: none" />
                                     <input is="menu-textbox" name="cardEntry.prompt" />
                                     <button class="menu-swapper-button">↔</button>
                                     <input is="menu-textbox" name="cardEntry.answer" />
@@ -560,6 +561,7 @@ export class UniversalSpacedRepGen
                                 <input type="text" class="menu-search-bar" placeholder="search cards..." />
                                 <div class="menu-list-entries"></div>
                                 <div class="menu-list-default-entry" is="menu-sr-card" cardtype="cloze-card">
+                                    <input is="menu-textbox" name="guid" value="" style="display: none" />
                                     <input is="menu-textbox" name="cardEntry.key" />
                                     <input is="menu-textbox" name="tags" placeholder="tags..." />
                                     <input is="menu-textbox" name="extraInfo" placeholder="extra info..." />
@@ -687,6 +689,11 @@ export class UniversalSpacedRepGen
             st.cards = st.cards.concat(st.settings.cardTypeSettings["simpleCards"]);
             st.cards = st.cards.concat(st.settings.cardTypeSettings["clozeCards"]);
             st.cards = st.cards.concat([...st.settings.pushcardQueue.accepted.map((j: any) => recursiveRepairJSON(j.data, makeEmptyCard(j.data.cardType)))]);
+            for (var i = 0; i < st.cards.length; i++) { // Ensure all new cards have a guid
+                if (!("guid" in st.cards[i])) {
+                    st.cards[i].guid = guidGenerator();
+                }
+            } 
             st.settings.pushcardQueue.accepted = [];
             st.cards = makeSRCardDict(st.cards);
             delete st.settings.cardTypeSettings["simpleCards"];

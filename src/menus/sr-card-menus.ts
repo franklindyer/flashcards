@@ -9,13 +9,15 @@ import {
     makeEmptyCard 
 } from "decks/spaced-repetition-universal-types"
 import {
-    recursiveRepairJSON
+    recursiveRepairJSON,
+    guidGenerator
 } from "utils/utils"
 
 export class SRCardMenu extends DeepJSONComponent {
     constructor() {
         super();
         this.lastSetState = makeEmptyCard(this.getAttribute("cardtype")!);
+        this.lastSetState.guid = "";
 
         this.preprocMap = {
             "cardEntry.prompt": (ls: string[]) => ls.join("|"),
@@ -24,6 +26,7 @@ export class SRCardMenu extends DeepJSONComponent {
         }
 
         this.postprocMap = {
+            "guid": (g: string) => g.length == 0 ? guidGenerator() : g,
             "cardEntry.prompt": (ls: string) => ls.split("|"),
             "cardEntry.answer": (ls: string) => ls.split("|"),
             "tags": (ls: string) => ls.length == 0 ? [] : ls.split(",")
