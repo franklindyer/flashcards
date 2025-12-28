@@ -65,7 +65,8 @@ import {
 
 export const defaultSRUniversalSettings = {
     cardTypeSettings: {},
-    initialHours: 8,
+    initialHours: 24,
+    minimumHours: 8,
     correctFactor: 1.5,
     incorrectFactor: 0.5,
     fillQOnlyWhenEmpty: true,
@@ -214,7 +215,7 @@ export class UniversalSpacedRepGen
             if (cardData.intervalMinutes == 0 && cardData.stats.streak >= 3) {
                 return settings.initialHours * 60;
             } else if (cardData.intervalMinutes != 0) {
-                return cardData.intervalMinutes * settings.correctFactor;
+                return Math.max(cardData.intervalMinutes * settings.correctFactor, settings.minimumHours * 60);
             } else {
                 return 0;
             }
@@ -437,6 +438,8 @@ export class UniversalSpacedRepGen
                 <div is="menu-group" name="settings">
                     <input is="menu-number" name="initialHours" min=1 max=1024 step=1/>
                     <label for="initialHours">Initial interval (hours)</label> <br />
+                    <input is="menu-number" name="minimumHours" min=1 max=1024 step=1/>
+                    <label for="minimumHours">Minimum interval (hours)</label> <br />
                     <input is="menu-number" name="correctFactor" min="1" max="10" step="0.1"/>
                     <label for="correctFactor">Correct factor</label> <br />
                     <input is="menu-number" name="incorrectFactor" min="0.1" max="1" step="0.01"/>
