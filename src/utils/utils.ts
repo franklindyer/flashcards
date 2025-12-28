@@ -89,6 +89,8 @@ export function iconButton(imgUrl: string, effect: () => void): HTMLElement {
 export function recursiveRepairJSON(obj: any, defaultObj: any, omitKeys: string[] = [], doPruning: boolean = true) {
     if (typeof obj === 'string' || obj instanceof String)
         return obj;
+    if (typeof obj === 'object' && obj instanceof Date)
+        return obj;
 
     var objKeys = Object.keys(obj);
     var defaultKeys = Object.keys(defaultObj);

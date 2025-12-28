@@ -304,9 +304,7 @@ class LazyListComponent<a> extends HTMLDivElement
             if (this.addAnotherButton) {
                 (<HTMLElement>this.addAnotherButton).onclick = (e) => {
                     _this.includedEntries.push(_this.st.length);
-                    console.log((<any>this.defaultElement).getState());
                     _this.st.push((<any>this.defaultElement).getState());
-                    console.log(this.st);
                     _this.rerunSearch();
                 }
             }

@@ -40,6 +40,8 @@ export class DeepJSONComponent extends HTMLDivElement
             }
             st = setDeepKey(st, mKey.split("."), mState);
         });
+        console.log(st);
+        console.log(this.lastSetState);
         st = recursiveRepairJSON(st, this.lastSetState, [], false);
         return st;
     }
