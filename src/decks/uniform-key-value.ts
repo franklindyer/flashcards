@@ -17,10 +17,6 @@ import {
     renderString
 } from "nunjucks"
 import {
-    StateEditor,
-    makeTranslationEditor
-} from "core/editor"
-import {
     MenuComponent
 } from "menus/menus"
 

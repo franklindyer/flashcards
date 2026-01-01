@@ -8,10 +8,6 @@ import {
     renderCard
 } from "core/flashcard-template"
 import {
-    StateEditor,
-    scrollNumberEditor
-} from "core/editor"
-import {
     renderString
 } from "nunjucks"
 import {

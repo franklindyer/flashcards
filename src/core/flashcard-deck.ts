@@ -6,9 +6,6 @@ import {
     FlashcardGen
 } from "core/flashcard-generator"
 import {
-    StateEditor
-} from "core/editor"
-import {
     MenuComponent
 } from "menus/menus"
 import {
