@@ -492,7 +492,7 @@ export class UniversalSpacedRepGen
                                     <label for="speechSettings.rate">Speech rate</label> <br />
                                     <input is="menu-number" name="speechSettings.pitch" min="0" max="2" step="0.05" />
                                     <label for="speechSettings.pitch">Speech pitch</label> <br />
-                                    <select is="menu-select" name="voice">
+                                    <select is="menu-select" name="speechSettings.voice">
                                         {% for v in ttsVoices %}
                                         <option value="{{ v }}">{{ v }}</option>
                                         {% endfor %}
@@ -548,7 +548,7 @@ export class UniversalSpacedRepGen
                                     <label for="speechSettings.rate">Speech rate</label> <br />
                                     <input is="menu-number" name="speechSettings.pitch" min="0" max="2" step="0.05" />
                                     <label for="speechSettings.pitch">Speech pitch</label> <br />
-                                    <select is="menu-select" name="voice">
+                                    <select is="menu-select" name="speechSettings.voice">
                                         {% for v in ttsVoices %}
                                         <option value="{{ v }}">{{ v }}</option>
                                         {% endfor %}
