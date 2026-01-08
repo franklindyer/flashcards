@@ -21,7 +21,13 @@ export function utter(
     utterThis.voice = getVoice(voice);
     utterThis.rate = rate;
     utterThis.pitch = pitch;
-    utterThis.onend = callback;
+    utterThis.onend = () => {
+        callback();
+    };
+    utterThis.onerror = (e) => {
+        console.log(e);
+        callback();
+    };
     // console.log(`Speaking "${txt}"...`);
     gSynth().speak(utterThis);
 }

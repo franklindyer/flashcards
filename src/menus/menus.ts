@@ -371,20 +371,20 @@ class LazyListComponent<a> extends HTMLDivElement
 
             var removeBtn = (<any>listEntryMenu).querySelector("button.menu-remove-entry-button")!;
             var restoreBtn = (<any>listEntryMenu).querySelector("button.menu-restore-entry-button")!;
-            removeBtn.onclick = ((i) => (e: any) => {
-                _this.includedEntries = [...this.includedEntries.filter((j) => i != j)];
+            removeBtn.onclick = ((k) => (e: any) => {
+                _this.includedEntries = [...this.includedEntries.filter((j) => k != j)];
                 removeBtn.style.display = "none";
                 restoreBtn.style.display = "inline-block";
                 (<HTMLElement>listEntryMenu).classList.add("list-entry-component-removed");
             })(i);
-            restoreBtn.onclick = ((i) => (e: any) => {
+            restoreBtn.onclick = ((i) => (k: any) => {
                 if (!_this.includedEntries.includes(i)) _this.includedEntries.push(i);
                 restoreBtn.style.display = "none";
                 removeBtn.style.display = "inline-block";
                 (<HTMLElement>listEntryMenu).classList.remove("list-entry-component-removed");
             })(i);
             
-            if (i in this.includedEntries) {
+            if (this.includedEntries.includes(i)) {
                 restoreBtn.click();
             } else {
                 removeBtn.click();
@@ -393,7 +393,6 @@ class LazyListComponent<a> extends HTMLDivElement
             _this.entryCallback(listEntryMenu);
             _this.shownEntries.push([i, listEntryMenu]);
         });
-        
     }
 }
 

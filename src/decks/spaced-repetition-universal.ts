@@ -519,19 +519,25 @@ export class UniversalSpacedRepGen
                                 <input type="text" class="menu-search-bar" placeholder="search cards..." />
                                 <div class="menu-list-entries"></div>
                                 <div class="menu-list-default-entry" is="menu-sr-card" cardtype="simple-card">
-                                    <input is="menu-textbox" name="guid" value="" style="display: none" />
-                                    <input is="menu-textbox" name="cardEntry.prompt" />
-                                    <button class="menu-swapper-button">↔</button>
-                                    <input is="menu-textbox" name="cardEntry.answer" />
-                                    <input is="menu-checkbox" name="cardEntry.twoSided" />
-                                    <input is="menu-checkbox" name="cardEntry.readAloud" />
-                                    <input is="menu-textbox" name="tags" placeholder="tags..." />
-                                    <input is="menu-textbox" name="extraInfo" placeholder="extra info..." />
-                                    <button class="menu-preview-card-button">view</button>
-                                    <button class="menu-prelisten-card-button">listen</button>
-                                    <button class="menu-remove-entry-button">remove</button>
-                                    <button class="menu-restore-entry-button">restore</button>
-                                    <div class="flashcard-container"></div>
+                                    <details>
+                                        <summary>
+                                            <input is="menu-textbox" name="guid" value="" style="display: none" />
+                                            <input is="menu-textbox" name="cardEntry.prompt" />
+                                            <button class="menu-swapper-button">↔</button>
+                                            <input is="menu-textbox" name="cardEntry.answer" />
+                                        </summary>
+                                        <input is="menu-checkbox" name="cardEntry.twoSided" />
+                                        <label for="cardEntry.twoSided">Card is two-sided?</label> <br />
+                                        <input is="menu-checkbox" name="cardEntry.readAloud" />
+                                        <label for="cardEntry.twoSided">Read aloud reversed card?</label> <br />
+                                        <input is="menu-textbox" name="tags" placeholder="tags..." />
+                                        <input is="menu-textbox" name="extraInfo" placeholder="extra info..." />
+                                        <button class="menu-preview-card-button">view</button>
+                                        <button class="menu-prelisten-card-button">listen</button>
+                                        <button class="menu-remove-entry-button">remove</button>
+                                        <button class="menu-restore-entry-button">restore</button>
+                                        <div class="flashcard-container"></div>
+                                    </details>
                                 </div>
                             </div>
                         </div>
