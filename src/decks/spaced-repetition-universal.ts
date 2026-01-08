@@ -425,8 +425,16 @@ export class UniversalSpacedRepGen
         var _this = this;
 
         var contDiv = document.createElement("div");
+
+        var numDue = (<any>this).gen.getDue(st).length;
+        var numNew = (<any>this).gen.getNew(st).length;
+        var numTotal = Object.keys(st.cards).length;
+
         var menuTpl = `
             <div is="menu-group">
+                <a>{{ numTotal }} total cards</a> <br />
+                <a>{{ numDue }} due cards</a> <br />
+                <a>{{ numNew }} new cards</a> <br />
                 <label for="studying">Studying cards in the order:</label>
                 <select is="menu-select" name="studying">
                     <option value=1>New cards</option>
@@ -606,7 +614,10 @@ export class UniversalSpacedRepGen
         `;
         var menuHTML = renderString(menuTpl, { 
             st: st,
-            ttsVoices: [...gSynth().getVoices().map((v) => v.name)] 
+            ttsVoices: [...gSynth().getVoices().map((v) => v.name)],
+            numDue: numDue,
+            numNew: numNew,
+            numTotal: numTotal
         });
         contDiv.innerHTML = menuHTML;
         var menu = <MenuComponent<SRUniversalState>><any>contDiv.children[0];
