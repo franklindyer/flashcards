@@ -306,7 +306,10 @@ export class UniversalSpacedRepGen
         if ((st.studying == SRStudying.NewCards) || 
                 (st.studying == SRStudying.NewThenDueCards && newInds.length > 0) ||
                 (st.studying == SRStudying.DueThenNewCards && dueInds.length == 0)) {
+            console.log("DOING NEW CARDS");
             var newGuid = chooseNext(st.newQ, newInds);
+            console.log(newGuid);
+            console.log(st.cards[newGuid!]);
             if (newGuid === undefined) {
                 return emptyCard;     
             }

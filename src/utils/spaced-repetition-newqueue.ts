@@ -13,7 +13,7 @@ export function emptySRQueue(maxNewCards: number) {
 export function chooseNext(q: SRNewQueue, allOpts: string[]): string | undefined {
     var newOpts = allOpts.filter((k) => !q.newQueue.includes(k));
     
-    if (q.newQueue.length > 0) {
+    if (q.newQueue.length > 0 && allOpts.includes(q.newQueue[0])) {
         return q.newQueue[0];
     } else {
         return undefined;
@@ -46,6 +46,8 @@ export function refillNewQueue(
     q: SRNewQueue, 
     allOpts: string[],
     refillOnlyWhenEmpty: boolean = false): SRNewQueue {
+    console.log(q);
+    q.newQueue = [...q.newQueue.filter((id) => allOpts.includes(id))];
     var cardsNeeded = q.maxNewCards - q.newQueue.length;
     if (refillOnlyWhenEmpty && q.newQueue.length > 0) {
         cardsNeeded = 0;
