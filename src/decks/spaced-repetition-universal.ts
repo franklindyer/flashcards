@@ -712,10 +712,9 @@ export class UniversalSpacedRepGen
             st.cards = st.cards.concat(st.settings.cardTypeSettings["simpleCards"]);
             st.cards = st.cards.concat(st.settings.cardTypeSettings["clozeCards"]);
             st.cards = st.cards.concat([...st.settings.pushcardQueue.accepted.map((j: any) => recursiveRepairJSON(j.data, makeEmptyCard(j.data.cardType)))]);
-            for (var i = 0; i < st.cards.length; i++) { // Ensure all new cards have a guid
-                if (!("guid" in st.cards[i])) {
-                    st.cards[i].guid = guidGenerator();
-                }
+            for (var i = 0; i < st.cards.length; i++) {
+                // Add any missing fields to new cards, e.g. guid and created timestamp 
+                st.cards[i] = recursiveRepairJSON(st.cards[i], makeEmptyCard(st.cards[i].cardType));
             } 
             st.settings.pushcardQueue.accepted = [];
             st.cards = makeSRCardDict(st.cards);
