@@ -505,7 +505,7 @@ export class UniversalSpacedRepGen
                                     <label for="speechSettings.pitch">Speech pitch</label> <br />
                                     <select is="menu-select" name="speechSettings.voice">
                                         {% for v in ttsVoices %}
-                                        <option value="{{ v }}">{{ v }}</option>
+                                        <option value="{{ v.name }}">{{ v.name }} ({{ v.lang }})</option>
                                         {% endfor %}
                                     </select>
                                 </details>
@@ -567,7 +567,7 @@ export class UniversalSpacedRepGen
                                     <label for="speechSettings.pitch">Speech pitch</label> <br />
                                     <select is="menu-select" name="speechSettings.voice">
                                         {% for v in ttsVoices %}
-                                        <option value="{{ v }}">{{ v }}</option>
+                                        <option value="{{ v.name }}">{{ v.name }} ({{ v.lang }})</option>
                                         {% endfor %}
                                     </select>
                                 </details>
@@ -617,7 +617,7 @@ export class UniversalSpacedRepGen
         `;
         var menuHTML = renderString(menuTpl, { 
             st: st,
-            ttsVoices: [...gSynth().getVoices().map((v) => v.name)],
+            ttsVoices: [...gSynth().getVoices()],
             numDue: numDue,
             numNew: numNew,
             numTotal: numTotal
