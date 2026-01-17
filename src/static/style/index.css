@@ -175,11 +175,10 @@ button {
     opacity: 1.0;
 }
 
-.deck-editor-entry a {
+.deck-editor-entry b {
     line-height: 28px;
     text-align: center;
     margin-left: 10px;
-    font-weight: bold;
 }
 
 .deck-editor-entry input {
@@ -292,12 +291,21 @@ hr {
     padding: 1px;
 }
 
+.list-entry-component-removed {
+    background-color: #ffbbbb;
+}
+
 .sr-card-due-date {
     display: inline-block;
     color: lightgray;
     margin-left: 10px;
     margin-right: 10px;
     vertical-align: middle;
+}
+
+.menu-ace-textfield {
+    height: 200px;
+    width: 90%;
 }
 
 // Animation for loading icon

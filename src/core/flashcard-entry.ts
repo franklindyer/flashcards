@@ -5,16 +5,6 @@ import {
     makeSubber
 } from "utils/utils"
 import {
-    StateEditor,
-    boolEditor,
-    swappingTextEditor,
-    singleTextFieldEditor,
-    multipleEditors,
-    doubleTextFieldEditor,
-    htmlEditor,
-    scrollNumberEditor
-} from "core/editor"
-import {
     randomizeStringSub
 } from "utils/random-templating"
 import {
@@ -22,7 +12,6 @@ import {
 } from "utils/generic-preloader"
 import {
     defaultSpeechSettings,
-    speechSettingsEditor,
     SpeechSettings,
     utter,
     makeAudioButtons
@@ -54,8 +43,6 @@ export abstract class FlashcardType<E, D, S> {
     abstract getSpeakableText(data: D): string;
     abstract generateCard(data: D, settings: S, externalParams: IDictionary<any>): Flashcard;
     abstract checkAnswer(answer: string, data: D, settings: S, tf: (s: string) => string): Promise<boolean>;
-    abstract makeEntryEditor(entry: E): StateEditor<E>;
-    abstract makeSettingsEditor(settings: S): StateEditor<S>;
 
     abstract getDefaultEntry(): E;
     abstract getDefaultSettings(): S;
@@ -198,104 +185,6 @@ export class SimpleCardType extends FlashcardType<SimpleCardEntry, SimpleCardDat
     // abstract checkAnswer(answer: string, data: D, settings: S): Promise<boolean>;
     checkAnswer(answer: string, data: SimpleCardData, settings: SimpleCardSettings, tf: (s: string) => string): Promise<boolean> {
         return trivialPromise(data.answer.map(tf).includes(tf(answer)));
-    }
-
-    // abstract makeEntryEditor(entry: E): StateEditor<E>;
-    makeEntryEditor(entry: SimpleCardEntry): StateEditor<SimpleCardEntry> {
-        var edDetails = document.createElement("details");
-        var edSummary = document.createElement("summary"); 
-        edDetails.style.display = "inline-block";
-        edDetails.appendChild(edSummary);
-        edDetails.classList.add("cardlist-accordion");
-        edDetails.onkeyup = function(e) {
-            if (e.keyCode == 32) {
-                e.preventDefault();
-            }
-        };
-
-        var edMain = swappingTextEditor([entry.prompt.join('|'), entry.answer.join('|')]);
-        edMain.element.style.display = "inline-block";
-        edSummary.appendChild(edMain.element);
-
-        var twoSideEd = boolEditor("Double-sided card?", entry.twoSided);
-        edDetails.appendChild(twoSideEd.element);
-
-        var readAloudEd = boolEditor("Reversed card can be read aloud?", entry.readAloud);
-        edDetails.appendChild(readAloudEd.element);
-
-        return {
-            element: edDetails,
-            menuToState: () => {
-                let tp = edMain.menuToState();
-                return {
-                    prompt: tp[0].split('|'),
-                    answer: tp[1].split('|'),
-                    twoSided: twoSideEd.menuToState(),
-                    readAloud: readAloudEd.menuToState()
-                };
-            }
-        }; 
-    }
-
-    // abstract makeSettingsEditor(settings: S): StateEditor<S>;
-    makeSettingsEditor(settings: SimpleCardSettings): StateEditor<SimpleCardSettings> {
-        var contDiv = document.createElement("div");
-
-        var reverseDetails = document.createElement("details");
-        var reverseSummary = document.createElement("summary");
-        reverseSummary.textContent = "Two-sided card settings";
-        contDiv.appendChild(reverseDetails);
-        reverseDetails.appendChild(reverseSummary);
-        var twoSidedEditor = boolEditor("Study both sides of two-sided cards?", settings.doTwoSided);
-        var twoSidedCont = document.createElement("div");
-        twoSidedCont.appendChild(twoSidedEditor.element);
-        reverseDetails.appendChild(twoSidedCont);
-
-        var readAloudEditor = boolEditor("Read aloud two-sided cards with setting enabled?", settings.doReadAloud);
-        var readAloudCont = document.createElement("div");
-        readAloudCont.appendChild(readAloudEditor.element);
-        reverseDetails.appendChild(readAloudCont);
-
-        var pReversedEditor = scrollNumberEditor("Probability of card being reversed", settings.probReversed, 0.1, 0.9, 0.1);
-        var pSpokenEditor = scrollNumberEditor("Probability of a reversed card using audio", settings.probSpoken, 0.1, 1.0, 0.1); 
-        reverseDetails.appendChild(pReversedEditor.element);
-        reverseDetails.appendChild(pSpokenEditor.element);
-
-        var ssEditor = speechSettingsEditor(settings.speechSettings);
-        var ssCont = document.createElement("div")
-        ssCont.appendChild(ssEditor.element);
-        contDiv.appendChild(ssCont);
-
-        var subsEditor = multipleEditors(
-            settings.substitutions,
-            () => <[string, string]>["", ""],
-            doubleTextFieldEditor
-        );
-        subsEditor.element = hideDetails(subsEditor.element, "Card substitution settings");
-        contDiv.appendChild(subsEditor.element);
-
-        var tplDetails = document.createElement("details");
-        var tplSummary = document.createElement("summary");
-        tplSummary.textContent = "Card template";
-        var tplEditor = htmlEditor(settings.template);
-        tplDetails.appendChild(tplSummary);
-        tplDetails.appendChild(tplEditor.element);
-        contDiv.appendChild(tplDetails);
-
-        return {
-            element: contDiv,
-            menuToState: () => {
-                return {
-                    doTwoSided: twoSidedEditor.menuToState(),
-                    doReadAloud: readAloudEditor.menuToState(),
-                    probReversed: pReversedEditor.menuToState(),
-                    probSpoken: pSpokenEditor.menuToState(), 
-                    speechSettings: ssEditor.menuToState(),
-                    substitutions: subsEditor.menuToState(),
-                    template: tplEditor.menuToState() 
-                };
-            }
-        }
     }
 
     // abstract getDefaultEntry(): E;
@@ -444,70 +333,6 @@ export class ClozeCardType extends FlashcardType<ClozeCardEntry, ClozeCardData, 
     // abstract checkAnswer(answer: string, data: D, settings: S, tf: (s: string) => string): Promise<boolean>;
     checkAnswer(answer: string, data: ClozeCardData, settings: ClozeCardSettings, tf: (s: string) => string) {
         return trivialPromise(data.valid && tf(answer) == tf(data.cloze!.answer));
-    }
-
-    // abstract makeEntryEditor(entry: E): StateEditor<E>;
-    makeEntryEditor(entry: ClozeCardEntry): StateEditor<ClozeCardEntry> {
-        var edDetails = document.createElement("details");
-        var edSummary = document.createElement("summary");
-        edDetails.appendChild(edSummary);
-        edDetails.classList.add("cardlist-accordion");
-        var keyEd = singleTextFieldEditor(entry.key);
-        keyEd.element.style.display = "inline-block";
-        edSummary.appendChild(keyEd.element);
-        return {
-            element: edDetails,
-            menuToState: () => {
-                return {
-                    key: keyEd.menuToState()
-                };
-            }
-        };
-    }
-
-    // abstract makeSettingsEditor(settings: S): StateEditor<S>;
-    makeSettingsEditor(settings: ClozeCardSettings): StateEditor<ClozeCardSettings> {
-        var clozeSettingsDiv = document.createElement("div");
-
-        var clozeServerDiv = document.createElement("div");
-        clozeServerDiv.classList.add("deck-menu-submenu"); 
-        var clozeServerUrlEditor = singleTextFieldEditor(settings.clozeServerUrl)
-        var clozeSourceLangEditor = singleTextFieldEditor(settings.sourceLangs.join(','));
-        var clozeTargetLangEditor = singleTextFieldEditor(settings.targetLang);
-        var clozeGroupsEditor = singleTextFieldEditor(settings.clozeGroups.join(','));
-        (<HTMLInputElement>clozeGroupsEditor.element).placeholder = "allowed groups...";
-
-        var ssEditor = speechSettingsEditor(settings.speechSettings);
-
-        clozeServerDiv.appendChild(clozeServerUrlEditor.element);
-        clozeServerDiv.appendChild(clozeSourceLangEditor.element);
-        clozeServerDiv.appendChild(clozeTargetLangEditor.element);
-        clozeServerDiv.appendChild(clozeGroupsEditor.element);
-
-        clozeSettingsDiv.appendChild(clozeServerDiv);
-        clozeSettingsDiv.appendChild(ssEditor.element);
-
-        var tplDetails = document.createElement("details");
-        var tplSummary = document.createElement("summary");
-        tplSummary.textContent = "Card template";
-        var tplEditor = htmlEditor(settings.template);
-        tplDetails.appendChild(tplSummary);
-        tplDetails.appendChild(tplEditor.element);
-        clozeSettingsDiv.appendChild(tplDetails);
-
-        return {
-            element: clozeSettingsDiv,
-            menuToState: () => {
-                return {
-                    clozeServerUrl: clozeServerUrlEditor.menuToState(),
-                    sourceLangs: clozeSourceLangEditor.menuToState().split(','),
-                    targetLang: clozeTargetLangEditor.menuToState(),
-                    clozeGroups: clozeGroupsEditor.menuToState().split(',').filter((g) => g.length > 0),
-                    speechSettings: ssEditor.menuToState(),
-                    template: tplEditor.menuToState()
-                }
-            }
-        }
     }
 
     // abstract getDefaultEntry(): E;

@@ -14,63 +14,73 @@ import {
     renderCard
 } from "core/flashcard-template"
 import {
-    BasicCardData
-} from "utils/basic-template"
+    renderString
+} from "nunjucks"
 import {
-    StateEditor,
-    makeTranslationEditor
-} from "core/editor"
+    MenuComponent
+} from "menus/menus"
+
+type KVCard = {
+    front: string,
+    back: string
+}
 
 export type KVFlashcardState = {
-    deck: BasicCardData[],
+    deck: KVCard[],
     history: [string, boolean][]
 }
 
-export class KVFlashcardGen extends FlashcardSyncGen<KVFlashcardState, BasicCardData> {
+export class KVFlashcardGen extends FlashcardSyncGen<KVFlashcardState, KVCard> {
     getGenName() { return "uniform-key-value"; }
 
-    getNextCard(state: KVFlashcardState): BasicCardData {
+    getNextCard(state: KVFlashcardState): KVCard {
         var dat = state.deck[Math.floor(Math.random() * Object.keys(state.deck).length)];
         return dat;
     }
 
-    updateState(state: KVFlashcardState, cardData: BasicCardData, correct: FlashcardResult): KVFlashcardState {
+    updateState(state: KVFlashcardState, cardData: KVCard, correct: FlashcardResult): KVFlashcardState {
         if (correct != FlashcardResult.Unanswered) {
-            state.history.push([cardData[0], correct == FlashcardResult.Correct]);
+            state.history.push([cardData.front, correct == FlashcardResult.Correct]);
         }
         return state;
     }
     
-    checkAnswer(ans: string, state: KVFlashcardState, cardData: BasicCardData) {
-        return (ans == cardData[1]);
+    checkAnswer(ans: string, state: KVFlashcardState, cardData: KVCard) {
+        return (ans == cardData.back);
     }
     
-    generateCard(_: KVFlashcardState, data: BasicCardData): Flashcard {
-        return renderCard("basic-template", data);
+    generateCard(_: KVFlashcardState, data: KVCard): Flashcard {
+        return renderCard("basic-template",[data.front, data.back])
     }
 
-    makeEditor(state: KVFlashcardState): StateEditor<KVFlashcardState> {
-        var transEd = makeTranslationEditor(state.deck, (x: string) => true);
-        return {
-            element: transEd.element,
-            menuToState: () => {
-                return {
-                    deck: transEd.menuToState(),
-                    history: state.history
-                };
-            }
-        }
+    makeEditor(st: KVFlashcardState): MenuComponent<KVFlashcardState> {
+        var contDiv = document.createElement("div");
+        var menuTpl: string = `
+            <div is="menu-group">
+                <div is="menu-list" name="deck">
+                    <div is="menu-group" style="display: inline-block;">
+                        <input is="menu-textbox" name="front" />
+                        <input is="menu-textbox" name="back" />
+                    </div>
+                </div>
+            </div>
+        `;
+        var menuHTML = renderString(menuTpl, { st: st });
+        contDiv.innerHTML = menuHTML;
+        var menu = <MenuComponent<KVFlashcardState>><any>contDiv.children[0];
+        menu.setState(st);
+        return menu;
     }
 
-    correctEffect(_: KVFlashcardState, __: BasicCardData, ___: string, resolve: () => void) { resolve() };
+    correctEffect(_: KVFlashcardState, __: KVCard, ___: string, resolve: () => void) { resolve() };
     repairDeckState(st: any) { return st; }
 }
 
 var kvDefaultState: KVFlashcardState = {
     deck: [
-        ["cat", "gato"],
-        ["dog", "perro"],
-        ["the dog runs", "el perro corre"],
+        { front: "cat", back: "gato"},
+        { front: "dog", back: "perro"},
+        { front: "the dog runs", back: "el perro corre"}
     ],
     history: []
 };

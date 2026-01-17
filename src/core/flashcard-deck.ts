@@ -6,8 +6,8 @@ import {
     FlashcardGen
 } from "core/flashcard-generator"
 import {
-    StateEditor
-} from "core/editor"
+    MenuComponent
+} from "menus/menus"
 import {
     getDeckSlugs,
     getDeckJSON,
@@ -22,7 +22,7 @@ import {
 export type FlashcardDeckType<S, D> = {
     slug: string,
     gen: FlashcardGen<S, D>,
-    editor: (s: S) => StateEditor<S> 
+    editor: (s: S) => MenuComponent<S> 
 }
 
 export type FlashcardDeckView = {
@@ -92,7 +92,7 @@ function menuSetup<S, D>(deckSlug: string) {
         var editorCont = document.getElementById("flashcard-deck-editor")!;
         var editor =  decktype.editor(getState());
         editorOverlay.style.display = "inline-block";
-        editorCont.replaceChildren(editor.element);
+        editorCont.replaceChildren(<any>editor);
         var doneBtn = document.getElementById("flashcard-deck-editor-close")!;
         window.onbeforeunload = function() {
             return "Are you sure you want to leave before saving your deck?";
@@ -100,7 +100,7 @@ function menuSetup<S, D>(deckSlug: string) {
         doneBtn.onclick = () => {
             window.onbeforeunload = () => {};
             editorOverlay.style.display = "none";
-            deck.state = editor.menuToState();
+            deck.state = editor.getState();
             gDeckRegistry[deckSlug].state = deck.state;
             saveDeck(deckSlug, () => {});
             runDeck(deck.slug);

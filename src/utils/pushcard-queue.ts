@@ -1,11 +1,9 @@
 import {
+    MenuComponent
+} from "menus/menus"
+import {
     trivialPromise
 } from "utils/utils"
-import {
-    StateEditor,
-    singleTextFieldEditor,
-    acceptDeclineEditor
-} from "core/editor"
 
 export type PushcardQueue = {
     url: string,
@@ -47,71 +45,75 @@ function pullCards(pcq: PushcardQueue): Promise<PushcardQueue> {
         if (results.length > 0) {
             pcq.epoch = Math.max(...results.map((r: any) => r.epoch));
         }
-        console.log(results);
         pcq.pending = pcq.pending.concat(results);
         return pcq;
     })
 }
 
-export function makePCQEditor(pcq: PushcardQueue): StateEditor<PushcardQueue> {
-    var contDiv = document.createElement("div");
-    var titleDiv = document.createElement("h3");
-    titleDiv.textContent = "Suggested third-party cards";
-    contDiv.appendChild(titleDiv);
-    contDiv.classList.add("deck-menu-submenu");
-    var urlEditor = singleTextFieldEditor(pcq.url);
-    (<HTMLInputElement>urlEditor.element).placeholder = "url of server...";
-    var keyEditor = singleTextFieldEditor(pcq.key);
-    (<HTMLInputElement>keyEditor.element).placeholder = "name of queue...";
-    contDiv.appendChild(urlEditor.element);
-    contDiv.appendChild(keyEditor.element);
-    var refreshBtn = document.createElement("button");
-    refreshBtn.textContent = "Refresh";
-    contDiv.appendChild(refreshBtn);
+class PushcardComponent extends HTMLDivElement
+                        implements MenuComponent<PushcardQueue> {
+    defaultElement?: HTMLElement;
+    entriesDiv?: HTMLElement;
+    serverURL?: HTMLElement;
+    serverKey?: HTMLElement;
+ 
+    st: PushcardQueue = defaultPushcardQueue();
+    suggestions: [number, MenuComponent<string>][] = [];
 
-    var suggestionsDiv = document.createElement("div");
-    contDiv.appendChild(suggestionsDiv);
-    var suggestions: any[] = [];
-    var yesNoEds: StateEditor<number>[] = [];
-
-    function refreshSuggestions(pcqNew: PushcardQueue) {
-        console.log(pcq.epoch);
-        suggestions = [];
-        yesNoEds = [];
-        pcq.url = urlEditor.menuToState();
-        pcq.key = keyEditor.menuToState();
-        pcq.epoch = pcqNew.epoch;
-        pcq.pending = pcqNew.pending;
-        suggestionsDiv.innerHTML = "";
-        for (var i in pcq.pending) {
-            var opt = pcq.pending[i];
-            var cardData = opt.data;
-            var cardSummary = opt.summary;
-            var yesNoEd = acceptDeclineEditor(cardData, cardSummary);
-            suggestions.push(opt);
-            yesNoEds.push(yesNoEd);
-            suggestionsDiv.appendChild(yesNoEd.element);
-        }
+    constructor() {
+        super();
     }
 
-    refreshSuggestions(pcq);
-    pullCards(pcq).then(refreshSuggestions);
-    refreshBtn.onclick = (e) => { pullCards(pcq).then(refreshSuggestions); };
-
-    return {
-        element: contDiv,
-        menuToState: () => {
-            pcq.url = urlEditor.menuToState();
-            pcq.key = keyEditor.menuToState();
-            pcq.pending = [];
-            pcq.accepted = [];
-            for (var i in suggestions) {
-                var sugg = suggestions[i];
-                var ed = yesNoEds[i];
-                if (ed.menuToState() == 0) pcq.pending.push(sugg);
-                if (ed.menuToState() == 1) pcq.accepted.push(sugg.data);
-            }
-            return pcq;
-        }
+    fieldName() {
+        return this.getAttribute("name")!;
     }
-}
+
+    lazyInit() {
+        if (this.defaultElement) {
+            return;
+        }
+        this.defaultElement = this.querySelector(".menu-pushcard-default-entry")!;
+        this.defaultElement.remove();
+
+        this.serverURL = this.querySelector(".menu-pushcard-server-url")!;
+        this.serverKey = this.querySelector(".menu-pushcard-server-key")!;
+        this.entriesDiv = this.querySelector(".menu-pushcard-entries-div")!;
+        var refreshBtn = <any>this.querySelector(".menu-pushcard-refresh-button")!;
+        refreshBtn.onclick = (e: any) => {
+            pullCards(this.getState()).then((st2) => {
+                this.setState(st2);
+            });    
+        };
+
+        setTimeout(() => refreshBtn.click(), 1000);
+    }
+
+    getState() {
+        this.lazyInit();
+        this.st.accepted = this.suggestions.filter((r) => r[1].getState() == "accept").map((r) => this.st.pending[r[0]]); 
+        this.st.pending = this.suggestions.filter((r) => r[1].getState() == "pending").map((r) => this.st.pending[r[0]]); 
+        this.st.url = (<any>this.serverURL).getState();
+        this.st.key = (<any>this.serverKey).getState();
+        this.setState(this.st);
+        return this.st;
+    }
+
+    setState(pcq: PushcardQueue) {
+        this.lazyInit();
+        this.suggestions = [];
+        this.st = pcq;
+        (<any>this.serverURL).setState(this.st.url);
+        (<any>this.serverKey).setState(this.st.key);
+        this.entriesDiv!.innerHTML = "";
+        [...Array(this.st.pending.length).keys()].forEach((i: number) => {
+            var entryMenu = <HTMLElement>this.defaultElement!.cloneNode(true);
+            var previewLabel = entryMenu.querySelector(".menu-pushcard-entry-label")!;
+            var acceptSelect = <any>entryMenu.querySelector(".menu-pushcard-accept-select")!;
+            previewLabel.textContent = this.st.pending[i].summary;
+            this.suggestions.push([i, acceptSelect]);
+            this.entriesDiv!.appendChild(entryMenu);
+        });
+    }
+} 
+
+window.customElements.define("menu-pushcard", PushcardComponent, { extends: "div" });

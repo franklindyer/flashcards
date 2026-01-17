@@ -18,6 +18,7 @@
     "utils/*": ["./src/utils/*"],
     "core/*": ["./src/core/*"],
     "decks/*": ["./src/decks/*"],
+    "menus/*": ["./src/menus/*"],
     "plotly.js": [
       "../node_modules/plotly.js/lib/core.js"
     ]

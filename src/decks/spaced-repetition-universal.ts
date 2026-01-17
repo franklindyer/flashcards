@@ -15,21 +15,19 @@ import {
     FlashcardResult
 } from "core/flashcard-generator"
 import {
+    gSynth,
     defaultSpeechSettings
 } from "utils/speech"
 import {
     applyTextFilter,
-    textFilterSelectionMenu,
     defaultTextFilterSettings
 } from "utils/text-filters"
 import {
-    StateEditor,
-    boolEditor,
-    scrollNumberEditor,
-    singleTextFieldEditor,
-    radioEditor,
-    multipleEditors
-} from "core/editor"
+    MenuComponent
+} from "menus/menus"
+import {
+    SRCardMenu
+} from "menus/sr-card-menus"
 import {
     njNoCardsLeft
 } from "utils/nj-templates"
@@ -51,7 +49,6 @@ import {
 } from "core/flashcard-entry"
 import {
     PushcardQueue,
-    makePCQEditor,
     defaultPushcardQueue
 } from "utils/pushcard-queue"
 import {
@@ -60,14 +57,16 @@ import {
     SRUniversalCardPhysical,
     SRStudying,
     SRUniversalSettings,
-    SRUniversalState
+    SRUniversalState,
+    makeEmptyCard
 } from "decks/spaced-repetition-universal-types"
 
 /* --- USEFUL UTILITIES FOR DEFINING SR DECK --- */
 
 export const defaultSRUniversalSettings = {
     cardTypeSettings: {},
-    initialHours: 8,
+    initialHours: 24,
+    minimumHours: 8,
     correctFactor: 1.5,
     incorrectFactor: 0.5,
     fillQOnlyWhenEmpty: true,
@@ -95,22 +94,6 @@ export const defaultSRUniversalState: SRUniversalState = {
     studying: SRStudying.NewCards,
     settings: defaultSRUniversalSettings
 };
-
-function makeEmptyCard(cardType: string): SRUniversalCardVirtual {
-    return {
-        guid: guidGenerator(),
-        cardType: cardType,
-        cardEntry: gCardTypeRegistry[cardType].getDefaultEntry(),
-        extraInfo: "",
-        tags: [],
-        due: new Date(),
-        intervalMinutes: 0,
-        stats: {
-            created: new Date(),
-            streak: 0
-        }
-    }
-}
 
 function infoWidgetSR(
     totalCards: number,
@@ -232,7 +215,7 @@ export class UniversalSpacedRepGen
             if (cardData.intervalMinutes == 0 && cardData.stats.streak >= 3) {
                 return settings.initialHours * 60;
             } else if (cardData.intervalMinutes != 0) {
-                return cardData.intervalMinutes * settings.correctFactor;
+                return Math.max(cardData.intervalMinutes * settings.correctFactor, settings.minimumHours * 60);
             } else {
                 return 0;
             }
@@ -323,7 +306,10 @@ export class UniversalSpacedRepGen
         if ((st.studying == SRStudying.NewCards) || 
                 (st.studying == SRStudying.NewThenDueCards && newInds.length > 0) ||
                 (st.studying == SRStudying.DueThenNewCards && dueInds.length == 0)) {
+            console.log("DOING NEW CARDS");
             var newGuid = chooseNext(st.newQ, newInds);
+            console.log(newGuid);
+            console.log(st.cards[newGuid!]);
             if (newGuid === undefined) {
                 return emptyCard;     
             }
@@ -438,231 +424,313 @@ export class UniversalSpacedRepGen
         return trivialPromise(fl);
     }
 
-    makeEditor(st: SRUniversalState):
-        StateEditor<SRUniversalState> {
+    makeEditor(st: SRUniversalState): MenuComponent<SRUniversalState> {
         var _this = this;
 
         var contDiv = document.createElement("div");
 
-        var totCards = Object.keys(st.cards).length;
-        var newCards = Object.keys(st.cards).filter((i) => (<any>this).gen.cardIsNew(st.cards[i]) && (<any>this).gen.cardIsEnabled(st.cards[i], st)).length;
-        var dueCards = Object.keys(st.cards).filter((i) => (<any>this).gen.cardIsDue(st.cards[i]) && (<any>this).gen.cardIsEnabled(st.cards[i], st)).length;
-        var infoWidget = infoWidgetSR(
-            totCards,
-            newCards,
-            dueCards
-        );
+        var numDue = (<any>this).gen.getDue(st).length;
+        var numNew = (<any>this).gen.getNew(st).length;
+        var numTotal = Object.keys(st.cards).length;
 
-        var studyingEditor = radioEditor(
-            st.studying,
-            [SRStudying.NewCards, SRStudying.DueCards, SRStudying.RandomCards, SRStudying.DueThenNewCards, SRStudying.NewThenDueCards],
-            ["Study new cards", "Study due cards", "Practice random cards", "Study due cards, then new cards", "Study new cards, then due cards"]
-        );
-        var newQueueSizeEditor = scrollNumberEditor("Max new cards to study at once: ", st.newQ.maxNewCards, 1, 100, 1);
-        var newQueueChunkingEditor = boolEditor("Only refill new card queue once each batch is finished?", st.settings.fillQOnlyWhenEmpty);
+        var menuTpl = `
+            <div is="menu-group">
+                <a>{{ numTotal }} total cards</a> <br />
+                <a>{{ numDue }} due cards</a> <br />
+                <a>{{ numNew }} new cards</a> <br />
+                <label for="studying">Studying cards in the order:</label>
+                <select is="menu-select" name="studying">
+                    <option value=1>New cards</option>
+                    <option value=2>Due cards</option>
+                    <option value=3>Random practice cards</option>
+                    <option value=4>Due then new cards</option>
+                    <option value=5>New then due cards</option>
+                </select>
+                <div is="menu-group" name="settings">
+                    <input is="menu-number" name="initialHours" min=1 max=1024 step=1/>
+                    <label for="initialHours">Initial interval (hours)</label> <br />
+                    <input is="menu-number" name="minimumHours" min=1 max=1024 step=1/>
+                    <label for="minimumHours">Minimum interval (hours)</label> <br />
+                    <input is="menu-number" name="correctFactor" min="1" max="10" step="0.1"/>
+                    <label for="correctFactor">Correct factor</label> <br />
+                    <input is="menu-number" name="incorrectFactor" min="0.1" max="1" step="0.01"/>
+                    <label for="incorrectFactor">Incorrect factor</label> <br />
+                    <input is="menu-checkbox" name="fillQOnlyWhenEmpty"/>
+                    <label for="fillQOnlyWhenEmpty">Refill new queue only when it is empty</label> <br />
+                    <input is="menu-checkbox" name="preventReversedNewCards"/>
+                    <label for="preventReversedNewCards">Don't reverse new cards during initial study</label> <br />
+                    <input is="menu-checkbox" name="readCorrectAnswers"/>
+                    <label for="readCorrectAnswers">Speak correct answers using text-to-speech</label> <br />
+                    <input is="menu-textbox" name="inactiveTags"/>
+                    <label for="inactiveTags">Deactivated tags</label> <br />
+                    <div is="menu-group" name="filterSettings">
+                        <input is="menu-checkbox" name="noPunctuation"/>
+                        <label for="noPunctuation">Ignore punctuation</label> <br />
+                        <input is="menu-checkbox" name="noCaps"/>
+                        <label for="noCaps">Ignore capitalization</label> <br />
+                        <input is="menu-checkbox" name="smartQuotes"/>
+                        <label for="smartQuotes">Ignore smart quotes</label> <br />
+                        <input is="menu-checkbox" name="doubleSpaces"/>
+                        <label for="doubleSpaces">Ignore multiple spaces in a row</label> <br />
+                        <input is="menu-checkbox" name="trimSpaces"/>
+                        <label for="trimSpaces">Ignore leading and trailing spaces</label> <br />
+                        <input is="menu-checkbox" name="nfc"/>
+                        <label for="nfc">NFC-normalize Unicode text</label> <br />
+                        <input is="menu-checkbox" name="removeParenDelimited"/>
+                        <label for="removeParenDelimited">Ignore substrings enclosed in (parentheses)</label> <br />
+                        <input is="menu-checkbox" name="removeSqDelimited"/>
+                        <label for="removeSqDelimited">Ignore substrings enclosed in [square brackets]</label> <br />
+                    </div>
 
-        var initHoursEditor = scrollNumberEditor("Initial interval (hours): ", st.settings.initialHours, 1, 240, 1);
-        var correctFactor = scrollNumberEditor("Correct factor: ", st.settings.correctFactor, 1, 10, 0.1);
-        var incorrectFactor = scrollNumberEditor("Incorrect factor: ", st.settings.incorrectFactor, 0, 1.0, 0.01);
+                    <div is="menu-group" name="cardTypeSettings">
+                        <div>
+                            <h3>Simple two-sided card</h3>
+                            <div is="menu-deep-json" name="simple-card">
+                                <details>
+                                    <summary>Two-sided card settings</summary>
+                                    <input is="menu-checkbox" name="doTwoSided" />
+                                    <label for="doTwoSided">Quiz on cards back-to-front sometimes</label> <br />
+                                    <input is="menu-checkbox" name="doReadAloud" />
+                                    <label for="doReadAloud">Read aloud back-to-front cards for which the setting is enabled</label> <br />
+                                    <input is="menu-number" name="probReversed" min="0" max="1" step="0.01" />
+                                    <label for="probReversed">Probability of card being reversed</label> <br />
+                                    <input is="menu-number" name="probSpoken" min="0" max="1" step="0.01" />
+                                    <label for="probSpoken">Probability of a reversed card being spoken</label> <br />
+                                </details>
+                                <details>
+                                    <summary>Text-to-speech settings</summary>
+                                    <input is="menu-number" name="speechSettings.rate" min="0" max="2" step="0.05" />
+                                    <label for="speechSettings.rate">Speech rate</label> <br />
+                                    <input is="menu-number" name="speechSettings.pitch" min="0" max="2" step="0.05" />
+                                    <label for="speechSettings.pitch">Speech pitch</label> <br />
+                                    <select is="menu-select" name="speechSettings.voice">
+                                        {% for v in ttsVoices %}
+                                        <option value="{{ v.name }}">{{ v.name }} ({{ v.lang }})</option>
+                                        {% endfor %}
+                                    </select>
+                                </details>
+                                <details>
+                                    <summary>Text substitutions</summary>
+                                    <div is="menu-list" name="substitutions">
+                                        <button class="menu-add-another-button">Add another</button>
+                                        <div class="menu-list-entries"></div>
+                                        <div class="menu-list-default-entry" is="menu-group">
+                                            <input is="menu-textbox" name="0" />
+                                            <input is="menu-textbox" name="1" />
+                                        </div>
+                                    </div>
+                                </details>
+                                <details>
+                                    <summary>Card template</summary>
+                                    <div is="menu-textfield" name="template"></tpl>
+                                </details>
+                            </div>
+                            <div is="menu-lazy-list" name="simpleCards" search="cardEntry.prompt,cardEntry.answer">
+                                <button class="menu-add-another-button">Add another</button>
+                                <input type="text" class="menu-search-bar" placeholder="search cards..." />
+                                <div class="menu-list-entries"></div>
+                                <div class="menu-list-default-entry" is="menu-sr-card" cardtype="simple-card">
+                                    <details>
+                                        <summary>
+                                            <input is="menu-textbox" name="guid" value="" style="display: none" />
+                                            <input is="menu-textbox" name="cardEntry.prompt" />
+                                            <button class="menu-swapper-button">↔</button>
+                                            <input is="menu-textbox" name="cardEntry.answer" />
+                                        </summary>
+                                        <input is="menu-checkbox" name="cardEntry.twoSided" />
+                                        <label for="cardEntry.twoSided">Card is two-sided?</label> <br />
+                                        <input is="menu-checkbox" name="cardEntry.readAloud" />
+                                        <label for="cardEntry.twoSided">Read aloud reversed card?</label> <br />
+                                        <input is="menu-textbox" name="tags" placeholder="tags..." />
+                                        <input is="menu-textbox" name="extraInfo" placeholder="extra info..." />
+                                        <button class="menu-preview-card-button">view</button>
+                                        <button class="menu-prelisten-card-button">listen</button>
+                                        <button class="menu-remove-entry-button">remove</button>
+                                        <button class="menu-restore-entry-button">restore</button>
+                                        <div class="flashcard-container"></div>
+                                    </details>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <h3>Cloze cards</h3>
+                            <div is="menu-deep-json" name="cloze-card">
+                                <input is="menu-textbox" name="clozeServerUrl" placeholder="cloze server URL..." />
+                                <input is="menu-textbox" name="sourceLangs" placeholder="source langs..." />
+                                <input is="menu-textbox" name="targetLang" placeholder="target lang..." />
+                                <input is="menu-textbox" name="clozeGroups" placeholder="puzzle groups..." />
+                                <details>
+                                    <summary>Text-to-speech settings</summary>
+                                    <input is="menu-number" name="speechSettings.rate" min="0" max="2" step="0.05" />
+                                    <label for="speechSettings.rate">Speech rate</label> <br />
+                                    <input is="menu-number" name="speechSettings.pitch" min="0" max="2" step="0.05" />
+                                    <label for="speechSettings.pitch">Speech pitch</label> <br />
+                                    <select is="menu-select" name="speechSettings.voice">
+                                        {% for v in ttsVoices %}
+                                        <option value="{{ v.name }}">{{ v.name }} ({{ v.lang }})</option>
+                                        {% endfor %}
+                                    </select>
+                                </details>
+                                <details>
+                                    <summary>Card template</summary>
+                                    <div is="menu-textfield" name="template"></tpl>
+                                </details>
+                            </div>
+                            <div is="menu-lazy-list" name="clozeCards" search="cardEntry.key">
+                                <button class="menu-add-another-button">Add another</button>
+                                <input type="text" class="menu-search-bar" placeholder="search cards..." />
+                                <div class="menu-list-entries"></div>
+                                <div class="menu-list-default-entry" is="menu-sr-card" cardtype="cloze-card">
+                                    <input is="menu-textbox" name="guid" value="" style="display: none" />
+                                    <input is="menu-textbox" name="cardEntry.key" />
+                                    <input is="menu-textbox" name="tags" placeholder="tags..." />
+                                    <input is="menu-textbox" name="extraInfo" placeholder="extra info..." />
+                                    <button class="menu-preview-card-button">view</button>
+                                    <button class="menu-prelisten-card-button">listen</button>
+                                    <button class="menu-remove-entry-button">remove</button>
+                                    <button class="menu-restore-entry-button">restore</button>
+                                    <div class="flashcard-container"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <h3>Suggested 3rd-party cards</h3>
+                            <div is="menu-pushcard" name="pushcardQueue">
+                                <input is="menu-textbox" class="menu-pushcard-server-url" />
+                                <input is="menu-textbox" class="menu-pushcard-server-key" />
+                                <button class="menu-pushcard-refresh-button">Refresh</button>
+                                <div class="menu-pushcard-entries-div"></div>
+                                <div class="menu-pushcard-default-entry">
+                                    <b class="menu-pushcard-entry-label"></b>
+                                    <select is="menu-select" class="menu-pushcard-accept-select">
+                                        <option value="pending">Choose to accept or reject...</option>
+                                        <option value="accept">Accept</option>
+                                        <option value="reject">Reject</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+                </div>
+            </div> 
+        `;
+        var menuHTML = renderString(menuTpl, { 
+            st: st,
+            ttsVoices: [...gSynth().getVoices()],
+            numDue: numDue,
+            numNew: numNew,
+            numTotal: numTotal
+        });
+        contDiv.innerHTML = menuHTML;
+        var menu = <MenuComponent<SRUniversalState>><any>contDiv.children[0];
 
-        var omitTagsEditor = singleTextFieldEditor(st.settings.inactiveTags.join(','));
-        (<HTMLInputElement>omitTagsEditor.element).placeholder = "comma-separated tags...";
-        var omitTagsCont = document.createElement("div");
-        omitTagsCont.textContent = "Omit cards with the following tags: "
-        omitTagsCont.appendChild(omitTagsEditor.element);
+        var simpleCardsMenu = (<any>menu).querySelector("[name='simpleCards']")!;
+        var clozeCardsMenu = (<any>menu).querySelector("[name='clozeCards']")!;
 
-        var speechCheckbox = boolEditor("Speak correct answers using text-to-speech?", st.settings.readCorrectAnswers);
-        var speechDiv = document.createElement("div");
-        speechDiv.appendChild(speechCheckbox.element);
+        var cardPreviewState = (guid: string) => {
+            return (<any>_this).gen.nextCardAsyncPreprocessing({
+                virtual: menu.getState().cards[guid],
+                context: {
+                    cardsLeft: 0,
+                    isPractice: false
+                }
+            }, menu.getState());
+        }
 
-        var preventReversedNewCardsCheckbox = boolEditor("Don't reverse two-sided cards during initial study", st.settings.preventReversedNewCards);
-
-        var omitTagsEditor = singleTextFieldEditor(st.settings.inactiveTags.join(','));
-        (<HTMLInputElement>omitTagsEditor.element).placeholder = "comma-separated tags...";
-        var omitTagsCont = document.createElement("div");
-        omitTagsCont.textContent = "Omit cards with the following tags: "
-        omitTagsCont.appendChild(omitTagsEditor.element); 
-
-        var filterEditor = textFilterSelectionMenu(st.settings.filterSettings);
-
-        var pcqEditor = makePCQEditor(st.settings.pushcardQueue);
-
-        function makeCardEditor(c: SRUniversalCardVirtual):
-            StateEditor<SRUniversalCardVirtual> {
-            var cardType = c.cardType;
-            var cardEntry = c.cardEntry;
-            var cardTypeClass = gCardTypeRegistry[cardType];
-            var ed = cardTypeClass.makeEntryEditor(c.cardEntry);
-
-            var extraInfoEd = singleTextFieldEditor(c.extraInfo);
-            (<HTMLInputElement>extraInfoEd.element).placeholder = "extra info...";
-            extraInfoEd.element.style.width = "70%";
-            ed.element.appendChild(extraInfoEd.element);
-
-            var tagsEd = singleTextFieldEditor(c.tags.join(','));
-            (<HTMLInputElement>tagsEd.element).placeholder = "tags...";
-            ed.element.appendChild(tagsEd.element);
-
-            var cardInfo = document.createElement("a");
-            cardInfo.classList.add("sr-card-due-date");
-            if (c.intervalMinutes == 0) {
-                cardInfo.textContent = "not studied";
-            } else {
-                cardInfo.textContent = `due ${getSRFutureDateInfo(c.due!)}`;
-            }
-            ed.element.appendChild(cardInfo);
-
-            var cardMenuToState = () => {
-                return <SRUniversalCardVirtual>{
-                    guid: c.guid,
-                    cardType: c.cardType,
-                    cardEntry: ed.menuToState(),
-                    cardData: null,
-                    extraInfo: extraInfoEd.menuToState(),
-                    tags: tagsEd.menuToState().split(",").filter((t) => t.length > 0),
-                    due: c.due,
-                    intervalMinutes: c.intervalMinutes,
-                    stats: c.stats
-                };
-            };
-
-            var cardMenuToPreview = () => {
-                var cardState = <any>cardMenuToState();
-                return (<any>_this).gen.nextCardAsyncPreprocessing({
-                    virtual: cardState,
-                    context: {
-                        cardsLeft: 0,
-                        isPractice: false
-                    }
-                }, st);
-            };
-
-            var cardPreviewCont = document.createElement("div");
-            var previewBtn = iconButton("eyeball.png", () => {
-                var cardDataPromise = cardMenuToPreview();
-                cardDataPromise.then((d: any) => {
-                    console.log(_this);
-                    var cardPreviewDivPromise = (<any>_this).gen.generateCardAsync(
-                        st,
-                        d
+        var cardPreviewCallback = (el: any) => {
+            var guid = el.getState().guid;
+            var previewDiv = el.querySelector(".flashcard-container");
+            previewDiv.style.display = "none";
+            var previewBtn = el.querySelector(".menu-preview-card-button")!;
+            var prelistenBtn = el.querySelector(".menu-prelisten-card-button")!;
+            previewBtn.onclick = (e: any) => {
+                var cardStatePromise = cardPreviewState(guid);
+                cardStatePromise.then((cs: any) => {
+                    var cardDivPromise = (<any>_this).gen.generateCardAsync(
+                        menu.getState(),
+                        cs
                     );
-                    console.log(d);
-                    cardPreviewDivPromise.then((cardPreviewDiv: any) => {
-                        console.log(cardPreviewDiv);
-                        cardPreviewCont.innerHTML = ""; 
-                        cardPreviewDiv.el.classList.add("flashcard");
-                        cardPreviewDiv.el.classList.add("flashcard-preview");
-                        cardPreviewCont.appendChild(cardPreviewDiv.el); 
+                    cardDivPromise.then((cp: Flashcard) => {
+                        cp.el.classList.add("flashcard");
+                        cp.el.classList.add("flashcard-preview");
+                        previewDiv.innerHTML = "";
+                        previewDiv.style.display = "block";
+                        previewDiv.appendChild(cp.el);
                     });
                 });
-            });
-            ed.element.appendChild(previewBtn);
-
-            var listenBtn = iconButton("speaker.png", () => {
-                var cardDataPromise = cardMenuToPreview();
-                var cardTypeSettings = st.settings.cardTypeSettings[c.cardType];
-                cardDataPromise.then((c: any) => {
-                    var d = c.processed;
-                    cardTypeClass.speakCard(d, cardTypeSettings, () => {});
-                });
-            });
-            ed.element.appendChild(listenBtn);
-            
-           
-            ed.element.appendChild(cardPreviewCont);
- 
-            return {
-                element: ed.element,
-                menuToState: cardMenuToState
             };
-        }
-       
-        var cardSettingsGroups: IDictionary<StateEditor<any>> = {}; 
-        var cardEditorGroups: StateEditor<SRUniversalCardVirtual[]>[] = [];
-        for (var i in Object.keys(gCardTypeRegistry)) {
-            var t = Object.keys(gCardTypeRegistry)[i];
-            var cardsEditor = ((t) => multipleEditors(
-                Object.values(st.cards).filter((c) => c.cardType == t),
-                () => makeEmptyCard(t), 
-                makeCardEditor,
-                true,
-                (s, cd) => gCardTypeRegistry[t].getSearchableText(cd.cardEntry).includes(s)
-            ))(t);
-            var cardsEditorCont = document.createElement("div");
-            var cardsEditorDetails = document.createElement("details");
-            var cardsEditorSummary = document.createElement("summary");
-            cardsEditorSummary.textContent = "Add, edit and remove cards";
-            cardsEditorDetails.appendChild(cardsEditorSummary);
-            cardsEditorDetails.appendChild(cardsEditor.element);
-            cardsEditorCont.appendChild(cardsEditorDetails);
-            cardsEditor.element = cardsEditorCont;
-            cardEditorGroups.push(cardsEditor);
-            cardSettingsGroups[t] 
-                = gCardTypeRegistry[t].makeSettingsEditor(st.settings.cardTypeSettings[t]);
-            var header = document.createElement("h2");
-            header.textContent = gCardTypeRegistry[t].getUserFriendlyName();
-            cardsEditor.element.prepend(cardSettingsGroups[t].element);
-            cardsEditor.element.prepend(header);
-        }
-        function getAllCardSettings() {
-            var d: IDictionary<any> = {}
-            for (var i in Object.keys(gCardTypeRegistry)) {
-                var t = Object.keys(gCardTypeRegistry)[i];
-                d[t] = cardSettingsGroups[t].menuToState();
-            }
-            return d;
-        }       
- 
-        [
-            infoWidget, 
-            studyingEditor.element,
-            initHoursEditor.element,
-            newQueueSizeEditor.element,
-            newQueueChunkingEditor.element,
-            correctFactor.element,
-            incorrectFactor.element,
-            omitTagsCont,
-            preventReversedNewCardsCheckbox.element,
-            speechDiv,
-            filterEditor.element,
-            pcqEditor.element
-        ].concat(cardEditorGroups.map((ed) => ed.element)).map((el) => {
-            el.classList.add("deck-menu-submenu");
-            contDiv.appendChild(el);
-        });
-
-        return {
-            element: contDiv,
-            menuToState: () => { 
-                var pcq = pcqEditor.menuToState();
-                var pushedCards = pcq.accepted.map((j) => {
-                    var c = makeEmptyCard(j.cardType);
-                    c.cardEntry = {...c.cardEntry, ...j.cardEntry};
-                    return c;
+            prelistenBtn.onclick = (e: any) => {
+                var cardStatePromise = cardPreviewState(guid);
+                cardStatePromise.then((cs: any) => {
+                    var cardTypeClass = gCardTypeRegistry[cs.virtual.cardType];
+                    var cardTypeSettings = menu.getState().settings.cardTypeSettings[cs.virtual.cardType];
+                    cardTypeClass.speakCard(cs.processed, cardTypeSettings, () => {});
                 });
-                pcq.accepted = [];
-                return {
-                    studying: studyingEditor.menuToState(),
-                    settings: {
-                        cardTypeSettings: getAllCardSettings(), 
-                        initialHours: initHoursEditor.menuToState(),
-                        correctFactor: correctFactor.menuToState(),
-                        incorrectFactor: incorrectFactor.menuToState(),
-                        fillQOnlyWhenEmpty: newQueueChunkingEditor.menuToState(),
-                        readCorrectAnswers: speechCheckbox.menuToState(),
-                        preventReversedNewCards: preventReversedNewCardsCheckbox.menuToState(),
-                        filterSettings: filterEditor.menuToState(),
-                        inactiveTags: omitTagsEditor.menuToState().split(","),
-                        pushcardQueue: pcqEditor.menuToState()
-                    },
-                    newQ: emptySRQueue(newQueueSizeEditor.menuToState()),
-                    cards: makeDict(
-                        pushedCards.concat(cardEditorGroups.map((e) => e.menuToState()).flat(1)), 
-                        (c) => c.guid
-                    ),
-                }
+            };
+
+            var swapperBtn = el.querySelector(".menu-swapper-button");
+            if (swapperBtn) {
+                var promptMenu = el.querySelector("[name='cardEntry.prompt']")!;
+                var answerMenu = el.querySelector("[name='cardEntry.answer']")!;
+                swapperBtn.onclick = (e: any) => {
+                    var aux = promptMenu.value;
+                    promptMenu.value = answerMenu.value;
+                    answerMenu.value = aux; 
+                };
             }
         };
+
+        simpleCardsMenu.entryCallback = cardPreviewCallback;
+        clozeCardsMenu.entryCallback = cardPreviewCallback;
+
+        (<any>menu).querySelector(".menu-pushcard-refresh-button")!.click();
+
+        (<any>menu).preProc = (st: any) => {
+            st.settings.inactiveTags = st.settings.inactiveTags.join(",");
+            var cardsList = [...Object.values(st.cards)];
+            st.settings.cardTypeSettings.simpleCards 
+                = [...Object.values(st.cards).filter((c: any) => c.cardType == "simple-card")];
+            st.settings.cardTypeSettings.clozeCards 
+                = [...Object.values(st.cards).filter((c: any) => c.cardType == "cloze-card")];
+            st.settings.cardTypeSettings.simpleCards.sort(
+                (c1: any, c2: any) => (c1.stats.created < c2.stats.created) ? -1 : 1
+            );            
+
+            st.settings.cardTypeSettings["cloze-card"].sourceLangs
+                = st.settings.cardTypeSettings["cloze-card"].sourceLangs.join(",");
+            
+            st.settings.cardTypeSettings["cloze-card"].clozeGroups
+                = st.settings.cardTypeSettings["cloze-card"].clozeGroups.join(",");
+            
+            return st;
+        };
+        (<any>menu).postProc = (st: any) => {
+            st.settings.inactiveTags = st.settings.inactiveTags.length == 0
+                ? [] : st.settings.inactiveTags.split(",");
+            st.cards = [];
+            st.cards = st.cards.concat(st.settings.cardTypeSettings["simpleCards"]);
+            st.cards = st.cards.concat(st.settings.cardTypeSettings["clozeCards"]);
+            st.cards = st.cards.concat([...st.settings.pushcardQueue.accepted.map((j: any) => recursiveRepairJSON(j.data, makeEmptyCard(j.data.cardType)))]);
+            for (var i = 0; i < st.cards.length; i++) {
+                // Add any missing fields to new cards, e.g. guid and created timestamp 
+                st.cards[i] = recursiveRepairJSON(st.cards[i], makeEmptyCard(st.cards[i].cardType));
+            } 
+            st.settings.pushcardQueue.accepted = [];
+            st.cards = makeSRCardDict(st.cards);
+            delete st.settings.cardTypeSettings["simpleCards"];
+            delete st.settings.cardTypeSettings["clozeCards"];
+            st.settings.cardTypeSettings["cloze-card"].sourceLangs
+                = st.settings.cardTypeSettings["cloze-card"].sourceLangs.length == 0
+                    ? [] : st.settings.cardTypeSettings["cloze-card"].sourceLangs.split(",")
+            st.settings.cardTypeSettings["cloze-card"].clozeGroups
+                = st.settings.cardTypeSettings["cloze-card"].clozeGroups.length == 0
+                    ? [] : st.settings.cardTypeSettings["cloze-card"].clozeGroups.split(",");
+            return st;
+        };
+
+        menu.setState(st);
+        return menu;
     }
 
 }

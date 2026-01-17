@@ -1,5 +1,6 @@
 import {
-    IDictionary
+    IDictionary,
+    guidGenerator
 } from "utils/utils"
 import {
     TextFilterSettings,
@@ -7,6 +8,9 @@ import {
 import {
     PushcardQueue
 } from "utils/pushcard-queue"
+import {
+    gCardTypeRegistry
+} from "core/flashcard-entry"
 import {
     SRNewQueue
 } from "utils/spaced-repetition-newqueue"
@@ -48,6 +52,7 @@ export enum SRStudying {
 export type SRUniversalSettings = {
     cardTypeSettings: IDictionary<any>,
     initialHours: number,
+    minimumHours: number,
     correctFactor: number,
     incorrectFactor: number,
     fillQOnlyWhenEmpty: boolean,
@@ -63,4 +68,20 @@ export type SRUniversalState = {
     newQ: SRNewQueue,
     studying: SRStudying,
     settings: SRUniversalSettings
+}
+
+export function makeEmptyCard(cardType: string): SRUniversalCardVirtual {
+    return {
+        guid: guidGenerator(),
+        cardType: cardType,
+        cardEntry: gCardTypeRegistry[cardType].getDefaultEntry(),
+        extraInfo: "",
+        tags: [],
+        due: new Date(),
+        intervalMinutes: 0,
+        stats: {
+            created: new Date(),
+            streak: 0
+        }
+    }
 }
