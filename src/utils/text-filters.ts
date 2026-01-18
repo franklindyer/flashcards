@@ -45,7 +45,8 @@ function filterNFC(str: string) {
 }
 
 function filterPunctuation(str: string) {
-    return str.replaceAll(/[.,\/#!?$%\^&\*;:{}=\-_`~()]/g, "");
+    // return str.replaceAll(/[.,\/#!?$%\^&\*;:{}=\-_`~()]/g, "");
+    return str.replaceAll(/\p{Sc}|\p{P}/gu, "");
 }
 
 function filterCaps(str: string) {
