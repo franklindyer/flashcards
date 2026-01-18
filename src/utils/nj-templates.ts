@@ -46,9 +46,9 @@ export const njClozeCard: string = `\
 
 export const njFreqProgCard: string = `\
 <div style="font-size: {{ fontSize }}vw;">
-    {{ prompt }}
     <span class="cards-freq-prog-rank">{{ rank }}</span>
-    <span class="cards-extra-info">{{ extraInfo }}</span>
+    {{ card.prompt }}
+    <span class="cards-extra-info">{{ card.extraInfo }}</span>
 </div>
 `;
 

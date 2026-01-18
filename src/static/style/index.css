@@ -285,6 +285,42 @@ hr {
     border: 3px solid #eeeeff;
 }
 
+.cards-freq-prog-rank {
+    position: absolute;
+    background-color: #ccccff;
+    border-radius: 5px;
+    padding: 5px;
+    font-family: Menlo;
+    font-weight: bold;
+    font-size: 28px;
+    top: 5px;
+    right: 5px;
+}
+
+.cards-extra-info {
+    position: absolute;
+    bottom: 5px;
+    left: 5px;
+    color: #999;
+    padding: 5px;
+    font-size: 16px;
+}
+
+.menu-freq-prog-incorrect-list div {
+    background-color: #ffcccc;
+    padding: 3px;
+    font-size: 18px;
+    margin: 5px;
+}
+
+.menu-freq-prog-incorrect-rank {
+    font-family: Menlo;
+    width: 50px;
+    left: 5px;
+    border-radius: 3px;
+    font-size: 15px;
+}
+
 .menu-remove-card-button {
     right: 2px;
     display: inline-block;

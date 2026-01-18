@@ -25,3 +25,5 @@ import "utils/transcript-template";
 setupDecklistMenu();
 
 loadAllDecks().then((_) => runDeck(getStartingDeck("key-value-quizzer")));
+
+console.log(gDeckRegistry);
