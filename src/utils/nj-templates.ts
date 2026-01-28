@@ -43,3 +43,12 @@ export const njClozeCard: string = `\
     {% endif %}
 </div>
 `;
+
+export const njFreqProgCard: string = `\
+<div style="font-size: {{ fontSize }}vw;">
+    <span class="cards-freq-prog-rank">{{ rank }}</span>
+    {{ card.prompt }}
+    <span class="cards-extra-info">{{ card.extraInfo }}</span>
+</div>
+`;
+

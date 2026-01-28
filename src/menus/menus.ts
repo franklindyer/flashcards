@@ -396,6 +396,41 @@ class LazyListComponent<a> extends HTMLDivElement
     }
 }
 
+class TextFileComponent extends HTMLButtonElement
+                        implements MenuComponent<string> {
+    fileUploadInput: HTMLElement;
+    stringValue: string = "";
+
+    constructor() {
+        super();
+        this.fileUploadInput = document.createElement("input");
+        (<HTMLInputElement>this.fileUploadInput).type = "file";
+        this.fileUploadInput.onchange = (e) => {
+            var files = (<HTMLInputElement>this.fileUploadInput).files;
+            if (files == null) return;
+            var file = files[0];
+            if (file == null) return;
+            var reader = new FileReader();
+            reader.onload = (e) => {
+                this.stringValue = <string>e.target!.result!; 
+            } 
+        }
+    }
+
+    fieldName() {
+        return this.getAttribute("name")!; 
+    }
+
+    getState() {
+        return this.stringValue;
+    }
+
+    setState(s: string) {
+        this.stringValue = s;
+    }
+}
+
+
 window.customElements.define("menu-checkbox", CheckboxComponent, { extends: "input" });
 window.customElements.define("menu-textbox", TextboxComponent, { extends: "input" });
 window.customElements.define("menu-textfield", TextfieldComponent, { extends: "div" });
@@ -405,3 +440,4 @@ window.customElements.define("menu-group", GroupingComponent, { extends: "div" }
 window.customElements.define("menu-list-entry", ListEntryComponent, { extends: "div" });
 window.customElements.define("menu-list", ListComponent, { extends: "div" });
 window.customElements.define("menu-lazy-list", LazyListComponent, { extends: "div" });
+window.customElements.define("menu-file-upload", TextFileComponent, { extends: "button" });

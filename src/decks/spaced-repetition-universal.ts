@@ -156,7 +156,7 @@ export class UniversalSpacedRepGen
         this.preprocessAllCards(st);
 
         // Fill the new queue, in case it isn't full yet
-        st.newQ = refillNewQueue(st.newQ, this.getNew(st), true);
+        st.newQ = refillNewQueue(st.newQ, this.getNew(st), st.settings.fillQOnlyWhenEmpty);
 
         return st;
     }
@@ -284,7 +284,7 @@ export class UniversalSpacedRepGen
             st.newQ = incorporateLast(st.newQ, cardGuid, this.cardIsNew(cardNewState));
         }
         st.newQ = filterNewQueue(st.newQ, (id: string) => this.cardIsEnabled(st.cards[id], st));
-        st.newQ = refillNewQueue(st.newQ, this.getNew(st), true);
+        st.newQ = refillNewQueue(st.newQ, this.getNew(st), st.settings.fillQOnlyWhenEmpty);
 
         st.cards[cardGuid] = cardNewState;
         return trivialPromise(st);

@@ -42,14 +42,24 @@ export function filterNewQueue(q: SRNewQueue, fxn: (id: string) => boolean) {
     return q;
 }
 
+export function deduplicateQueue(q: SRNewQueue) {
+    var ddQ: string[] = [];
+    for (var x of q.newQueue) {
+        if (!ddQ.includes(x)) {
+            ddQ.push(x);
+        }
+    }
+    q.newQueue = ddQ;
+    return q;
+}
+
 export function refillNewQueue(
     q: SRNewQueue, 
     allOpts: string[],
     refillOnlyWhenEmpty: boolean = false): SRNewQueue {
-    console.log(q);
     q.newQueue = [...q.newQueue.filter((id) => allOpts.includes(id))];
     var cardsNeeded = q.maxNewCards - q.newQueue.length;
-    if (refillOnlyWhenEmpty && q.newQueue.length > 0) {
+    if (refillOnlyWhenEmpty && (q.newQueue.length > 0)) {
         cardsNeeded = 0;
     }
     if (cardsNeeded == 0) {
@@ -58,5 +68,6 @@ export function refillNewQueue(
     var cardsAdding = Math.min(allOpts.length, cardsNeeded);
     var nextCards = allOpts.slice(0, cardsAdding);
     nextCards.forEach((s) => q.newQueue.push(s));
+    q = deduplicateQueue(q);
     return q;
 }
