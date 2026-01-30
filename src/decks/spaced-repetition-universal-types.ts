@@ -55,6 +55,7 @@ export type SRUniversalSettings = {
     minimumHours: number,
     correctFactor: number,
     incorrectFactor: number,
+    spreadingCoef: number,
     fillQOnlyWhenEmpty: boolean,
     inactiveTags: string[],
     readCorrectAnswers: boolean,

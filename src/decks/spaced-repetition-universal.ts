@@ -69,6 +69,7 @@ export const defaultSRUniversalSettings = {
     minimumHours: 8,
     correctFactor: 1.5,
     incorrectFactor: 0.5,
+    spreadingCoef: 0.0,
     fillQOnlyWhenEmpty: true,
     inactiveTags: [],
     readCorrectAnswers: false,
@@ -257,11 +258,14 @@ export class UniversalSpacedRepGen
         var newInterval = this.updateInterval(card, st.settings, correct);
         cardVirtual.intervalMinutes = newInterval;
 
+        var smoothedInterval = cardVirtual.intervalMinutes;
+        smoothedInterval = (1 + st.settings.spreadingCoef*(2*Math.random()-1))*smoothedInterval;
+
         // Interval > 0 implies the card is no longer new
         // Only reschedule the card if it was answered correctly
         if (correct == FlashcardResult.Correct && newInterval > 0) {
             cardVirtual.due = this.getDate();
-            cardVirtual.due.setHours(cardVirtual.due!.getHours() + cardVirtual.intervalMinutes/60);
+            cardVirtual.due.setHours(cardVirtual.due!.getHours() + smoothedInterval/60);
         }
 
         return cardVirtual;
@@ -455,6 +459,9 @@ export class UniversalSpacedRepGen
                     <label for="correctFactor">Correct factor</label> <br />
                     <input is="menu-number" name="incorrectFactor" min="0.1" max="1" step="0.01"/>
                     <label for="incorrectFactor">Incorrect factor</label> <br />
+                    <input is="menu-number" name="spreadingCoef" min="0.0" max="0.9" step="0.01"/>
+                    <label for="spreadingCoef">Spreading coefficient for intervals</label> <br />
+                    <input is="menu-checkbox" name="fillQOnlyWhenEmpty"/>
                     <input is="menu-checkbox" name="fillQOnlyWhenEmpty"/>
                     <label for="fillQOnlyWhenEmpty">Refill new queue only when it is empty</label> <br />
                     <input is="menu-checkbox" name="preventReversedNewCards"/>

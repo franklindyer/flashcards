@@ -21,6 +21,15 @@ export function shuffleArr<a>(ls: a[]): a[] {
         .map((v) => v.val);
 }
 
+// Standard Normal variate using Box-Muller transform.
+function gaussianRandom(mean=0, stdev=1) {
+    const u = 1 - Math.random(); // Converting [0,1) to (0,1]
+    const v = Math.random();
+    const z = Math.sqrt( -2.0 * Math.log( u ) ) * Math.cos( 2.0 * Math.PI * v );
+    // Transform to the desired mean and standard deviation:
+    return z * stdev + mean;
+}
+
 export function makeDict<a>(items: a[], key: (x: a) => string) {
     var d: IDictionary<a> = {};
     items.map((x) => { d[key(x)] = x; });
