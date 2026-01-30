@@ -10,14 +10,24 @@ export function emptySRQueue(maxNewCards: number) {
     };
 }
 
-export function chooseNext(q: SRNewQueue, allOpts: string[]): string | undefined {
+export function chooseNext(
+    q: SRNewQueue, 
+    allOpts: string[],
+    refillOnlyWhenEmpty: boolean = false) : string | undefined {
     var newOpts = allOpts.filter((k) => !q.newQueue.includes(k));
-    
-    if (q.newQueue.length > 0 && allOpts.includes(q.newQueue[0])) {
-        return q.newQueue[0];
-    } else {
-        return undefined;
+    var qNotFull = q.newQueue.length < q.maxNewCards;    
+
+    if (qNotFull && newOpts.length > 0 && !refillOnlyWhenEmpty) {
+        return newOpts[0];
     }
+
+    if (q.newQueue.length > 0) {
+        return q.newQueue[0];
+    } else if (newOpts.length > 0) {
+        return newOpts[0];
+    }
+    
+    return undefined;
 }
 
 export function incorporateLast(
