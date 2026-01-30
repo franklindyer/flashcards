@@ -1,12 +1,14 @@
 export type SRNewQueue = {
     maxNewCards: number,
     newQueue: string[],
+    refilling: boolean  // Aux boolean for when refill occurs in batches
 }
 
 export function emptySRQueue(maxNewCards: number) {
     return {
         maxNewCards: maxNewCards,
-        newQueue: []
+        newQueue: [],
+        refilling: true
     };
 }
 
@@ -21,10 +23,10 @@ export function chooseNext(
         return newOpts[0];
     }
 
-    if (q.newQueue.length > 0) {
-        return q.newQueue[0];
-    } else if (newOpts.length > 0) {
+    if (q.refilling && newOpts.length > 0) {
         return newOpts[0];
+    } else if (q.newQueue.length > 0) {
+        return q.newQueue[0];
     }
     
     return undefined;
@@ -35,6 +37,10 @@ export function incorporateLast(
     c: string | undefined,
     isStillNew: boolean): 
     SRNewQueue {
+    if (q.newQueue.length == 0) {
+        q.refilling = true;
+    }
+
     if (c === undefined) {
         return q;
     }
@@ -44,6 +50,11 @@ export function incorporateLast(
     if (isStillNew) {
         q.newQueue.push(c);
     }
+
+    if (q.newQueue.length >= q.maxNewCards) {
+        q.refilling = false;
+    }
+
     return q;
 }
 
