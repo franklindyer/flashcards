@@ -157,7 +157,7 @@ export class UniversalSpacedRepGen
         this.preprocessAllCards(st);
 
         // Fill the new queue, in case it isn't full yet
-        st.newQ = refillNewQueue(st.newQ, this.getNew(st), st.settings.fillQOnlyWhenEmpty);
+        // st.newQ = refillNewQueue(st.newQ, this.getNew(st), st.settings.fillQOnlyWhenEmpty);
 
         return st;
     }
@@ -288,7 +288,7 @@ export class UniversalSpacedRepGen
             st.newQ = incorporateLast(st.newQ, cardGuid, this.cardIsNew(cardNewState));
         }
         st.newQ = filterNewQueue(st.newQ, (id: string) => this.cardIsEnabled(st.cards[id], st));
-        st.newQ = refillNewQueue(st.newQ, this.getNew(st), st.settings.fillQOnlyWhenEmpty);
+        // st.newQ = refillNewQueue(st.newQ, this.getNew(st), st.settings.fillQOnlyWhenEmpty);
 
         st.cards[cardGuid] = cardNewState;
         return trivialPromise(st);
@@ -310,8 +310,7 @@ export class UniversalSpacedRepGen
         if ((st.studying == SRStudying.NewCards) || 
                 (st.studying == SRStudying.NewThenDueCards && newInds.length > 0) ||
                 (st.studying == SRStudying.DueThenNewCards && dueInds.length == 0)) {
-            console.log("DOING NEW CARDS");
-            var newGuid = chooseNext(st.newQ, newInds);
+            var newGuid = chooseNext(st.newQ, newInds, st.settings.fillQOnlyWhenEmpty);
             console.log(newGuid);
             console.log(st.cards[newGuid!]);
             if (newGuid === undefined) {
@@ -461,7 +460,6 @@ export class UniversalSpacedRepGen
                     <label for="incorrectFactor">Incorrect factor</label> <br />
                     <input is="menu-number" name="spreadingCoef" min="0.0" max="0.9" step="0.01"/>
                     <label for="spreadingCoef">Spreading coefficient for intervals</label> <br />
-                    <input is="menu-checkbox" name="fillQOnlyWhenEmpty"/>
                     <input is="menu-checkbox" name="fillQOnlyWhenEmpty"/>
                     <label for="fillQOnlyWhenEmpty">Refill new queue only when it is empty</label> <br />
                     <input is="menu-checkbox" name="preventReversedNewCards"/>

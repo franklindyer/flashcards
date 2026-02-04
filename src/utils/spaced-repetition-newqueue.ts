@@ -37,9 +37,6 @@ export function incorporateLast(
     c: string | undefined,
     isStillNew: boolean): 
     SRNewQueue {
-    if (q.newQueue.length == 0) {
-        q.refilling = true;
-    }
 
     if (c === undefined) {
         return q;
@@ -53,6 +50,8 @@ export function incorporateLast(
 
     if (q.newQueue.length >= q.maxNewCards) {
         q.refilling = false;
+    } else if (q.newQueue.length == 0) {
+        q.refilling = true;
     }
 
     return q;

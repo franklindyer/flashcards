@@ -87,11 +87,34 @@ describe('SR new queue works correctly', () => {
             }
 
             prevQSize = q.newQueue.length;
-            console.log(prevQSize);
         }
     });
 
-    // test('queue is refilled continuously when the argument is not set', () => {});
+    test('queue is refilled continuously when the argument is not set', () => {
+        var newOptions: string[] = numberStrings(100); 
+        var q: SRNewQueue = emptySRQueue(10);
+
+        var cardSeq: string[] = [];
+        var qHasBeenFilled = false;
+        for (var i = 0; i < 100; i++) {
+            var c = chooseNext(q, newOptions, false);
+            cardSeq.push(c!);
+            var isStillNew = Math.random() < 0.5;
+            if (!isStillNew) {
+                newOptions = [...newOptions.filter((n) => n != c)];
+            }
+            q = incorporateLast(q, c, isStillNew);
+
+            if (q.newQueue.length == q.maxNewCards) {
+                qHasBeenFilled = true;
+            }
+
+            if (qHasBeenFilled) {
+                expect(q.newQueue.length).toBeGreaterThanOrEqual(9); 
+            }
+        }
+
+    });
 
     // test('', () => {});
     // test('', () => {});
