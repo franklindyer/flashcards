@@ -224,7 +224,7 @@ export type ClozeCardData = {
     valid: boolean, 
     cloze?: {
         prompt: string,
-        answer: string,
+        answers: string[],
         translation: string,
         group: string
     }
@@ -277,12 +277,17 @@ export class ClozeCardType extends FlashcardType<ClozeCardEntry, ClozeCardData, 
                 if (j === undefined) {
                     return { valid: false, key: entry.key };
                 }
+                var shortAnswer = "";
+                j["puzzle"].match(/\{\{([^\{\}]+)\}\}/g)!.forEach((m: string) => {
+                    if (shortAnswer !== "") shortAnswer = shortAnswer.concat(", ");
+                    shortAnswer = shortAnswer.concat(m.slice(2, -2));
+                });
                 return {
                     key: entry.key,
                     valid: true,
                     cloze: {
                         prompt: j["puzzle"],
-                        answer: j["target"],
+                        answers: [j["target"], shortAnswer],
                         translation: j["source"],
                         group: j["group"]
                     }
@@ -301,7 +306,7 @@ export class ClozeCardType extends FlashcardType<ClozeCardEntry, ClozeCardData, 
     // abstract getSpeakableText(data: D): string;
     getSpeakableText(data: ClozeCardData): string {
         if (data.valid)
-            return data.cloze!.answer;
+            return data.cloze!.answers[0];
         else
             return "";
     }
@@ -327,12 +332,12 @@ export class ClozeCardType extends FlashcardType<ClozeCardEntry, ClozeCardData, 
         var tpl = settings.template;
         var el = <HTMLElement>(new DOMParser().parseFromString(renderString(tpl, templateArgs), "text/html").body.firstChild);
 
-        return new Flashcard(el, data.cloze!.answer);
+        return new Flashcard(el, data.cloze!.answers[0]);
     }
 
     // abstract checkAnswer(answer: string, data: D, settings: S, tf: (s: string) => string): Promise<boolean>;
     checkAnswer(answer: string, data: ClozeCardData, settings: ClozeCardSettings, tf: (s: string) => string) {
-        return trivialPromise(data.valid && tf(answer) == tf(data.cloze!.answer));
+        return trivialPromise(data.valid && data.cloze!.answers.map(tf).includes(tf(answer)));
     }
 
     // abstract getDefaultEntry(): E;
