@@ -1,0 +1,215 @@
+  console.log
+    1
+
+      at Object.<anonymous> (tests/sr-newqueue.test.ts:90:21)
+
+  console.log
+    1
+
+      at Object.<anonymous> (tests/sr-newqueue.test.ts:90:21)
+
+  console.log
+    1
+
+      at Object.<anonymous> (tests/sr-newqueue.test.ts:90:21)
+
+  console.log
+    1
+
+      at Object.<anonymous> (tests/sr-newqueue.test.ts:90:21)
+
+  console.log
+    1
+
+      at Object.<anonymous> (tests/sr-newqueue.test.ts:90:21)
+
+  console.log
+    1
+
+      at Object.<anonymous> (tests/sr-newqueue.test.ts:90:21)
+
+  console.log
+    2
+
+      at Object.<anonymous> (tests/sr-newqueue.test.ts:90:21)
+
+  console.log
+    3
+
+      at Object.<anonymous> (tests/sr-newqueue.test.ts:90:21)
+
+  console.log
+    3
+
+      at Object.<anonymous> (tests/sr-newqueue.test.ts:90:21)
+
+  console.log
+    4
+
+      at Object.<anonymous> (tests/sr-newqueue.test.ts:90:21)
+
+  console.log
+    4
+
+      at Object.<anonymous> (tests/sr-newqueue.test.ts:90:21)
+
+  console.log
+    5
+
+      at Object.<anonymous> (tests/sr-newqueue.test.ts:90:21)
+
+  console.log
+    6
+
+      at Object.<anonymous> (tests/sr-newqueue.test.ts:90:21)
+
+  console.log
+    6
+
+      at Object.<anonymous> (tests/sr-newqueue.test.ts:90:21)
+
+  console.log
+    6
+
+      at Object.<anonymous> (tests/sr-newqueue.test.ts:90:21)
+
+  console.log
+    7
+
+      at Object.<anonymous> (tests/sr-newqueue.test.ts:90:21)
+
+  console.log
+    7
+
+      at Object.<anonymous> (tests/sr-newqueue.test.ts:90:21)
+
+  console.log
+    8
+
+      at Object.<anonymous> (tests/sr-newqueue.test.ts:90:21)
+
+  console.log
+    8
+
+      at Object.<anonymous> (tests/sr-newqueue.test.ts:90:21)
+
+  console.log
+    9
+
+      at Object.<anonymous> (tests/sr-newqueue.test.ts:90:21)
+
+  console.log
+    9
+
+      at Object.<anonymous> (tests/sr-newqueue.test.ts:90:21)
+
+  console.log
+    9
+
+      at Object.<anonymous> (tests/sr-newqueue.test.ts:90:21)
+
+  console.log
+    9
+
+      at Object.<anonymous> (tests/sr-newqueue.test.ts:90:21)
+
+  console.log
+    10
+
+      at Object.<anonymous> (tests/sr-newqueue.test.ts:90:21)
+
+  console.log
+    10
+
+      at Object.<anonymous> (tests/sr-newqueue.test.ts:90:21)
+
+  console.log
+    9
+
+      at Object.<anonymous> (tests/sr-newqueue.test.ts:90:21)
+
+  console.log
+    8
+
+      at Object.<anonymous> (tests/sr-newqueue.test.ts:90:21)
+
+  console.log
+    8
+
+      at Object.<anonymous> (tests/sr-newqueue.test.ts:90:21)
+
+  console.log
+    8
+
+      at Object.<anonymous> (tests/sr-newqueue.test.ts:90:21)
+
+  console.log
+    8
+
+      at Object.<anonymous> (tests/sr-newqueue.test.ts:90:21)
+
+  console.log
+    8
+
+      at Object.<anonymous> (tests/sr-newqueue.test.ts:90:21)
+
+  console.log
+    7
+
+      at Object.<anonymous> (tests/sr-newqueue.test.ts:90:21)
+
+  console.log
+    7
+
+      at Object.<anonymous> (tests/sr-newqueue.test.ts:90:21)
+
+  console.log
+    6
+
+      at Object.<anonymous> (tests/sr-newqueue.test.ts:90:21)
+
+  console.log
+    6
+
+      at Object.<anonymous> (tests/sr-newqueue.test.ts:90:21)
+
+  console.log
+    5
+
+      at Object.<anonymous> (tests/sr-newqueue.test.ts:90:21)
+
+  console.log
+    5
+
+      at Object.<anonymous> (tests/sr-newqueue.test.ts:90:21)
+
+  console.log
+    4
+
+      at Object.<anonymous> (tests/sr-newqueue.test.ts:90:21)
+
+  console.log
+    3
+
+      at Object.<anonymous> (tests/sr-newqueue.test.ts:90:21)
+
+  console.log
+    2
+
+      at Object.<anonymous> (tests/sr-newqueue.test.ts:90:21)
+
+  console.log
+    2
+
+      at Object.<anonymous> (tests/sr-newqueue.test.ts:90:21)
+
+  console.log
+    1
+
+      at Object.<anonymous> (tests/sr-newqueue.test.ts:90:21)
+
+  console.log
+    1
+
+      at Object.<anonymous> (tests/sr-newqueue.test.ts:90:21)
+

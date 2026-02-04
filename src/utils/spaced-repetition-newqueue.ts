@@ -1,23 +1,35 @@
 export type SRNewQueue = {
     maxNewCards: number,
     newQueue: string[],
+    refilling: boolean  // Aux boolean for when refill occurs in batches
 }
 
 export function emptySRQueue(maxNewCards: number) {
     return {
         maxNewCards: maxNewCards,
-        newQueue: []
+        newQueue: [],
+        refilling: true
     };
 }
 
-export function chooseNext(q: SRNewQueue, allOpts: string[]): string | undefined {
+export function chooseNext(
+    q: SRNewQueue, 
+    allOpts: string[],
+    refillOnlyWhenEmpty: boolean = false) : string | undefined {
     var newOpts = allOpts.filter((k) => !q.newQueue.includes(k));
-    
-    if (q.newQueue.length > 0 && allOpts.includes(q.newQueue[0])) {
-        return q.newQueue[0];
-    } else {
-        return undefined;
+    var qNotFull = q.newQueue.length < q.maxNewCards;    
+
+    if (qNotFull && newOpts.length > 0 && !refillOnlyWhenEmpty) {
+        return newOpts[0];
     }
+
+    if (q.refilling && newOpts.length > 0) {
+        return newOpts[0];
+    } else if (q.newQueue.length > 0) {
+        return q.newQueue[0];
+    }
+    
+    return undefined;
 }
 
 export function incorporateLast(
@@ -25,6 +37,7 @@ export function incorporateLast(
     c: string | undefined,
     isStillNew: boolean): 
     SRNewQueue {
+
     if (c === undefined) {
         return q;
     }
@@ -34,6 +47,13 @@ export function incorporateLast(
     if (isStillNew) {
         q.newQueue.push(c);
     }
+
+    if (q.newQueue.length >= q.maxNewCards) {
+        q.refilling = false;
+    } else if (q.newQueue.length == 0) {
+        q.refilling = true;
+    }
+
     return q;
 }
 
