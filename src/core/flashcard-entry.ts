@@ -361,3 +361,32 @@ export class ClozeCardType extends FlashcardType<ClozeCardEntry, ClozeCardData, 
 }
 
 registerFlashcardType(new ClozeCardType())
+
+/* MULTI-SIDED CARD TYPE */
+
+export type MultiSidedCardEntry = {
+    sides: string[],
+    
+}
+
+export type MultiSidedCardData = {
+    prompt: string,
+    answers: string[][],
+    spoken: boolean,
+    allAnswersRequired: boolean
+}
+
+export enum MultiSidedCardQStyle {
+    AllowAnySide = 1,
+    AskRandomSide,
+    AskAllSides
+}
+
+export type MultiSidedCardSettings = {
+    sideNames: string[],
+    quizzingStyle: MultiSidedCardQStyle, 
+    readableSide: number,
+    doReadAloudForReadableSide: boolean,    
+    speechSettings: SpeechSettings,
+    template: string
+}
