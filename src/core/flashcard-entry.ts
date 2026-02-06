@@ -407,22 +407,23 @@ export class MultiSidedCardType extends FlashcardType<MultiSidedCardEntry, Multi
     processEntry(entry: MultiSidedCardEntry, settings: MultiSidedCardSettings, context: any): Promise<MultiSidedCardData> {
         var n: number = entry.sides.length;
         var chosenSide = Math.floor(Math.random() * n);
-        var prompt = entry.sides[n];
-        var promptName = settings.sideNames[n];
-        var answersIndices = [...[...new Array(n).keys()].filter((j) => j != n)];
+        var prompt = entry.sides[chosenSide].split("|")[0];
+        var promptName = settings.sideNames[chosenSide];
+        var answersIndices = [...[...new Array(n).keys()].filter((j) => j != chosenSide)];
         if (settings.quizzingStyle === MultiSidedCardQStyle.AskRandomSide) {
             answersIndices = [answersIndices[Math.floor(Math.random() * answersIndices.length)]];
         }
         var answers = [...answersIndices.map((j) => entry.sides[j].split("|"))];
         var answersNames = [...answersIndices.map((j) => settings.sideNames[j])];
-        return trivialPromise({
+        var res: MultiSidedCardData = {
             prompt: prompt,
             promptName: promptName,
             answers: answers,
             answersNames: answersNames,
             spokenText: entry.sides[settings.speakableSide],
             allAnswersRequired: settings.quizzingStyle !== MultiSidedCardQStyle.AllowAnySide
-        });
+        };
+        return trivialPromise(res);
     } 
  
     // abstract getSearchableText(entry: E): string;
@@ -438,7 +439,7 @@ export class MultiSidedCardType extends FlashcardType<MultiSidedCardEntry, Multi
     // abstract generateCard(data: D, settings: S, externalParams: IDictionary<any>): Flashcard;
     generateCard(data: MultiSidedCardData, settings: MultiSidedCardSettings, externalParams: IDictionary<any>) {
         var templateArgs = {
-            fontSize: 5
+            fontSize: 25
         };
         templateArgs = Object.assign({}, templateArgs, data, externalParams);
         var tpl = settings.template;
@@ -447,7 +448,6 @@ export class MultiSidedCardType extends FlashcardType<MultiSidedCardEntry, Multi
     }
 
     // abstract checkAnswer(answer: string, data: D, settings: S, tf: (s: string) => string): Promise<boolean>;
-    // TODO
     checkAnswer(answer: string, data: MultiSidedCardData, settings: MultiSidedCardSettings, tf: (s: string) => string): Promise<boolean> {
         var answerParts = answer.split(",");
         if (answerParts.length < data.answers.length) {

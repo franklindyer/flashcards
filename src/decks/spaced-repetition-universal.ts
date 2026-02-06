@@ -598,8 +598,6 @@ export class UniversalSpacedRepGen
                                    
                                         <div class="menu-list-entries"></div>
                                         <input is="menu-textbox" class="menu-list-default-entry" value="" />
-                                        <button class="menu-remove-entry-button">remove</button>
-                                        <button class="menu-restore-entry-button">restore</button>
                                     </div>
  
                                     <button class="menu-preview-card-button">view</button>
