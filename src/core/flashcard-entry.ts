@@ -375,6 +375,7 @@ export type MultiSidedCardData = {
     promptName: string,
     answersNames: string[],
     spoken: boolean,
+    spokenText: string,
     allAnswersRequired: boolean
 }
 
@@ -386,9 +387,10 @@ export enum MultiSidedCardQStyle {
 
 export type MultiSidedCardSettings = {
     sideNames: string[],
+    speakableSide: number,
+    probSpoken: number,
     quizzingStyle: MultiSidedCardQStyle, 
-    readableSide: number,
-    doReadAloudForReadableSide: boolean,    
+    doReadAloud: boolean,    
     speechSettings: SpeechSettings,
     template: string
 }
@@ -402,11 +404,48 @@ export class MultiSidedCardType extends FlashcardType<MultiSidedCardEntry, Multi
     }
 
     // abstract preprocessEntry(entry: E, settings: S): void;
+    preprocessEntry(entry: MultiSidedCardEntry, settings: MultiSidedCardSettings) {}
+
     // abstract processEntry(entry: E, settings: S, context: any): Promise<D>;
+    // TODO
+    processEntry(entry: MultiSidedCardEntry, settings: MultiSidedCardSettings, context: any): Promise<MultiSidedCardData> {
+        var n: number = entry.sides.length;
+        var chosenSide = Math.floor(Math.random() * n);
+        var prompt = entry.sides[n];
+        var promptName = settings.sideNames[n];
+        var answersIndices = [...[...new Array(n).keys()].filter((j) => j != n)];
+        if (settings.quizzingStyle === MultiSidedCardQStyle.AskRandomSide) {
+            answersIndices = [answersIndices[Math.floor(Math.random() * answersIndices.length)]];
+        }
+        var answers = [...answersIndices.map((j) => entry.sides[j].split("|"))];
+        var answersNames = [...answersIndices.map((j) => settings.sideNames[j])];
+        var isSpoken = Math.random() < settings.probSpoken;
+        return trivialPromise({
+            prompt: prompt,
+            promptName: promptName,
+            answers: answers,
+            answersNames: answersNames,
+            spoken: isSpoken,
+            spokenText: entry.sides[settings.speakableSide],
+            allAnswersRequired: settings.quizzingStyle !== MultiSidedCardQStyle.AllowAnySide
+        });
+    } 
+ 
     // abstract getSearchableText(entry: E): string;
+    getSearchableText(entry: MultiSidedCardEntry): string {
+        return entry.sides.join(" ");
+    }    
+
     // abstract getSpeakableText(data: D): string;
+    getSpeakableText(data: MultiSidedCardData): string {
+        return data.spokenText;
+    } 
+
     // abstract generateCard(data: D, settings: S, externalParams: IDictionary<any>): Flashcard;
+    // TODO
+
     // abstract checkAnswer(answer: string, data: D, settings: S, tf: (s: string) => string): Promise<boolean>;
+    // TODO
 
     // abstract getDefaultEntry(): E;
     getDefaultEntry(): MultiSidedCardEntry {
@@ -419,9 +458,10 @@ export class MultiSidedCardType extends FlashcardType<MultiSidedCardEntry, Multi
     getDefaultSettings(): MultiSidedCardSettings {
         return {
             sideNames: ["first side", "second side"],
+            speakableSide: 0,
+            probSpoken: 0.0,
             quizzingStyle: MultiSidedCardQStyle.AskAllSides,
-            readableSide: 0,
-            doReadAloudForReadableSide: false,
+            doReadAloud: false,
             speechSettings: defaultSpeechSettings(),
             template: njMultiSidedCard
         }
