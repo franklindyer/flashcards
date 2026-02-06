@@ -24,7 +24,8 @@ import {
 } from "nunjucks"
 import {
     njSimpleCard,
-    njClozeCard
+    njClozeCard,
+    njMultiSidedCard
 } from "utils/nj-templates"
 
 export const gCardTypeRegistry: IDictionary<FlashcardType<any, any, any>> = {};
@@ -365,13 +366,14 @@ registerFlashcardType(new ClozeCardType())
 /* MULTI-SIDED CARD TYPE */
 
 export type MultiSidedCardEntry = {
-    sides: string[],
-    
+    sides: string[]
 }
 
 export type MultiSidedCardData = {
     prompt: string,
     answers: string[][],
+    promptName: string,
+    answersNames: string[],
     spoken: boolean,
     allAnswersRequired: boolean
 }
@@ -389,4 +391,41 @@ export type MultiSidedCardSettings = {
     doReadAloudForReadableSide: boolean,    
     speechSettings: SpeechSettings,
     template: string
+}
+
+export class MultiSidedCardType extends FlashcardType<MultiSidedCardEntry, MultiSidedCardData, MultiSidedCardSettings> {
+    getTypeName(): string {
+        throw new Error("multi-sided-card");
+    }
+    getUserFriendlyName(): string {
+        throw new Error("Multi-sided flashcards");
+    }
+
+    // abstract preprocessEntry(entry: E, settings: S): void;
+    // abstract processEntry(entry: E, settings: S, context: any): Promise<D>;
+    // abstract getSearchableText(entry: E): string;
+    // abstract getSpeakableText(data: D): string;
+    // abstract generateCard(data: D, settings: S, externalParams: IDictionary<any>): Flashcard;
+    // abstract checkAnswer(answer: string, data: D, settings: S, tf: (s: string) => string): Promise<boolean>;
+
+    // abstract getDefaultEntry(): E;
+    getDefaultEntry(): MultiSidedCardEntry {
+        return {
+            "sides": ["", ""]
+        };
+    }
+
+    // abstract getDefaultSettings(): S;
+    getDefaultSettings(): MultiSidedCardSettings {
+        return {
+            sideNames: ["first side", "second side"],
+            quizzingStyle: MultiSidedCardQStyle.AskAllSides,
+            readableSide: 0,
+            doReadAloudForReadableSide: false,
+            speechSettings: defaultSpeechSettings(),
+            template: njMultiSidedCard
+        }
+
+    }
+
 }
