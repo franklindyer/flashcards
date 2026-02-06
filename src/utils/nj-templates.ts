@@ -46,13 +46,9 @@ export const njClozeCard: string = `\
 
 export const njMultiSidedCard: string = `\
 <div style="display: block; text-align: center; font-size: {{ fontSize }}px;">
-    {% if spoken %}
-        <img src="/speaker.png" class="read-aloud-button" alt="{{ prompt }}" />
-    {% else %}
-        <p style="display: block;">
-            {{ promptName }}: {{ prompt }}
-        </p>
-    {% endif %}
+    <p style="display: block;">
+        {{ promptName }}: {{ prompt }}
+    </p>
     <hr>
     <p style="display: block;">
         {% if allAnswersRequired %}

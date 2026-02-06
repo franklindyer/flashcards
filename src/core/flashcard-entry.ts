@@ -374,7 +374,6 @@ export type MultiSidedCardData = {
     answers: string[][],
     promptName: string,
     answersNames: string[],
-    spoken: boolean,
     spokenText: string,
     allAnswersRequired: boolean
 }
@@ -388,26 +387,23 @@ export enum MultiSidedCardQStyle {
 export type MultiSidedCardSettings = {
     sideNames: string[],
     speakableSide: number,
-    probSpoken: number,
     quizzingStyle: MultiSidedCardQStyle, 
-    doReadAloud: boolean,    
     speechSettings: SpeechSettings,
     template: string
 }
 
 export class MultiSidedCardType extends FlashcardType<MultiSidedCardEntry, MultiSidedCardData, MultiSidedCardSettings> {
     getTypeName(): string {
-        throw new Error("multi-sided-card");
+        return "multi-sided-card";
     }
     getUserFriendlyName(): string {
-        throw new Error("Multi-sided flashcards");
+        return "Multi-sided flashcards";
     }
 
     // abstract preprocessEntry(entry: E, settings: S): void;
     preprocessEntry(entry: MultiSidedCardEntry, settings: MultiSidedCardSettings) {}
 
     // abstract processEntry(entry: E, settings: S, context: any): Promise<D>;
-    // TODO
     processEntry(entry: MultiSidedCardEntry, settings: MultiSidedCardSettings, context: any): Promise<MultiSidedCardData> {
         var n: number = entry.sides.length;
         var chosenSide = Math.floor(Math.random() * n);
@@ -419,13 +415,11 @@ export class MultiSidedCardType extends FlashcardType<MultiSidedCardEntry, Multi
         }
         var answers = [...answersIndices.map((j) => entry.sides[j].split("|"))];
         var answersNames = [...answersIndices.map((j) => settings.sideNames[j])];
-        var isSpoken = Math.random() < settings.probSpoken;
         return trivialPromise({
             prompt: prompt,
             promptName: promptName,
             answers: answers,
             answersNames: answersNames,
-            spoken: isSpoken,
             spokenText: entry.sides[settings.speakableSide],
             allAnswersRequired: settings.quizzingStyle !== MultiSidedCardQStyle.AllowAnySide
         });
@@ -479,9 +473,7 @@ export class MultiSidedCardType extends FlashcardType<MultiSidedCardEntry, Multi
         return {
             sideNames: ["first side", "second side"],
             speakableSide: 0,
-            probSpoken: 0.0,
             quizzingStyle: MultiSidedCardQStyle.AskAllSides,
-            doReadAloud: false,
             speechSettings: defaultSpeechSettings(),
             template: njMultiSidedCard
         }
@@ -489,3 +481,5 @@ export class MultiSidedCardType extends FlashcardType<MultiSidedCardEntry, Multi
     }
 
 }
+
+registerFlashcardType(new MultiSidedCardType())

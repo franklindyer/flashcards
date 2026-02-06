@@ -557,6 +557,53 @@ export class UniversalSpacedRepGen
                                 </div>
                             </div>
                         </div>
+
+                        <div>
+                            <h3>Multi-sided cards</h3>
+                            <div is="menu-deep-json" name="multi-sided-card">
+                                <select is="menu-select" name="quizzingStyle">
+                                    <option value=1>Answer with any other side</option>
+                                    <option value=2>Answer with a randomly chosen other side</option>
+                                    <option value=3>Answer with all other sides</option>
+                                </select> <br />
+                                <input is="menu-textbox" name="sideNames" placeholder="names for card sides..." /> <br />
+                                <input is="menu-number" name="speakableSide" min="0" max="10" step="1" />
+                                <label for="speakableSide">Side to be read aloud</label> <br />
+                                <details>
+                                    <summary>Text-to-speech settings</summary>
+                                    <input is="menu-number" name="speechSettings.rate" min="0" max="2" step="0.05" />
+                                    <label for="speechSettings.rate">Speech rate</label> <br />
+                                    <input is="menu-number" name="speechSettings.pitch" min="0" max="2" step="0.05" />
+                                    <label for="speechSettings.pitch">Speech pitch</label> <br />
+                                    <select is="menu-select" name="speechSettings.voice">
+                                        {% for v in ttsVoices %}
+                                        <option value="{{ v.name }}">{{ v.name }} ({{ v.lang }})</option>
+                                        {% endfor %}
+                                    </select>
+                                </details>
+                                <details>
+                                    <summary>Card template</summary>
+                                    <div is="menu-textfield" name="template"></tpl>
+                                </details>
+                            </div>
+                            <div is="menu-lazy-list" name="multiCards" search="cardEntry.sides.0">
+                                <button class="menu-add-another-button">Add another</button>
+                                <input type="text" class="menu-search-bar" placeholder="search cards..." />
+                                <div class="menu-list-entries"></div>
+                                <div class="menu-list-default-entry" is="menu-sr-card" cardtype="multi-sided-card">
+                                    <input is="menu-textbox" name="guid" value="" style="display: none" />
+                                     
+                                    <input is="menu-textbox" name="cardEntry.sides" value="" />
+ 
+                                    <button class="menu-preview-card-button">view</button>
+                                    <button class="menu-prelisten-card-button">listen</button>
+                                    <button class="menu-remove-entry-button">remove</button>
+                                    <button class="menu-restore-entry-button">restore</button>
+                                    <div class="flashcard-container"></div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div>
                             <h3>Cloze cards</h3>
                             <div is="menu-deep-json" name="cloze-card">
@@ -632,6 +679,7 @@ export class UniversalSpacedRepGen
 
         var simpleCardsMenu = (<any>menu).querySelector("[name='simpleCards']")!;
         var clozeCardsMenu = (<any>menu).querySelector("[name='clozeCards']")!;
+        var multiCardsMenu = (<any>menu).querySelector("[name='multiCards']")!;
 
         var cardPreviewState = (guid: string) => {
             return (<any>_this).gen.nextCardAsyncPreprocessing({
@@ -688,7 +736,8 @@ export class UniversalSpacedRepGen
 
         simpleCardsMenu.entryCallback = cardPreviewCallback;
         clozeCardsMenu.entryCallback = cardPreviewCallback;
-
+        multiCardsMenu.entryCallback = cardPreviewCallback;
+        
         (<any>menu).querySelector(".menu-pushcard-refresh-button")!.click();
 
         (<any>menu).preProc = (st: any) => {
@@ -698,6 +747,8 @@ export class UniversalSpacedRepGen
                 = [...Object.values(st.cards).filter((c: any) => c.cardType == "simple-card")];
             st.settings.cardTypeSettings.clozeCards 
                 = [...Object.values(st.cards).filter((c: any) => c.cardType == "cloze-card")];
+            st.settings.cardTypeSettings.multiCards 
+                = [...Object.values(st.cards).filter((c: any) => c.cardType == "multi-sided-card")];
             st.settings.cardTypeSettings.simpleCards.sort(
                 (c1: any, c2: any) => (c1.stats.created < c2.stats.created) ? -1 : 1
             );            
@@ -708,6 +759,9 @@ export class UniversalSpacedRepGen
             st.settings.cardTypeSettings["cloze-card"].clozeGroups
                 = st.settings.cardTypeSettings["cloze-card"].clozeGroups.join(",");
             
+            st.settings.cardTypeSettings["multi-sided-card"].sideNames
+                = st.settings.cardTypeSettings["multi-sided-card"].sideNames.join(",");
+            
             return st;
         };
         (<any>menu).postProc = (st: any) => {
@@ -716,6 +770,7 @@ export class UniversalSpacedRepGen
             st.cards = [];
             st.cards = st.cards.concat(st.settings.cardTypeSettings["simpleCards"]);
             st.cards = st.cards.concat(st.settings.cardTypeSettings["clozeCards"]);
+            st.cards = st.cards.concat(st.settings.cardTypeSettings["multiCards"]);
             st.cards = st.cards.concat([...st.settings.pushcardQueue.accepted.map((j: any) => recursiveRepairJSON(j.data, makeEmptyCard(j.data.cardType)))]);
             for (var i = 0; i < st.cards.length; i++) {
                 // Add any missing fields to new cards, e.g. guid and created timestamp 
@@ -731,6 +786,9 @@ export class UniversalSpacedRepGen
             st.settings.cardTypeSettings["cloze-card"].clozeGroups
                 = st.settings.cardTypeSettings["cloze-card"].clozeGroups.length == 0
                     ? [] : st.settings.cardTypeSettings["cloze-card"].clozeGroups.split(",");
+            st.settings.cardTypeSettings["multi-sided-card"].sideNames
+                = st.settings.cardTypeSettings["multi-sided-card"].sideNames == 0
+                    ? ["first side", "second side"] : st.settings.cardTypeSettings["cloze-card"].clozeGroups.split(",");
             return st;
         };
 

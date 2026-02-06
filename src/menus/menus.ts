@@ -228,7 +228,7 @@ class ListComponent<a> extends HTMLDivElement
     constructor() {
         super();
 
-        this.defaultEntry = this.querySelector(".menu-list-default-entry")!;
+        this.defaultEntry = <HTMLElement>querySelectorTopLevel(this, ".menu-list-default-entry")[0];
         this.defaultEntry.remove();
         var addEntryButton = <HTMLButtonElement>this.querySelector("button.menu-add-another-button")!; 
         this.entriesDiv = <HTMLDivElement>this.querySelector(".menu-list-entries")!;
