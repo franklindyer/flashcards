@@ -229,7 +229,8 @@ class ListComponent<a> extends HTMLDivElement
         super();
 
         this.defaultEntry = <HTMLElement>querySelectorTopLevel(this, ".menu-list-default-entry")[0];
-        this.defaultEntry.remove();
+        // this.defaultEntry.remove();
+        this.defaultEntry.style.display = "none";
         var addEntryButton = <HTMLButtonElement>this.querySelector("button.menu-add-another-button")!; 
         this.entriesDiv = <HTMLDivElement>this.querySelector(".menu-list-entries")!;
         
@@ -238,6 +239,7 @@ class ListComponent<a> extends HTMLDivElement
             var listEntry = new ListEntryComponent<a>();
             listEntry.setAttribute("is", "menu-list-entry");
             var listEntryMenu = _this.defaultEntry!.cloneNode(true);
+            (<HTMLElement>listEntryMenu).style.display = "";
             listEntry.appendChild(listEntryMenu);
             _this.entriesDiv.prepend(listEntry);
         };
@@ -264,6 +266,7 @@ class ListComponent<a> extends HTMLDivElement
             var listEntry = new ListEntryComponent<a>();
             listEntry.setAttribute("is", "menu-list-entry");
             var listEntryMenu = _this.defaultEntry!.cloneNode(true);
+            (<HTMLElement>listEntryMenu).style.display = "";
             listEntry.appendChild(listEntryMenu);
             listEntry.setState([st]);
             _this.entryCallback(<HTMLElement>listEntryMenu);
@@ -320,7 +323,8 @@ class LazyListComponent<a> extends HTMLDivElement
         }
         if (!this.defaultElement) {
             this.defaultElement = this.querySelector(".menu-list-default-entry")!;
-            this.defaultElement.remove();
+            // this.defaultElement.remove();
+            this.defaultElement.style.display = "none";
         }
     }
 
@@ -366,6 +370,7 @@ class LazyListComponent<a> extends HTMLDivElement
         selectedEntries.forEach((i) => {
             var entry = this.st[i];
             var listEntryMenu = <HTMLElement>_this.defaultElement!.cloneNode(true);
+            (<HTMLElement>listEntryMenu).style.display = "";
             (<any>listEntryMenu).setState(entry);
             this.entriesDiv!.appendChild(listEntryMenu);
 

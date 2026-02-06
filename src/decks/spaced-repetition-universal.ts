@@ -586,14 +586,21 @@ export class UniversalSpacedRepGen
                                     <div is="menu-textfield" name="template"></tpl>
                                 </details>
                             </div>
-                            <div is="menu-lazy-list" name="multiCards" search="cardEntry.sides.0">
+                            <div is="menu-lazy-list" name="multiCards" search="cardEntry.sides">
                                 <button class="menu-add-another-button">Add another</button>
                                 <input type="text" class="menu-search-bar" placeholder="search cards..." />
                                 <div class="menu-list-entries"></div>
                                 <div class="menu-list-default-entry" is="menu-sr-card" cardtype="multi-sided-card">
                                     <input is="menu-textbox" name="guid" value="" style="display: none" />
                                      
-                                    <input is="menu-textbox" name="cardEntry.sides" value="" />
+                                    <div is="menu-list" name="cardEntry.sides" class="menu-list-default-entry">
+                                        <button class="menu-add-another-button">Add another</button>
+                                   
+                                        <div class="menu-list-entries"></div>
+                                        <input is="menu-textbox" class="menu-list-default-entry" value="" />
+                                        <button class="menu-remove-entry-button">remove</button>
+                                        <button class="menu-restore-entry-button">restore</button>
+                                    </div>
  
                                     <button class="menu-preview-card-button">view</button>
                                     <button class="menu-prelisten-card-button">listen</button>
@@ -778,8 +785,11 @@ export class UniversalSpacedRepGen
             } 
             st.settings.pushcardQueue.accepted = [];
             st.cards = makeSRCardDict(st.cards);
+
             delete st.settings.cardTypeSettings["simpleCards"];
             delete st.settings.cardTypeSettings["clozeCards"];
+            delete st.settings.cardTypeSettings["multiCards"];
+
             st.settings.cardTypeSettings["cloze-card"].sourceLangs
                 = st.settings.cardTypeSettings["cloze-card"].sourceLangs.length == 0
                     ? [] : st.settings.cardTypeSettings["cloze-card"].sourceLangs.split(",")
@@ -788,7 +798,7 @@ export class UniversalSpacedRepGen
                     ? [] : st.settings.cardTypeSettings["cloze-card"].clozeGroups.split(",");
             st.settings.cardTypeSettings["multi-sided-card"].sideNames
                 = st.settings.cardTypeSettings["multi-sided-card"].sideNames == 0
-                    ? ["first side", "second side"] : st.settings.cardTypeSettings["cloze-card"].clozeGroups.split(",");
+                    ? ["first side", "second side"] : st.settings.cardTypeSettings["multi-sided-card"].sideNames.split(",");
             return st;
         };
 
