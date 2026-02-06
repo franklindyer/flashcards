@@ -442,10 +442,30 @@ export class MultiSidedCardType extends FlashcardType<MultiSidedCardEntry, Multi
     } 
 
     // abstract generateCard(data: D, settings: S, externalParams: IDictionary<any>): Flashcard;
-    // TODO
+    generateCard(data: MultiSidedCardData, settings: MultiSidedCardSettings, externalParams: IDictionary<any>) {
+        var templateArgs = {
+            fontSize: 5
+        };
+        templateArgs = Object.assign({}, templateArgs, data, externalParams);
+        var tpl = settings.template;
+        var el = <HTMLElement>(new DOMParser().parseFromString(renderString(tpl, templateArgs), "text/html").body.firstChild);
+        return new Flashcard(el, data.answers.map((a) => a[0]).join(", "));
+    }
 
     // abstract checkAnswer(answer: string, data: D, settings: S, tf: (s: string) => string): Promise<boolean>;
     // TODO
+    checkAnswer(answer: string, data: MultiSidedCardData, settings: MultiSidedCardSettings, tf: (s: string) => string): Promise<boolean> {
+        var answerParts = answer.split(",");
+        if (answerParts.length < data.answers.length) {
+            return trivialPromise(false);
+        }
+        for (var i = 0; i < data.answers.length; i++) {
+            if (!data.answers[i].map(tf).includes(tf(answerParts[i]))) {
+                return trivialPromise(false);
+            }
+        }
+        return trivialPromise(true);
+    }
 
     // abstract getDefaultEntry(): E;
     getDefaultEntry(): MultiSidedCardEntry {
