@@ -45,7 +45,7 @@ export abstract class FlashcardType<E, D, S> {
     abstract generateCard(data: D, settings: S, externalParams: IDictionary<any>): Flashcard;
     abstract checkAnswer(answer: string, data: D, settings: S, tf: (s: string) => string): Promise<boolean>;
 
-    abstract getDefaultEntry(): E;
+    abstract getDefaultEntry(settings?: S): E;
     abstract getDefaultSettings(): S;
 
     getMaybeSetting(key: string, settings: S): any {
@@ -188,8 +188,8 @@ export class SimpleCardType extends FlashcardType<SimpleCardEntry, SimpleCardDat
         return trivialPromise(data.answer.map(tf).includes(tf(answer)));
     }
 
-    // abstract getDefaultEntry(): E;
-    getDefaultEntry(): SimpleCardEntry {
+    // abstract getDefaultEntry(settings?: S): E;
+    getDefaultEntry(settings?: SimpleCardSettings): SimpleCardEntry {
         return {
             prompt: [],
             answer: [],
@@ -341,8 +341,8 @@ export class ClozeCardType extends FlashcardType<ClozeCardEntry, ClozeCardData, 
         return trivialPromise(data.valid && data.cloze!.answers.map(tf).includes(tf(answer)));
     }
 
-    // abstract getDefaultEntry(): E;
-    getDefaultEntry(): ClozeCardEntry {
+    // abstract getDefaultEntry(settings?: S): E;
+    getDefaultEntry(settings?: ClozeCardSettings): ClozeCardEntry {
         return {
             key: ""
         };
@@ -461,8 +461,8 @@ export class MultiSidedCardType extends FlashcardType<MultiSidedCardEntry, Multi
         return trivialPromise(true);
     }
 
-    // abstract getDefaultEntry(): E;
-    getDefaultEntry(): MultiSidedCardEntry {
+    // abstract getDefaultEntry(settings?: S): E;
+    getDefaultEntry(settings?: MultiSidedCardSettings): MultiSidedCardEntry {
         return {
             "sides": ["", ""]
         };

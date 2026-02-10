@@ -14,9 +14,10 @@ import {
 } from "utils/utils"
 
 export class SRCardMenu extends DeepJSONComponent {
-    constructor() {
+    constructor(fullSettingsMenu: MenuComponent<any>) {
         super();
-        this.lastSetState = makeEmptyCard(this.getAttribute("cardtype")!);
+
+        this.lastSetState = makeEmptyCard(this.getAttribute("cardtype")!, undefined);
         this.lastSetState.guid = "";
 
         this.preprocMap = {

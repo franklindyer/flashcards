@@ -223,6 +223,7 @@ class ListComponent<a> extends HTMLDivElement
     defaultEntry?: HTMLElement;
     entriesDiv: HTMLDivElement = document.createElement("div");
 
+    dynamicDefaultEntry?: () => a;
     entryCallback: (el: HTMLElement) => void = (el) => {};
 
     constructor() {
@@ -236,12 +237,19 @@ class ListComponent<a> extends HTMLDivElement
         
         var _this = this;
         addEntryButton.onclick = (e) => {
-            var listEntry = new ListEntryComponent<a>();
-            listEntry.setAttribute("is", "menu-list-entry");
-            var listEntryMenu = _this.defaultEntry!.cloneNode(true);
-            (<HTMLElement>listEntryMenu).style.display = "";
-            listEntry.appendChild(listEntryMenu);
-            _this.entriesDiv.prepend(listEntry);
+            var ls = _this.getState();
+            var newEntry = (<any>_this.defaultEntry!).getState();
+            if (_this.dynamicDefaultEntry === undefined) {
+                newEntry = _this.dynamicDefaultEntry!();
+            }
+            ls.unshift((<any>_this.defaultEntry!).getState());
+            _this.setState(ls);
+            // var listEntry = new ListEntryComponent<a>();
+            // listEntry.setAttribute("is", "menu-list-entry");
+            // var listEntryMenu = _this.defaultEntry!.cloneNode(true);
+            // (<HTMLElement>listEntryMenu).style.display = "";
+            // listEntry.appendChild(listEntryMenu);
+            // _this.entriesDiv.prepend(listEntry);
         };
     }
     
@@ -289,6 +297,7 @@ class LazyListComponent<a> extends HTMLDivElement
     maxElements: number = 0;
     searchableFields: string[] = [];
 
+    dynamicDefaultEntry?: () => a;
     entryCallback: (el: HTMLElement) => void = (el) => {};
 
     constructor() {
@@ -296,6 +305,14 @@ class LazyListComponent<a> extends HTMLDivElement
     }
 
     connectedCallback() {
+    }
+
+    getDefaultState(): a {
+        if (this.dynamicDefaultEntry === undefined) {
+            return (<any>this.defaultElement).getState();
+        } else {
+            return this.dynamicDefaultEntry();
+        }
     }
 
     findChildren() {
@@ -307,7 +324,7 @@ class LazyListComponent<a> extends HTMLDivElement
             if (this.addAnotherButton) {
                 (<HTMLElement>this.addAnotherButton).onclick = (e) => {
                     _this.includedEntries.push(_this.st.length);
-                    _this.st.push((<any>this.defaultElement).getState());
+                    _this.st.push(this.getDefaultState());
                     _this.rerunSearch();
                 }
             }

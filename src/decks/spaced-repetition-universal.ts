@@ -311,8 +311,6 @@ export class UniversalSpacedRepGen
                 (st.studying == SRStudying.NewThenDueCards && newInds.length > 0) ||
                 (st.studying == SRStudying.DueThenNewCards && dueInds.length == 0)) {
             var newGuid = chooseNext(st.newQ, newInds, st.settings.fillQOnlyWhenEmpty);
-            console.log(newGuid);
-            console.log(st.cards[newGuid!]);
             if (newGuid === undefined) {
                 return emptyCard;     
             }
@@ -686,6 +684,15 @@ export class UniversalSpacedRepGen
         var clozeCardsMenu = (<any>menu).querySelector("[name='clozeCards']")!;
         var multiCardsMenu = (<any>menu).querySelector("[name='multiCards']")!;
 
+        [[simpleCardsMenu, "simple-card"], 
+            [clozeCardsMenu, "cloze-card"], 
+            [multiCardsMenu, "multi-sided-card"]].forEach((m) => {
+            var settingsMenu = (<any>menu).querySelector(`[name='${m[1]}']`)!;
+            (<any>m[0]).dynamicDefaultEntry = () => {
+                return makeEmptyCard(m[1], settingsMenu.getState());
+            };
+        });
+
         var cardPreviewState = (guid: string) => {
             return (<any>_this).gen.nextCardAsyncPreprocessing({
                 virtual: menu.getState().cards[guid],
@@ -776,10 +783,10 @@ export class UniversalSpacedRepGen
             st.cards = st.cards.concat(st.settings.cardTypeSettings["simpleCards"]);
             st.cards = st.cards.concat(st.settings.cardTypeSettings["clozeCards"]);
             st.cards = st.cards.concat(st.settings.cardTypeSettings["multiCards"]);
-            st.cards = st.cards.concat([...st.settings.pushcardQueue.accepted.map((j: any) => recursiveRepairJSON(j.data, makeEmptyCard(j.data.cardType)))]);
+            st.cards = st.cards.concat([...st.settings.pushcardQueue.accepted.map((j: any) => recursiveRepairJSON(j.data, makeEmptyCard(j.data.cardType, st.settings)))]);
             for (var i = 0; i < st.cards.length; i++) {
                 // Add any missing fields to new cards, e.g. guid and created timestamp 
-                st.cards[i] = recursiveRepairJSON(st.cards[i], makeEmptyCard(st.cards[i].cardType));
+                st.cards[i] = recursiveRepairJSON(st.cards[i], makeEmptyCard(st.cards[i].cardType, st.settings));
             } 
             st.settings.pushcardQueue.accepted = [];
             st.cards = makeSRCardDict(st.cards);
