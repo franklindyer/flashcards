@@ -223,7 +223,6 @@ class ListComponent<a> extends HTMLDivElement
     defaultEntry?: HTMLElement;
     entriesDiv: HTMLDivElement = document.createElement("div");
 
-    dynamicDefaultEntry?: () => a;
     entryCallback: (el: HTMLElement) => void = (el) => {};
 
     constructor() {
@@ -239,9 +238,6 @@ class ListComponent<a> extends HTMLDivElement
         addEntryButton.onclick = (e) => {
             var ls = _this.getState();
             var newEntry = (<any>_this.defaultEntry!).getState();
-            if (_this.dynamicDefaultEntry === undefined) {
-                newEntry = _this.dynamicDefaultEntry!();
-            }
             ls.unshift((<any>_this.defaultEntry!).getState());
             _this.setState(ls);
             // var listEntry = new ListEntryComponent<a>();

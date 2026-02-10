@@ -370,18 +370,19 @@ export type MultiSidedCardEntry = {
 }
 
 export type MultiSidedCardData = {
-    prompt: string,
+    prompts: string[],
     answers: string[][],
-    promptName: string,
+    promptNames: string[],
     answersNames: string[],
     spokenText: string,
     allAnswersRequired: boolean
 }
 
 export enum MultiSidedCardQStyle {
-    AllowAnySide = 1,
-    AskRandomSide,
-    AskAllSides
+    AllowAnySide = 1,           // Given 1 side, provide any other side
+    AskRandomSide,              // Given 1 side, provide a randomly chosen other side
+    AskAllSides,                // Given 1 side, provide all other sides
+    AskOneSideGivenAllOthers    // Given all sides but one, provide the missing side
 }
 
 export type MultiSidedCardSettings = {
@@ -406,20 +407,37 @@ export class MultiSidedCardType extends FlashcardType<MultiSidedCardEntry, Multi
     // abstract processEntry(entry: E, settings: S, context: any): Promise<D>;
     processEntry(entry: MultiSidedCardEntry, settings: MultiSidedCardSettings, context: any): Promise<MultiSidedCardData> {
         var n: number = entry.sides.length;
-        var chosenSide = Math.floor(Math.random() * n);
-        var prompt = entry.sides[chosenSide].split("|")[0];
-        var promptName = settings.sideNames[chosenSide];
-        var answersIndices = [...[...new Array(n).keys()].filter((j) => j != chosenSide)];
-        if (settings.quizzingStyle === MultiSidedCardQStyle.AskRandomSide) {
-            answersIndices = [answersIndices[Math.floor(Math.random() * answersIndices.length)]];
+        var chosenSides = [];
+        var availableSides = [...new Array(n).keys()];
+        var k = 1;
+        if (settings.quizzingStyle == MultiSidedCardQStyle.AskOneSideGivenAllOthers) {
+            k = n-1;
         }
-        var answers = [...answersIndices.map((j) => entry.sides[j].split("|"))];
-        var answersNames = [...answersIndices.map((j) => settings.sideNames[j])];
+       
+        for (var i = 0; i < k; i++) {
+            var ind = Math.floor(Math.random() * availableSides.length);
+            ind = availableSides[ind];
+            chosenSides.push(ind);
+            availableSides = [...availableSides.filter((j) => j != ind)];
+        }
+
+        if (settings.quizzingStyle === MultiSidedCardQStyle.AskRandomSide) {
+            var ind = Math.floor(Math.random() * availableSides.length);
+            ind = availableSides[ind];
+            availableSides = [ind];
+        }
+
+        var prompts = [...chosenSides.map((ind) => entry.sides[ind].split("|")[0])];
+        var promptNames = [...chosenSides.map((ind) => settings.sideNames[ind])];
+
+        var answers = [...availableSides.map((ind) => entry.sides[ind].split("|"))];
+        var answerNames = [...availableSides.map((ind) => settings.sideNames[ind])];
+
         var res: MultiSidedCardData = {
-            prompt: prompt,
-            promptName: promptName,
+            prompts: prompts,
+            promptNames: promptNames,
             answers: answers,
-            answersNames: answersNames,
+            answersNames: answerNames,
             spokenText: entry.sides[settings.speakableSide],
             allAnswersRequired: settings.quizzingStyle !== MultiSidedCardQStyle.AllowAnySide
         };

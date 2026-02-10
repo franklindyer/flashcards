@@ -561,8 +561,9 @@ export class UniversalSpacedRepGen
                             <div is="menu-deep-json" name="multi-sided-card">
                                 <select is="menu-select" name="quizzingStyle">
                                     <option value=1>Answer with any other side</option>
-                                    <option value=2>Answer with a randomly chosen other side</option>
+                                    <option value=2>Answer with a randomly chosen side, given one other side</option>
                                     <option value=3>Answer with all other sides</option>
+                                    <option value=4>Answer with a randomly chosen side, given all other sides</option>
                                 </select> <br />
                                 <input is="menu-textbox" name="sideNames" placeholder="names for card sides..." /> <br />
                                 <input is="menu-number" name="speakableSide" min="0" max="10" step="1" />

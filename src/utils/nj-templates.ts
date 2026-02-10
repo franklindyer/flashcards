@@ -46,9 +46,11 @@ export const njClozeCard: string = `\
 
 export const njMultiSidedCard: string = `\
 <div style="display: block; text-align: center; font-size: {{ fontSize }}px;">
+    {% for promptName in promptNames %}
     <p style="display: block;">
-        {{ promptName }}: {{ prompt }}
+        {{ promptName }}: {{ prompts[loop.index0] }} <br />
     </p>
+    {% endfor %}
     <hr>
     <p style="display: block;">
         {% if allAnswersRequired %}
