@@ -11,6 +11,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@jcubic/tagger": "^0.6.2",
     "@svgmoji/openmoji": "^3.2.0",
     "@types/nunjucks": "^3.2.6",
     "ace-builds": "^1.43.4",

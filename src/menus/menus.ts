@@ -3,7 +3,10 @@ import {
     querySelectorTopLevel,
     getDeepKey
 } from "utils/utils"
+// import tagger from '@jcubic/tagger';
 import * as ace from 'brace';
+
+const tagger = require('@jcubic/tagger');
 
 export interface MenuComponent<a> {
     fieldName(): string;
@@ -216,6 +219,41 @@ class ListEntryComponent<a> extends HTMLDivElement
         (<any>menuElement).setState(ls[0]);
     }
 
+}
+
+class TagListComponent extends HTMLInputElement
+                       implements MenuComponent<string[]> {
+    taggerInst: any;
+
+    constructor() {
+        super();
+        this.type = "text";
+        this.style.display = "none";
+        this.taggerInst = tagger(this, {
+            allow_spaces: true,
+            wrap: true
+        });
+
+        var innerUL = <HTMLElement>this.parentNode!.querySelector("div.tagger > ul")!;
+        innerUL.style.display = "none";
+        var innerUL = <HTMLElement>this.parentNode!.querySelector("div.tagger > div.tagger > ul")!;
+        innerUL.style.display = "flex";
+    }
+    
+    fieldName() {
+        return this.getAttribute("name")!;
+    }
+
+    setState(ls: string[]) {
+        this.value = "";
+        ls.forEach((s: string) => {
+            this.taggerInst.add_tag(s);
+        });
+    }
+
+    getState(): string[] {
+        return this.value.split(",");
+    }
 }
 
 class ListComponent<a> extends HTMLDivElement
@@ -457,5 +495,6 @@ window.customElements.define("menu-select", SelectComponent, { extends: "select"
 window.customElements.define("menu-group", GroupingComponent, { extends: "div" });
 window.customElements.define("menu-list-entry", ListEntryComponent, { extends: "div" });
 window.customElements.define("menu-list", ListComponent, { extends: "div" });
+window.customElements.define("menu-tag-list", TagListComponent, { extends: "input" });
 window.customElements.define("menu-lazy-list", LazyListComponent, { extends: "div" });
 window.customElements.define("menu-file-upload", TextFileComponent, { extends: "button" });

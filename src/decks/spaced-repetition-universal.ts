@@ -592,12 +592,13 @@ export class UniversalSpacedRepGen
                                 <div class="menu-list-default-entry" is="menu-sr-card" cardtype="multi-sided-card">
                                     <input is="menu-textbox" name="guid" value="" style="display: none" />
                                      
-                                    <div is="menu-list" name="cardEntry.sides" class="menu-list-default-entry">
+                                    <!-- <div is="menu-list" name="cardEntry.sides" class="menu-list-default-entry">
                                         <button class="menu-add-another-button">Add another</button>
                                    
                                         <div class="menu-list-entries"></div>
                                         <input is="menu-textbox" class="menu-list-default-entry" value="" />
-                                    </div>
+                                    </div> -->
+                                    <input is="menu-tag-list" type="text" name="cardEntry.sides" class="menu-list-default-entry" />
  
                                     <button class="menu-preview-card-button">view</button>
                                     <button class="menu-prelisten-card-button">listen</button>
