@@ -44,6 +44,31 @@ export const njClozeCard: string = `\
 </div>
 `;
 
+export const njMultiSidedCard: string = `\
+<div style="display: block; text-align: center; font-size: {{ fontSize }}px;">
+    {% for promptName in promptNames %}
+    <p style="display: block;">
+        {{ promptName }}: {{ prompts[loop.index0] }} <br />
+    </p>
+    {% endfor %}
+    <hr>
+    <p style="display: block;">
+        {% if allAnswersRequired %}
+        Answer with each of: {{ answersNames | join(", ") }}
+        {% else %}
+        Answer with one of: {{ answersNames | join(", ") }}
+        {% endif %}
+    </p>
+    
+    {% if isPractice %}
+    <span class="cards-left-span">This is a practice card and will not affect progress.</span>
+    {% else %}
+    <span class="cards-left-span">{{ cardsLeft }} {{ studying }} cards left</span>
+    {% endif %}
+</div>
+`;
+
+
 export const njFreqProgCard: string = `\
 <div style="font-size: {{ fontSize }}vw;">
     <span class="cards-freq-prog-rank">{{ rank }}</span>

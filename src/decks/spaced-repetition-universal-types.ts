@@ -71,11 +71,11 @@ export type SRUniversalState = {
     settings: SRUniversalSettings
 }
 
-export function makeEmptyCard(cardType: string): SRUniversalCardVirtual {
+export function makeEmptyCard(cardType: string, settings?: any): SRUniversalCardVirtual {
     return {
         guid: guidGenerator(),
         cardType: cardType,
-        cardEntry: gCardTypeRegistry[cardType].getDefaultEntry(),
+        cardEntry: gCardTypeRegistry[cardType].getDefaultEntry(settings),
         extraInfo: "",
         tags: [],
         due: new Date(),

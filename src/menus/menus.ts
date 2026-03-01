@@ -3,7 +3,10 @@ import {
     querySelectorTopLevel,
     getDeepKey
 } from "utils/utils"
+// import tagger from '@jcubic/tagger';
 import * as ace from 'brace';
+
+const tagger = require('@jcubic/tagger');
 
 export interface MenuComponent<a> {
     fieldName(): string;
@@ -218,6 +221,41 @@ class ListEntryComponent<a> extends HTMLDivElement
 
 }
 
+class TagListComponent extends HTMLInputElement
+                       implements MenuComponent<string[]> {
+    taggerInst: any;
+
+    constructor() {
+        super();
+        this.type = "text";
+        this.style.display = "none";
+        this.taggerInst = tagger(this, {
+            allow_spaces: true,
+            wrap: true
+        });
+
+        var innerUL = <HTMLElement>this.parentNode!.querySelector("div.tagger > ul")!;
+        innerUL.style.display = "none";
+        var innerUL = <HTMLElement>this.parentNode!.querySelector("div.tagger > div.tagger > ul")!;
+        innerUL.style.display = "flex";
+    }
+    
+    fieldName() {
+        return this.getAttribute("name")!;
+    }
+
+    setState(ls: string[]) {
+        this.value = "";
+        ls.forEach((s: string) => {
+            this.taggerInst.add_tag(s);
+        });
+    }
+
+    getState(): string[] {
+        return this.value.split(",");
+    }
+}
+
 class ListComponent<a> extends HTMLDivElement
                        implements MenuComponent<a[]> {
     defaultEntry?: HTMLElement;
@@ -228,18 +266,24 @@ class ListComponent<a> extends HTMLDivElement
     constructor() {
         super();
 
-        this.defaultEntry = this.querySelector(".menu-list-default-entry")!;
-        this.defaultEntry.remove();
+        this.defaultEntry = <HTMLElement>querySelectorTopLevel(this, ".menu-list-default-entry")[0];
+        // this.defaultEntry.remove();
+        this.defaultEntry.style.display = "none";
         var addEntryButton = <HTMLButtonElement>this.querySelector("button.menu-add-another-button")!; 
         this.entriesDiv = <HTMLDivElement>this.querySelector(".menu-list-entries")!;
         
         var _this = this;
         addEntryButton.onclick = (e) => {
-            var listEntry = new ListEntryComponent<a>();
-            listEntry.setAttribute("is", "menu-list-entry");
-            var listEntryMenu = _this.defaultEntry!.cloneNode(true);
-            listEntry.appendChild(listEntryMenu);
-            _this.entriesDiv.prepend(listEntry);
+            var ls = _this.getState();
+            var newEntry = (<any>_this.defaultEntry!).getState();
+            ls.unshift((<any>_this.defaultEntry!).getState());
+            _this.setState(ls);
+            // var listEntry = new ListEntryComponent<a>();
+            // listEntry.setAttribute("is", "menu-list-entry");
+            // var listEntryMenu = _this.defaultEntry!.cloneNode(true);
+            // (<HTMLElement>listEntryMenu).style.display = "";
+            // listEntry.appendChild(listEntryMenu);
+            // _this.entriesDiv.prepend(listEntry);
         };
     }
     
@@ -264,6 +308,7 @@ class ListComponent<a> extends HTMLDivElement
             var listEntry = new ListEntryComponent<a>();
             listEntry.setAttribute("is", "menu-list-entry");
             var listEntryMenu = _this.defaultEntry!.cloneNode(true);
+            (<HTMLElement>listEntryMenu).style.display = "";
             listEntry.appendChild(listEntryMenu);
             listEntry.setState([st]);
             _this.entryCallback(<HTMLElement>listEntryMenu);
@@ -286,6 +331,7 @@ class LazyListComponent<a> extends HTMLDivElement
     maxElements: number = 0;
     searchableFields: string[] = [];
 
+    dynamicDefaultEntry?: () => a;
     entryCallback: (el: HTMLElement) => void = (el) => {};
 
     constructor() {
@@ -293,6 +339,14 @@ class LazyListComponent<a> extends HTMLDivElement
     }
 
     connectedCallback() {
+    }
+
+    getDefaultState(): a {
+        if (this.dynamicDefaultEntry === undefined) {
+            return (<any>this.defaultElement).getState();
+        } else {
+            return this.dynamicDefaultEntry();
+        }
     }
 
     findChildren() {
@@ -304,7 +358,7 @@ class LazyListComponent<a> extends HTMLDivElement
             if (this.addAnotherButton) {
                 (<HTMLElement>this.addAnotherButton).onclick = (e) => {
                     _this.includedEntries.push(_this.st.length);
-                    _this.st.push((<any>this.defaultElement).getState());
+                    _this.st.push(this.getDefaultState());
                     _this.rerunSearch();
                 }
             }
@@ -320,7 +374,8 @@ class LazyListComponent<a> extends HTMLDivElement
         }
         if (!this.defaultElement) {
             this.defaultElement = this.querySelector(".menu-list-default-entry")!;
-            this.defaultElement.remove();
+            // this.defaultElement.remove();
+            this.defaultElement.style.display = "none";
         }
     }
 
@@ -366,6 +421,7 @@ class LazyListComponent<a> extends HTMLDivElement
         selectedEntries.forEach((i) => {
             var entry = this.st[i];
             var listEntryMenu = <HTMLElement>_this.defaultElement!.cloneNode(true);
+            (<HTMLElement>listEntryMenu).style.display = "";
             (<any>listEntryMenu).setState(entry);
             this.entriesDiv!.appendChild(listEntryMenu);
 
@@ -439,5 +495,6 @@ window.customElements.define("menu-select", SelectComponent, { extends: "select"
 window.customElements.define("menu-group", GroupingComponent, { extends: "div" });
 window.customElements.define("menu-list-entry", ListEntryComponent, { extends: "div" });
 window.customElements.define("menu-list", ListComponent, { extends: "div" });
+window.customElements.define("menu-tag-list", TagListComponent, { extends: "input" });
 window.customElements.define("menu-lazy-list", LazyListComponent, { extends: "div" });
 window.customElements.define("menu-file-upload", TextFileComponent, { extends: "button" });
