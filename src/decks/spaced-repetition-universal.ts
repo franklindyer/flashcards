@@ -608,7 +608,7 @@ export class UniversalSpacedRepGen
                             <menu-group name="cloze-card">
                                 <menu-textbox name="clozeServerUrl" placeholder="cloze server URL..." ></menu-textbox>
                                 <menu-textlist name="sourceLangs" placeholder="source langs..." ></menu-textlist>
-                                <menu-textlist name="targetLang" placeholder="target lang..." ></menu-textlist>
+                                <menu-textbox name="targetLang" placeholder="target lang..." ></menu-textbox>
                                 <menu-textlist name="clozeGroups" placeholder="puzzle groups..." ></menu-textlist>
                                 <details>
                                     <summary>Text-to-speech settings</summary>
@@ -641,6 +641,7 @@ export class UniversalSpacedRepGen
                                     <button class="list-entry-remove-button">remove</button>
                                     <button class="list-entry-restore-button">restore</button>
                                     <div class="flashcard-container"></div>
+                                    <br/>
                                 </menu-group>
                             </menu-list>
                         </div>

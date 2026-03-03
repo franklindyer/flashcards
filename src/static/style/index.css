@@ -321,13 +321,17 @@ hr {
     font-size: 15px;
 }
 
-.menu-remove-card-button {
+.list-entry-remove-button {
     right: 2px;
     display: inline-block;
     padding: 1px;
 }
 
-.list-entry-component-removed {
+.list-entry-container {
+    display: block;
+}
+
+.deleted-list-entry {
     background-color: #ffbbbb;
 }
 
