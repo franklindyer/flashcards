@@ -158,6 +158,11 @@ export class TextboxListComponent extends HTMLElement
     connectedCallback() {
         this.innerHTML = "";
         this.appendChild(this.inputElement);
+        
+        var placeholder = this.getAttribute("placeholder");
+        if (placeholder) {
+            this.inputElement.placeholder = placeholder;
+        }
         if (this.getAttribute("sep")) {
             this.separator = this.getAttribute("sep")!;
         }
