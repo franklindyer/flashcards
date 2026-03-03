@@ -85,6 +85,7 @@ export class CheckboxComponent extends HTMLElement
 export class OptionsComponent extends HTMLElement
                               implements MenuComponent<string> {
     root = this;
+    state?: string;
     inputElement: HTMLSelectElement = document.createElement("select");
 
     constructor() {
@@ -96,6 +97,9 @@ export class OptionsComponent extends HTMLElement
         this.innerHTML = "";
         options.forEach((el) => { this.inputElement.appendChild(el); });
         this.appendChild(this.inputElement);
+        if (this.state) {
+            this.setState(this.state);
+        }
     }
 
     getState() {
@@ -103,6 +107,7 @@ export class OptionsComponent extends HTMLElement
     }
 
     setState(s: string) {
+        this.state = s;
         this.inputElement.value = s;
     }
 }
@@ -299,9 +304,7 @@ class LazyListComponent<a> extends HTMLElement
         if (!this.addAnotherButton) {
             this.addAnotherButton = <any>querySelectorTopLevel(<any>this, ".add-another-button")[0];
             if (this.addAnotherButton) {
-                console.log("HELLOOOOO");
                 this.addAnotherButton.onclick = (e: any) => {
-                    console.log("HELLOOOOO");
                     _this.state.push(_this.newEntryState());
                     var ind: number = _this.state.length - 1;
                     _this.includedEntries.push(ind);
