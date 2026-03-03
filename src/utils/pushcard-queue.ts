@@ -50,8 +50,10 @@ function pullCards(pcq: PushcardQueue): Promise<PushcardQueue> {
     })
 }
 
-class PushcardComponent extends HTMLDivElement
+class PushcardComponent extends HTMLElement
                         implements MenuComponent<PushcardQueue> {
+    root = this;
+
     defaultElement?: HTMLElement;
     entriesDiv?: HTMLElement;
     serverURL?: HTMLElement;
@@ -116,4 +118,4 @@ class PushcardComponent extends HTMLDivElement
     }
 } 
 
-window.customElements.define("menu-pushcard", PushcardComponent, { extends: "div" });
+window.customElements.define("menu-pushcard", PushcardComponent);

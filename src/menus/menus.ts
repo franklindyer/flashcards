@@ -1,338 +1,233 @@
-import {
-    recursiveRepairJSON,
-    querySelectorTopLevel,
-    getDeepKey
-} from "utils/utils"
-// import tagger from '@jcubic/tagger';
-import * as ace from 'brace';
-
-const tagger = require('@jcubic/tagger');
-
 export interface MenuComponent<a> {
-    fieldName(): string;
+    root: MenuComponent<any>;
     getState(): a;
-    setState(s: a): void;
+    setState(x: a): void;
 }
 
-class CheckboxComponent extends HTMLInputElement
-                        implements MenuComponent<boolean> {
+/* UTILITY FUNCTIONS */
+
+function guidGenerator() {
+    var S4 = function() {
+        return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
+    };
+    return (S4()+S4()+"-"+S4()+"-"+S4()+"-"+S4()+"-"+S4()+S4()+S4());
+}
+
+function getMenuFieldName(el: HTMLElement): string {
+     return el.getAttribute("name") || "";
+}
+
+function querySelectorTopLevel(el: HTMLElement, q: string) {
+    var res = [...el.querySelectorAll(q)];
+    var resFilt = res.filter((el2) => !res.some((el3) => el3 !== el2 && el3.contains(el2)));
+    return [...resFilt];
+}
+
+function getDeepKey(obj: any, ks: string[]) {
+    if (ks.length == 0) {
+        return obj;
+    } else if (ks[0] in obj) {
+        return getDeepKey(obj[ks[0]], ks.slice(1));
+    } else {
+        return undefined;
+    }
+}
+
+function setDeepKey(obj: any, ks: string[], value: any) {
+    if (ks.length == 1) {
+        obj[ks[0]] = value;
+        return obj;
+    } else {
+        if (!(ks[0] in obj)) {
+            obj[ks[0]] = {};
+        }
+        obj[ks[0]] = setDeepKey(obj[ks[0]], ks.slice(1), value);
+        return obj;
+    }
+}
+
+function getMenuRoot(menu: MenuComponent<any>) {
+    var menu2 = undefined;
+    while (menu !== menu2) {
+        console.log(menu);
+        menu2 = menu;
+        menu = menu.root;
+    }
+    return menu;
+}
+
+/* CUSTOM MENU COMPONENTS */
+
+export class CheckboxComponent extends HTMLElement
+                               implements MenuComponent<boolean> {
+    root = this;
+    inputElement: HTMLInputElement = document.createElement("input");
+
     constructor() {
         super();
+        this.inputElement.type = "checkbox";
     }
 
     connectedCallback() {
-        this.type = "checkbox";
-    }
-    
-    fieldName() {
-        return this.getAttribute("name")!; 
+        this.innerHTML = "";
+        this.appendChild(this.inputElement);
     }
 
     getState() {
-        return this.checked;
+        return this.inputElement.checked;
     }
 
     setState(b: boolean) {
-        this.checked = b;
+        this.inputElement.checked = b;
     }
 }
 
-class TextboxComponent extends HTMLInputElement
-                       implements MenuComponent<string> {
-    constructor() {
-        super();
-    }
+export class OptionsComponent extends HTMLElement
+                              implements MenuComponent<string> {
+    root = this;
+    state?: string;
+    inputElement: HTMLSelectElement = document.createElement("select");
 
-    fieldName() {
-        return this.getAttribute("name")!;
-    }
-
-    getState() {
-        return this.value;
-    }
-
-    setState(s: string) {
-        this.value = s;
-    }
-}
-
-class TextfieldComponent extends HTMLDivElement
-                                 implements MenuComponent<string> {
-    ed: any;
-    constructor() {
-        super();
-    }
-
-    getEditor() {
-        if (!this.ed) {
-            this.ed = ace.edit(this);
-            this.classList.add("menu-ace-textfield");
-        }
-        return this.ed;
-    }
-
-    fieldName() {
-        return this.getAttribute("name")!;
-    }
-
-    getState() {
-        return this.getEditor().getValue();
-    }
-
-    setState(s: string) {
-        this.getEditor().setValue(s);
-    }
-
-}
-
-class NumberComponent extends HTMLInputElement
-                      implements MenuComponent<number> {
     constructor() {
         super();
     }
 
     connectedCallback() {
-        this.type = "number";
-    }
-    
-    fieldName() {
-        return this.getAttribute("name")!;
+        var options = this.querySelectorAll("option");
+        this.innerHTML = "";
+        options.forEach((el) => { this.inputElement.appendChild(el); });
+        this.appendChild(this.inputElement);
+        if (this.state) {
+            this.setState(this.state);
+        }
     }
 
     getState() {
-        return Number(this.value);
+        return this.inputElement.value;
+    }
+
+    setState(s: string) {
+        this.state = s;
+        this.inputElement.value = s;
+    }
+}
+
+export class TextboxComponent extends HTMLElement
+                              implements MenuComponent<string> {
+    root = this;
+    inputElement: HTMLInputElement = document.createElement("input");
+
+    constructor() {
+        super();
+        this.inputElement.type = "text";
+    }
+
+    connectedCallback() {
+        this.innerHTML = "";
+        this.appendChild(this.inputElement);
+
+        var placeholder = this.getAttribute("placeholder");
+        if (placeholder) {
+            this.inputElement.placeholder = placeholder;
+        }
+        if (this.getAttribute("disabled") == "true") {
+            this.inputElement.disabled = true;
+        }
+    }
+
+    getState() {
+        return this.inputElement.value;
+    }
+
+    setState(s: string) {
+        this.inputElement.value = s;
+    }
+}
+
+export class TextboxListComponent extends HTMLElement
+                                  implements MenuComponent<string[]> {
+    root = this;
+    separator: string = ",";
+    inputElement: HTMLInputElement = document.createElement("input");
+
+    constructor() {
+        super();
+        this.inputElement.type = "text";
+    }
+
+    connectedCallback() {
+        this.innerHTML = "";
+        this.appendChild(this.inputElement);
+        if (this.getAttribute("sep")) {
+            this.separator = this.getAttribute("sep")!;
+        }
+    }
+
+    getState() {
+        if (this.inputElement.value.length == 0) {
+            return [];
+        }
+        return this.inputElement.value.split(this.separator);
+    }
+
+    setState(ss: string[]) {
+        this.inputElement.value = ss.join(this.separator);
+    }
+}
+
+export class NumberComponent extends HTMLElement
+                             implements MenuComponent<number> {
+    root = this;
+    inputElement: HTMLInputElement = document.createElement("input");
+
+    constructor() {
+        super();
+        this.inputElement.type = "number";
+    }
+
+    connectedCallback() {
+        this.appendChild(this.inputElement);
+        this.inputElement.min = this.getAttribute("min")!;
+        this.inputElement.max = this.getAttribute("max")!;
+        this.inputElement.step = this.getAttribute("step")!;
+    }
+
+    getState() {
+        return parseFloat(this.inputElement.value);
     }
 
     setState(x: number) {
-        this.value = x.toString();
+        this.inputElement.value = x.toString();
     }
 }
 
-class SelectComponent extends HTMLSelectElement
-                      implements MenuComponent<string> {
+export class LazyGuidComponent extends HTMLElement
+                               implements MenuComponent<string> {
+    root = this;
+    guid: string = guidGenerator();
+
     constructor() {
         super();
     }
-    
-    fieldName() {
-        return this.getAttribute("name")!;
-    }
 
     getState() {
-        return this.value;
+        return this.guid;
     }
 
     setState(s: string) {
-        this.value = s;
+        this.guid = s;
     }
 }
 
-class GroupingComponent extends HTMLDivElement
-                        implements MenuComponent<any> {
-    lastSetState: any;
+export class GroupingComponent extends HTMLElement
+                               implements MenuComponent<any> {
+    root = this;
+    isStateInit: boolean = false;    
+    state: any = {};
+    subcomponents: any = {};
 
-    preProc: (x: any) => any = (x: any) => x;
-    postProc: (x: any) => any = (x: any) => x;
-
-    constructor() {
-        super();
-    }
-
-    fieldName() {
-        return this.getAttribute("name")!;
-    }
-
-    getState() {
-        var stateObj: any = {};
-        var menuTopEls = querySelectorTopLevel(this, "[is^='menu-']");
-        menuTopEls.forEach((el) => {
-            stateObj[el.getAttribute("name")!] = (<any>el).getState();
-        });
-        if (this.lastSetState !== undefined) {
-            stateObj = recursiveRepairJSON(stateObj, this.lastSetState);
-        }
-        stateObj = this.postProc(stateObj);
-        return stateObj;
-    }
-
-    setState(s: any) {
-        s = this.preProc(s);
-        this.lastSetState = s;
-        var menuEls = [...this.querySelectorAll("[is^='menu-']")];
-        menuEls.forEach((el) => {
-            var entryName = el.getAttribute("name")!;
-            if (entryName in s) {
-                (<any>el).setState(s[entryName]);
-            }
-        });
-        return;
-    }
-}
-
-class ListEntryComponent<a> extends HTMLDivElement
-                            implements MenuComponent<a[]> {
-    removeBtn?: HTMLElement;
-    removeEntry: boolean = false;
-
-    constructor() {
-        super();
-    }
-    
-    lazyInit() {
-        if (this.removeBtn) return;
-        this.removeBtn = this.querySelector(".menu-list-remove-button")!;
-        if (!this.removeBtn) {
-            this.removeBtn = document.createElement("button");
-            this.removeBtn.textContent = "delete";
-            this.appendChild(this.removeBtn);
-        }
-        var _this = this;
-        (<any>this.removeBtn).onclick = (e: any) => {
-            _this.removeEntry = !_this.removeEntry;
-            if (_this.removeEntry) {
-                _this.removeBtn!.textContent = "restore";
-                this.classList.add("list-entry-component-removed");
-            } else {
-                _this.removeBtn!.textContent = "delete";
-                this.classList.remove("list-entry-component-removed");
-            }
-        };
-        (<any>this.removeBtn).style.display = "inline-block";
-    }
-    
-    fieldName() {
-        return this.getAttribute("name")!;
-    }
-
-    getState() {
-        var menuElement = this.querySelector("[is^='menu-']");
-        if (this.removeEntry) {
-            return [];
-        } else {
-            return [(<any>menuElement).getState()];
-        }
-    }
-
-    setState(ls: a[]) {
-        this.lazyInit();
-        var menuElement = this.querySelector("[is^='menu-']");
-        (<any>menuElement).setState(ls[0]);
-    }
-
-}
-
-class TagListComponent extends HTMLInputElement
-                       implements MenuComponent<string[]> {
-    taggerInst: any;
-
-    constructor() {
-        super();
-        this.type = "text";
-        this.style.display = "none";
-        this.taggerInst = tagger(this, {
-            allow_spaces: true,
-            wrap: true
-        });
-
-        var innerUL = <HTMLElement>this.parentNode!.querySelector("div.tagger > ul")!;
-        innerUL.style.display = "none";
-        var innerUL = <HTMLElement>this.parentNode!.querySelector("div.tagger > div.tagger > ul")!;
-        innerUL.style.display = "flex";
-    }
-    
-    fieldName() {
-        return this.getAttribute("name")!;
-    }
-
-    setState(ls: string[]) {
-        this.value = "";
-        ls.forEach((s: string) => {
-            this.taggerInst.add_tag(s);
-        });
-    }
-
-    getState(): string[] {
-        return this.value.split(",");
-    }
-}
-
-class ListComponent<a> extends HTMLDivElement
-                       implements MenuComponent<a[]> {
-    defaultEntry?: HTMLElement;
-    entriesDiv: HTMLDivElement = document.createElement("div");
-
-    entryCallback: (el: HTMLElement) => void = (el) => {};
-
-    constructor() {
-        super();
-
-        this.defaultEntry = <HTMLElement>querySelectorTopLevel(this, ".menu-list-default-entry")[0];
-        // this.defaultEntry.remove();
-        this.defaultEntry.style.display = "none";
-        var addEntryButton = <HTMLButtonElement>this.querySelector("button.menu-add-another-button")!; 
-        this.entriesDiv = <HTMLDivElement>this.querySelector(".menu-list-entries")!;
-        
-        var _this = this;
-        addEntryButton.onclick = (e) => {
-            var ls = _this.getState();
-            var newEntry = (<any>_this.defaultEntry!).getState();
-            ls.unshift((<any>_this.defaultEntry!).getState());
-            _this.setState(ls);
-            // var listEntry = new ListEntryComponent<a>();
-            // listEntry.setAttribute("is", "menu-list-entry");
-            // var listEntryMenu = _this.defaultEntry!.cloneNode(true);
-            // (<HTMLElement>listEntryMenu).style.display = "";
-            // listEntry.appendChild(listEntryMenu);
-            // _this.entriesDiv.prepend(listEntry);
-        };
-    }
-    
-    fieldName() {
-        return this.getAttribute("name")!;
-    }
-
-    getState() {
-        var fullList: a[] = [];
-        var menuTopEls = querySelectorTopLevel(this.entriesDiv, "[is^='menu-']");
-        [...menuTopEls].forEach((el: Element) => {
-            fullList = fullList.concat((<any>el).getState());
-        });
-        return fullList;
-    }
-
-    setState(ls: a[]) {
-        this.entriesDiv.innerHTML = "";
-       
-        var _this = this; 
-        ls.forEach((st: a) => {
-            var listEntry = new ListEntryComponent<a>();
-            listEntry.setAttribute("is", "menu-list-entry");
-            var listEntryMenu = _this.defaultEntry!.cloneNode(true);
-            (<HTMLElement>listEntryMenu).style.display = "";
-            listEntry.appendChild(listEntryMenu);
-            listEntry.setState([st]);
-            _this.entryCallback(<HTMLElement>listEntryMenu);
-            this.entriesDiv.appendChild(listEntry); 
-        });
-    }
-   
-}
-
-class LazyListComponent<a> extends HTMLDivElement
-                           implements MenuComponent<a[]> {
-    defaultElement?: HTMLElement;
-    searchBar?: HTMLInputElement;
-    entriesDiv?: HTMLDivElement; 
-    addAnotherButton?: HTMLDivElement; 
-    shownEntries: [number, HTMLElement][] = [];
-
-    st: a[] = [];
-    includedEntries: number[] = [];
-    maxElements: number = 0;
-    searchableFields: string[] = [];
-
-    dynamicDefaultEntry?: () => a;
-    entryCallback: (el: HTMLElement) => void = (el) => {};
+    preProc: (obj: any) => any = (obj: any) => obj;
+    postProc: (obj: any) => any = (obj: any) => obj;
 
     constructor() {
         super();
@@ -341,160 +236,243 @@ class LazyListComponent<a> extends HTMLDivElement
     connectedCallback() {
     }
 
-    getDefaultState(): a {
-        if (this.dynamicDefaultEntry === undefined) {
-            return (<any>this.defaultElement).getState();
-        } else {
-            return this.dynamicDefaultEntry();
+    initComponents() {
+        if (!this.isStateInit) {
+            this.isStateInit = true;
+            var childComps = querySelectorTopLevel(this, "[name]");
+            childComps.forEach((el) => {
+                (<any>el).root = this;
+                this.subcomponents[el.getAttribute("name")!] = el;
+            });
         }
     }
 
-    findChildren() {
+    getState() {
+        this.initComponents();
+        Object.keys(this.subcomponents).forEach((k: string) => {
+            var v: any = (<MenuComponent<any>>this.subcomponents[k]).getState();
+            this.state = setDeepKey(this.state, k.split("."), v);
+            // this.state[k] = (<MenuComponent<any>>this.subcomponents[k]).getState();
+        });
+        return this.postProc(this.state); 
+    }
+    
+    setState(obj: any) {
+        this.initComponents();
+        this.state = this.preProc(obj);
+        Object.keys(this.subcomponents).forEach((k) => {
+            var deepVal = getDeepKey(this.state, k.split("."));
+            if (deepVal) {
+                (<any>this.subcomponents[k]).setState(deepVal);
+            }
+        });
+    }
+
+}
+
+class LazyListComponent<a> extends HTMLElement
+                           implements MenuComponent<a[]> {
+    root = this;
+
+    state: a[] = [];
+    includedEntries: number[] = [];
+    shownEntries: [number, MenuComponent<any>][] = [];
+
+    limit: number = -1;
+    defaultStatePath: string = "";
+
+    addAnotherButton?: HTMLElement;
+    searchBar?: HTMLInputElement;
+    entryContainer?: HTMLElement;
+    defaultEntry?: MenuComponent<any>;
+    dynamicDefaultState?: () => any;
+
+    entryCallback: (el: HTMLElement) => void = (el: HTMLElement) => {};
+
+    constructor() {
+        super();
+    }
+
+    initComponents() {
         var _this = this;
-        this.maxElements = parseInt(this.getAttribute("max") || "10");
-        this.searchableFields = (this.getAttribute("search") || "").split(",");
+        if (this.getAttribute("limit")) {
+            this.limit = parseInt(this.getAttribute("limit")!);
+        }
+        if (this.getAttribute("defaultStatePath")) {
+            this.defaultStatePath = this.getAttribute("defaultStatePath")!;
+        }
         if (!this.addAnotherButton) {
-            this.addAnotherButton = this.querySelector("button.menu-add-another-button")!;
+            this.addAnotherButton = <any>querySelectorTopLevel(<any>this, ".add-another-button")[0];
             if (this.addAnotherButton) {
-                (<HTMLElement>this.addAnotherButton).onclick = (e) => {
-                    _this.includedEntries.push(_this.st.length);
-                    _this.st.push(this.getDefaultState());
-                    _this.rerunSearch();
+                this.addAnotherButton.onclick = (e: any) => {
+                    _this.state.push(_this.newEntryState());
+                    var ind: number = _this.state.length - 1;
+                    _this.includedEntries.push(ind);
+                    _this.addElementForEntry(ind);
                 }
             }
         }
         if (!this.searchBar) {
-            this.searchBar = <HTMLInputElement>this.querySelector("input.menu-search-bar");
-            this.searchBar.onchange = (e) => {
-                _this.rerunSearch();
+            this.searchBar = this.querySelector(".search-bar")!;
+            if (this.searchBar) {
+                this.searchBar.onchange = (e: any) => {
+                    _this.rerunSearch();
+                };
             }
         }
-        if (!this.entriesDiv) {
-            this.entriesDiv = this.querySelector("div.menu-list-entries")!;
+        if (!this.entryContainer) {
+            this.entryContainer = this.querySelector(".list-entry-container")!;
         }
-        if (!this.defaultElement) {
-            this.defaultElement = this.querySelector(".menu-list-default-entry")!;
-            // this.defaultElement.remove();
-            this.defaultElement.style.display = "none";
+        if (!this.defaultEntry) {
+            this.defaultEntry = <any>querySelectorTopLevel(<any>this, ".list-default-entry")[0];
+            console.log(this.defaultEntry);
+            if (this.defaultEntry) {
+                (<any>this.defaultEntry).classList.remove("list-default-entry");
+                (<any>this.defaultEntry).remove();
+            }
         }
     }
 
-    fieldName() {
-        return this.getAttribute("name")!;
+    newEntryElement() {
+        var entryEl = (<any>this.defaultEntry!).cloneNode(true);
+        return entryEl;
     }
 
-    getState() {
-        this.saveChanges();
-        return [...this.includedEntries.map((i) => this.st[i])];
+    newEntryState() {
+        var res = undefined;
+        if (this.defaultStatePath) {
+            res = getDeepKey(getMenuRoot(this).getState(), this.defaultStatePath.split(".")); // Could be made lazier?
+        } else if (this.dynamicDefaultState) {
+            res = this.dynamicDefaultState();
+        } else {
+            res = this.newEntryElement().getState();
+        }
+        res = JSON.parse(JSON.stringify(res));
+        return res;
     }
 
-    setState(ls: a[]) {
-        this.st = ls;
-        this.includedEntries = Array.from(Array(this.st.length).keys());
-        this.shownEntries = [];
-        this.rerunSearch();
+    addElementForEntry(i: number) {
+        var _this = this;
+        var r = this.state[i];
+        var entryEl = this.newEntryElement();
+        entryEl.setState(r);
+        entryEl.root = this;
+        var entryRemoveBtn = entryEl.querySelector(".list-entry-remove-button")!;
+        var entryRestoreBtn = entryEl.querySelector(".list-entry-restore-button")!;
+        entryRemoveBtn.onclick = ((i) => (e: any) => {
+            entryRemoveBtn.style.display = "none";
+            entryRestoreBtn.style.display = "inline-block";
+            entryEl.classList.add("deleted-list-entry");
+            _this.includedEntries = [..._this.includedEntries.filter((j) => j !== i)];
+        })(i);
+        entryRestoreBtn.onclick = ((i) => (e: any) => {
+            entryRemoveBtn.style.display = "inline-block";
+            entryRestoreBtn.style.display = "none";
+            entryEl.classList.remove("deleted-list-entry");
+            if (!(this.includedEntries.includes(i))) {
+                _this.includedEntries.unshift(i); 
+            }
+        })(i);
+        if (this.includedEntries.includes(i)) {
+            entryRestoreBtn.click();
+        } else {
+            entryRemoveBtn.click();
+        }
+
+        this.entryCallback(entryEl);
+
+        this.shownEntries.push([i, entryEl]);
+        this.entryContainer!.prepend(entryEl);
     }
 
-    saveChanges() {
-        this.shownEntries.forEach((r) => {
-            this.st[r[0]] = (<any>r[1]).getState();
+    saveEdits() {
+        this.shownEntries.forEach((r: [number, MenuComponent<any>]) => {
+            this.state[r[0]] = r[1].getState();
         });
     }
 
     rerunSearch() {
-        this.findChildren();
-        this.saveChanges();
+        this.initComponents();
+
+        this.saveEdits();
+
+        var q = "";
+        if (this.searchBar) {
+            q = this.searchBar.value;
+        }
+
+        this.shownEntries = [];
+        this.entryContainer!.innerHTML = "";
+
+        var resultInds = [...new Array(this.state.length).keys()]; // .reverse();
+        if (q.length > 0) {
+            resultInds = [...resultInds.filter((i) => JSON.stringify(this.state[i]).includes(q))];
+        }
+        if (this.limit > 0) {
+            resultInds.reverse();
+            resultInds = resultInds.slice(0, this.limit);
+            resultInds.reverse();
+        }
 
         var _this = this;
-        if (!this.searchBar) {
-            return;
-        }
-        var q = this.searchBar!.value;
-
-        var selectedEntries = Array.from(Array(this.st.length).keys());
-        selectedEntries = selectedEntries.filter((i) => _this.searchableFields.some((fld) => JSON.stringify(getDeepKey(_this.st[i], fld.split("."))).includes(q)));
-        selectedEntries = [...selectedEntries].reverse();
-        selectedEntries = selectedEntries.slice(0, this.maxElements);
-
-        this.entriesDiv!.innerHTML = "";
-        this.shownEntries = [];
-        selectedEntries.forEach((i) => {
-            var entry = this.st[i];
-            var listEntryMenu = <HTMLElement>_this.defaultElement!.cloneNode(true);
-            (<HTMLElement>listEntryMenu).style.display = "";
-            (<any>listEntryMenu).setState(entry);
-            this.entriesDiv!.appendChild(listEntryMenu);
-
-            var removeBtn = (<any>listEntryMenu).querySelector("button.menu-remove-entry-button")!;
-            var restoreBtn = (<any>listEntryMenu).querySelector("button.menu-restore-entry-button")!;
-            removeBtn.onclick = ((k) => (e: any) => {
-                _this.includedEntries = [...this.includedEntries.filter((j) => k != j)];
-                removeBtn.style.display = "none";
-                restoreBtn.style.display = "inline-block";
-                (<HTMLElement>listEntryMenu).classList.add("list-entry-component-removed");
-            })(i);
-            restoreBtn.onclick = ((i) => (k: any) => {
-                if (!_this.includedEntries.includes(i)) _this.includedEntries.push(i);
-                restoreBtn.style.display = "none";
-                removeBtn.style.display = "inline-block";
-                (<HTMLElement>listEntryMenu).classList.remove("list-entry-component-removed");
-            })(i);
-            
-            if (this.includedEntries.includes(i)) {
-                restoreBtn.click();
-            } else {
-                removeBtn.click();
-            }
-
-            _this.entryCallback(listEntryMenu);
-            _this.shownEntries.push([i, listEntryMenu]);
+        resultInds.forEach((i) => {
+            _this.addElementForEntry(i);
         });
-    }
-}
-
-class TextFileComponent extends HTMLButtonElement
-                        implements MenuComponent<string> {
-    fileUploadInput: HTMLElement;
-    stringValue: string = "";
-
-    constructor() {
-        super();
-        this.fileUploadInput = document.createElement("input");
-        (<HTMLInputElement>this.fileUploadInput).type = "file";
-        this.fileUploadInput.onchange = (e) => {
-            var files = (<HTMLInputElement>this.fileUploadInput).files;
-            if (files == null) return;
-            var file = files[0];
-            if (file == null) return;
-            var reader = new FileReader();
-            reader.onload = (e) => {
-                this.stringValue = <string>e.target!.result!; 
-            } 
-        }
-    }
-
-    fieldName() {
-        return this.getAttribute("name")!; 
     }
 
     getState() {
-        return this.stringValue;
+        this.initComponents();
+        this.saveEdits();
+        var result = this.includedEntries.map((i) => this.state[i]);
+        return result;
     }
 
-    setState(s: string) {
-        this.stringValue = s;
+    setState(xs: a[]) {
+        this.initComponents();
+        this.state = xs;
+        this.includedEntries = [...new Array(this.state.length).keys()];
+        this.rerunSearch();
+    } 
+}
+
+/* OTHER CUSTOM COMPONENTS */
+
+export class SwappingButton extends HTMLElement {
+    leftEl?: HTMLElement
+    rightEl?: HTMLElement
+
+    constructor() {
+        super();
+        var btn = document.createElement("button");
+        btn.textContent = this.textContent;
+        this.textContent = "";
+        this.appendChild(btn);
+        btn.onclick = (e: any) => {
+            this.initComponents();
+            var s: any = (<any>this.leftEl).getState();
+            (<any>this.leftEl).setState((<any>this.rightEl).getState());
+            (<any>this.rightEl).setState(s);
+        }
+    }
+
+    initComponents() {
+        if (!this.leftEl || !this.rightEl) {
+            var leftName: string = this.getAttribute("left")!;
+            this.leftEl = this.parentNode!.querySelector(`[name='${leftName}']`)!;
+            var rightName: string = this.getAttribute("right")!;
+            this.rightEl = this.parentNode!.querySelector(`[name='${rightName}']`)!;
+        }
     }
 }
 
+window.customElements.define("menu-checkbox", CheckboxComponent);
+window.customElements.define("menu-options", OptionsComponent);
+window.customElements.define("menu-textbox", TextboxComponent);
+window.customElements.define("menu-textlist", TextboxListComponent);
+window.customElements.define("menu-guid", LazyGuidComponent);
+window.customElements.define("menu-number", NumberComponent);
+window.customElements.define("menu-group", GroupingComponent);
+window.customElements.define("menu-list", LazyListComponent);
 
-window.customElements.define("menu-checkbox", CheckboxComponent, { extends: "input" });
-window.customElements.define("menu-textbox", TextboxComponent, { extends: "input" });
-window.customElements.define("menu-textfield", TextfieldComponent, { extends: "div" });
-window.customElements.define("menu-number", NumberComponent, { extends: "input" });
-window.customElements.define("menu-select", SelectComponent, { extends: "select" });
-window.customElements.define("menu-group", GroupingComponent, { extends: "div" });
-window.customElements.define("menu-list-entry", ListEntryComponent, { extends: "div" });
-window.customElements.define("menu-list", ListComponent, { extends: "div" });
-window.customElements.define("menu-tag-list", TagListComponent, { extends: "input" });
-window.customElements.define("menu-lazy-list", LazyListComponent, { extends: "div" });
-window.customElements.define("menu-file-upload", TextFileComponent, { extends: "button" });
+window.customElements.define("swap-button", SwappingButton);
+

@@ -340,6 +340,12 @@ hr {
 }
 
 .menu-ace-textfield {
+    display: block;
+    height: 200px;
+    width: 90%;
+}
+
+textarea.ace_text-input {
     height: 200px;
     width: 90%;
 }
