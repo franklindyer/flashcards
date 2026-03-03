@@ -56,14 +56,19 @@ export class KVFlashcardGen extends FlashcardSyncGen<KVFlashcardState, KVCard> {
     makeEditor(st: KVFlashcardState): MenuComponent<KVFlashcardState> {
         var contDiv = document.createElement("div");
         var menuTpl: string = `
-            <div is="menu-group">
-                <div is="menu-list" name="deck">
-                    <div is="menu-group" style="display: inline-block;">
-                        <input is="menu-textbox" name="front" />
-                        <input is="menu-textbox" name="back" />
-                    </div>
-                </div>
-            </div>
+            <menu-group>
+                <menu-list name="deck">
+                    <button class="add-another-button">Add another</button>
+                    <input class="search-bar" placeholder="search..."></input>
+                    <div class="list-entry-container"></div>
+                    <menu-group style="display: block;" class="list-default-entry">
+                        <menu-textbox name="front" style="display: inline-block;"></menu-textbox>
+                        <menu-textbox name="back" style="display: inline-block;"></menu-textbox>
+                        <button class="list-entry-remove-button">remove</button>
+                        <button class="list-entry-restore-button">restore</button>
+                    </menu-group>
+                </menu-list>
+            </menu-group>
         `;
         var menuHTML = renderString(menuTpl, { st: st });
         contDiv.innerHTML = menuHTML;

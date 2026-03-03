@@ -352,12 +352,12 @@ class LazyListComponent<a> extends HTMLElement
         var entryRestoreBtn = entryEl.querySelector(".list-entry-restore-button")!;
         entryRemoveBtn.onclick = ((i) => (e: any) => {
             entryRemoveBtn.style.display = "none";
-            entryRestoreBtn.style.display = "block";
+            entryRestoreBtn.style.display = "inline-block";
             entryEl.classList.add("deleted-list-entry");
             _this.includedEntries = [..._this.includedEntries.filter((j) => j !== i)];
         })(i);
         entryRestoreBtn.onclick = ((i) => (e: any) => {
-            entryRemoveBtn.style.display = "block";
+            entryRemoveBtn.style.display = "inline-block";
             entryRestoreBtn.style.display = "none";
             entryEl.classList.remove("deleted-list-entry");
             if (!(this.includedEntries.includes(i))) {
