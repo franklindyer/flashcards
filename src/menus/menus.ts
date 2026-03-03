@@ -125,6 +125,9 @@ export class TextboxComponent extends HTMLElement
         if (placeholder) {
             this.inputElement.placeholder = placeholder;
         }
+        if (this.getAttribute("disabled") == "true") {
+            this.inputElement.disabled = true;
+        }
     }
 
     getState() {
@@ -462,3 +465,4 @@ window.customElements.define("menu-group", GroupingComponent);
 window.customElements.define("menu-list", LazyListComponent);
 
 window.customElements.define("swap-button", SwappingButton);
+

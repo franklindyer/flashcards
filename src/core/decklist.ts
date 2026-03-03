@@ -31,7 +31,7 @@ export function generateDecklistMenu(
     var contDiv = document.createElement("div");
     console.log(gDeckTypeRegistry);
     var menuTpl = `
-        <div is="menu-list">
+        <menu-list>
             <button class="menu-add-another-button">Create new deck</button>
             <select class="menu-options-decktype">
                 {% for dt in decktypes %}
@@ -42,24 +42,25 @@ export function generateDecklistMenu(
             <button class="menu-setup-sync-server">Setup sync server</button>
             <button class="menu-import-remote-button">Import deck from server</button> <br />
             <div class="menu-sync-server-info-div"></div>
-            <div class="menu-list-entries"></div>
-            <div class="menu-list-default-entry deck-editor-entry" is="menu-deep-json">
+            <div class="list-entry-container"></div>
+            <menu-group class="list-default-entry deck-editor-entry">
                 <div class="decklist-edit-div">
-                    <input is="menu-textbox" name="name" />
-                    <input is="menu-textbox" name="view.color" />
-                    <input is="menu-checkbox" name="doSync" />
+                    <menu-textbox name="name"></menu-textbox>
+                    <menu-textbox name="view.color"></menu-textbox>
+                    <menu-checkbox name="doSync"></menu-checkbox>
                     <label for="doSync">Sync deck with server?</label> <br />
-                    <input is="menu-textbox" name="slug" disabled/>
+                    <menu-textbox name="slug" disabled="true"></menu-textbox>
                     <button class="decklist-save-button">Save</button>
                 </div>
                 <div class="decklist-view-div">
                     <b class="decklist-view-title"></b>
                     <button class="decklist-study-button deck-editor-button">study</button>
                     <button class="decklist-edit-button deck-editor-button">edit</button>
-                    <button class="decklist-delete-button menu-list-remove-button deck-editor-button">delete</button>
+                    <button class="list-entry-remove-button menu-list-remove-button deck-editor-button">delete</button>
+                    <button class="list-entry-restore-button deck-editor-button">restore</button>
                 </div>
-            </div>
-        </div>       
+            </menu-list>
+        </menu-list>       
     `;
     var menuHTML = renderString(menuTpl, {
         decktypes: Object.keys(gDeckTypeRegistry),
@@ -146,8 +147,8 @@ export function generateDecklistMenu(
         var saveButton = <any>el.querySelector(".decklist-save-button")!;
         var editButton = <any>el.querySelector(".decklist-edit-button")!;
         var updateDeckView = () => {
-            nameView.textContent = nameInput.value;
-            el.style.backgroundColor = colorInput.value;
+            nameView.textContent = nameInput.getState();
+            el.style.backgroundColor = colorInput.getState();
             deckEditor.style.display = "none";
             deckView.style.display = "block"; 
         };
