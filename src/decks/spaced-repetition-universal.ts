@@ -565,7 +565,7 @@ export class UniversalSpacedRepGen
                                     <option value=4>Answer with a randomly chosen side, given all other sides</option>
                                 </menu-options> <br />
                                 <menu-textlist name="sideNames" placeholder="names for card sides..." ></menu-textlist> <br />
-                                <menu-number name="speakableSide" min="0" max="10" step="1" ></menu-number>
+                                <menu-number name="speakableSide" min=0 max=10 step=1 ></menu-number>
                                 <label for="speakableSide">Side to be read aloud</label> <br />
                                 <details>
                                     <summary>Text-to-speech settings</summary>
