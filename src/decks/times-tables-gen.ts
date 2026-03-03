@@ -17,7 +17,6 @@ import {
     registerDeckType
 } from "core/flashcard-deck"
 
-
 // Type of data needed to describe the state of the entire deck
 type TimesTableState = {
     minNum: number,
@@ -80,13 +79,13 @@ export class TimesTableGen
     makeEditor(st: TimesTableState): MenuComponent<TimesTableState> {
         var contDiv = document.createElement("div");
         var menuTpl: string = `
-            <div is="menu-group">
+            <menu-group>
                 <div>
-                    <input id="min-num-input" is="menu-number" name="minNum" />
+                    <menu-number id="min-num-input" name="minNum" step=1></menu-number>
                     <label for="min-num-input">Minimum factor value</label>
                 </div>
                 <div>
-                    <input id="max-num-input" is="menu-number" name="maxNum" />
+                    <menu-number id="max-num-input" name="maxNum" step=1></menu-number>
                     <label for="max-num-input">Maximum factor value</label>
                 </div>
                 <h3>Questions recently answered incorrectly:</h3>
@@ -95,7 +94,7 @@ export class TimesTableGen
                     <ul>{{ r[0] }} × {{ r[1] }} = {{ r[0]*r[1] }}</ul>
                     {% endfor %}
                 </ul>            
-            </div>
+            </menu-group>
         `;
         var menuHTML = renderString(menuTpl, { st: st });
         contDiv.innerHTML = menuHTML;

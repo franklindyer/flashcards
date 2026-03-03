@@ -9,13 +9,13 @@ import {
 } from "core/decklist"
 
 import "menus/menus";
-import "menus/deep-json-menu";
-import "menus/sr-card-menus";
+// import "menus/deep-json-menu";
+// import "menus/sr-card-menus";
 
 import "decks/times-tables-gen";
-import "decks/uniform-key-value";
-import "decks/spaced-repetition-universal";
-import "decks/frequency-progression-deck";
+// import "decks/uniform-key-value";
+// import "decks/spaced-repetition-universal";
+// import "decks/frequency-progression-deck";
 
 import "utils/basic-template";
 import "utils/cloze-template";

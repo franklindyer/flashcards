@@ -25,9 +25,9 @@ import {
 import {
     MenuComponent
 } from "menus/menus"
-import {
-    SRCardMenu
-} from "menus/sr-card-menus"
+// import {
+//     SRCardMenu
+// } from "menus/sr-card-menus"
 import {
     njNoCardsLeft
 } from "utils/nj-templates"
