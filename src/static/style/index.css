@@ -343,6 +343,10 @@ hr {
     vertical-align: middle;
 }
 
+menu-group, menu-list {
+    display: block;
+}
+
 .menu-ace-textfield {
     display: block;
     height: 200px;
