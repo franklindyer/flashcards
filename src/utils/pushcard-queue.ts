@@ -118,4 +118,4 @@ class PushcardComponent extends HTMLElement
     }
 } 
 
-window.customElements.define("menu-pushcard", PushcardComponent, { extends: "div" });
+window.customElements.define("menu-pushcard", PushcardComponent);

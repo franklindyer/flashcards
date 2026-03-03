@@ -221,6 +221,9 @@ export class GroupingComponent extends HTMLElement
     state: any = {};
     subcomponents: any = {};
 
+    preProc: (obj: any) => any = (obj: any) => obj;
+    postProc: (obj: any) => any = (obj: any) => obj;
+
     constructor() {
         super();
     }
@@ -246,12 +249,12 @@ export class GroupingComponent extends HTMLElement
             this.state = setDeepKey(this.state, k.split("."), v);
             // this.state[k] = (<MenuComponent<any>>this.subcomponents[k]).getState();
         });
-        return this.state; 
+        return this.postProc(this.state); 
     }
     
     setState(obj: any) {
         this.initComponents();
-        this.state = obj;
+        this.state = this.preProc(obj);
         Object.keys(this.subcomponents).forEach((k) => {
             var deepVal = getDeepKey(this.state, k.split("."));
             if (deepVal) {
@@ -277,6 +280,7 @@ class LazyListComponent<a> extends HTMLElement
     searchBar?: HTMLInputElement;
     entryContainer?: HTMLElement;
     defaultEntry?: MenuComponent<any>;
+    dynamicDefaultState?: () => any;
 
     entryCallback: (el: HTMLElement) => void = (el: HTMLElement) => {};
 
@@ -335,6 +339,8 @@ class LazyListComponent<a> extends HTMLElement
         var res = undefined;
         if (this.defaultStatePath) {
             res = getDeepKey(getMenuRoot(this).getState(), this.defaultStatePath.split(".")); // Could be made lazier?
+        } else if (this.dynamicDefaultState) {
+            res = this.dynamicDefaultState();
         } else {
             res = this.newEntryElement().getState();
         }
@@ -460,6 +466,7 @@ window.customElements.define("menu-checkbox", CheckboxComponent);
 window.customElements.define("menu-options", OptionsComponent);
 window.customElements.define("menu-textbox", TextboxComponent);
 window.customElements.define("menu-textlist", TextboxListComponent);
+window.customElements.define("menu-guid", LazyGuidComponent);
 window.customElements.define("menu-number", NumberComponent);
 window.customElements.define("menu-group", GroupingComponent);
 window.customElements.define("menu-list", LazyListComponent);
