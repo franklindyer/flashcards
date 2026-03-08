@@ -165,7 +165,7 @@ export class SimpleCardType extends FlashcardType<SimpleCardEntry, SimpleCardDat
         
         prompt = data.prompt[0];
         answers = data.answer;
-        hint = data.answer.join(' | ');
+        // hint = data.answer.join(' | ');
 
         var fontSize = 100.0/(10.0*Math.log(10+prompt.length));
         
@@ -314,26 +314,31 @@ export class ClozeCardType extends FlashcardType<ClozeCardEntry, ClozeCardData, 
 
     // abstract generateCard(data: D, settings: S, externalParams: IDictionary<any>): Flashcard;
     generateCard(data: ClozeCardData, settings: ClozeCardSettings, externalParams: IDictionary<any> = {}): Flashcard {
-        var fontSize = 5;
-        if (data.valid) {
-            var fontSize = 900.0/(10.0*Math.log(10+data.cloze!.prompt.length)); 
+        if (!data.valid) {
+            
         }
 
-        var prompt = data.cloze!.prompt.replaceAll(/\{\{([^\{\}]+)\}\}/g, "___"); 
+        var fontSize = 20;
+        var prompt = "";
+        if (data.valid) {
+            var fontSize = 900.0/(10.0*Math.log(10+data.cloze!.prompt.length)); 
+            prompt = data.cloze!.prompt.replaceAll(/\{\{([^\{\}]+)\}\}/g, "___"); 
+        }
+
 
         var templateArgs = {
             key: data.key,
             puzzleFound: data.valid,
             prompt: prompt, 
-            translation: data.cloze!.translation,
-            source: data.cloze!.group,
+            translation: data.valid ? data.cloze!.translation : undefined,
+            source: data.valid ? data.cloze!.group : undefined,
             fontSize: fontSize,
         };
         templateArgs = Object.assign({}, templateArgs, externalParams);
         var tpl = settings.template;
         var el = <HTMLElement>(new DOMParser().parseFromString(renderString(tpl, templateArgs), "text/html").body.firstChild);
 
-        return new Flashcard(el, data.cloze!.answers[0]);
+        return new Flashcard(el, data.valid ? data.cloze!.answers[0] : "no answer, press up or down arrow to skip");
     }
 
     // abstract checkAnswer(answer: string, data: D, settings: S, tf: (s: string) => string): Promise<boolean>;
