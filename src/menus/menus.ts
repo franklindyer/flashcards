@@ -147,7 +147,6 @@ export class TextboxComponent extends HTMLElement
 export class TextboxListComponent extends HTMLElement
                                   implements MenuComponent<string[]> {
     root = this;
-    separator: string = ",";
     inputElement: HTMLInputElement = document.createElement("input");
 
     constructor() {
@@ -155,6 +154,13 @@ export class TextboxListComponent extends HTMLElement
         this.inputElement.type = "text";
     }
 
+    getSeparator() {
+        if (this.getAttribute("sep")) {
+            return this.getAttribute("sep")!;
+        }
+        return ",";
+    }
+    
     connectedCallback() {
         this.innerHTML = "";
         this.appendChild(this.inputElement);
@@ -163,20 +169,19 @@ export class TextboxListComponent extends HTMLElement
         if (placeholder) {
             this.inputElement.placeholder = placeholder;
         }
-        if (this.getAttribute("sep")) {
-            this.separator = this.getAttribute("sep")!;
-        }
     }
 
     getState() {
+        var separator = this.getSeparator();
         if (this.inputElement.value.length == 0) {
             return [];
         }
-        return this.inputElement.value.split(this.separator);
+        return this.inputElement.value.split(separator);
     }
 
     setState(ss: string[]) {
-        this.inputElement.value = ss.join(this.separator);
+        var separator = this.getSeparator();
+        this.inputElement.value = ss.join(separator);
     }
 }
 
