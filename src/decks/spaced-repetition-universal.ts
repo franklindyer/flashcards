@@ -62,6 +62,7 @@ import {
 
 export const defaultSRUniversalSettings = {
     cardTypeSettings: {},
+    initialStreak: 3,
     initialHours: 24,
     minimumHours: 8,
     correctFactor: 1.5,
@@ -210,7 +211,7 @@ export class UniversalSpacedRepGen
     ): number {
         var cardData = card.virtual!;
         if (correct == FlashcardResult.Correct) {
-            if (cardData.intervalMinutes == 0 && cardData.stats.streak >= 3) {
+            if (cardData.intervalMinutes == 0 && cardData.stats.streak >= settings.initialStreak) {
                 return settings.initialHours * 60;
             } else if (cardData.intervalMinutes != 0) {
                 return Math.max(cardData.intervalMinutes * settings.correctFactor, settings.minimumHours * 60);
@@ -445,6 +446,8 @@ export class UniversalSpacedRepGen
                     <option value=5>New then due cards</option>
                 </menu-options>
                 <menu-group name="settings">
+                    <menu-number name="initialStreak" min=1 max=10 step=1></menu-number>
+                    <label for="initialStreak">Streak needed to complete new card</label> <br />
                     <menu-number name="initialHours" min=1 max=1024 step=1></menu-number>
                     <label for="initialHours">Initial interval (hours)</label> <br />
                     <menu-number name="minimumHours" min=1 max=1024 step=1></menu-number>

@@ -51,6 +51,7 @@ export enum SRStudying {
 
 export type SRUniversalSettings = {
     cardTypeSettings: IDictionary<any>,
+    initialStreak: number,
     initialHours: number,
     minimumHours: number,
     correctFactor: number,
