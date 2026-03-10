@@ -55,6 +55,8 @@ export function generateDecklistMenu(
                     <menu-textbox name="view.color"></menu-textbox>
                     <menu-checkbox name="doSync"></menu-checkbox>
                     <label for="doSync">Sync deck with server?</label> <br />
+                    <menu-checkbox name="doLog"></menu-checkbox>
+                    <label for="doLog">Log answers to server?</label> <br />
                     <menu-textbox name="slug" disabled="true"></menu-textbox>
                     <button class="decklist-save-button">Save</button>
                 </div>
@@ -160,7 +162,7 @@ export function generateDecklistMenu(
         promptForLogCreds(updateLogServerDiv);
     };
     
-    validateSyncCreds(
+    validateLogCreds(
         updateLogServerDiv,
         () => {}
     );    

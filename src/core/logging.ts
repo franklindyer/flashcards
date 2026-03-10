@@ -7,19 +7,19 @@ import {
 } from "core/flashcard-deck"
 
 export function setLogRemote(url: string) {
-    localStorage.setItem("syncserver", url);
+    localStorage.setItem("logserver", url);
 }
 
 export function getLogRemote(): string | null {
-    return localStorage.getItem("syncserver");
+    return localStorage.getItem("logserver");
 }
 
 export function setLogKey(key: string) {
-    localStorage.setItem("synckey", key);
+    localStorage.setItem("logkey", key);
 }
 
 export function getLogKey(): string | null {
-    return localStorage.getItem("synckey");
+    return localStorage.getItem("logkey");
 }
 
 export function validateLogCreds(goodCallback: (r: string, k: string) => void, badCallback: () => void) {
@@ -56,7 +56,7 @@ export function promptForLogCreds(successCallback: (r: string, k: string) => voi
     );
 }
 
-export function logPost(data: any, doAlert: boolean = false): void {
+export function logPost(deckId: string, data: any, doAlert: boolean = false): void {
     var badCallback = () => alert("Could not log deck data. Please ensure your logging server is set up.");
     var host = getHostname();
 
@@ -64,21 +64,23 @@ export function logPost(data: any, doAlert: boolean = false): void {
         return;
     }   
  
-    validateLogCreds(
-        (remote, key) => {
-            try {
-                fetch(`${remote}/put`, {
-                    method: "POST",
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ host: host, key: key, data: data })
-                }).catch(res => badCallback());
-            } catch (e) {
-                badCallback();
-            }
-        },
-        () => badCallback()
-    );
+    var remote = getLogRemote();
+    var key = getLogKey();
+
+    if (remote === null || key === null) {
+        return;
+    }
+
+    try {
+        fetch(`${remote}/put`, {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ host: host, key: key, data: data, id: deckId })
+        }).catch(res => badCallback());
+    } catch (e) {
+        badCallback();
+    }
 }
 

@@ -3,6 +3,9 @@ import {
     hideLoadingIcon
 } from "utils/utils"
 import {
+    logPost
+} from "./logging"
+import {
     MenuComponent    
 } from "menus/menus"
 import {
@@ -66,6 +69,8 @@ export abstract class FlashcardGen<S, D> {
         hideLoadingIcon();
         this.showLoading = false;
 
+        var thisDeckSlug = localStorage.getItem("last-deck-slug")!;
+
         var inputBox = <HTMLInputElement>document.getElementById("answer-input");
         var correctCallback = (newState: S) => () => {
             inputBox.value = "";
@@ -77,7 +82,8 @@ export abstract class FlashcardGen<S, D> {
             if (correct) {
                 inputBox.onkeydown = (e) => {}; // To prevent multiple submissions by accident
                 var result = card.correctFirst ? FlashcardResult.Correct : FlashcardResult.Incorrect;
-                var newState = await this.updateStateAsync(s, cardData, result);
+                var newState = await this.updateStateAsync(s, cardData, FlashcardResult.Incorrect);
+                logPost(thisDeckSlug, this.reportableData(s, cardData, result));
                 await this.correctEffect(newState, cardData, attempt, correctCallback(newState));
             } else {
                 card.markWrong();
@@ -92,6 +98,7 @@ export abstract class FlashcardGen<S, D> {
                 inputCallback(inputBox.value);
             } else if (e.key == "ArrowUp") {
                 var newState = await this.updateStateAsync(s, cardData, FlashcardResult.Correct);
+                logPost(thisDeckSlug, this.reportableData(s, cardData, FlashcardResult.Correct));
                 this.correctEffect(newState, cardData, "", correctCallback(newState));
             } else if (e.key == "ArrowDown") {
                 inputBox.value = "";
