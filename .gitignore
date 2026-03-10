@@ -5,6 +5,7 @@ node_modules/**
 **/venv
 **/__pycache__
 **/sync-data
+**/log-data
 microservices/cloze-server/db
 dist
 docs/_build/**
