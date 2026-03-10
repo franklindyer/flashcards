@@ -1,5 +1,6 @@
 import {
-    guidGenerator
+    guidGenerator,
+    getHostname
 } from "utils/utils"
 import {
     FlashcardDeck
@@ -7,20 +8,11 @@ import {
 
 const CONFIRM_DOWNLOAD_MSG = "A more recent version of this deck was found on the sync server. Do you want to download it, overwriting your current copy of the deck?";
 
-export function getHostname() {
-    var host = localStorage.getItem("host");
-    if (host === null) {
-        host = guidGenerator();
-        localStorage.setItem("host", host);
-    }
-    return host;
-}
-
-export function setRemote(url: string) {
+export function setSyncRemote(url: string) {
     localStorage.setItem("syncserver", url);
 }
 
-export function getRemote(): string | null {
+export function getSyncRemote(): string | null {
     return localStorage.getItem("syncserver");
 }
 
@@ -33,7 +25,7 @@ export function getSyncKey(): string | null {
 }
 
 export function validateSyncCreds(goodCallback: (r: string, k: string) => void, badCallback: () => void) {
-    var remote = getRemote()!;
+    var remote = getSyncRemote()!;
     var key = getSyncKey()!;
 
     try {
@@ -55,7 +47,7 @@ export function validateSyncCreds(goodCallback: (r: string, k: string) => void, 
 export function promptForSyncCreds(successCallback: (r: string, k: string) => void = (_: string, __: string) => {}) {
     var remote = window.prompt("Enter the URL of your synchronization server.") || "";
     var key = window.prompt("Enter your key with the synchronization server.") || "";
-    setRemote(remote);
+    setSyncRemote(remote);
     setSyncKey(key);
     validateSyncCreds(
         (_, __) => {
