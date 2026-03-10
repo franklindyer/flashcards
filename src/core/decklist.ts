@@ -24,6 +24,10 @@ import {
     syncDownloadDeck,
     validateSyncCreds
 } from "./synchronization"
+import {
+    promptForLogCreds,
+    validateLogCreds
+} from "./logging"
 
 export function generateDecklistMenu(
         decklist: IDictionary<FlashcardDeck<any>>,
@@ -42,6 +46,8 @@ export function generateDecklistMenu(
             <button class="menu-setup-sync-server">Setup sync server</button>
             <button class="menu-import-remote-button">Import deck from server</button> <br />
             <div class="menu-sync-server-info-div"></div>
+            <button class="menu-setup-log-server">Setup logging server</button>
+            <div class="menu-log-server-info-div"></div>
             <div class="list-entry-container"></div>
             <menu-group class="list-default-entry deck-editor-entry">
                 <div class="decklist-edit-div">
@@ -75,6 +81,8 @@ export function generateDecklistMenu(
     var syncSetupButton = <any>menu.querySelector(".menu-setup-sync-server");
     var syncDeckButton = <any>menu.querySelector(".menu-import-remote-button");
     var syncInfoDiv = <any>menu.querySelector(".menu-sync-server-info-div");
+    var logSetupButton = <any>menu.querySelector(".menu-setup-log-server");
+    var logInfoDiv = <any>menu.querySelector(".menu-log-server-info-div");
 
     newDeckButton.onclick = (e: any) => {
         var st = menu.getState();
@@ -108,6 +116,7 @@ export function generateDecklistMenu(
         fileUploadInput.click();
     };
 
+    // SYNC SERVER
     syncInfoDiv.style.display = "none";
     var updateSyncServerDiv = (r: string, s: string) => {
         syncInfoDiv.style.display = "block";
@@ -136,6 +145,25 @@ export function generateDecklistMenu(
             saveDeck(deckslug, () => {});
         });
     };
+
+    // LOGGING SERVER
+    logInfoDiv.style.display = "none";
+    var updateLogServerDiv = (r: string, s: string) => {
+        logInfoDiv.style.display = "block";
+        logInfoDiv.innerHTML = `
+            <a>Log server URL: <code>${r}</code></a> <br />
+            <a>Log server user key: <code>${s.slice(0, 8)}...</code></a>
+        `;
+    };
+
+    logSetupButton.onclick = (e: any) => {
+        promptForLogCreds(updateLogServerDiv);
+    };
+    
+    validateSyncCreds(
+        updateLogServerDiv,
+        () => {}
+    );    
 
     menu.entryCallback = (el: HTMLElement) => {
         var deckView = <any>el.querySelector(".decklist-view-div")!;
