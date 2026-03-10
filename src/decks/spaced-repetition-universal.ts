@@ -291,6 +291,23 @@ export class UniversalSpacedRepGen
         return trivialPromise(st);
     }
 
+    reportableData(
+        st: SRUniversalState,
+        card: SRUniversalCardPhysical,
+        result: FlashcardResult
+    ): any {
+        if (!card.virtual || result == FlashcardResult.Unanswered) {
+            return {};
+        }
+        return {
+            "guid": card.virtual!.guid,
+            "stats": card.virtual!.stats, 
+            "due": card.virtual!.due,
+            "interval": card.virtual!.intervalMinutes,
+            "correct": result == FlashcardResult.Correct
+        }
+    }
+
     getNextCardAsync(st: SRUniversalState): Promise<SRUniversalCardPhysical> {
         var inds = Object.keys(st.cards);
         var newInds = this.getNew(st);
