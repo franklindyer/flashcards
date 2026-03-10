@@ -304,6 +304,7 @@ export class UniversalSpacedRepGen
             "guid": card.virtual!.guid,
             "stats": card.virtual!.stats, 
             "due": card.virtual!.due,
+            "timestamp": this.getDate(),
             "interval": card.virtual!.intervalMinutes,
             "correct": result == FlashcardResult.Correct
         }
