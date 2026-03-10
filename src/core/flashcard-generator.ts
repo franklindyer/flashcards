@@ -82,7 +82,7 @@ export abstract class FlashcardGen<S, D> {
             if (correct) {
                 inputBox.onkeydown = (e) => {}; // To prevent multiple submissions by accident
                 var result = card.correctFirst ? FlashcardResult.Correct : FlashcardResult.Incorrect;
-                var newState = await this.updateStateAsync(s, cardData, FlashcardResult.Incorrect);
+                var newState = await this.updateStateAsync(s, cardData, result);
                 logPost(thisDeckSlug, this.reportableData(s, cardData, result));
                 await this.correctEffect(newState, cardData, attempt, correctCallback(newState));
             } else {
