@@ -77,7 +77,8 @@ export class KVFlashcardGen extends FlashcardSyncGen<KVFlashcardState, KVCard> {
         return menu;
     }
 
-    correctEffect(_: KVFlashcardState, __: KVCard, ___: string, resolve: () => void) { resolve() };
+    correctEffect(_: KVFlashcardState, __: KVCard, ___: string, resolve: () => void) { resolve(); }
+    reportableData(state: KVFlashcardState, cardData: KVCard, correct: FlashcardResult) { return {}; }
     repairDeckState(st: any) { return st; }
 }
 

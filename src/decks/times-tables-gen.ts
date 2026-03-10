@@ -52,6 +52,10 @@ export class TimesTableGen
         resolve();
     }
 
+    reportableData(st: TimesTableState, c: TimesTableFact, res: FlashcardResult) {
+        return {};
+    }
+
     getNextCard(st: TimesTableState): TimesTableFact {
         var factor1 = Math.floor(Math.random() * (st.maxNum-st.minNum+1)) + st.minNum;
         var factor2 = Math.floor(Math.random() * (st.maxNum-st.minNum+1)) + st.minNum;

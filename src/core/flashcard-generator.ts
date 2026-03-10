@@ -39,6 +39,9 @@ export abstract class FlashcardGen<S, D> {
     // Should not attempt to change the deck's state
     abstract correctEffect(state: S, cardData: D, attempt: string, resolve: () => void): void;   
 
+    // Used for statistics/data reporting
+    abstract reportableData(state: S, cardData: D, correct: FlashcardResult): any;
+
     async runOnce(s: S, setState: (s: S) => void, callback: () => void) {
         this.showLoading = true;
         setTimeout(() => {
