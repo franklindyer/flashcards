@@ -147,8 +147,14 @@ export class UniversalSpacedRepGen
         }
         for (var i in Object.keys(st.cards)) {
             var guid = Object.keys(st.cards)[i];
+            var emptyCard = makeEmptyCard(st.cards[guid].cardType);
             if (!("extraInfo" in st.cards[guid]) || st.cards[guid].extraInfo === null)
                 st.cards[guid].extraInfo = "";
+            if (st.cards[guid].stats.numCorrect === null || st.cards[guid].stats.numCorrect === undefined)
+                st.cards[guid].stats.numCorrect = 0
+            if (st.cards[guid].stats.numIncorrect === null || st.cards[guid].stats.numIncorrect === undefined)
+                st.cards[guid].stats.numIncorrect = 0
+            // st.cards[guid].stats = recursiveRepairJSON(st.cards[guid].stats, emptyCard);
         }
 
         this.preprocessAllCards(st);
