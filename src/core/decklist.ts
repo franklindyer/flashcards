@@ -35,39 +35,76 @@ export function generateDecklistMenu(
     var contDiv = document.createElement("div");
     console.log(gDeckTypeRegistry);
     var menuTpl = `
-        <menu-list>
-            <button class="menu-add-another-button">Create new deck</button>
-            <select class="menu-options-decktype">
-                {% for dt in decktypes %}
-                <option value="{{ dt }}">{{ deckDefaultRegistry[dt].name }}</option>
-                {% endfor %}
-            </select> <br />
-            <button class="menu-import-file-button">Import deck from file</button> <br />
-            <button class="menu-setup-sync-server">Setup sync server</button>
-            <button class="menu-import-remote-button">Import deck from server</button> <br />
-            <div class="menu-sync-server-info-div"></div>
-            <button class="menu-setup-log-server">Setup logging server</button>
-            <div class="menu-log-server-info-div"></div>
-            <div class="list-entry-container"></div>
-            <menu-group class="list-default-entry deck-editor-entry">
-                <div class="decklist-edit-div">
-                    <menu-textbox name="name"></menu-textbox>
-                    <menu-textbox name="view.color"></menu-textbox>
-                    <menu-checkbox name="doSync"></menu-checkbox>
-                    <label for="doSync">Sync deck with server?</label> <br />
-                    <menu-checkbox name="doLog"></menu-checkbox>
-                    <label for="doLog">Log answers to server?</label> <br />
-                    <menu-textbox name="slug" disabled="true"></menu-textbox>
-                    <button class="decklist-save-button">Save</button>
+        <menu-list class="decklist-menu">
+            <div class="decklist-menu-header">
+                <div class="decklist-menu-primary-actions">
+                    <h2 class="decklist-menu-title">Decks</h2>
+                    <button class="menu-add-another-button decklist-primary-button">Create new deck</button>
                 </div>
-                <div class="decklist-view-div">
-                    <b class="decklist-view-title"></b>
-                    <button class="decklist-study-button deck-editor-button">study</button>
-                    <button class="decklist-edit-button deck-editor-button">edit</button>
-                    <button class="list-entry-remove-button menu-list-remove-button deck-editor-button">delete</button>
-                    <button class="list-entry-restore-button deck-editor-button">restore</button>
+                <div class="decklist-menu-secondary-actions">
+                    <label class="decklist-label" for="deck-type-select">Deck type</label>
+                    <select id="deck-type-select" class="menu-options-decktype decklist-select">
+                        {% for dt in decktypes %}
+                        <option value="{{ dt }}">{{ deckDefaultRegistry[dt].name }}</option>
+                        {% endfor %}
+                    </select>
+                    <button class="menu-import-file-button decklist-secondary-button">Import from file</button>
                 </div>
-            </menu-list>
+                <div class="decklist-menu-meta-actions">
+                    <div class="decklist-menu-sync-section">
+                        <span class="decklist-section-label">Sync</span>
+                        <button class="menu-setup-sync-server decklist-link-button">Setup sync server</button>
+                        <button class="menu-import-remote-button decklist-link-button">Import from server</button>
+                        <div class="menu-sync-server-info-div decklist-meta-text"></div>
+                    </div>
+                    <div class="decklist-menu-log-section">
+                        <span class="decklist-section-label">Logging</span>
+                        <button class="menu-setup-log-server decklist-link-button">Setup logging server</button>
+                        <div class="menu-log-server-info-div decklist-meta-text"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="decklist-menu-list">
+                <div class="list-entry-container"></div>
+                <menu-group class="list-default-entry deck-editor-entry">
+                    <div class="decklist-edit-div">
+                        <div class="decklist-edit-row">
+                            <label class="decklist-label" for="deck-name">Name</label>
+                            <menu-textbox id="deck-name" name="name"></menu-textbox>
+                        </div>
+                        <div class="decklist-edit-row">
+                            <label class="decklist-label" for="deck-color">Accent color</label>
+                            <menu-textbox id="deck-color" name="view.color"></menu-textbox>
+                        </div>
+                        <div class="decklist-edit-row decklist-edit-row-inline">
+                            <menu-checkbox name="doSync"></menu-checkbox>
+                            <label for="doSync">Sync deck with server</label>
+                        </div>
+                        <div class="decklist-edit-row decklist-edit-row-inline">
+                            <menu-checkbox name="doLog"></menu-checkbox>
+                            <label for="doLog">Log answers to server</label>
+                        </div>
+                        <div class="decklist-edit-row">
+                            <label class="decklist-label" for="deck-slug">Deck ID</label>
+                            <menu-textbox id="deck-slug" name="slug" disabled="true"></menu-textbox>
+                        </div>
+                        <div class="decklist-edit-actions">
+                            <button class="decklist-save-button decklist-primary-button">Save deck</button>
+                        </div>
+                    </div>
+                    <div class="decklist-view-div">
+                        <div class="decklist-view-main">
+                            <b class="decklist-view-title"></b>
+                        </div>
+                        <div class="decklist-view-actions">
+                            <button class="decklist-study-button deck-editor-button decklist-primary-button">Study</button>
+                            <button class="decklist-edit-button deck-editor-button">Edit</button>
+                            <button class="list-entry-remove-button menu-list-remove-button deck-editor-button">Delete</button>
+                            <button class="list-entry-restore-button deck-editor-button">Restore</button>
+                        </div>
+                    </div>
+                </menu-group>
+            </div>
         </menu-list>       
     `;
     var menuHTML = renderString(menuTpl, {
