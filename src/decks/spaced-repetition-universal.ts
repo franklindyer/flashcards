@@ -150,11 +150,7 @@ export class UniversalSpacedRepGen
             var emptyCard = makeEmptyCard(st.cards[guid].cardType);
             if (!("extraInfo" in st.cards[guid]) || st.cards[guid].extraInfo === null)
                 st.cards[guid].extraInfo = "";
-            if (st.cards[guid].stats.numCorrect === null || st.cards[guid].stats.numCorrect === undefined)
-                st.cards[guid].stats.numCorrect = 0
-            if (st.cards[guid].stats.numIncorrect === null || st.cards[guid].stats.numIncorrect === undefined)
-                st.cards[guid].stats.numIncorrect = 0
-            // st.cards[guid].stats = recursiveRepairJSON(st.cards[guid].stats, emptyCard);
+            st.cards[guid].stats = recursiveRepairJSON(st.cards[guid].stats, emptyCard.stats);
         }
 
         this.preprocessAllCards(st);
@@ -247,7 +243,8 @@ export class UniversalSpacedRepGen
         }
 
         if (correct !== FlashcardResult.Unanswered) {
-            card.virtual!.stats.lastStudied = this.getDate();
+            card.virtual!.stats.lastStudied = card.virtual!.stats.lastStudied.slice(1);
+            card.virtual!.stats.lastStudied.unshift(this.getDate());
         }
  
         return card.virtual!.stats;
