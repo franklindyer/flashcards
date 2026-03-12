@@ -231,9 +231,19 @@ export class UniversalSpacedRepGen
     ): SRUniversalStats {
         if (correct == FlashcardResult.Correct) {
             card.virtual!.stats.streak += 1;
+            card.virtual!.stats.streakWrong = 0;
+            card.virtual!.stats.numCorrect += 1;
         } else if (correct == FlashcardResult.Incorrect) {
+            card.virtual!.stats.maxStreakBroken = Math.max(card.virtual!.stats.maxStreakBroken, card.virtual!.stats.streak);
             card.virtual!.stats.streak = 0;
-        } 
+            card.virtual!.stats.streakWrong += 1;
+            card.virtual!.stats.numIncorrect += 1;
+        }
+
+        if (correct !== FlashcardResult.Unanswered) {
+            card.virtual!.stats.lastStudied = this.getDate();
+        }
+ 
         return card.virtual!.stats;
     }
 
