@@ -39,7 +39,6 @@ export function generateDecklistMenu(
             <div class="decklist-menu-header">
                 <div class="decklist-menu-primary-actions">
                     <h2 class="decklist-menu-title">Decks</h2>
-                    <button class="menu-add-another-button decklist-primary-button">Create new deck</button>
                 </div>
                 <div class="decklist-menu-secondary-actions">
                     <label class="decklist-label" for="deck-type-select">Deck type</label>
@@ -48,6 +47,7 @@ export function generateDecklistMenu(
                         <option value="{{ dt }}">{{ deckDefaultRegistry[dt].name }}</option>
                         {% endfor %}
                     </select>
+                    <button class="menu-add-another-button decklist-primary-button">Create new deck</button>
                     <button class="menu-import-file-button decklist-secondary-button">Import from file</button>
                 </div>
                 <div class="decklist-menu-meta-actions">

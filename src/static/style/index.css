@@ -353,15 +353,18 @@ button:focus-visible {
 }
 
 .decklist-link-button {
-    background-color: transparent;
-    border-color: transparent;
-    padding-left: 0;
-    padding-right: 0;
+    background-color: var(--color-surface-alt);
+    border-color: var(--color-border-subtle);
+    border-radius: 999px;
+    padding-left: 10px;
+    padding-right: 10px;
+    font-size: 13px;
     color: var(--color-text-muted);
 }
 
 .decklist-link-button:hover {
-    background-color: transparent;
+    background-color: #e5e7eb;
+    border-color: var(--color-border-strong);
     color: var(--color-text);
 }
 
