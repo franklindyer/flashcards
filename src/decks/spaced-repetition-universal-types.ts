@@ -88,7 +88,7 @@ export function makeEmptyCard(cardType: string, settings?: any): SRUniversalCard
         intervalMinutes: 0,
         stats: {
             created: new Date(),
-            lastStudied: undefined,
+            lastStudied: null!,
             streak: 0,
             streakWrong: 0,
             numCorrect: 0,
