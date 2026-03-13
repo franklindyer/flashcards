@@ -608,6 +608,134 @@ menu-group, menu-list {
     border: 1px solid var(--color-border-subtle);
 }
 
+.sr-card-type-section {
+    border-left: 3px solid var(--color-border-strong);
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+.sr-details-type-settings {
+    margin-top: 6px;
+}
+
+/* Tighter spacing between list entries in SR card-type sections */
+.sr-card-type-section .list-entry-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.sr-card-type-section .list-entry-container > * {
+    margin: 0;
+}
+
+.sr-entry-details {
+    margin: 0;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 3px;
+    background-color: var(--color-surface);
+    padding: 3px 6px;
+}
+
+.sr-card-type-section .deleted-list-entry {
+    background: none;
+}
+
+.deleted-list-entry .sr-entry-details {
+    background-color: var(--color-danger-soft);
+    border-color: #fecaca;
+}
+
+.sr-entry-details + .sr-entry-details,
+.sr-card-type-section .list-entry-container > * + * {
+    margin-top: 0;
+}
+
+.sr-entry-summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    list-style: none;
+}
+
+.sr-entry-summary::-webkit-details-marker,
+.sr-entry-summary::marker {
+    display: none;
+}
+
+.sr-entry-main {
+    flex: 1 1 auto;
+    min-width: 80px;
+}
+
+.sr-entry-main menu-textbox,
+.sr-entry-main menu-textlist {
+    display: inline-block;
+    min-width: 80px;
+    max-width: 200px;
+}
+
+.sr-entry-main input {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.sr-entry-extra {
+    flex: 1 1 auto;
+    display: inline-flex;
+    flex-wrap: nowrap;
+    gap: 4px;
+    align-items: center;
+    min-width: 0;
+}
+
+.sr-entry-extra menu-textlist {
+    display: inline-block;
+    min-width: 60px;
+    max-width: 100px;
+}
+
+.sr-entry-extra input {
+    width: 100%;
+    min-width: 50px;
+    box-sizing: border-box;
+}
+
+.sr-entry-actions {
+    flex: 0 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+}
+
+.sr-entry-actions .list-entry-remove-button,
+.sr-entry-actions .list-entry-restore-button {
+    padding: 6px 10px;
+}
+
+/* Cloze: keep key + tags + extra + buttons on one line */
+.sr-entry-cloze .sr-entry-summary {
+    gap: 4px;
+}
+
+.sr-entry-cloze .sr-entry-main {
+    flex: 0 1 120px;
+}
+
+.sr-entry-cloze .sr-entry-main menu-textbox {
+    max-width: 120px;
+}
+
+.sr-entry-cloze .sr-entry-extra {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.sr-entry-cloze .sr-entry-extra menu-textlist {
+    max-width: 90px;
+}
+
 .sr-menu-section-title {
     margin: 0 0 6px 0;
     font-size: 14px;

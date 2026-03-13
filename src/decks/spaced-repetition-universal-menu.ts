@@ -101,72 +101,77 @@ export const srUniversalMenuTpl = `
                     </menu-group>
 
                     <menu-group name="cardTypeSettings" class="sr-menu-section-group">
-                        <div class="sr-menu-section">
+                        <div class="sr-menu-section sr-card-type-section">
                             <h3 class="sr-menu-section-title">Simple two-sided cards</h3>
-                            <menu-group name="simple-card">
-                                <details class="sr-details">
-                                    <summary>Two-sided card behavior</summary>
-                                    <div class="sr-details-body">
-                                        <div class="sr-menu-toggle-row">
-                                            <menu-checkbox name="doTwoSided" ></menu-checkbox>
-                                            <label for="doTwoSided">Quiz cards in both directions</label>
-                                        </div>
-                                        <div class="sr-menu-toggle-row">
-                                            <menu-checkbox name="doReadAloud" ></menu-checkbox>
-                                            <label for="doReadAloud">Read aloud reversed cards</label>
-                                        </div>
-                                        <div class="sr-menu-field-row">
-                                            <menu-number name="probReversed" min="0" max="1" step="0.01" ></menu-number>
-                                            <label class="sr-menu-label" for="probReversed">Probability of reversal</label>
-                                        </div>
-                                        <div class="sr-menu-field-row">
-                                            <menu-number name="probSpoken" min="0" max="1" step="0.01" ></menu-number>
-                                            <label class="sr-menu-label" for="probSpoken">Probability of speaking</label>
-                                        </div>
-                                    </div>
-                                </details>
-                                <details class="sr-details">
-                                    <summary>Text-to-speech</summary>
-                                    <div class="sr-details-body">
-                                        <div class="sr-menu-field-row">
-                                            <menu-number name="speechSettings.rate" min="0" max="2" step="0.05" ></menu-number>
-                                            <label class="sr-menu-label" for="speechSettings.rate">Speech rate</label>
-                                        </div>
-                                        <div class="sr-menu-field-row">
-                                            <menu-number name="speechSettings.pitch" min="0" max="2" step="0.05" ></menu-number>
-                                            <label class="sr-menu-label" for="speechSettings.pitch">Speech pitch</label>
-                                        </div>
-                                        <div class="sr-menu-field-row">
-                                            <menu-options name="speechSettings.voice">
-                                                {% for v in ttsVoices %}
-                                                <option value="{{ v.name }}">{{ v.name }} ({{ v.lang }})</option>
-                                                {% endfor %}
-                                            </menu-options>
-                                        </div>
-                                    </div>
-                                </details>
-                                <details class="sr-details">
-                                    <summary>Text substitutions</summary>
-                                    <div class="sr-details-body">
-                                        <menu-list name="substitutions">
-                                            <button class="add-another-button">Add another</button>
-                                            <div class="list-entry-container"></div>
-                                            <menu-group class="list-default-entry">
-                                                <menu-textbox name="0" ></menu-textbox>
-                                                <menu-textbox name="1" ></menu-textbox>
-                                                <button class="list-entry-remove-button">remove</button>
-                                                <button class="list-entry-restore-button">restore</button>
-                                            </menu-group>
-                                        </menu-list>
-                                    </div>
-                                </details>
-                                <details class="sr-details">
-                                    <summary>Card template</summary>
-                                    <div class="sr-details-body">
-                                        <menu-textfield name="template"></menu-textfield>
-                                    </div>
-                                </details>
-                            </menu-group>
+                            <details class="sr-details sr-details-type-settings">
+                                <summary>Settings</summary>
+                                <div class="sr-details-body">
+                                    <menu-group name="simple-card">
+                                        <details class="sr-details">
+                                            <summary>Two-sided card behavior</summary>
+                                            <div class="sr-details-body">
+                                                <div class="sr-menu-toggle-row">
+                                                    <menu-checkbox name="doTwoSided" ></menu-checkbox>
+                                                    <label for="doTwoSided">Quiz cards in both directions</label>
+                                                </div>
+                                                <div class="sr-menu-toggle-row">
+                                                    <menu-checkbox name="doReadAloud" ></menu-checkbox>
+                                                    <label for="doReadAloud">Read aloud reversed cards</label>
+                                                </div>
+                                                <div class="sr-menu-field-row">
+                                                    <menu-number name="probReversed" min="0" max="1" step="0.01" ></menu-number>
+                                                    <label class="sr-menu-label" for="probReversed">Probability of reversal</label>
+                                                </div>
+                                                <div class="sr-menu-field-row">
+                                                    <menu-number name="probSpoken" min="0" max="1" step="0.01" ></menu-number>
+                                                    <label class="sr-menu-label" for="probSpoken">Probability of speaking</label>
+                                                </div>
+                                            </div>
+                                        </details>
+                                        <details class="sr-details">
+                                            <summary>Text-to-speech</summary>
+                                            <div class="sr-details-body">
+                                                <div class="sr-menu-field-row">
+                                                    <menu-number name="speechSettings.rate" min="0" max="2" step="0.05" ></menu-number>
+                                                    <label class="sr-menu-label" for="speechSettings.rate">Speech rate</label>
+                                                </div>
+                                                <div class="sr-menu-field-row">
+                                                    <menu-number name="speechSettings.pitch" min="0" max="2" step="0.05" ></menu-number>
+                                                    <label class="sr-menu-label" for="speechSettings.pitch">Speech pitch</label>
+                                                </div>
+                                                <div class="sr-menu-field-row">
+                                                    <menu-options name="speechSettings.voice">
+                                                        {% for v in ttsVoices %}
+                                                        <option value="{{ v.name }}">{{ v.name }} ({{ v.lang }})</option>
+                                                        {% endfor %}
+                                                    </menu-options>
+                                                </div>
+                                            </div>
+                                        </details>
+                                        <details class="sr-details">
+                                            <summary>Text substitutions</summary>
+                                            <div class="sr-details-body">
+                                                <menu-list name="substitutions">
+                                                    <button class="add-another-button">Add another</button>
+                                                    <div class="list-entry-container"></div>
+                                                    <menu-group class="list-default-entry">
+                                                        <menu-textbox name="0" ></menu-textbox>
+                                                        <menu-textbox name="1" ></menu-textbox>
+                                                        <button class="list-entry-remove-button">remove</button>
+                                                        <button class="list-entry-restore-button">restore</button>
+                                                    </menu-group>
+                                                </menu-list>
+                                            </div>
+                                        </details>
+                                        <details class="sr-details">
+                                            <summary>Card template</summary>
+                                            <div class="sr-details-body">
+                                                <menu-textfield name="template"></menu-textfield>
+                                            </div>
+                                        </details>
+                                    </menu-group>
+                                </div>
+                            </details>
                             <menu-list name="simpleCards" limit=10>
                                 <button class="add-another-button">Add another</button>
                                 <input type="text" class="search-bar" placeholder="search cards..." />
@@ -201,131 +206,144 @@ export const srUniversalMenuTpl = `
                             </menu-list>
                         </div>
 
-                        <div class="sr-menu-section">
+                        <div class="sr-menu-section sr-card-type-section">
                             <h3 class="sr-menu-section-title">Multi-sided cards</h3>
-                            <menu-group name="multi-sided-card">
-                                <div class="sr-menu-field-row">
-                                    <menu-options name="quizzingStyle">
-                                        <option value=1>Answer with any other side</option>
-                                        <option value=2>Answer with a random side (given one)</option>
-                                        <option value=3>Answer with all other sides</option>
-                                        <option value=4>Answer with a random side (given all)</option>
-                                    </menu-options>
-                                </div>
-                                <div class="sr-menu-field-row">
-                                    <menu-textlist name="sideNames" placeholder="names for card sides..." ></menu-textlist>
-                                </div>
-                                <div class="sr-menu-field-row">
-                                    <menu-number name="speakableSide" min=0 max=10 step=1 ></menu-number>
-                                    <label class="sr-menu-label" for="speakableSide">Side to be read aloud</label>
-                                </div>
-                                <details class="sr-details">
-                                    <summary>Text-to-speech</summary>
-                                    <div class="sr-details-body">
+                            <details class="sr-details sr-details-type-settings">
+                                <summary>Settings</summary>
+                                <div class="sr-details-body">
+                                    <menu-group name="multi-sided-card">
                                         <div class="sr-menu-field-row">
-                                            <menu-number name="speechSettings.rate" min="0" max="2" step="0.05" ></menu-number>
-                                            <label class="sr-menu-label" for="speechSettings.rate">Speech rate</label>
-                                        </div>
-                                        <div class="sr-menu-field-row">
-                                            <menu-number name="speechSettings.pitch" min="0" max="2" step="0.05" ></menu-number>
-                                            <label class="sr-menu-label" for="speechSettings.pitch">Speech pitch</label>
-                                        </div>
-                                        <div class="sr-menu-field-row">
-                                            <menu-options name="speechSettings.voice">
-                                                {% for v in ttsVoices %}
-                                                <option value="{{ v.name }}">{{ v.name }} ({{ v.lang }})</option>
-                                                {% endfor %}
+                                            <menu-options name="quizzingStyle">
+                                                <option value=1>Answer with any other side</option>
+                                                <option value=2>Answer with a random side (given one)</option>
+                                                <option value=3>Answer with all other sides</option>
+                                                <option value=4>Answer with a random side (given all)</option>
                                             </menu-options>
                                         </div>
-                                    </div>
-                                </details>
-                                <details class="sr-details">
-                                    <summary>Card template</summary>
-                                    <div class="sr-details-body">
-                                        <menu-textfield name="template"></menu-textfield>
-                                    </div>
-                                </details>
-                            </menu-group>
+                                        <div class="sr-menu-field-row">
+                                            <menu-textlist name="sideNames" placeholder="names for card sides..." ></menu-textlist>
+                                        </div>
+                                        <div class="sr-menu-field-row">
+                                            <menu-number name="speakableSide" min=0 max=10 step=1 ></menu-number>
+                                            <label class="sr-menu-label" for="speakableSide">Side to be read aloud</label>
+                                        </div>
+                                        <details class="sr-details">
+                                            <summary>Text-to-speech</summary>
+                                            <div class="sr-details-body">
+                                                <div class="sr-menu-field-row">
+                                                    <menu-number name="speechSettings.rate" min="0" max="2" step="0.05" ></menu-number>
+                                                    <label class="sr-menu-label" for="speechSettings.rate">Speech rate</label>
+                                                </div>
+                                                <div class="sr-menu-field-row">
+                                                    <menu-number name="speechSettings.pitch" min="0" max="2" step="0.05" ></menu-number>
+                                                    <label class="sr-menu-label" for="speechSettings.pitch">Speech pitch</label>
+                                                </div>
+                                                <div class="sr-menu-field-row">
+                                                    <menu-options name="speechSettings.voice">
+                                                        {% for v in ttsVoices %}
+                                                        <option value="{{ v.name }}">{{ v.name }} ({{ v.lang }})</option>
+                                                        {% endfor %}
+                                                    </menu-options>
+                                                </div>
+                                            </div>
+                                        </details>
+                                        <details class="sr-details">
+                                            <summary>Card template</summary>
+                                            <div class="sr-details-body">
+                                                <menu-textfield name="template"></menu-textfield>
+                                            </div>
+                                        </details>
+                                    </menu-group>
+                                </div>
+                            </details>
                             <menu-list name="multiCards" limit=10>
                                 <button class="add-another-button">Add another</button>
                                 <input type="text" class="search-bar" placeholder="search cards..." />
                                 <div class="list-entry-container"></div>
                                 <menu-group class="list-default-entry" cardtype="multi-sided-card">
-                                    <menu-guid name="guid" style="display: none" ></menu-guid>
-                                     
-                                    <menu-textlist type="text" name="cardEntry.sides" class="list-default-entry"></menu-textlist>
-
-                                    <div class="sr-menu-inline-actions">
-                                        <button class="menu-preview-card-button">view</button>
-                                        <button class="menu-prelisten-card-button">listen</button>
-                                        <button class="list-entry-remove-button">remove</button>
-                                        <button class="list-entry-restore-button">restore</button>
-                                    </div>
-                                    <div class="flashcard-container"></div>
-                                    <br />
+                                    <details class="sr-details sr-entry-details">
+                                        <summary class="sr-entry-summary">
+                                            <menu-guid name="guid" style="display: none" ></menu-guid>
+                                            <span class="sr-entry-main"><menu-textlist type="text" name="cardEntry.sides" class="list-default-entry"></menu-textlist></span>
+                                            <span class="sr-entry-actions">
+                                                <button class="menu-preview-card-button">view</button>
+                                                <button class="menu-prelisten-card-button">listen</button>
+                                                <button class="list-entry-remove-button">remove</button>
+                                                <button class="list-entry-restore-button">restore</button>
+                                            </span>
+                                        </summary>
+                                        <div class="flashcard-container"></div>
+                                    </details>
                                 </menu-group>
                             </menu-list>
                         </div>
 
-                        <div class="sr-menu-section">
+                        <div class="sr-menu-section sr-card-type-section">
                             <h3 class="sr-menu-section-title">Cloze cards</h3>
-                            <menu-group name="cloze-card">
-                                <div class="sr-menu-field-row">
-                                    <menu-textbox name="clozeServerUrl" placeholder="cloze server URL..." ></menu-textbox>
-                                </div>
-                                <div class="sr-menu-field-row">
-                                    <menu-textlist name="sourceLangs" placeholder="source langs..." ></menu-textlist>
-                                </div>
-                                <div class="sr-menu-field-row">
-                                    <menu-textbox name="targetLang" placeholder="target lang..." ></menu-textbox>
-                                </div>
-                                <div class="sr-menu-field-row">
-                                    <menu-textlist name="clozeGroups" placeholder="puzzle groups..." ></menu-textlist>
-                                </div>
-                                <details class="sr-details">
-                                    <summary>Text-to-speech</summary>
-                                    <div class="sr-details-body">
+                            <details class="sr-details sr-details-type-settings">
+                                <summary>Settings</summary>
+                                <div class="sr-details-body">
+                                    <menu-group name="cloze-card">
                                         <div class="sr-menu-field-row">
-                                            <menu-number name="speechSettings.rate" min="0" max="2" step="0.05" ></menu-number>
-                                            <label class="sr-menu-label" for="speechSettings.rate">Speech rate</label>
+                                            <menu-textbox name="clozeServerUrl" placeholder="cloze server URL..." ></menu-textbox>
                                         </div>
                                         <div class="sr-menu-field-row">
-                                            <menu-number name="speechSettings.pitch" min="0" max="2" step="0.05" ></menu-number>
-                                            <label class="sr-menu-label" for="speechSettings.pitch">Speech pitch</label>
+                                            <menu-textlist name="sourceLangs" placeholder="source langs..." ></menu-textlist>
                                         </div>
                                         <div class="sr-menu-field-row">
-                                            <menu-options name="speechSettings.voice">
-                                                {% for v in ttsVoices %}
-                                                <option value="{{ v.name }}">{{ v.name }} ({{ v.lang }})</option>
-                                                {% endfor %}
-                                            </menu-options>
+                                            <menu-textbox name="targetLang" placeholder="target lang..." ></menu-textbox>
                                         </div>
-                                    </div>
-                                </details>
-                                <details class="sr-details">
-                                    <summary>Card template</summary>
-                                    <div class="sr-details-body">
-                                        <menu-textfield name="template"></menu-textfield>
-                                    </div>
-                                </details>
-                            </menu-group>
+                                        <div class="sr-menu-field-row">
+                                            <menu-textlist name="clozeGroups" placeholder="puzzle groups..." ></menu-textlist>
+                                        </div>
+                                        <details class="sr-details">
+                                            <summary>Text-to-speech</summary>
+                                            <div class="sr-details-body">
+                                                <div class="sr-menu-field-row">
+                                                    <menu-number name="speechSettings.rate" min="0" max="2" step="0.05" ></menu-number>
+                                                    <label class="sr-menu-label" for="speechSettings.rate">Speech rate</label>
+                                                </div>
+                                                <div class="sr-menu-field-row">
+                                                    <menu-number name="speechSettings.pitch" min="0" max="2" step="0.05" ></menu-number>
+                                                    <label class="sr-menu-label" for="speechSettings.pitch">Speech pitch</label>
+                                                </div>
+                                                <div class="sr-menu-field-row">
+                                                    <menu-options name="speechSettings.voice">
+                                                        {% for v in ttsVoices %}
+                                                        <option value="{{ v.name }}">{{ v.name }} ({{ v.lang }})</option>
+                                                        {% endfor %}
+                                                    </menu-options>
+                                                </div>
+                                            </div>
+                                        </details>
+                                        <details class="sr-details">
+                                            <summary>Card template</summary>
+                                            <div class="sr-details-body">
+                                                <menu-textfield name="template"></menu-textfield>
+                                            </div>
+                                        </details>
+                                    </menu-group>
+                                </div>
+                            </details>
                             <menu-list name="clozeCards" limit=10>
                                 <button class="add-another-button">Add another</button>
                                 <input type="text" class="search-bar" placeholder="search cards..." />
                                 <div class="list-entry-container"></div>
                                 <menu-group class="list-default-entry">
-                                    <menu-guid name="guid" style="display: none" ></menu-guid>
-                                    <menu-textbox name="cardEntry.key" ></menu-textbox>
-                                    <menu-textlist name="tags" placeholder="tags..." ></menu-textlist>
-                                    <menu-textlist name="extraInfo" placeholder="extra info..." ></menu-textlist>
-                                    <div class="sr-menu-inline-actions">
-                                        <button class="menu-preview-card-button">view</button>
-                                        <button class="menu-prelisten-card-button">listen</button>
-                                        <button class="list-entry-remove-button">remove</button>
-                                        <button class="list-entry-restore-button">restore</button>
-                                    </div>
-                                    <div class="flashcard-container"></div>
-                                    <br/>
+                                    <details class="sr-details sr-entry-details sr-entry-cloze">
+                                        <summary class="sr-entry-summary">
+                                            <menu-guid name="guid" style="display: none" ></menu-guid>
+                                            <span class="sr-entry-main"><menu-textbox name="cardEntry.key" placeholder="key"></menu-textbox></span>
+                                            <span class="sr-entry-extra"><menu-textlist name="tags" placeholder="tags"></menu-textlist><menu-textlist name="extraInfo" placeholder="extra"></menu-textlist></span>
+                                            <span class="sr-entry-actions">
+                                                <button class="menu-preview-card-button">view</button>
+                                                <button class="menu-prelisten-card-button">listen</button>
+                                                <button class="list-entry-remove-button">remove</button>
+                                                <button class="list-entry-restore-button">restore</button>
+                                            </span>
+                                        </summary>
+                                        <div class="flashcard-container"></div>
+                                    </details>
                                 </menu-group>
                             </menu-list>
                         </div>

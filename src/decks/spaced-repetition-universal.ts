@@ -517,6 +517,8 @@ export class UniversalSpacedRepGen
                         previewDiv.innerHTML = "";
                         previewDiv.style.display = "block";
                         previewDiv.appendChild(cp.el);
+                        var detailsEl = previewDiv.closest("details");
+                        if (detailsEl) { detailsEl.open = true; }
                     });
                 });
             };
