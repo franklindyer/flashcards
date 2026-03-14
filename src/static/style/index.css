@@ -143,6 +143,7 @@ button:focus-visible {
 .flashcard-slide-out {
     animation: card-slide-out 0.8s;
     animation-timing-function: ease-in-out;
+    background-color: #e8f0e8;
 }
 
 .flashcard-slide-out-unanswered {
