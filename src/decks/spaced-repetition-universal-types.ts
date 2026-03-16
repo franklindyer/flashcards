@@ -19,7 +19,9 @@ export type SRUniversalStats = {
     created: Date,
     lastStudied: Date[],
     streak: number,
+    lastStreak: number,
     streakWrong: number,
+    lastStreakWrong: number,
     numCorrect: number,
     numIncorrect: number,
     maxStreakBroken: number
@@ -90,7 +92,9 @@ export function makeEmptyCard(cardType: string, settings?: any): SRUniversalCard
             created: new Date(),
             lastStudied: [],
             streak: 0,
+            lastStreak: 0,
             streakWrong: 0,
+            lastStreakWrong: 0,
             numCorrect: 0,
             numIncorrect: 0,
             maxStreakBroken: 0

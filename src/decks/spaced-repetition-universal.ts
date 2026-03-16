@@ -233,6 +233,13 @@ export class UniversalSpacedRepGen
         settings: SRUniversalSettings,
         correct: FlashcardResult
     ): SRUniversalStats {
+        if (correct !== FlashcardResult.Unanswered) {
+            card.virtual!.stats.lastStudied = card.virtual!.stats.lastStudied.slice(1);
+            card.virtual!.stats.lastStudied.unshift(this.getDate());
+            card.virtual!.stats.lastStreak = card.virtual!.stats.streak;
+            card.virtual!.stats.lastStreakWrong = card.virtual!.stats.streakWrong;
+        }
+ 
         if (correct == FlashcardResult.Correct) {
             card.virtual!.stats.streak += 1;
             card.virtual!.stats.streakWrong = 0;
@@ -244,11 +251,6 @@ export class UniversalSpacedRepGen
             card.virtual!.stats.numIncorrect += 1;
         }
 
-        if (correct !== FlashcardResult.Unanswered) {
-            card.virtual!.stats.lastStudied = card.virtual!.stats.lastStudied.slice(1);
-            card.virtual!.stats.lastStudied.unshift(this.getDate());
-        }
- 
         return card.virtual!.stats;
     }
 
