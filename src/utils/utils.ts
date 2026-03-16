@@ -10,6 +10,15 @@ export function guidGenerator(): string {
     return (S4()+S4()+"-"+S4()+"-"+S4()+"-"+S4()+"-"+S4()+S4()+S4());
 }
 
+export function getHostname() {
+    var host = localStorage.getItem("host");
+    if (host === null) {
+        host = guidGenerator();
+        localStorage.setItem("host", host);
+    }
+    return host;
+}
+
 export function arrayReindex<a>(ls: a[]): a[] { 
     return ls.filter((_) => true);
 }

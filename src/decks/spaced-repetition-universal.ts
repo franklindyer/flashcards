@@ -57,6 +57,7 @@ import {
     SRUniversalState,
     makeEmptyCard
 } from "decks/spaced-repetition-universal-types"
+import { srUniversalMenuTpl } from "decks/spaced-repetition-universal-menu"
 
 /* --- USEFUL UTILITIES FOR DEFINING SR DECK --- */
 
@@ -148,8 +149,10 @@ export class UniversalSpacedRepGen
         }
         for (var i in Object.keys(st.cards)) {
             var guid = Object.keys(st.cards)[i];
+            var emptyCard = makeEmptyCard(st.cards[guid].cardType);
             if (!("extraInfo" in st.cards[guid]) || st.cards[guid].extraInfo === null)
                 st.cards[guid].extraInfo = "";
+            st.cards[guid].stats = recursiveRepairJSON(st.cards[guid].stats, emptyCard.stats);
         }
 
         this.preprocessAllCards(st);
@@ -230,11 +233,24 @@ export class UniversalSpacedRepGen
         settings: SRUniversalSettings,
         correct: FlashcardResult
     ): SRUniversalStats {
+        if (correct !== FlashcardResult.Unanswered) {
+            card.virtual!.stats.lastStudied = card.virtual!.stats.lastStudied.slice(1);
+            card.virtual!.stats.lastStudied.unshift(this.getDate());
+            card.virtual!.stats.lastStreak = card.virtual!.stats.streak;
+            card.virtual!.stats.lastStreakWrong = card.virtual!.stats.streakWrong;
+        }
+ 
         if (correct == FlashcardResult.Correct) {
             card.virtual!.stats.streak += 1;
+            card.virtual!.stats.streakWrong = 0;
+            card.virtual!.stats.numCorrect += 1;
         } else if (correct == FlashcardResult.Incorrect) {
+            card.virtual!.stats.maxStreakBroken = Math.max(card.virtual!.stats.maxStreakBroken, card.virtual!.stats.streak);
             card.virtual!.stats.streak = 0;
-        } 
+            card.virtual!.stats.streakWrong += 1;
+            card.virtual!.stats.numIncorrect += 1;
+        }
+
         return card.virtual!.stats;
     }
 
@@ -290,6 +306,24 @@ export class UniversalSpacedRepGen
 
         st.cards[cardGuid] = cardNewState;
         return trivialPromise(st);
+    }
+
+    reportableData(
+        st: SRUniversalState,
+        card: SRUniversalCardPhysical,
+        result: FlashcardResult
+    ): any {
+        if (!card.virtual || result == FlashcardResult.Unanswered) {
+            return {};
+        }
+        return {
+            "guid": card.virtual!.guid,
+            "stats": card.virtual!.stats, 
+            "due": card.virtual!.due,
+            "timestamp": this.getDate(),
+            "interval": card.virtual!.intervalMinutes,
+            "correct": result == FlashcardResult.Correct
+        }
     }
 
     getNextCardAsync(st: SRUniversalState): Promise<SRUniversalCardPhysical> {
@@ -432,244 +466,7 @@ export class UniversalSpacedRepGen
         var numNew = (<any>this).gen.getNew(st).length;
         var numTotal = Object.keys(st.cards).length;
 
-        var menuTpl = `
-            <menu-group>
-                <a>{{ numTotal }} total cards</a> <br />
-                <a>{{ numDue }} due cards</a> <br />
-                <a>{{ numNew }} new cards</a> <br />
-                <label for="studying">Studying cards in the order:</label>
-                <menu-options name="studying">
-                    <option value=1>New cards</option>
-                    <option value=2>Due cards</option>
-                    <option value=3>Random practice cards</option>
-                    <option value=4>Due then new cards</option>
-                    <option value=5>New then due cards</option>
-                </menu-options>
-                <menu-group name="settings">
-                    <menu-number name="initialStreak" min=1 max=10 step=1></menu-number>
-                    <label for="initialStreak">Streak needed to complete new card</label> <br />
-                    <menu-number name="initialHours" min=1 max=1024 step=1></menu-number>
-                    <label for="initialHours">Initial interval (hours)</label> <br />
-                    <menu-number name="minimumHours" min=1 max=1024 step=1></menu-number>
-                    <label for="minimumHours">Minimum interval (hours)</label> <br />
-                    <menu-number name="correctFactor" min="1" max="10" step="0.1"></menu-number>
-                    <label for="correctFactor">Correct factor</label> <br />
-                    <menu-number name="incorrectFactor" min="0.1" max="1" step="0.01"></menu-number>
-                    <label for="incorrectFactor">Incorrect factor</label> <br />
-                    <menu-number name="spreadingCoef" min="0.0" max="0.9" step="0.01"></menu-number>
-                    <label for="spreadingCoef">Spreading coefficient for intervals</label> <br />
-                    <menu-checkbox name="fillQOnlyWhenEmpty"></menu-checkbox>
-                    <label for="fillQOnlyWhenEmpty">Refill new queue only when it is empty</label> <br />
-                    <menu-checkbox name="preventReversedNewCards"></menu-checkbox>
-                    <label for="preventReversedNewCards">Don't reverse new cards during initial study</label> <br />
-                    <menu-checkbox name="readCorrectAnswers"></menu-checkbox>
-                    <label for="readCorrectAnswers">Speak correct answers using text-to-speech</label> <br />
-                    <menu-textlist name="inactiveTags"></menu-textlist>
-                    <label for="inactiveTags">Deactivated tags</label> <br />
-                    <menu-group name="filterSettings">
-                        <menu-checkbox name="noPunctuation"></menu-checkbox>
-                        <label for="noPunctuation">Ignore punctuation</label> <br />
-                        <menu-checkbox name="noCaps"></menu-checkbox>
-                        <label for="noCaps">Ignore capitalization</label> <br />
-                        <menu-checkbox name="smartQuotes"></menu-checkbox>
-                        <label for="smartQuotes">Ignore smart quotes</label> <br />
-                        <menu-checkbox name="doubleSpaces"></menu-checkbox>
-                        <label for="doubleSpaces">Ignore multiple spaces in a row</label> <br />
-                        <menu-checkbox name="trimSpaces"></menu-checkbox>
-                        <label for="trimSpaces">Ignore leading and trailing spaces</label> <br />
-                        <menu-checkbox name="nfc"></menu-checkbox>
-                        <label for="nfc">NFC-normalize Unicode text</label> <br />
-                        <menu-checkbox name="removeParenDelimited"></menu-checkbox>
-                        <label for="removeParenDelimited">Ignore substrings enclosed in (parentheses)</label> <br />
-                        <menu-checkbox name="removeSqDelimited"></menu-checkbox>
-                        <label for="removeSqDelimited">Ignore substrings enclosed in [square brackets]</label> <br />
-                    </menu-group>
-
-                    <menu-group name="cardTypeSettings">
-                        <div>
-                            <h3>Simple two-sided card</h3>
-                            <menu-group name="simple-card">
-                                <details>
-                                    <summary>Two-sided card settings</summary>
-                                    <menu-checkbox name="doTwoSided" ></menu-checkbox>
-                                    <label for="doTwoSided">Quiz on cards back-to-front sometimes</label> <br />
-                                    <menu-checkbox name="doReadAloud" ></menu-checkbox>
-                                    <label for="doReadAloud">Read aloud back-to-front cards for which the setting is enabled</label> <br />
-                                    <menu-number name="probReversed" min="0" max="1" step="0.01" ></menu-number>
-                                    <label for="probReversed">Probability of card being reversed</label> <br />
-                                    <menu-number name="probSpoken" min="0" max="1" step="0.01" ></menu-number>
-                                    <label for="probSpoken">Probability of a reversed card being spoken</label> <br />
-                                </details>
-                                <details>
-                                    <summary>Text-to-speech settings</summary>
-                                    <menu-number name="speechSettings.rate" min="0" max="2" step="0.05" ></menu-number>
-                                    <label for="speechSettings.rate">Speech rate</label> <br />
-                                    <menu-number name="speechSettings.pitch" min="0" max="2" step="0.05" ></menu-number>
-                                    <label for="speechSettings.pitch">Speech pitch</label> <br />
-                                    <menu-options name="speechSettings.voice">
-                                        {% for v in ttsVoices %}
-                                        <option value="{{ v.name }}">{{ v.name }} ({{ v.lang }})</option>
-                                        {% endfor %}
-                                    </menu-options>
-                                </details>
-                                <details>
-                                    <summary>Text substitutions</summary>
-                                    <menu-list name="substitutions">
-                                        <button class="add-another-button">Add another</button>
-                                        <div class="list-entry-container"></div>
-                                        <menu-group class="list-default-entry">
-                                            <menu-textbox name="0" ></menu-textbox>
-                                            <menu-textbox name="1" ></menu-textbox>
-                                            <button class="list-entry-remove-button">remove</button>
-                                            <button class="list-entry-restore-button">restore</button>
-                                        </menu-group>
-                                    </menu-list>
-                                </details>
-                                <details>
-                                    <summary>Card template</summary>
-                                    <menu-textfield name="template"></menu-textfield>
-                                </details>
-                            </menu-group>
-                            <menu-list name="simpleCards" limit=10>
-                                <button class="add-another-button">Add another</button>
-                                <input type="text" class="search-bar" placeholder="search cards..." />
-                                <div class="list-entry-container"></div>
-                                <menu-group class="list-default-entry">
-                                    <details>
-                                        <summary>
-                                            <menu-guid name="guid" style="display: none" ></menu-guid>
-                                            <menu-textlist name="cardEntry.prompt" sep="|"></menu-textlist>
-                                            <swap-button left="cardEntry.prompt" right="cardEntry.answer">↔</swap-button>
-                                            <menu-textlist name="cardEntry.answer" sep="|"></menu-textlist>
-                                        </summary>
-                                        <menu-checkbox name="cardEntry.twoSided" ></menu-checkbox>
-                                        <label for="cardEntry.twoSided">Card is two-sided?</label> <br />
-                                        <menu-checkbox name="cardEntry.readAloud" ></menu-checkbox>
-                                        <label for="cardEntry.twoSided">Read aloud reversed card?</label> <br />
-                                        <menu-textlist name="tags" placeholder="tags..." ></menu-textlist>
-                                        <menu-textlist name="extraInfo" placeholder="extra info..." ></menu-textlist>
-                                        <button class="menu-preview-card-button">view</button>
-                                        <button class="menu-prelisten-card-button">listen</button>
-                                        <button class="list-entry-remove-button">remove</button>
-                                        <button class="list-entry-restore-button">restore</button>
-                                        <div class="flashcard-container"></div>
-                                    </details>
-                                </menu-group>
-                            </menu-list>
-                        </div>
-
-                        <div>
-                            <h3>Multi-sided cards</h3>
-                            <menu-group name="multi-sided-card">
-                                <menu-options name="quizzingStyle">
-                                    <option value=1>Answer with any other side</option>
-                                    <option value=2>Answer with a randomly chosen side, given one other side</option>
-                                    <option value=3>Answer with all other sides</option>
-                                    <option value=4>Answer with a randomly chosen side, given all other sides</option>
-                                </menu-options> <br />
-                                <menu-textlist name="sideNames" placeholder="names for card sides..." ></menu-textlist> <br />
-                                <menu-number name="speakableSide" min=0 max=10 step=1 ></menu-number>
-                                <label for="speakableSide">Side to be read aloud</label> <br />
-                                <details>
-                                    <summary>Text-to-speech settings</summary>
-                                    <menu-number name="speechSettings.rate" min="0" max="2" step="0.05" ></menu-number>
-                                    <label for="speechSettings.rate">Speech rate</label> <br />
-                                    <menu-number name="speechSettings.pitch" min="0" max="2" step="0.05" ></menu-number>
-                                    <label for="speechSettings.pitch">Speech pitch</label> <br />
-                                    <menu-options name="speechSettings.voice">
-                                        {% for v in ttsVoices %}
-                                        <option value="{{ v.name }}">{{ v.name }} ({{ v.lang }})</option>
-                                        {% endfor %}
-                                    </menu-options>
-                                </details>
-                                <details>
-                                    <summary>Card template</summary>
-                                    <menu-textfield name="template"></menu-textfield>
-                                </details>
-                            </menu-group>
-                            <menu-list name="multiCards" limit=10>
-                                <button class="add-another-button">Add another</button>
-                                <input type="text" class="search-bar" placeholder="search cards..." />
-                                <div class="list-entry-container"></div>
-                                <menu-group class="list-default-entry" cardtype="multi-sided-card">
-                                    <menu-guid name="guid" style="display: none" ></menu-guid>
-                                     
-                                    <menu-textlist type="text" name="cardEntry.sides" class="list-default-entry"></menu-textlist>
- 
-                                    <button class="menu-preview-card-button">view</button>
-                                    <button class="menu-prelisten-card-button">listen</button>
-                                    <button class="list-entry-remove-button">remove</button>
-                                    <button class="list-entry-restore-button">restore</button>
-                                    <div class="flashcard-container"></div>
-                                    <br />
-                                </menu-group>
-                            </menu-list>
-                        </div>
-
-                        <div>
-                            <h3>Cloze cards</h3>
-                            <menu-group name="cloze-card">
-                                <menu-textbox name="clozeServerUrl" placeholder="cloze server URL..." ></menu-textbox>
-                                <menu-textlist name="sourceLangs" placeholder="source langs..." ></menu-textlist>
-                                <menu-textbox name="targetLang" placeholder="target lang..." ></menu-textbox>
-                                <menu-textlist name="clozeGroups" placeholder="puzzle groups..." ></menu-textlist>
-                                <details>
-                                    <summary>Text-to-speech settings</summary>
-                                    <menu-number name="speechSettings.rate" min="0" max="2" step="0.05" ></menu-number>
-                                    <label for="speechSettings.rate">Speech rate</label> <br />
-                                    <menu-number name="speechSettings.pitch" min="0" max="2" step="0.05" ></menu-number>
-                                    <label for="speechSettings.pitch">Speech pitch</label> <br />
-                                    <menu-options name="speechSettings.voice">
-                                        {% for v in ttsVoices %}
-                                        <option value="{{ v.name }}">{{ v.name }} ({{ v.lang }})</option>
-                                        {% endfor %}
-                                    </menu-options>
-                                </details>
-                                <details>
-                                    <summary>Card template</summary>
-                                    <menu-textfield name="template"></menu-textfield>
-                                </details>
-                            </menu-group>
-                            <menu-list name="clozeCards" limit=10>
-                                <button class="add-another-button">Add another</button>
-                                <input type="text" class="search-bar" placeholder="search cards..." />
-                                <div class="list-entry-container"></div>
-                                <menu-group class="list-default-entry">
-                                    <menu-guid name="guid" style="display: none" ></menu-guid>
-                                    <menu-textbox name="cardEntry.key" ></menu-textbox>
-                                    <menu-textlist name="tags" placeholder="tags..." ></menu-textlist>
-                                    <menu-textlist name="extraInfo" placeholder="extra info..." ></menu-textlist>
-                                    <button class="menu-preview-card-button">view</button>
-                                    <button class="menu-prelisten-card-button">listen</button>
-                                    <button class="list-entry-remove-button">remove</button>
-                                    <button class="list-entry-restore-button">restore</button>
-                                    <div class="flashcard-container"></div>
-                                    <br/>
-                                </menu-group>
-                            </menu-list>
-                        </div>
-                        <div>
-                            <h3>Suggested 3rd-party cards</h3>
-                            <menu-pushcard name="pushcardQueue">
-                                <menu-textbox class="menu-pushcard-server-url" ></menu-textbox>
-                                <menu-textbox class="menu-pushcard-server-key" ></menu-textbox>
-                                <button class="menu-pushcard-refresh-button">Refresh</button>
-                                <div class="menu-pushcard-entries-div"></div>
-                                <div class="menu-pushcard-default-entry">
-                                    <b class="menu-pushcard-entry-label"></b>
-                                    <menu-options class="menu-pushcard-accept-select">
-                                        <option value="pending">Choose to accept or reject...</option>
-                                        <option value="accept">Accept</option>
-                                        <option value="reject">Reject</option>
-                                    </menu-options>
-                                </div>
-                            </menu-pushcard>
-                        </div>
-                        </div>
-                    </menu-group>
-                </menu-group>
-            </menu-group> 
-        `;
+        var menuTpl = srUniversalMenuTpl;
         var menuHTML = renderString(menuTpl, { 
             st: st,
             ttsVoices: [...gSynth().getVoices()],
@@ -722,6 +519,8 @@ export class UniversalSpacedRepGen
                         previewDiv.innerHTML = "";
                         previewDiv.style.display = "block";
                         previewDiv.appendChild(cp.el);
+                        var detailsEl = previewDiv.closest("details");
+                        if (detailsEl) { detailsEl.open = true; }
                     });
                 });
             };

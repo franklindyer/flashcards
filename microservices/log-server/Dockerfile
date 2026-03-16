@@ -5,14 +5,15 @@ RUN python3 -m venv /venv
 RUN /venv/bin/python3 -m pip install flask flask_socketio waitress
 ENV PATH="/venv/bin:$PATH"
 
-RUN mkdir /db
+RUN mkdir /data
 
 COPY requirements.txt requirements.txt
 RUN pip3 install -r requirements.txt
 
+COPY utils.py utils.py
 COPY server.py server.py
 
 EXPOSE 8080 
 
-# CMD ["python3", "server.py", "8080"]
-ENTRYPOINT ["waitress-serve", "--host", "0.0.0.0", "--call", "server:app"]
+CMD ["python3", "server.py"]
+# ENTRYPOINT ["waitress-serve", "--host", "--port=8080", "0.0.0.0", "--call", "server:app"]

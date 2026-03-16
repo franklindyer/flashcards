@@ -135,6 +135,10 @@ export class FreqProgGen
         resolve();
     }
 
+    reportableData(st: FreqProgState, j: number, res: FlashcardResult): any {
+        return {};
+    }
+
     getNextCard(st: FreqProgState): number {
         var u = Math.random();
         var p = 1 - 2/(st.score + 2);

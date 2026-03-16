@@ -36,6 +36,7 @@ export type FlashcardDeck<S> = {
     view: FlashcardDeckView,
     lastSaved: Date,
     doSync: boolean,
+    doLog: boolean,
     state: S
 }
 
@@ -211,6 +212,7 @@ export function registerDeckType<S, D>(
         state: defaultState,
         lastSaved: new Date(),
         doSync: false,
+        doLog: false,
         view: {
             color: colorCode
         }

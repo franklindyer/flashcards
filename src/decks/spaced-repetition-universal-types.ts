@@ -17,7 +17,14 @@ import {
 
 export type SRUniversalStats = {
     created: Date,
+    lastStudied: Date[],
     streak: number,
+    lastStreak: number,
+    streakWrong: number,
+    lastStreakWrong: number,
+    numCorrect: number,
+    numIncorrect: number,
+    maxStreakBroken: number
 }
 
 export type SRUniversalCardVirtual = {
@@ -83,7 +90,14 @@ export function makeEmptyCard(cardType: string, settings?: any): SRUniversalCard
         intervalMinutes: 0,
         stats: {
             created: new Date(),
-            streak: 0
+            lastStudied: [],
+            streak: 0,
+            lastStreak: 0,
+            streakWrong: 0,
+            lastStreakWrong: 0,
+            numCorrect: 0,
+            numIncorrect: 0,
+            maxStreakBroken: 0
         }
     }
 }
