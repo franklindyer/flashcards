@@ -203,11 +203,20 @@ export class NumberComponent extends HTMLElement
     }
 
     getState() {
+        if (this.inputElement.value.length == 0) {
+            return 0;
+        }
         return parseFloat(this.inputElement.value);
     }
 
     setState(x: number) {
-        this.inputElement.value = x.toString();
+        console.log(x);
+        if (x.toString() == '') {
+            this.inputElement.value = "0";
+        } else {
+            this.inputElement.value = x.toString();
+        }
+        console.log(this.inputElement.value);
     }
 }
 
