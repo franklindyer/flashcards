@@ -68,7 +68,7 @@ export const defaultSRUniversalSettings = {
     minimumHours: 8,
     correctFactor: 1.5,
     incorrectFactor: 0.5,
-    spreadingCoef: 0.0,
+    spreadingCoef: 0.1,
     fillQOnlyWhenEmpty: true,
     inactiveTags: [],
     readCorrectAnswers: false,
