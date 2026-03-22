@@ -296,6 +296,9 @@ export const srUniversalMenuTpl = `
                                         <div class="sr-menu-field-row">
                                             <menu-textlist name="clozeGroups" placeholder="puzzle groups..." ></menu-textlist>
                                         </div>
+                                        <div class="sr-menu-field-row">
+                                            <menu-number name="maxLength" ></menu-number>
+                                        </div>
                                         <details class="sr-details">
                                             <summary>Text-to-speech</summary>
                                             <div class="sr-details-body">

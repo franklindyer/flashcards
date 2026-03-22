@@ -236,6 +236,7 @@ export type ClozeCardSettings = {
     sourceLangs: string[],
     targetLang: string,
     clozeGroups: string[],
+    maxLength: number,
     speechSettings: SpeechSettings,
     template: string
 }
@@ -257,7 +258,8 @@ export class ClozeCardType extends FlashcardType<ClozeCardEntry, ClozeCardData, 
                 "groups": settings.clozeGroups.join(","),
                 "tgt": settings.targetLang,
                 "lemma": key,
-                "n": this.cache.numPreload.toString()
+                "n": this.cache.numPreload.toString(),
+                "maxlen": settings.maxLength.toString()
             }).toString()
         ).then((r) => r.json()).catch((e) => undefined);
    
@@ -360,6 +362,7 @@ export class ClozeCardType extends FlashcardType<ClozeCardEntry, ClozeCardData, 
             sourceLangs: [],
             targetLang: "",
             clozeGroups: [],
+            maxLength: 150,
             speechSettings: defaultSpeechSettings(),
             template: njClozeCard
         }
