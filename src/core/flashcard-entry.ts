@@ -280,17 +280,18 @@ export class ClozeCardType extends FlashcardType<ClozeCardEntry, ClozeCardData, 
                 if (j === undefined) {
                     return { valid: false, key: entry.key };
                 }
-                var shortAnswer = "";
+                var goalWords: string[] = [];
                 j["puzzle"].match(/\{\{([^\{\}]+)\}\}/g)!.forEach((m: string) => {
-                    if (shortAnswer !== "") shortAnswer = shortAnswer.concat(", ");
-                    shortAnswer = shortAnswer.concat(m.slice(2, -2));
+                    goalWords.push(m.slice(2, -2))
                 });
+                var shortAnswer1 = goalWords.join(", ");
+                var shortAnswer2 = goalWords.join(" ");
                 return {
                     key: entry.key,
                     valid: true,
                     cloze: {
                         prompt: j["puzzle"],
-                        answers: [j["target"], shortAnswer],
+                        answers: [j["target"], shortAnswer1, shortAnswer2],
                         translation: j["source"],
                         group: j["group"]
                     }
