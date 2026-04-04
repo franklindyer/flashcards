@@ -8,15 +8,14 @@ import {
     renderCard
 } from "core/flashcard-template"
 import {
-    StateEditor,
-    scrollNumberEditor
-} from "core/editor"
+    renderString
+} from "nunjucks"
 import {
-    gDeckRegistry,
-    gDeckTypeRegistry,
+    MenuComponent
+} from "menus/menus"
+import {
     registerDeckType
 } from "core/flashcard-deck"
-
 
 // Type of data needed to describe the state of the entire deck
 type TimesTableState = {
@@ -53,6 +52,10 @@ export class TimesTableGen
         resolve();
     }
 
+    reportableData(st: TimesTableState, c: TimesTableFact, res: FlashcardResult) {
+        return {};
+    }
+
     getNextCard(st: TimesTableState): TimesTableFact {
         var factor1 = Math.floor(Math.random() * (st.maxNum-st.minNum+1)) + st.minNum;
         var factor2 = Math.floor(Math.random() * (st.maxNum-st.minNum+1)) + st.minNum;
@@ -77,41 +80,31 @@ export class TimesTableGen
         return (answer === (c.factor1 * c.factor2).toString());
     }
 
-    makeEditor(st: TimesTableState): StateEditor<TimesTableState> {
-        var minEd = scrollNumberEditor("Minimum factor:", st.minNum, 0, 100, 1);
-        var maxEd = scrollNumberEditor("Maximum factor:", st.maxNum, 0, 100, 1);
-       
-        var wrongDiv = document.createElement("div");
-        wrongDiv.style.backgroundColor = "#ffdddd";
-        wrongDiv.classList.add("deck-menu-submenu");
-        var wrongList = document.createElement("ul");
-        var wrongHdr = document.createElement("b");
-        wrongHdr.textContent = "You have not gotten any cards wrong yet.";
-        for (var i in Object.keys(st.recentlyIncorrect)) {
-            var fct = st.recentlyIncorrect[i];
-            var li = document.createElement("li");
-            li.textContent = `${fct[0]} × ${fct[1]} = ${fct[0] * fct[1]}`;
-            wrongList.appendChild(li);
-            wrongHdr.textContent = "You have gotten the following cards wrong:"
-        }
-        wrongDiv.appendChild(wrongHdr);
-        wrongDiv.appendChild(wrongList);
-        
-        var edDiv = document.createElement("div");
-        edDiv.appendChild(minEd.element);
-        edDiv.appendChild(maxEd.element);
-        edDiv.appendChild(wrongDiv);
-        
-        return {
-            element: edDiv,
-            menuToState: () => {
-                return {
-                    minNum: minEd.menuToState(),
-                    maxNum: maxEd.menuToState(),
-                    recentlyIncorrect: st.recentlyIncorrect
-                };
-            }
-        };
+    makeEditor(st: TimesTableState): MenuComponent<TimesTableState> {
+        var contDiv = document.createElement("div");
+        var menuTpl: string = `
+            <menu-group>
+                <div>
+                    <menu-number id="min-num-input" name="minNum" step=1></menu-number>
+                    <label for="min-num-input">Minimum factor value</label>
+                </div>
+                <div>
+                    <menu-number id="max-num-input" name="maxNum" step=1></menu-number>
+                    <label for="max-num-input">Maximum factor value</label>
+                </div>
+                <h3>Questions recently answered incorrectly:</h3>
+                <ul>
+                    {% for r in st.recentlyIncorrect %}
+                    <ul>{{ r[0] }} × {{ r[1] }} = {{ r[0]*r[1] }}</ul>
+                    {% endfor %}
+                </ul>            
+            </menu-group>
+        `;
+        var menuHTML = renderString(menuTpl, { st: st });
+        contDiv.innerHTML = menuHTML;
+        var menu = <MenuComponent<TimesTableState>><any>contDiv.children[0];
+        menu.setState(st);
+        return menu;
     }
 
 }

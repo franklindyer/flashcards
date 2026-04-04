@@ -12,7 +12,8 @@ import {
 } from "utils/speech"
 
 export type TranscriptCardData = {
-    text: string,
+    spokenText: string,
+    hintText: string,
     speechSettings: SpeechSettings
 };
 
@@ -23,15 +24,15 @@ class TranscriptFlashcardTemplate extends FlashcardTemplate<TranscriptCardData> 
         var container = document.createElement("div");
 
         var playBtn = document.createElement("img");
-        playBtn.src = "/static/images/speaker.png";
+        playBtn.src = "/speaker.png";
         playBtn.classList.add("transcription-audio-button");
         playBtn.onclick = (e) => {
             var ss = data.speechSettings;
-            utter(data.text, ss.voice, ss.rate, ss.pitch);
+            utter(data.spokenText, ss.voice, ss.rate, ss.pitch);
         };
         container.appendChild(playBtn);
 
-        var fl = new Flashcard(container, data.text);
+        var fl = new Flashcard(container, data.hintText);
         return fl;
     }
 }

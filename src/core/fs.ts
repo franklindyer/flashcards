@@ -24,5 +24,8 @@ export function setDeckJSON(deckSlug: string, deckBlob: string) {
 }
 
 export function deleteDeck(deckSlug: string) {
-    deckFolderP().then((h) => h.removeEntry(deckSlug));
+    deckFolderP().then((h) => { 
+        h.removeEntry(deckSlug);
+        console.log(getDeckSlugs());
+    });
 }

@@ -9,13 +9,35 @@ textarea {
     width: 500px;
     height: 300px;
 }
+
+button {
+    margin-left: 10px;
+    margin-right: 10px;
+}
 </style>
 <script>
+function isValidJSON(s) {
+    try {
+        JSON.parse(s);
+        return true;
+    } catch (e) {
+        return false;
+    }
+}
+
 function submitQueueItem() {
     var key = document.getElementById("key-input").value;
     var passkey = document.getElementById("passkey-input").value;
     var summary = document.getElementById("summary-input").value;
-    var value = document.getElementById("value-input").value;
+    var valueInput = document.getElementById("value-input");
+    var value = valueInput.value;
+
+    if (!isValidJSON(value)) {
+        valueInput.style.backgroundColor = "#ffdddd";
+        return;
+    }
+    valueInput.style.backgroundColor = "white"; 
+
     fetch("/put", {
         method: "POST",
         headers: {
@@ -27,6 +49,26 @@ function submitQueueItem() {
             passkey: passkey,
             summary: summary,
             data: value
+        })
+    }).then((r) => {
+        refreshQueueItems();
+    });
+}
+
+function deleteQueueItem(h) {
+    var key = document.getElementById("key-input").value;
+    var passkey = document.getElementById("passkey-input").value;
+
+    fetch("/delete", {
+        method: "POST",
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            key: key,
+            passkey: passkey,
+            hash: h
         })
     }).then((r) => {
         refreshQueueItems();
@@ -57,6 +99,11 @@ function refreshQueueItems() {
                 var li = document.createElement("li");
                 li.textContent = entry.summary;
                 ul.appendChild(li);
+                
+                var deleteBtn = document.createElement("button");
+                deleteBtn.textContent = "delete";
+                deleteBtn.onclick = ((h) => (() => deleteQueueItem(h)))(entry.hash);
+                li.appendChild(deleteBtn);
             }
         }
     )
@@ -77,4 +124,12 @@ function refreshQueueItems() {
         <ul id="queue-item-list">
         </ul>
     </div>
+    
+<script>
+var textInput = document.getElementById("value-input");
+textInput.value = localStorage.getItem("textarea");
+textInput.oninput = (e) => {
+    localStorage.setItem("textarea", textInput.value);
+}
+</script>    
 </body>

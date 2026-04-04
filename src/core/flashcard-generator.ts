@@ -1,11 +1,13 @@
 import {
-    guidGenerator,
     showLoadingIcon,
     hideLoadingIcon
 } from "utils/utils"
 import {
-    StateEditor
-} from "core/editor"
+    logPost
+} from "./logging"
+import {
+    MenuComponent    
+} from "menus/menus"
 import {
     Flashcard
 } from "core/flashcard"
@@ -35,10 +37,13 @@ export abstract class FlashcardGen<S, D> {
     abstract generateCardAsync(state: S, data: D): Promise<Flashcard>;
     abstract checkAnswerAsync(answer: string, state: S, data: D): Promise<boolean>;
 
-    abstract makeEditor(s: S): StateEditor<S>;
+    abstract makeEditor(s: S): MenuComponent<S>;
 
     // Should not attempt to change the deck's state
     abstract correctEffect(state: S, cardData: D, attempt: string, resolve: () => void): void;   
+
+    // Used for statistics/data reporting
+    abstract reportableData(state: S, cardData: D, correct: FlashcardResult): any;
 
     async runOnce(s: S, setState: (s: S) => void, callback: () => void) {
         this.showLoading = true;
@@ -64,6 +69,8 @@ export abstract class FlashcardGen<S, D> {
         hideLoadingIcon();
         this.showLoading = false;
 
+        var thisDeckSlug = localStorage.getItem("last-deck-slug")!;
+
         var inputBox = <HTMLInputElement>document.getElementById("answer-input");
         var correctCallback = (newState: S) => () => {
             inputBox.value = "";
@@ -76,6 +83,7 @@ export abstract class FlashcardGen<S, D> {
                 inputBox.onkeydown = (e) => {}; // To prevent multiple submissions by accident
                 var result = card.correctFirst ? FlashcardResult.Correct : FlashcardResult.Incorrect;
                 var newState = await this.updateStateAsync(s, cardData, result);
+                logPost(thisDeckSlug, this.reportableData(s, cardData, result));
                 await this.correctEffect(newState, cardData, attempt, correctCallback(newState));
             } else {
                 card.markWrong();
@@ -90,6 +98,7 @@ export abstract class FlashcardGen<S, D> {
                 inputCallback(inputBox.value);
             } else if (e.key == "ArrowUp") {
                 var newState = await this.updateStateAsync(s, cardData, FlashcardResult.Correct);
+                logPost(thisDeckSlug, this.reportableData(s, cardData, FlashcardResult.Correct));
                 this.correctEffect(newState, cardData, "", correctCallback(newState));
             } else if (e.key == "ArrowDown") {
                 inputBox.value = "";

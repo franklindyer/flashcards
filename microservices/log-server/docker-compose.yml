@@ -4,4 +4,4 @@ services:
         ports:
             - 5052:8080
         volumes:
-            - ./db:/db
+            - ./log-data:/data

@@ -2,8 +2,10 @@ clean:
 	rm -rf dist/*
 
 docs: clean
+	mkdir -p dist
 	mkdir dist/docs
-	./build_docs
+	cp docs/conf.py dist/docs/conf.py
+	sphinx-build -M html "./docs" "./dist/docs"
 
 build: docs 
 	tsc --target es2022

@@ -1,8 +1,26 @@
----
-title: About Flashcards
----
+:::{image} _static/logos/pfeil-logo-large-lavender-transparent.png
+:align: center
+:::
 
-# About Flashcards
+:::{toctree}
+:caption: User's guide
+:hidden:
+:maxdepth: 2
+
+users-guide/help
+users-guide/cards
+users-guide/decks
+:::
+
+:::{toctree}
+:caption: Developer's guide
+:hidden:
+:maxdepth: 2
+
+developers-guide/building-docs
+:::
+
+# About Pfeil
 
 This is an app that I made for studying things with flashcards. Mainly foreign languages.
 
@@ -34,7 +52,7 @@ In summary, the principles behind this app are as follows:
 - The code should be as client-centric as possible with very little or no server participation needed
 - It should be easy for anyone to export an entire flashcard deck and edit the deck file by hand
 
-I began working on this app because existing flashcard apps were not flexible enough for me. Existing apps that I've tried using incluse Flashcards Deluxe and Anki2. The former is a great app, but it's not open source, which makes it impractical to make small tweaks to a deck's appearance or behavior unless settings happen to exist for the desired changes already. The latter is open-source, but I find its design to be too inflexible and oriented towards spaced repetition specifically.
+I began working on this app because existing flashcard apps were not flexible enough for me. Existing apps that I've tried using include Flashcards Deluxe and Anki2. The former is a great app, but it's not open source, which makes it impractical to make small tweaks to a deck's appearance or behavior unless settings happen to exist for the desired changes already. The latter is open-source, but I find its design to be too inflexible and oriented towards spaced repetition specifically.
 
 The design of this app is specifically intended as a framework that enables *generative* flashcards. The philosophy is as follows: a flashcard represents a specific *thing* that you want to study, but it does not always need to present itself in the same way. For example, suppose that you want one flashcard to represent the German verb `sein` ("to be"). But when the card comes up in your deck, perhaps you would like to be quizzed on a random one of its conjugations:
 

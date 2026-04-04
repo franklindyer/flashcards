@@ -3,8 +3,8 @@ import {
     guidGenerator
 } from "utils/utils"
 import {
-    setDeckJSON
-} from "./fs"
+    renderString
+} from "nunjucks"
 import {
     FlashcardDeck,
     runDeck,
@@ -16,179 +16,247 @@ import {
     eraseDeck
 } from "core/flashcard-deck"
 import {
-    FlashcardGen
-} from "core/flashcard-generator"
-import {
-    singleTextFieldEditor,
-    StateEditor
-} from "core/editor"
+    MenuComponent
+} from "menus/menus"
 import {
     promptForSyncCreds,
     syncUploadDeck,
-    syncDownloadDeck
+    syncDownloadDeck,
+    validateSyncCreds
 } from "./synchronization"
-
-function generateDeckNameEditor(deck: FlashcardDeck<any>): StateEditor<FlashcardDeck<any>> {
-    var nicknameEditor = singleTextFieldEditor(deck.name);
-    var colorEditor = singleTextFieldEditor(deck.view.color); 
-    var closeBtn = document.createElement("button");
-    closeBtn.textContent = "Save";
-    var deckIdA= document.createElement("A");
-    deckIdA.textContent = `Internal deck ID: ${deck.slug}`
-    var contDiv = document.createElement("div");
-    [
-        nicknameEditor.element, 
-        colorEditor.element, 
-        closeBtn,
-        document.createElement("br"),
-        deckIdA
-    ].map((el) => contDiv.appendChild(el));
-    contDiv.onclick = (e) => {
-        e.cancelBubble = true;
-        if (e.stopPropagation) e.stopPropagation();
-    };
-    var ed = {
-        element: contDiv,
-        menuToState: () => {
-            deck.name = nicknameEditor.menuToState();
-            deck.view.color = colorEditor.menuToState();
-            contDiv.remove();
-            return deck;
-        }
-    }
-    return ed;
-}
+import {
+    promptForLogCreds,
+    validateLogCreds
+} from "./logging"
 
 export function generateDecklistMenu(
-    decklist: IDictionary<FlashcardDeck<any>>,
-    onfinish: (st: IDictionary<FlashcardDeck<any>>) => void) {
+        decklist: IDictionary<FlashcardDeck<any>>,
+        onfinish: (st: IDictionary<FlashcardDeck<any>>) => void) {
+    var contDiv = document.createElement("div");
+    console.log(gDeckTypeRegistry);
+    var menuTpl = `
+        <menu-list class="decklist-menu">
+            <div class="decklist-menu-header">
+                <div class="decklist-menu-primary-actions">
+                    <h2 class="decklist-menu-title">Decks</h2>
+                </div>
+                <div class="decklist-menu-secondary-actions">
+                    <label class="decklist-label" for="deck-type-select">Deck type</label>
+                    <select id="deck-type-select" class="menu-options-decktype decklist-select">
+                        {% for dt in decktypes %}
+                        <option value="{{ dt }}">{{ deckDefaultRegistry[dt].name }}</option>
+                        {% endfor %}
+                    </select>
+                    <button class="menu-add-another-button decklist-primary-button">Create new deck</button>
+                    <button class="menu-import-file-button decklist-secondary-button">Import from file</button>
+                </div>
+                <div class="decklist-menu-meta-actions">
+                    <div class="decklist-menu-sync-section">
+                        <span class="decklist-section-label">Sync</span>
+                        <button class="menu-setup-sync-server decklist-link-button">Setup sync server</button>
+                        <button class="menu-import-remote-button decklist-link-button">Import from server</button>
+                        <div class="menu-sync-server-info-div decklist-meta-text"></div>
+                    </div>
+                    <div class="decklist-menu-log-section">
+                        <span class="decklist-section-label">Logging</span>
+                        <button class="menu-setup-log-server decklist-link-button">Setup logging server</button>
+                        <div class="menu-log-server-info-div decklist-meta-text"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="decklist-menu-list">
+                <div class="list-entry-container"></div>
+                <menu-group class="list-default-entry deck-editor-entry">
+                    <div class="decklist-edit-div">
+                        <div class="decklist-edit-row">
+                            <label class="decklist-label" for="deck-name">Name</label>
+                            <menu-textbox id="deck-name" name="name"></menu-textbox>
+                        </div>
+                        <div class="decklist-edit-row">
+                            <label class="decklist-label" for="deck-color">Accent color</label>
+                            <menu-textbox id="deck-color" name="view.color"></menu-textbox>
+                        </div>
+                        <div class="decklist-edit-row decklist-edit-row-inline">
+                            <menu-checkbox name="doSync"></menu-checkbox>
+                            <label for="doSync">Sync deck with server</label>
+                        </div>
+                        <div class="decklist-edit-row decklist-edit-row-inline">
+                            <menu-checkbox name="doLog"></menu-checkbox>
+                            <label for="doLog">Log answers to server</label>
+                        </div>
+                        <div class="decklist-edit-row">
+                            <label class="decklist-label" for="deck-slug">Deck ID</label>
+                            <menu-textbox id="deck-slug" name="slug" disabled="true"></menu-textbox>
+                        </div>
+                        <div class="decklist-edit-actions">
+                            <button class="decklist-save-button decklist-primary-button">Save deck</button>
+                        </div>
+                    </div>
+                    <div class="decklist-view-div">
+                        <div class="decklist-view-main">
+                            <b class="decklist-view-title"></b>
+                        </div>
+                        <div class="decklist-view-actions">
+                            <button class="decklist-study-button deck-editor-button decklist-primary-button">Study</button>
+                            <button class="decklist-edit-button deck-editor-button">Edit</button>
+                            <button class="list-entry-remove-button menu-list-remove-button deck-editor-button">Delete</button>
+                            <button class="list-entry-restore-button deck-editor-button">Restore</button>
+                        </div>
+                    </div>
+                </menu-group>
+            </div>
+        </menu-list>       
+    `;
+    var menuHTML = renderString(menuTpl, {
+        decktypes: Object.keys(gDeckTypeRegistry),
+        deckDefaultRegistry: gDeckDefaultRegistry
+    });
+    contDiv.innerHTML = menuHTML;
+    var menu = <any>contDiv.children[0];
+
+    var newDeckButton = <any>menu.querySelector(".menu-add-another-button");
+    var deckTypeSelect = <any>menu.querySelector(".menu-options-decktype");
+    var importDeckButton = <any>menu.querySelector(".menu-import-file-button");
+    var syncSetupButton = <any>menu.querySelector(".menu-setup-sync-server");
+    var syncDeckButton = <any>menu.querySelector(".menu-import-remote-button");
+    var syncInfoDiv = <any>menu.querySelector(".menu-sync-server-info-div");
+    var logSetupButton = <any>menu.querySelector(".menu-setup-log-server");
+    var logInfoDiv = <any>menu.querySelector(".menu-log-server-info-div");
+
+    newDeckButton.onclick = (e: any) => {
+        var st = menu.getState();
+        var decktype = deckTypeSelect.value;
+        var newDeck = <any>JSON.parse(JSON.stringify(gDeckDefaultRegistry[decktype]));
+        newDeck.slug = guidGenerator();
+        st.push(newDeck);
+        menu.setState(st);
+        saveDeck(st.slug, () => {});
+    };
+
+    importDeckButton.onclick = (e: any) => {
+        var fileUploadInput = document.createElement("input");
+        fileUploadInput.type = "file";
+        fileUploadInput.onchange = (e: any) => {
+            var files = (<HTMLInputElement>fileUploadInput).files;
+            if (files == null) return;
+            var file = files[0];
+            if (file == null) return;
+            var reader = new FileReader();
+            reader.onload = (e: any) => {
+                var importedDeck = JSON.parse(<string>e.target!.result);
+                importedDeck.slug = guidGenerator();
+                var st = menu.getState();
+                st.push(importedDeck);
+                menu.setState(st);
+                saveDeck(st.slug, () => {});
+            };
+            reader.readAsText(file, "UTF-8");
+        };
+        fileUploadInput.click();
+    };
+
+    // SYNC SERVER
+    syncInfoDiv.style.display = "none";
+    var updateSyncServerDiv = (r: string, s: string) => {
+        syncInfoDiv.style.display = "block";
+        syncInfoDiv.innerHTML = `
+            <a>Sync server URL: <code>${r}</code></a> <br />
+            <a>Sync server user key: <code>${s.slice(0, 8)}...</code></a>
+        `;
+    };
+
+    syncSetupButton.onclick = (e: any) => {
+        promptForSyncCreds(updateSyncServerDiv);
+    };
+
+    validateSyncCreds(
+        updateSyncServerDiv,
+        () => {}
+    );    
+
+    syncDeckButton.onclick = (e: any) => {
+        var deckslug = prompt("Enter the ID of the deck you would like to download.") || "";
+        var defaultDate = new Date("1970-01-01T00:00:00Z");
+        syncDownloadDeck(deckslug, defaultDate, (s: string) => {
+            var st = menu.getState();
+            st.push(JSON.parse(s));
+            menu.setState(st);
+            saveDeck(deckslug, () => {});
+        });
+    };
+
+    // LOGGING SERVER
+    logInfoDiv.style.display = "none";
+    var updateLogServerDiv = (r: string, s: string) => {
+        logInfoDiv.style.display = "block";
+        logInfoDiv.innerHTML = `
+            <a>Log server URL: <code>${r}</code></a> <br />
+            <a>Log server user key: <code>${s.slice(0, 8)}...</code></a>
+        `;
+    };
+
+    logSetupButton.onclick = (e: any) => {
+        promptForLogCreds(updateLogServerDiv);
+    };
+    
+    validateLogCreds(
+        updateLogServerDiv,
+        () => {}
+    );    
+
+    menu.entryCallback = (el: HTMLElement) => {
+        var deckView = <any>el.querySelector(".decklist-view-div")!;
+        var deckEditor = <any>el.querySelector(".decklist-edit-div")!;
+        var nameInput = <any>el.querySelector("[name='name']")!;
+        var nameView = <any>el.querySelector(".decklist-view-title")!;
+        var colorInput = <any>el.querySelector("[name='view.color']")!;
+        var studyButton = <any>el.querySelector(".decklist-study-button")!;
+        var saveButton = <any>el.querySelector(".decklist-save-button")!;
+        var editButton = <any>el.querySelector(".decklist-edit-button")!;
+        var updateDeckView = () => {
+            nameView.textContent = nameInput.getState();
+            el.style.backgroundColor = colorInput.getState();
+            deckEditor.style.display = "none";
+            deckView.style.display = "block"; 
+        };
+        var editDeck = () => {
+            deckEditor.style.display = "block";
+            deckView.style.display = "none"; 
+        };
+        saveButton.onclick = updateDeckView;
+        editButton.onclick = editDeck;
+        studyButton.onclick = () => {
+            var id = (<any>el).getState().slug;
+            var newDecklist = menu.getState();
+            var newDeckdict = Object.fromEntries(newDecklist.map((x: any) => [x.slug, x]));
+            decklistOverlay.style.display = "none";
+            onfinish(newDeckdict);
+            runDeck(id);
+            // saveDeck(id, () => runDeck(id));
+        };
+        updateDeckView();
+    };
+
+    menu.setState([...Object.values(gDeckRegistry)]);    
 
     var decklistEditor = <HTMLElement>document.getElementById("flashcard-decklist-editor");
     decklistEditor.innerHTML = "";
     var decklistOverlay = <HTMLElement>document.getElementById("flashcard-decklist-overlay");
-
-    var deckTypeList = document.createElement("select");
-    deckTypeList.id = "deck-type-dropdown";
-    for (var i in Object.keys(gDeckTypeRegistry)) {
-        var deckTypeId = Object.keys(gDeckTypeRegistry)[i];
-        var deckTypeName = gDeckDefaultRegistry[deckTypeId].name;
-        var deckTypeOption = document.createElement("option");
-        deckTypeOption.value = deckTypeId;
-        deckTypeOption.textContent = deckTypeName;
-        deckTypeList.appendChild(deckTypeOption);
-    }
-    var newDeckBtn = document.createElement("button");
-    newDeckBtn.textContent = "Create new deck";
-    newDeckBtn.onclick = (e) => {
-        deckTypeId = (<HTMLInputElement>document.getElementById("deck-type-dropdown"))!.value;
-        var guid = guidGenerator();
-        var deckClone = <FlashcardDeck<any>>JSON.parse(JSON.stringify(gDeckDefaultRegistry[deckTypeId]));
-        deckClone.slug = guid;
-        decklist[guid] = deckClone;
-        generateDecklistMenu(decklist, onfinish);
-    };
-    decklistEditor.appendChild(newDeckBtn);
-    decklistEditor.appendChild(deckTypeList);
-    decklistEditor.appendChild(document.createElement("br"));
-
-    var syncServerBtn = document.createElement("button");
-    syncServerBtn.textContent = "Setup sync server";
-    syncServerBtn.onclick = promptForSyncCreds;
-    decklistEditor.appendChild(syncServerBtn);   
-
-    var addRemoteBtn = document.createElement("button");
-    addRemoteBtn.textContent = "Add external deck";
-    addRemoteBtn.onclick = (e) => {
-        var deckslug = prompt("Enter the ID of the deck you would like to download.") || "";
-        syncDownloadDeck(deckslug, (s: string) => { console.log(s); setDeck(deckslug, s, () => {
-            generateDecklistMenu(decklist, onfinish);
-        }); });
-    };
-    decklistEditor.appendChild(addRemoteBtn);
-
-    Object.keys(decklist).sort(); 
-    for (var k in decklist) {
-        var deckDiv = document.createElement("div");
-        var slug = decklist[k].slug;
-        var deckLabel = document.createElement("a");
-        deckLabel.textContent = decklist[k].name;
-        deckDiv.appendChild(deckLabel);
-        deckDiv.classList.add("deck-editor-entry");
-        if (decklist[k].view !== undefined) {
-            deckDiv.style.backgroundColor = decklist[k].view!.color;
-        }
-        deckDiv.onclick = ((s) => (e) => {
-            decklistOverlay.style.display = "none";
-            onfinish(decklist);
-            saveDeck(s, () => runDeck(s));
-        })(slug);
-
-        var deckEditBtn = document.createElement("button");
-        deckEditBtn.title = "Edit deck";
-        deckEditBtn.innerHTML = "<img src='edit.png'/>";
-        deckEditBtn.classList.add("deck-editor-button");
-        deckEditBtn.onclick = ((dk, deckDiv) => (e) => {
-            var ed = generateDeckNameEditor(dk);
-            var closeBtn = ed.element.getElementsByTagName("button")[0];
-            closeBtn.onclick = (e: Event) => {
-                var newDeck = ed.menuToState();
-                decklist[dk.slug] = newDeck;
-                saveDeck(dk.slug, () => {});
-                generateDecklistMenu(decklist, onfinish);
-            };
-            deckDiv.replaceChildren(ed.element);
-            e.cancelBubble = true;
-            if (e.stopPropagation) e.stopPropagation();
-        })(decklist[k], deckDiv);
-
-        var deckDeleteBtn = document.createElement("button");
-        deckDeleteBtn.title = "Delete deck";
-        deckDeleteBtn.classList.add("deck-editor-button");
-        deckDeleteBtn.innerHTML = "<img src='trash.png'/>";
-        deckDeleteBtn.onclick = ((dk) => (e) => {
-            var confirmation = confirm(`Are you sure you want to delete "${dk.name}"?`);
-            if (confirmation) {
-                eraseDeck(dk.slug);
-            }
-            e.cancelBubble = true;
-            if (e.stopPropagation) e.stopPropagation();
-            generateDecklistMenu(decklist, onfinish);
-        })(decklist[k]);
-        
-        var deckUploadBtn = document.createElement("button");
-        deckUploadBtn.title = "Upload deck to server";
-        deckUploadBtn.classList.add("deck-editor-button");
-        deckUploadBtn.innerHTML = "<img src='upcloud.png'/>";
-        deckUploadBtn.onclick = ((dk) => (e) => {
-            syncUploadDeck(dk);
-            e.cancelBubble = true;
-            if (e.stopPropagation) e.stopPropagation();
-        })(decklist[k]);
-        
-        var deckDownloadBtn = document.createElement("button");
-        deckDownloadBtn.title = "Download deck from server";
-        deckDownloadBtn.classList.add("deck-editor-button");
-            deckDownloadBtn.innerHTML = "<img src='downcloud.png'/>";
-        deckDownloadBtn.onclick = ((k) => (e) => {
-            syncDownloadDeck(k, (s: string) => { setDeck(k, s, () => {}); });
-            e.cancelBubble = true;
-            if (e.stopPropagation) e.stopPropagation();
-        })(k);
-
-        deckDiv.appendChild(deckUploadBtn);
-        deckDiv.appendChild(deckDownloadBtn);
-        deckDiv.appendChild(deckEditBtn);
-        deckDiv.appendChild(deckDeleteBtn);
-        decklistEditor.appendChild(deckDiv);
-
-    }
+    decklistEditor.appendChild(menu);
 }
 
 export function setupDecklistMenu() {
     var decksBtn = <HTMLElement>document.getElementById("deck-list-button");
     decksBtn.onclick = (e: Event) => {
         var decklistOverlay = <HTMLElement>document.getElementById("flashcard-decklist-overlay");
-        generateDecklistMenu(gDeckRegistry, (_) => {});
+        generateDecklistMenu(gDeckRegistry, (newDeckRegistry) => {
+            [...Object.values(newDeckRegistry)].forEach((d) => gDeckRegistry[d.slug] = d);
+            [...Object.keys(gDeckRegistry)].forEach((k) => {
+                if (!(k in newDeckRegistry)) {
+                    eraseDeck(k); 
+                }
+            });
+        });
         decklistOverlay.style.display = "block";
         
     };

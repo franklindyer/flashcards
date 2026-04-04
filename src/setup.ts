@@ -8,12 +8,15 @@ import {
     setupDecklistMenu
 } from "core/decklist"
 
+import "menus/menus";
+import "menus/ace-text-editor";
+// import "menus/deep-json-menu";
+// import "menus/sr-card-menus";
+
 import "decks/times-tables-gen";
 import "decks/uniform-key-value";
-import "decks/spaced-repetition-simple";
-import "decks/spaced-repetition-cloze";
-import "decks/spaced-repetition-modular";
-import "decks/transcript-gen";
+import "decks/spaced-repetition-universal";
+// import "decks/frequency-progression-deck";
 
 import "utils/basic-template";
 import "utils/cloze-template";
@@ -23,3 +26,5 @@ import "utils/transcript-template";
 setupDecklistMenu();
 
 loadAllDecks().then((_) => runDeck(getStartingDeck("key-value-quizzer")));
+
+console.log(gDeckRegistry);

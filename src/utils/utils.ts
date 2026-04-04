@@ -10,6 +10,15 @@ export function guidGenerator(): string {
     return (S4()+S4()+"-"+S4()+"-"+S4()+"-"+S4()+"-"+S4()+S4()+S4());
 }
 
+export function getHostname() {
+    var host = localStorage.getItem("host");
+    if (host === null) {
+        host = guidGenerator();
+        localStorage.setItem("host", host);
+    }
+    return host;
+}
+
 export function arrayReindex<a>(ls: a[]): a[] { 
     return ls.filter((_) => true);
 }
@@ -19,6 +28,15 @@ export function shuffleArr<a>(ls: a[]): a[] {
         .map((v) => ({ val: v, key: Math.random() }))
         .sort((x, y) => x.key - y.key )
         .map((v) => v.val);
+}
+
+// Standard Normal variate using Box-Muller transform.
+function gaussianRandom(mean=0, stdev=1) {
+    const u = 1 - Math.random(); // Converting [0,1) to (0,1]
+    const v = Math.random();
+    const z = Math.sqrt( -2.0 * Math.log( u ) ) * Math.cos( 2.0 * Math.PI * v );
+    // Transform to the desired mean and standard deviation:
+    return z * stdev + mean;
 }
 
 export function makeDict<a>(items: a[], key: (x: a) => string) {
@@ -86,8 +104,10 @@ export function iconButton(imgUrl: string, effect: () => void): HTMLElement {
     return btn;
 }
 
-export function recursiveRepairJSON(obj: any, defaultObj: any, omitKeys: string[] = []) {
+export function recursiveRepairJSON(obj: any, defaultObj: any, omitKeys: string[] = [], doPruning: boolean = true) {
     if (typeof obj === 'string' || obj instanceof String)
+        return obj;
+    if (typeof obj === 'object' && obj instanceof Date)
         return obj;
 
     var objKeys = Object.keys(obj);
@@ -108,17 +128,17 @@ export function recursiveRepairJSON(obj: any, defaultObj: any, omitKeys: string[
         if (Array.isArray(obj[k])) {
             if (defaultObj[k].length > 0) {
                 for (var j in obj[k]) {
-                    obj[k][j] = recursiveRepairJSON(obj[k][j], defaultObj[k][0], omitKeys);
+                    obj[k][j] = recursiveRepairJSON(obj[k][j], defaultObj[k][0], omitKeys, doPruning);
                 }
             }
         } else if (typeof obj[k] === "object") {
-            obj[k] = recursiveRepairJSON(obj[k], defaultObj[k], omitKeys);
+            obj[k] = recursiveRepairJSON(obj[k], defaultObj[k], omitKeys, doPruning);
         }
     }
    
     for (var i in objKeys) {
         var k = objKeys[i];
-        if (!(k in defaultObj)) {
+        if (doPruning && !(k in defaultObj)) {
             delete obj[k];
         }
     }
@@ -134,4 +154,55 @@ export function recursiveRepairEachValueJSON(objDict: any, defaultObj: any, omit
         objDict[k] = recursiveRepairJSON(objDict[k], defaultObj, omitKeys);
     }
     return objDict;
+}
+
+export function getDeepKey(objDict: any, keys: string[]) {
+    if (keys.length == 0) {
+        return objDict;
+    } else if (keys.length == 1) {
+        return objDict[keys[0]];
+    } else {
+        return getDeepKey(objDict[keys[0]], keys.slice(1, keys.length))
+    }
+}
+
+export function setDeepKey(objDict: any, keys: string[], value: any) {
+    if (keys.length == 0) {
+        return objDict;
+    } else if (keys.length == 1) {
+        objDict[keys[0]] = value;
+        return objDict;
+    } else {
+        if (!(keys[0] in objDict)) {
+             objDict[keys[0]] = {};
+        }
+        objDict[keys[0]] = setDeepKey(objDict[keys[0]], keys.slice(1, keys.length), value);
+        return objDict;
+    }
+}
+
+export function makeSubber(subs: [string, string][]): (s: string) => string {
+    var reSubs: [RegExp, string][] = subs.map((r) => [new RegExp(r[0]), r[1]]);
+    return function(s: string) {
+        for (var i in reSubs) {
+            var r = reSubs[i];
+            s = s.replace(r[0], r[1]);
+        }
+        return s;
+    };
+}
+
+export function hideDetails(el: HTMLElement, summary: string) {
+    var detailsEl = document.createElement("details");
+    var summaryEl = document.createElement("summary");
+    summaryEl.textContent = summary;
+    detailsEl.appendChild(summaryEl);
+    detailsEl.appendChild(el);
+    return detailsEl;
+}
+
+export function querySelectorTopLevel(el: HTMLElement, query: string) {
+    var allMatches = [...el.querySelectorAll(query)];
+    var allMatchesTop = [...allMatches.filter((el2) => !allMatches.some((el3) => el3 != el2 && el3.contains(el2)))];
+    return allMatchesTop;
 }

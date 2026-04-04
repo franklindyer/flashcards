@@ -1,25 +1,28 @@
-import {
+import{
     IDictionary,
-    guidGenerator,
     downloadText
 } from "utils/utils"
 import {
     FlashcardGen
 } from "core/flashcard-generator"
 import {
-    StateEditor
-} from "core/editor"
+    MenuComponent
+} from "menus/menus"
 import {
     getDeckSlugs,
     getDeckJSON,
     setDeckJSON,
     deleteDeck
 } from "./fs"
+import {
+    syncUploadDeck,
+    syncDownloadDeck
+} from "./synchronization"
 
 export type FlashcardDeckType<S, D> = {
     slug: string,
     gen: FlashcardGen<S, D>,
-    editor: (s: S) => StateEditor<S> 
+    editor: (s: S) => MenuComponent<S> 
 }
 
 export type FlashcardDeckView = {
@@ -31,6 +34,9 @@ export type FlashcardDeck<S> = {
     slug: string,
     type: string,
     view: FlashcardDeckView,
+    lastSaved: Date,
+    doSync: boolean,
+    doLog: boolean,
     state: S
 }
 
@@ -45,6 +51,10 @@ export function setDeck(deckSlug: string, deckString: string, callback: () => vo
 }
 
 export function saveDeck(deckSlug: string, callback: () => void) {
+    gDeckRegistry[deckSlug].lastSaved = new Date();
+    if (gDeckRegistry[deckSlug].doSync) {
+        syncUploadDeck(gDeckRegistry[deckSlug]);
+    }
     setDeckJSON(deckSlug, JSON.stringify(gDeckRegistry[deckSlug])).then((_) => callback());
 }
 
@@ -64,8 +74,8 @@ export function loadAllDecks() {
 }
 
 export function eraseDeck(deckSlug: string) {
-    deleteDeck(deckSlug);
     delete gDeckRegistry[deckSlug];
+    deleteDeck(deckSlug);
 }
 
 /* Setup general-purpose menus */
@@ -83,7 +93,7 @@ function menuSetup<S, D>(deckSlug: string) {
         var editorCont = document.getElementById("flashcard-deck-editor")!;
         var editor =  decktype.editor(getState());
         editorOverlay.style.display = "inline-block";
-        editorCont.replaceChildren(editor.element);
+        editorCont.replaceChildren(<any>editor);
         var doneBtn = document.getElementById("flashcard-deck-editor-close")!;
         window.onbeforeunload = function() {
             return "Are you sure you want to leave before saving your deck?";
@@ -91,7 +101,7 @@ function menuSetup<S, D>(deckSlug: string) {
         doneBtn.onclick = () => {
             window.onbeforeunload = () => {};
             editorOverlay.style.display = "none";
-            deck.state = editor.menuToState();
+            deck.state = editor.getState();
             gDeckRegistry[deckSlug].state = deck.state;
             saveDeck(deckSlug, () => {});
             runDeck(deck.slug);
@@ -122,31 +132,51 @@ function importExportSetup<S>(deckSlug: string, setDeck: (s: S) => void) {
     }
 
     exportBtn.onclick = (e) => {
-        downloadText(deckSlug, JSON.stringify(gDeckRegistry[deckSlug])); 
+        downloadText(deckSlug, JSON.stringify(gDeckRegistry[deckSlug], null, "\t")); 
     } 
 }
 
-export function runDeck(deckSlug: string) {
-    setLastDeck(deckSlug);
-    document.getElementById("flashcard-container")!.innerHTML = "";
-
-    var decktype = gDeckTypeRegistry[gDeckRegistry[deckSlug].type];
-    gDeckRegistry[deckSlug].state = decktype.gen.repairDeckState(gDeckRegistry[deckSlug].state)
-
-    var getState = () => gDeckRegistry[deckSlug].state;
-    var setState = (state: any) => {
-        gDeckRegistry[deckSlug].state = state;
+export function updateDeckFromRemote(deckSlug: string, resolve: () => void) {
+    if (gDeckRegistry[deckSlug].doSync) {
+        syncDownloadDeck(
+            deckSlug,
+            new Date(gDeckRegistry[deckSlug].lastSaved),
+            (deckStr: string, resolve2: () => void) => {
+                setDeck(deckSlug, deckStr, resolve2);
+            },
+            resolve
+        )
+    } else {
+        resolve();
     }
-    
-    menuSetup(deckSlug);
-    importExportSetup(deckSlug, (s: any) => {
-        gDeckRegistry[deckSlug] = s;
-        saveDeck(deckSlug, () => {
-            runDeck(deckSlug); 
-        })
-    });
+}
 
-    decktype.gen.runLoop(getState, setState, () => saveDeck(deckSlug, () => {}));
+export function runDeck(deckSlug: string, forceSync: boolean = false) {
+    var getState = () => gDeckRegistry[deckSlug].state;
+    var setState = (s: any) => {
+        gDeckRegistry[deckSlug].state = s;
+    };
+
+    updateDeckFromRemote(
+        deckSlug,
+        () => {
+            setLastDeck(deckSlug);
+            document.getElementById("flashcard-container")!.innerHTML = "";
+
+            var decktype = gDeckTypeRegistry[gDeckRegistry[deckSlug].type];
+            gDeckRegistry[deckSlug].state = decktype.gen.repairDeckState(gDeckRegistry[deckSlug].state)
+
+            menuSetup(deckSlug);
+            importExportSetup(deckSlug, (s: any) => {
+                gDeckRegistry[deckSlug] = s;
+                saveDeck(deckSlug, () => {
+                    runDeck(deckSlug); 
+                })
+            });
+
+            decktype.gen.runLoop(getState, setState, () => saveDeck(deckSlug, () => {}));
+        } 
+    )    
 }
 
 export function setLastDeck(deckSlug: string) {
@@ -180,6 +210,9 @@ export function registerDeckType<S, D>(
         slug: defaultSlug,
         type: gen.getGenName(),
         state: defaultState,
+        lastSaved: new Date(),
+        doSync: false,
+        doLog: false,
         view: {
             color: colorCode
         }

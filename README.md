@@ -1,9 +1,8 @@
-# Flashcards
+<img src="docs/_static/logos/pfeil-logo-lavender-transparent.png">
 
-TODO:
+# Pfeil
 
-- come up with a snappy name for this app
-- add an introduction to the app here, maybe copied from site docs?
+This is a simple app for studying things with flashcards, particularly foreign languages. The stable(ish) version of the site is hosted [here](https://flashcardapp.org/) and the dev version is available [here](https://dev.flashcardapp.org/). The dev version has the latest features, but is somewhat less stable, so please export and backup your decks often!
 
 ## Development
 
@@ -11,18 +10,12 @@ The site and all of its assets are served out of the flat directory `dist`.
 
 ### Creating an instance of the site
 
-Install all packages listed in `dev-spec.txt`. This is easy with a package manager such as [Miniconda](https://www.anaconda.com/docs/getting-started/miniconda/main). The process of creating a dev environment using Miniconda is like so:
+Sourcing the `create-pfeil-env.sh` script will create a development environment for you using [Miniconda](https://www.anaconda.com/docs/getting-started/miniconda/main):
 ```
-conda create -y -n flashcards-dev --file dev-spec.txt
-conda activate flashcards-dev
-```
-
-Install the custom types by running:
-```
-npm install --save @types/jest
+source create-pfeil-env.sh
 ```
 
-Then, run:
+Once you are in the `pfeil-dev` environment, you can run
 ```
 make build
 ``` 

@@ -1,9 +1,3 @@
-import {
-    StateEditor,
-    scrollNumberEditor,
-    optionsEditor
-} from "core/editor"
-
 export const gSynth = () => { return window.speechSynthesis; };
 
 function getVoice(voiceName: string): SpeechSynthesisVoice {
@@ -27,7 +21,13 @@ export function utter(
     utterThis.voice = getVoice(voice);
     utterThis.rate = rate;
     utterThis.pitch = pitch;
-    utterThis.onend = callback;
+    utterThis.onend = () => {
+        callback();
+    };
+    utterThis.onerror = (e) => {
+        console.log(e);
+        callback();
+    };
     // console.log(`Speaking "${txt}"...`);
     gSynth().speak(utterThis);
 }
@@ -56,28 +56,12 @@ export function defaultSpeechSettings() {
 }
 defaultSpeechSettings();
 
-export function speechSettingsEditor(ss: SpeechSettings): StateEditor<SpeechSettings> {
-    var voices = gSynth().getVoices().map((v) => v.name);
-    var voiceEditor = optionsEditor(ss.voice, voices, (v) => `${getVoice(v).name} (${getVoice(v).lang})`);
-    var rateEditor = scrollNumberEditor("Speech rate: ", ss.rate, 0.5, 2.0, 0.05);
-    var pitchEditor = scrollNumberEditor("Speech pitch: ", ss.pitch, 0, 2, 0.05);
-
-    var contDiv = document.createElement("div");
-    var accordion = document.createElement("details");
-    var accordionSummary = document.createElement("summary");
-    accordionSummary.textContent = "Text-to-speech settings";
-    accordion.appendChild(accordionSummary);
-    [voiceEditor, rateEditor, pitchEditor].map((ed) => accordion.appendChild(ed.element));
-    contDiv.appendChild(accordion);
-
-    return {
-        element: contDiv,
-        menuToState: () => { return {
-            voice: voiceEditor.menuToState(),
-            rate: rateEditor.menuToState(),
-            pitch: pitchEditor.menuToState()
-        }}
-    }
+export function makeAudioButtons(el: HTMLElement, ss: SpeechSettings): HTMLElement {
+    var btns = el.querySelectorAll(".read-aloud-button");
+    btns.forEach((btn) => {
+        (<any>btn).onclick = (e: any) => {
+            utter(e.target.alt, ss.voice, ss.rate, ss.pitch);
+        }
+    });
+    return el;
 }
-
-// utter("Hello, my name is Albert.", gSynth.getVoices()[0], 1, 1);

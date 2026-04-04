@@ -1,29 +1,32 @@
 import {
     IDictionary,
-    guidGenerator,
-    trivialPromise
+    trivialPromise,
+    hideDetails,
+    makeSubber
 } from "utils/utils"
 import {
-    StateEditor,
-    boolEditor,
-    swappingTextEditor,
-    singleTextFieldEditor
-} from "core/editor"
-import {
-    TextFilterSettings,
-    applyTextFilter,
-    textFilterSelectionMenu,
-    defaultTextFilterSettings
-} from "utils/text-filters"
-import {
-    renderCard 
-} from "core/flashcard-template"
+    randomizeStringSub
+} from "utils/random-templating"
 import {
     Preloader
 } from "utils/generic-preloader"
 import {
+    defaultSpeechSettings,
+    SpeechSettings,
+    utter,
+    makeAudioButtons
+} from "utils/speech"
+import {
     Flashcard
 } from "core/flashcard"
+import {
+    renderString
+} from "nunjucks"
+import {
+    njSimpleCard,
+    njClozeCard,
+    njMultiSidedCard
+} from "utils/nj-templates"
 
 export const gCardTypeRegistry: IDictionary<FlashcardType<any, any, any>> = {};
 
@@ -36,15 +39,32 @@ export abstract class FlashcardType<E, D, S> {
     }
 
     abstract preprocessEntry(entry: E, settings: S): void;
-    abstract processEntry(entry: E, settings: S): Promise<D>;
+    abstract processEntry(entry: E, settings: S, context: any): Promise<D>;
     abstract getSearchableText(entry: E): string;
-    abstract generateCard(data: D, settings: S): Flashcard;
+    abstract getSpeakableText(data: D): string;
+    abstract generateCard(data: D, settings: S, externalParams: IDictionary<any>): Flashcard;
     abstract checkAnswer(answer: string, data: D, settings: S, tf: (s: string) => string): Promise<boolean>;
-    abstract makeEntryEditor(entry: E): StateEditor<E>;
-    abstract makeSettingsEditor(settings: S): StateEditor<S>;
 
-    abstract getDefaultEntry(): E;
+    abstract getDefaultEntry(settings?: S): E;
     abstract getDefaultSettings(): S;
+
+    getMaybeSetting(key: string, settings: S): any {
+        if (key in <Object>settings) {
+            return (<any>settings)[key];
+        } else {
+            return null;
+        }
+    }
+
+    speakCard(data: D, settings: S, resolve: () => void): void {
+        var ss = this.getMaybeSetting("speechSettings", settings);
+        if (ss == null) {
+            console.log("SPEECH SETTINGS NOT FOUND");
+            resolve();
+        } else {
+            utter(this.getSpeakableText(data), ss.voice, ss.rate, ss.pitch, resolve);
+        }
+    }
 }
 
 export function registerFlashcardType(ft: FlashcardType<any, any, any>) {
@@ -58,17 +78,25 @@ export function registerFlashcardType(ft: FlashcardType<any, any, any>) {
 export type SimpleCardEntry = {
     prompt: string[],
     answer: string[],
-    twoSided: boolean
+    twoSided: boolean,
+    readAloud: boolean
 }
 
 export type SimpleCardData = {
     prompt: string[],
     answer: string[],
-    reversed: boolean
+    reversed: boolean,
+    spoken: boolean
 }
 
 export type SimpleCardSettings = {
-    doTwoSided: boolean
+    doTwoSided: boolean,
+    doReadAloud: boolean,
+    probReversed: number,
+    probSpoken: number,
+    speechSettings: SpeechSettings,
+    substitutions: [string, string][],
+    template: string
 }
 
 export class SimpleCardType extends FlashcardType<SimpleCardEntry, SimpleCardData, SimpleCardSettings> {
@@ -84,12 +112,34 @@ export class SimpleCardType extends FlashcardType<SimpleCardEntry, SimpleCardDat
         return;
     }
 
-    // abstract processEntry(entry: E, settings: S): Promise<D>;
-    processEntry(entry: SimpleCardEntry, settings: SimpleCardSettings): Promise<SimpleCardData> {
+    // abstract processEntry(entry: E, settings: S, context: any): Promise<D>;
+    processEntry(entry: SimpleCardEntry, settings: SimpleCardSettings, context: any): Promise<SimpleCardData> {
+        var preventReversedCard = context.preventReversedCard;
+        var canBeReversed = !preventReversedCard && entry.twoSided && settings.doTwoSided;
+        var reversed = canBeReversed && (Math.random() < settings.probReversed);
+        var canBeSpoken = settings.doReadAloud && entry.readAloud;
+        var spoken = reversed && canBeSpoken && (Math.random() < settings.probSpoken);
+
+        var subber = makeSubber(settings.substitutions);
+        var tpPrompt = [];
+        var tpAnswers = [];
+        var ctx = {};
+        for (var i in Object.keys(entry.prompt)) {
+            var res = randomizeStringSub(subber(entry.prompt[i]), ctx);
+            ctx = res[1];
+            tpPrompt.push(res[0]);
+        }
+        for (var i in Object.keys(entry.answer)) {
+            var res = randomizeStringSub(subber(entry.answer[i]), ctx);
+            ctx = res[1];
+            tpAnswers.push(res[0]);
+        }
+
         return trivialPromise({
-            prompt: entry.prompt,
-            answer: entry.answer,
-            reversed: entry.twoSided && (Math.random() < 0.5)
+            prompt: reversed ? tpAnswers : tpPrompt,
+            answer: reversed ? tpPrompt : tpAnswers,
+            reversed: reversed,
+            spoken: spoken 
         });
     }
 
@@ -98,25 +148,39 @@ export class SimpleCardType extends FlashcardType<SimpleCardEntry, SimpleCardDat
         return entry.prompt.join(" ").concat(entry.answer.join(" "));
     }
 
-    // abstract generateCard(data: D, settings: S): Flashcard;
-    generateCard(data: SimpleCardData, settings: SimpleCardSettings): Flashcard {
+    // abstract getSpeakableText(data: D): string;
+    getSpeakableText(data: SimpleCardData): string {
+        if (data.reversed)
+            return data.prompt[0]
+        else
+            return data.answer[0];
+    }
+
+    // abstract generateCard(data: D, settings: S, externalParams: IDictionary<any>): Flashcard;
+    generateCard(data: SimpleCardData, settings: SimpleCardSettings, externalParams: IDictionary<any> = {}): Flashcard {
         var a = document.createElement("div");
         var prompt = "";
         var answers: string[] = [];
         var hint = "";
-        if (!data.reversed) {
-            prompt = data.prompt[0];
-            answers = data.answer;
-            hint = data.answer[0];
-        } else {
-            prompt = data.answer[0];
-            answers = data.prompt;
-            hint = data.prompt[0];
-        }
+        
+        prompt = data.prompt[0];
+        answers = data.answer;
+        hint = data.answer.join(' | ');
+
         var fontSize = 100.0/(10.0*Math.log(10+prompt.length));
-        a.style.fontSize = `${fontSize}vw`;
-        a.textContent = prompt;
-        return new Flashcard(a, hint);
+        
+        var templateArgs = {
+            prompts: data.prompt,
+            fontSize: fontSize,
+            reversed: data.reversed,
+            spoken: data.spoken
+        };
+        templateArgs = Object.assign({}, templateArgs, externalParams);
+        var tpl = settings.template;
+        var el = <HTMLElement>(new DOMParser().parseFromString(renderString(tpl, templateArgs), "text/html").body.firstChild);
+        el = makeAudioButtons(el, settings.speechSettings);
+
+        return new Flashcard(el, hint);
     }
 
     // abstract checkAnswer(answer: string, data: D, settings: S): Promise<boolean>;
@@ -124,69 +188,26 @@ export class SimpleCardType extends FlashcardType<SimpleCardEntry, SimpleCardDat
         return trivialPromise(data.answer.map(tf).includes(tf(answer)));
     }
 
-    // abstract makeEntryEditor(entry: E): StateEditor<E>;
-    makeEntryEditor(entry: SimpleCardEntry): StateEditor<SimpleCardEntry> {
-        var edDetails = document.createElement("details");
-        var edSummary = document.createElement("summary"); 
-        edDetails.style.display = "inline-block";
-        edDetails.appendChild(edSummary);
-        edDetails.classList.add("cardlist-accordion");
-        edDetails.onkeyup = function(e) {
-            if (e.keyCode == 32) {
-                e.preventDefault();
-            }
-        };
-
-        var edMain = swappingTextEditor([entry.prompt.join('|'), entry.answer.join('|')]);
-        edMain.element.style.display = "inline-block";
-        edSummary.appendChild(edMain.element);
-
-        var twoSideEd = boolEditor("Double-sided card?", entry.twoSided);
-        edDetails.appendChild(twoSideEd.element);
-
-        return {
-            element: edDetails,
-            menuToState: () => {
-                let tp = edMain.menuToState();
-                return {
-                    prompt: tp[0].split('|'),
-                    answer: tp[1].split('|'),
-                    twoSided: twoSideEd.menuToState()
-                };
-            }
-        }; 
-    }
-
-    // abstract makeSettingsEditor(settings: S): StateEditor<S>;
-    makeSettingsEditor(settings: SimpleCardSettings): StateEditor<SimpleCardSettings> {
-        var contDiv = document.createElement("div");
-        var twoSidedEditor = boolEditor("Study both sides of two-sided cards?", settings.doTwoSided);
-        var twoSidedCont = document.createElement("div");
-        twoSidedCont.appendChild(twoSidedEditor.element);
-        contDiv.appendChild(twoSidedCont);
-        return {
-            element: contDiv,
-            menuToState: () => {
-                return {
-                    doTwoSided: twoSidedEditor.menuToState()
-                };
-            }
-        }
-    }
-
-    // abstract getDefaultEntry(): E;
-    getDefaultEntry(): SimpleCardEntry {
+    // abstract getDefaultEntry(settings?: S): E;
+    getDefaultEntry(settings?: SimpleCardSettings): SimpleCardEntry {
         return {
             prompt: [],
             answer: [],
-            twoSided: false
+            twoSided: false,
+            readAloud: false
         };
     }
 
     // abstract getDefaultSettings(): S;
     getDefaultSettings(): SimpleCardSettings {
         return {
-            doTwoSided: true
+            doTwoSided: true,
+            doReadAloud: true,
+            probReversed: 0.5,
+            probSpoken: 0.5,
+            speechSettings: defaultSpeechSettings(),
+            substitutions: [],
+            template: njSimpleCard
         };
     }
 }
@@ -204,7 +225,7 @@ export type ClozeCardData = {
     valid: boolean, 
     cloze?: {
         prompt: string,
-        answer: string,
+        answers: string[],
         translation: string,
         group: string
     }
@@ -214,7 +235,10 @@ export type ClozeCardSettings = {
     clozeServerUrl: string,
     sourceLangs: string[],
     targetLang: string,
-    clozeGroups: string[]
+    clozeGroups: string[],
+    maxLength: number,
+    speechSettings: SpeechSettings,
+    template: string
 }
 
 export class ClozeCardType extends FlashcardType<ClozeCardEntry, ClozeCardData, ClozeCardSettings> {
@@ -234,7 +258,8 @@ export class ClozeCardType extends FlashcardType<ClozeCardEntry, ClozeCardData, 
                 "groups": settings.clozeGroups.join(","),
                 "tgt": settings.targetLang,
                 "lemma": key,
-                "n": this.cache.numPreload.toString()
+                "n": this.cache.numPreload.toString(),
+                "maxlen": settings.maxLength.toString()
             }).toString()
         ).then((r) => r.json()).catch((e) => undefined);
    
@@ -245,8 +270,8 @@ export class ClozeCardType extends FlashcardType<ClozeCardEntry, ClozeCardData, 
         this.cache.addKey(entry.key, (k) => this.fetchCloze(entry.key, settings));
     }
 
-    // abstract processEntry(entry: E, settings: S): Promise<D>;
-    processEntry(entry: ClozeCardEntry, settings: ClozeCardSettings): Promise<ClozeCardData> {
+    // abstract processEntry(entry: E, settings: S, context: any): Promise<D>;
+    processEntry(entry: ClozeCardEntry, settings: ClozeCardSettings, context: any): Promise<ClozeCardData> {
         return this.cache.getKey(
             entry.key,
             (k) => this.fetchCloze(entry.key, settings)    
@@ -255,12 +280,18 @@ export class ClozeCardType extends FlashcardType<ClozeCardEntry, ClozeCardData, 
                 if (j === undefined) {
                     return { valid: false, key: entry.key };
                 }
+                var goalWords: string[] = [];
+                j["puzzle"].match(/\{\{([^\{\}]+)\}\}/g)!.forEach((m: string) => {
+                    goalWords.push(m.slice(2, -2))
+                });
+                var shortAnswer1 = goalWords.join(", ");
+                var shortAnswer2 = goalWords.join(" ");
                 return {
                     key: entry.key,
                     valid: true,
                     cloze: {
                         prompt: j["puzzle"],
-                        answer: j["target"],
+                        answers: [j["target"], shortAnswer1, shortAnswer2],
                         translation: j["source"],
                         group: j["group"]
                     }
@@ -276,69 +307,50 @@ export class ClozeCardType extends FlashcardType<ClozeCardEntry, ClozeCardData, 
         return entry.key;
     }
 
-    // abstract generateCard(data: D, settings: S): Flashcard;
-    generateCard(data: ClozeCardData, settings: ClozeCardSettings): Flashcard {
+    // abstract getSpeakableText(data: D): string;
+    getSpeakableText(data: ClozeCardData): string {
+        if (data.valid)
+            return data.cloze!.answers[0];
+        else
+            return "";
+    }
+
+    // abstract generateCard(data: D, settings: S, externalParams: IDictionary<any>): Flashcard;
+    generateCard(data: ClozeCardData, settings: ClozeCardSettings, externalParams: IDictionary<any> = {}): Flashcard {
         if (!data.valid) {
-            return renderCard("noanswer-template", `Could not get puzzle for card "${data.key}".`)
+            
         }
-        var fl = renderCard("cloze-template", {
-            group: data.cloze!.group,
-            guid: "",
-            upper: data.cloze!.prompt,
-            lower: data.cloze!.translation
-        });
-        return fl;
+
+        var fontSize = 20;
+        var prompt = "";
+        if (data.valid) {
+            var fontSize = 900.0/(10.0*Math.log(10+data.cloze!.prompt.length)); 
+            prompt = data.cloze!.prompt.replaceAll(/\{\{([^\{\}]+)\}\}/g, "___"); 
+        }
+
+
+        var templateArgs = {
+            key: data.key,
+            puzzleFound: data.valid,
+            prompt: prompt, 
+            translation: data.valid ? data.cloze!.translation : undefined,
+            source: data.valid ? data.cloze!.group : undefined,
+            fontSize: fontSize,
+        };
+        templateArgs = Object.assign({}, templateArgs, externalParams);
+        var tpl = settings.template;
+        var el = <HTMLElement>(new DOMParser().parseFromString(renderString(tpl, templateArgs), "text/html").body.firstChild);
+
+        return new Flashcard(el, data.valid ? data.cloze!.answers[0] : "no answer, press up or down arrow to skip");
     }
 
     // abstract checkAnswer(answer: string, data: D, settings: S, tf: (s: string) => string): Promise<boolean>;
     checkAnswer(answer: string, data: ClozeCardData, settings: ClozeCardSettings, tf: (s: string) => string) {
-        return trivialPromise(data.valid && tf(answer) == tf(data.cloze!.answer));
+        return trivialPromise(data.valid && data.cloze!.answers.map(tf).includes(tf(answer)));
     }
 
-    // abstract makeEntryEditor(entry: E): StateEditor<E>;
-    makeEntryEditor(entry: ClozeCardEntry): StateEditor<ClozeCardEntry> {
-        var edCont = document.createElement("div");
-        var keyEd = singleTextFieldEditor(entry.key);
-        keyEd.element.style.display = "inline-block";
-        edCont.appendChild(keyEd.element);
-        return {
-            element: edCont,
-            menuToState: () => {
-                return {
-                    key: keyEd.menuToState()
-                };
-            }
-        };
-    }
-
-    // abstract makeSettingsEditor(settings: S): StateEditor<S>;
-    makeSettingsEditor(settings: ClozeCardSettings): StateEditor<ClozeCardSettings> {
-        var clozeServerDiv = document.createElement("div");
-        clozeServerDiv.classList.add("deck-menu-submenu"); 
-        var clozeServerUrlEditor = singleTextFieldEditor(settings.clozeServerUrl)
-        var clozeSourceLangEditor = singleTextFieldEditor(settings.sourceLangs.join(','));
-        var clozeTargetLangEditor = singleTextFieldEditor(settings.targetLang);
-        var clozeGroupsEditor = singleTextFieldEditor(settings.clozeGroups.join(','));
-        (<HTMLInputElement>clozeGroupsEditor.element).placeholder = "allowed groups..."; 
-        clozeServerDiv.appendChild(clozeServerUrlEditor.element);
-        clozeServerDiv.appendChild(clozeSourceLangEditor.element);
-        clozeServerDiv.appendChild(clozeTargetLangEditor.element);
-        clozeServerDiv.appendChild(clozeGroupsEditor.element);
-        return {
-            element: clozeServerDiv,
-            menuToState: () => {
-                return {
-                    clozeServerUrl: clozeServerUrlEditor.menuToState(),
-                    sourceLangs: clozeSourceLangEditor.menuToState().split(','),
-                    targetLang: clozeTargetLangEditor.menuToState(),
-                    clozeGroups: clozeGroupsEditor.menuToState().split(',').filter((g) => g.length > 0)
-                }
-            }
-        }
-    }
-
-    // abstract getDefaultEntry(): E;
-    getDefaultEntry(): ClozeCardEntry {
+    // abstract getDefaultEntry(settings?: S): E;
+    getDefaultEntry(settings?: ClozeCardSettings): ClozeCardEntry {
         return {
             key: ""
         };
@@ -350,9 +362,151 @@ export class ClozeCardType extends FlashcardType<ClozeCardEntry, ClozeCardData, 
             clozeServerUrl: "",
             sourceLangs: [],
             targetLang: "",
-            clozeGroups: []
+            clozeGroups: [],
+            maxLength: 150,
+            speechSettings: defaultSpeechSettings(),
+            template: njClozeCard
         }
     }
 }
 
 registerFlashcardType(new ClozeCardType())
+
+/* MULTI-SIDED CARD TYPE */
+
+export type MultiSidedCardEntry = {
+    sides: string[]
+}
+
+export type MultiSidedCardData = {
+    prompts: string[],
+    answers: string[][],
+    promptNames: string[],
+    answersNames: string[],
+    spokenText: string,
+    allAnswersRequired: boolean
+}
+
+export enum MultiSidedCardQStyle {
+    AllowAnySide = 1,           // Given 1 side, provide any other side
+    AskRandomSide,              // Given 1 side, provide a randomly chosen other side
+    AskAllSides,                // Given 1 side, provide all other sides
+    AskOneSideGivenAllOthers    // Given all sides but one, provide the missing side
+}
+
+export type MultiSidedCardSettings = {
+    sideNames: string[],
+    speakableSide: number,
+    quizzingStyle: MultiSidedCardQStyle, 
+    speechSettings: SpeechSettings,
+    template: string
+}
+
+export class MultiSidedCardType extends FlashcardType<MultiSidedCardEntry, MultiSidedCardData, MultiSidedCardSettings> {
+    getTypeName(): string {
+        return "multi-sided-card";
+    }
+    getUserFriendlyName(): string {
+        return "Multi-sided flashcards";
+    }
+
+    // abstract preprocessEntry(entry: E, settings: S): void;
+    preprocessEntry(entry: MultiSidedCardEntry, settings: MultiSidedCardSettings) {}
+
+    // abstract processEntry(entry: E, settings: S, context: any): Promise<D>;
+    processEntry(entry: MultiSidedCardEntry, settings: MultiSidedCardSettings, context: any): Promise<MultiSidedCardData> {
+        var n: number = entry.sides.length;
+        var chosenSides = [];
+        var availableSides = [...new Array(n).keys()];
+        var k = 1;
+        if (settings.quizzingStyle == MultiSidedCardQStyle.AskOneSideGivenAllOthers) {
+            k = n-1;
+        }
+       
+        for (var i = 0; i < k; i++) {
+            var ind = Math.floor(Math.random() * availableSides.length);
+            ind = availableSides[ind];
+            chosenSides.push(ind);
+            availableSides = [...availableSides.filter((j) => j != ind)];
+        }
+
+        if (settings.quizzingStyle === MultiSidedCardQStyle.AskRandomSide) {
+            var ind = Math.floor(Math.random() * availableSides.length);
+            ind = availableSides[ind];
+            availableSides = [ind];
+        }
+
+        var prompts = [...chosenSides.map((ind) => entry.sides[ind].split("|")[0])];
+        var promptNames = [...chosenSides.map((ind) => settings.sideNames[ind])];
+
+        var answers = [...availableSides.map((ind) => entry.sides[ind].split("|"))];
+        var answerNames = [...availableSides.map((ind) => settings.sideNames[ind])];
+
+        var res: MultiSidedCardData = {
+            prompts: prompts,
+            promptNames: promptNames,
+            answers: answers,
+            answersNames: answerNames,
+            spokenText: entry.sides[settings.speakableSide],
+            allAnswersRequired: settings.quizzingStyle !== MultiSidedCardQStyle.AllowAnySide
+        };
+        return trivialPromise(res);
+    } 
+ 
+    // abstract getSearchableText(entry: E): string;
+    getSearchableText(entry: MultiSidedCardEntry): string {
+        return entry.sides.join(" ");
+    }    
+
+    // abstract getSpeakableText(data: D): string;
+    getSpeakableText(data: MultiSidedCardData): string {
+        return data.spokenText;
+    } 
+
+    // abstract generateCard(data: D, settings: S, externalParams: IDictionary<any>): Flashcard;
+    generateCard(data: MultiSidedCardData, settings: MultiSidedCardSettings, externalParams: IDictionary<any>) {
+        var templateArgs = {
+            fontSize: 25
+        };
+        templateArgs = Object.assign({}, templateArgs, data, externalParams);
+        var tpl = settings.template;
+        var el = <HTMLElement>(new DOMParser().parseFromString(renderString(tpl, templateArgs), "text/html").body.firstChild);
+        return new Flashcard(el, data.answers.map((a) => a[0]).join(", "));
+    }
+
+    // abstract checkAnswer(answer: string, data: D, settings: S, tf: (s: string) => string): Promise<boolean>;
+    checkAnswer(answer: string, data: MultiSidedCardData, settings: MultiSidedCardSettings, tf: (s: string) => string): Promise<boolean> {
+        var answerParts = answer.split(",");
+        if (answerParts.length < data.answers.length) {
+            return trivialPromise(false);
+        }
+        for (var i = 0; i < data.answers.length; i++) {
+            if (!data.answers[i].map(tf).includes(tf(answerParts[i]))) {
+                return trivialPromise(false);
+            }
+        }
+        return trivialPromise(true);
+    }
+
+    // abstract getDefaultEntry(settings?: S): E;
+    getDefaultEntry(settings?: MultiSidedCardSettings): MultiSidedCardEntry {
+        return {
+            "sides": ["", ""]
+        };
+    }
+
+    // abstract getDefaultSettings(): S;
+    getDefaultSettings(): MultiSidedCardSettings {
+        return {
+            sideNames: ["first side", "second side"],
+            speakableSide: 0,
+            quizzingStyle: MultiSidedCardQStyle.AskAllSides,
+            speechSettings: defaultSpeechSettings(),
+            template: njMultiSidedCard
+        }
+
+    }
+
+}
+
+registerFlashcardType(new MultiSidedCardType())

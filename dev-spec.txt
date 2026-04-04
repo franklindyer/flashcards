@@ -1,3 +1,6 @@
 typescript
 nodejs
 pandoc
+sphinx
+sphinx-autobuild
+myst-parser
