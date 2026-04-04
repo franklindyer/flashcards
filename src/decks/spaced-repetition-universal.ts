@@ -66,6 +66,7 @@ export const defaultSRUniversalSettings = {
     initialStreak: 3,
     initialHours: 24,
     minimumHours: 8,
+    minimumMinutesWhenWrong: 10,
     correctFactor: 1.5,
     incorrectFactor: 0.5,
     spreadingCoef: 0.0,
@@ -276,10 +277,14 @@ export class UniversalSpacedRepGen
         smoothedInterval = (1 + st.settings.spreadingCoef*(2*Math.random()-1))*smoothedInterval;
 
         // Interval > 0 implies the card is no longer new
-        // Only reschedule the card if it was answered correctly
         if (correct == FlashcardResult.Correct && newInterval > 0) {
+            // When correct, reschedule card using its current interval
             cardVirtual.due = this.getDate();
             cardVirtual.due.setHours(cardVirtual.due!.getHours() + smoothedInterval/60);
+        } else if (correct == FlashcardResult.Incorrect && newInterval > 0) {
+            // When incorrect, reschedule for re-study after a short timeout
+            cardVirtual.due = this.getDate();
+            cardVirtual.due.setMinutes(cardVirtual.due!.getMinutes() + st.settings.minimumMinutesWhenWrong);
         }
 
         return cardVirtual;

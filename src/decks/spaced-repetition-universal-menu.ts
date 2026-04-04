@@ -29,6 +29,10 @@ export const srUniversalMenuTpl = `
                             <label class="sr-menu-label" for="minimumHours">Minimum interval (hours)</label>
                         </div>
                         <div class="sr-menu-field-row">
+                            <menu-number name="minimumMinutesWhenWrong" min=1 max=1440 step=1></menu-number>
+                            <label class="sr-menu-label" for="minimumMintuesWhenWrong">Minimum timeout (minutes) before re-answering a wrong card</label>
+                        </div>
+                        <div class="sr-menu-field-row">
                             <menu-number name="initialStreak" min=1 max=10 step=1></menu-number>
                             <label class="sr-menu-label" for="initialStreak">Streak needed to complete new card</label>
                         </div>

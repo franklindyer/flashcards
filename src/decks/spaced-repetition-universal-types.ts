@@ -61,6 +61,7 @@ export type SRUniversalSettings = {
     initialStreak: number,
     initialHours: number,
     minimumHours: number,
+    minimumMinutesWhenWrong: number,
     correctFactor: number,
     incorrectFactor: number,
     spreadingCoef: number,
