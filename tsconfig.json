@@ -13,7 +13,6 @@
   "module": "commonjs",
   "types": ["node", "jest"],
   "resolveJsonModule": true,
-  "moduleResolution": "node",
   "esModuleInterop": true,
   "allowSyntheticDefaultImports": true,
   "paths": {
