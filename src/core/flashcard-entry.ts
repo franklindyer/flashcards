@@ -284,14 +284,14 @@ export class ClozeCardType extends FlashcardType<ClozeCardEntry, ClozeCardData, 
                 j["puzzle"].match(/\{\{([^\{\}]+)\}\}/g)!.forEach((m: string) => {
                     goalWords.push(m.slice(2, -2))
                 });
-                var shortAnswer1 = goalWords.join(", ");
-                var shortAnswer2 = goalWords.join(" ");
+                var shortAnswer1 = goalWords.join(" ");
+                var shortAnswer2 = goalWords.join(", ");
                 return {
                     key: entry.key,
                     valid: true,
                     cloze: {
                         prompt: j["puzzle"],
-                        answers: [j["target"], shortAnswer1, shortAnswer2],
+                        answers: [shortAnswer1, shortAnswer2, j["target"]],
                         translation: j["source"],
                         group: j["group"]
                     }
