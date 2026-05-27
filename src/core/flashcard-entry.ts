@@ -315,7 +315,7 @@ export class ClozeCardType extends FlashcardType<ClozeCardEntry, ClozeCardData, 
     // abstract getSpeakableText(data: D): string;
     getSpeakableText(data: ClozeCardData): string {
         if (data.valid)
-            return data.cloze!.answers[0];
+            return data.cloze!.answers.at(-1)!;
         else
             return "";
     }
