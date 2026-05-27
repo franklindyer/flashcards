@@ -267,18 +267,23 @@ export class ClozeCardType extends FlashcardType<ClozeCardEntry, ClozeCardData, 
 
     // abstract preprocessEntry(entry: E, settings: S): void;
     preprocessEntry(entry: ClozeCardEntry, settings: ClozeCardSettings): void {
-        this.cache.addKey(entry.key, (k) => this.fetchCloze(entry.key, settings));
+        entry.key.split("|").forEach((key) => {
+            this.cache.addKey(key, (k) => this.fetchCloze(key, settings));
+        });
     }
 
     // abstract processEntry(entry: E, settings: S, context: any): Promise<D>;
     processEntry(entry: ClozeCardEntry, settings: ClozeCardSettings, context: any): Promise<ClozeCardData> {
+        var keys = entry.key.split("|");
+        var keyInd = Math.floor(Math.random() * keys.length); // Uniform choice among keys
+        var key = keys[keyInd];
         return this.cache.getKey(
-            entry.key,
-            (k) => this.fetchCloze(entry.key, settings)    
+            key,
+            (k) => this.fetchCloze(key, settings)    
         ).then(
             (j) => {
                 if (j === undefined) {
-                    return { valid: false, key: entry.key };
+                    return { valid: false, key: key };
                 }
                 var goalWords: string[] = [];
                 j["puzzle"].match(/\{\{([^\{\}]+)\}\}/g)!.forEach((m: string) => {
@@ -287,7 +292,7 @@ export class ClozeCardType extends FlashcardType<ClozeCardEntry, ClozeCardData, 
                 var shortAnswer1 = goalWords.join(" ");
                 var shortAnswer2 = goalWords.join(", ");
                 return {
-                    key: entry.key,
+                    key: key,
                     valid: true,
                     cloze: {
                         prompt: j["puzzle"],
@@ -298,7 +303,7 @@ export class ClozeCardType extends FlashcardType<ClozeCardEntry, ClozeCardData, 
                 };
             }
         ).catch((e) => {
-            return { valid: false, key: entry.key };
+            return { valid: false, key: key };
         });
     }
 
