@@ -334,6 +334,7 @@ export class UniversalSpacedRepGen
     getNextCardAsync(st: SRUniversalState): Promise<SRUniversalCardPhysical> {
         var inds = Object.keys(st.cards);
         var newInds = this.getNew(st);
+        console.log(newInds);
         var dueInds = this.getDue(st);
         var emptyCard = this.nextCardAsyncPreprocessing({
             virtual: undefined,

@@ -19,7 +19,7 @@ export function chooseNext(
     var newOpts = allOpts.filter((k) => !q.newQueue.includes(k));
     var qNotFull = q.newQueue.length < q.maxNewCards;    
 
-    if (qNotFull && newOpts.length > 0 && !refillOnlyWhenEmpty) {
+    if (((qNotFull && !refillOnlyWhenEmpty) || q.newQueue.length == 0) && newOpts.length > 0) {
         return newOpts[0];
     }
 
