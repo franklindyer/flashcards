@@ -316,6 +316,7 @@ export class UniversalSpacedRepGen
     reportableData(
         st: SRUniversalState,
         card: SRUniversalCardPhysical,
+        attempt: string,
         result: FlashcardResult
     ): any {
         if (!card.virtual || result == FlashcardResult.Unanswered) {
@@ -327,6 +328,7 @@ export class UniversalSpacedRepGen
             "due": card.virtual!.due,
             "timestamp": this.getDate(),
             "interval": card.virtual!.intervalMinutes,
+            "attempt": attempt.slice(0, 50),
             "correct": result == FlashcardResult.Correct
         }
     }

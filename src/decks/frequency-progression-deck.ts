@@ -135,7 +135,7 @@ export class FreqProgGen
         resolve();
     }
 
-    reportableData(st: FreqProgState, j: number, res: FlashcardResult): any {
+    reportableData(st: FreqProgState, j: number, attempt: string, res: FlashcardResult): any {
         return {};
     }
 

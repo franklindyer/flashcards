@@ -52,7 +52,7 @@ export class TimesTableGen
         resolve();
     }
 
-    reportableData(st: TimesTableState, c: TimesTableFact, res: FlashcardResult) {
+    reportableData(st: TimesTableState, c: TimesTableFact, attempt: string, res: FlashcardResult) {
         return {};
     }
 
