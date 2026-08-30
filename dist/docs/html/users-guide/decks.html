@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Decks &#8212; Pfeil  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
+    <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Documentation development" href="../developers-guide/building-docs.html" />
+    <link rel="prev" title="Cards" href="cards.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="decks">
+<span id="deck-types"></span><h1>Decks<a class="headerlink" href="#decks" title="Link to this heading">¶</a></h1>
+<p>There are several different possible deck types, each with their own functionalities.</p>
+<section id="key-value-quiz-deck">
+<h2>Key-value quiz deck<a class="headerlink" href="#key-value-quiz-deck" title="Link to this heading">¶</a></h2>
+<p>Each card in the deck has a prompt and a correct answer. Cards are chosen and displayed uniformly at random from the deck.</p>
+</section>
+<section id="spaced-repetition-deck">
+<span id="spaced-rep-deck"></span><h2>Spaced repetition deck<a class="headerlink" href="#spaced-repetition-deck" title="Link to this heading">¶</a></h2>
+<p>This deck uses the <em>spaced repetition</em> algorithm to help you study cards long-term. It also offers several detailed options for customization and different types of cards.</p>
+<section id="spaced-repetition-algorithm">
+<h3>Spaced repetition algorithm<a class="headerlink" href="#spaced-repetition-algorithm" title="Link to this heading">¶</a></h3>
+<p>Each time you answer a card correctly, it is removed from the queue and its due date is set for a later date and time. The amount of time between the time a card is answered correctly and its next due date is called that card’s <em>interval</em>. When a card is answered correctly, its interval is multiplied by the <em>correct factor</em> <span class="math notranslate nohighlight">\(\alpha^+ &gt; 1\)</span>, and when it is answered incorrectly, its interval is multiplied by the <em>incorrect factor</em> <span class="math notranslate nohighlight">\(\alpha^- &lt; 1\)</span>. This way, when cards are answered correctly, they come due less often, and when they are answered incorrectly, they come due more often.</p>
+<p>When you first add cards to your deck, they won’t become due until you study them for the first time. By default, <em>new cards</em> must be answered correctly 3 times in a row before they shed their “new card” status. From that point onwards, they can show up normally in the queue. To switch between studying new cards and studying due cards from the queue, toggle the checkbox in the deck editor accordingly.</p>
+<p>When a card’s interval is large enough, it is considered a <em>review card</em>. These cards are not scheduled according to due dates and intervals anymore. Instead, when you study due cards, review cards (if any exist) will randomly pop up in your queue with a certain fixed probability. Each review card that pops up is chosen uniformly at random from among all of the review cards in your deck.</p>
+<p>The configurable parameters for the deck are as follows:</p>
+<ul class="simple">
+<li><p>Initial interval: the interval of a card when it goes from <em>new</em> to <em>due</em> for the first time</p></li>
+<li><p>Correct factor: the factor <span class="math notranslate nohighlight">\(\alpha^+\)</span> by which a card’s interval increases when answered correctly</p></li>
+<li><p>Incorrect factor: the factor <span class="math notranslate nohighlight">\(\alpha^-\)</span> by which a card’s interval increases when answered incorrectly</p></li>
+<li><p>Probability of review cards: when studying due cards, the probability that each card is taken from review cards</p></li>
+</ul>
+</section>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Pfeil</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="help.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="help.html#customizing-your-deck">Customizing your deck</a></li>
+<li class="toctree-l1"><a class="reference internal" href="help.html#additional-deck-controls">Additional deck controls</a></li>
+<li class="toctree-l1"><a class="reference internal" href="help.html#if-something-breaks">If something breaks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cards.html">Cards</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Decks</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#key-value-quiz-deck">Key-value quiz deck</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#spaced-repetition-deck">Spaced repetition deck</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../developers-guide/building-docs.html">Documentation development</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="cards.html" title="previous chapter">Cards</a></li>
+      <li>Next: <a href="../developers-guide/building-docs.html" title="next chapter">Documentation development</a></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Franklin Pezzuti Dyer, Althea Denlinger.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.1.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="../_sources/users-guide/decks.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

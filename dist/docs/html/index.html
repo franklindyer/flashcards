@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>About Pfeil &#8212; Pfeil  documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=27fed22d" />
+    <script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Getting started" href="users-guide/help.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <img alt="_images/pfeil-logo-large-lavender-transparent.png" class="align-center" src="_images/pfeil-logo-large-lavender-transparent.png" />
+<div class="toctree-wrapper compound">
+</div>
+<div class="toctree-wrapper compound">
+</div>
+<section id="about-pfeil">
+<h1>About Pfeil<a class="headerlink" href="#about-pfeil" title="Link to this heading">¶</a></h1>
+<p>This is an app that I made for studying things with flashcards. Mainly foreign languages.</p>
+<section id="who-this-is-for">
+<h2>Who this is for<a class="headerlink" href="#who-this-is-for" title="Link to this heading">¶</a></h2>
+<p>This app is for you if:</p>
+<ul class="simple">
+<li><p>You want a simple, aesthetically minimal flashcards app to study with</p></li>
+<li><p>You like to use spaced repetition for studying languages</p></li>
+<li><p>You want to be able to easily export entire decks into a readable, hackable file format</p></li>
+<li><p>You want to use a flashcards app that is dev-friendly and open-source</p></li>
+</ul>
+<p>This app is not for you if:</p>
+<ul class="simple">
+<li><p>You want to study languages or other things with a lot of gamification</p></li>
+<li><p>You want a flashcard app that offers a lot of reskinning or aesthetic customization options</p></li>
+<li><p>You are a crazy power user who wants to study decks with hundreds of thousands of cards</p></li>
+</ul>
+<p>Mainly, this app is for me (and for my wife).</p>
+</section>
+<section id="my-motivation">
+<h2>My motivation<a class="headerlink" href="#my-motivation" title="Link to this heading">¶</a></h2>
+<p>In summary, the principles behind this app are as follows:</p>
+<ul class="simple">
+<li><p>The code should provide a unified interface for a very broad class of flashcard-style quizzers</p></li>
+<li><p>Decks should allow for “virtual cards”, that is, cards that are generated rather than listed</p></li>
+<li><p>Common variants of the Spaced Repetition algorithm should be supported, but not exclusively</p></li>
+<li><p>The aesthetic should be minimalistic with a few pleasing animations but very few distractions</p></li>
+<li><p>The code should be as client-centric as possible with very little or no server participation needed</p></li>
+<li><p>It should be easy for anyone to export an entire flashcard deck and edit the deck file by hand</p></li>
+</ul>
+<p>I began working on this app because existing flashcard apps were not flexible enough for me. Existing apps that I’ve tried using include Flashcards Deluxe and Anki2. The former is a great app, but it’s not open source, which makes it impractical to make small tweaks to a deck’s appearance or behavior unless settings happen to exist for the desired changes already. The latter is open-source, but I find its design to be too inflexible and oriented towards spaced repetition specifically.</p>
+<p>The design of this app is specifically intended as a framework that enables <em>generative</em> flashcards. The philosophy is as follows: a flashcard represents a specific <em>thing</em> that you want to study, but it does not always need to present itself in the same way. For example, suppose that you want one flashcard to represent the German verb <code class="docutils literal notranslate"><span class="pre">sein</span></code> (“to be”). But when the card comes up in your deck, perhaps you would like to be quizzed on a random one of its conjugations:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">to</span> <span class="pre">be</span> <span class="pre">|</span> <span class="pre">sein</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">I</span> <span class="pre">am</span> <span class="pre">|</span> <span class="pre">ich</span> <span class="pre">bin</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">you</span> <span class="pre">are</span> <span class="pre">|</span> <span class="pre">du</span> <span class="pre">bist</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">he</span> <span class="pre">is</span> <span class="pre">|</span> <span class="pre">er</span> <span class="pre">ist</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">she</span> <span class="pre">is</span> <span class="pre">|</span> <span class="pre">sie</span> <span class="pre">ist</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">it</span> <span class="pre">is</span> <span class="pre">|</span> <span class="pre">es</span> <span class="pre">ist</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">we</span> <span class="pre">are</span> <span class="pre">|</span> <span class="pre">wir</span> <span class="pre">sind</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">you</span> <span class="pre">guys</span> <span class="pre">are</span> <span class="pre">|</span> <span class="pre">ihr</span> <span class="pre">seid</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">they</span> <span class="pre">are</span> <span class="pre">|</span> <span class="pre">sie</span> <span class="pre">sind</span></code></p></li>
+</ul>
+<p>Or perhaps you would like to be presented with a random fill-in-the-blank puzzle involving the conjugations of this word:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">Ich</span> <span class="pre">{{bin}}</span> <span class="pre">kein</span> <span class="pre">Arzt.</span> <span class="pre">|</span> <span class="pre">I</span> <span class="pre">am</span> <span class="pre">not</span> <span class="pre">a</span> <span class="pre">doctor.</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">{{Bist}}</span> <span class="pre">du</span> <span class="pre">in</span> <span class="pre">Gefahr?</span> <span class="pre">|</span> <span class="pre">Are</span> <span class="pre">you</span> <span class="pre">in</span> <span class="pre">danger?</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Er</span> <span class="pre">{{ist}}</span> <span class="pre">mein</span> <span class="pre">Freund.</span> <span class="pre">|</span> <span class="pre">He</span> <span class="pre">is</span> <span class="pre">my</span> <span class="pre">friend.</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Ich</span> <span class="pre">weiß</span> <span class="pre">nicht,</span> <span class="pre">wo</span> <span class="pre">sie</span> <span class="pre">{{sind}}.</span> <span class="pre">|</span> <span class="pre">I</span> <span class="pre">don't</span> <span class="pre">know</span> <span class="pre">where</span> <span class="pre">they</span> <span class="pre">are.</span></code></p></li>
+<li><p>…</p></li>
+</ul>
+<p>You could add all of these cards to your deck by hand, but it could get tedious to add all of the conjugations for each verb manually. And if your sentences aren’t manually written, but pulled automatically from some existing data set of sentence translations or fill-in-the-blank puzzles, then it might not be practical to add them by hand at all. Furthermore, if you are studying in a spaced repetition deck, you might want to have a wide variety of possible sentences involving a single word (e.g. <code class="docutils literal notranslate"><span class="pre">sein</span></code>), but treating them as distinct cards wouldn’t make sense both because they would be too numerous and because their intervals would be independent of each other despite their quizzing you on the same word.</p>
+<p>This app is written with this sort of thing in mind (even if not all of the capabilities are implemented just yet).</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="#">Pfeil</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">User's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="users-guide/help.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="users-guide/help.html#customizing-your-deck">Customizing your deck</a></li>
+<li class="toctree-l1"><a class="reference internal" href="users-guide/help.html#additional-deck-controls">Additional deck controls</a></li>
+<li class="toctree-l1"><a class="reference internal" href="users-guide/help.html#if-something-breaks">If something breaks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="users-guide/cards.html">Cards</a></li>
+<li class="toctree-l1"><a class="reference internal" href="users-guide/decks.html">Decks</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer's guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="developers-guide/building-docs.html">Documentation development</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+      <li>Next: <a href="users-guide/help.html" title="next chapter">Getting started</a></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Franklin Pezzuti Dyer, Althea Denlinger.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.1.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="_sources/index.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
