@@ -68,6 +68,21 @@ export const srUniversalMenuTpl = `
 
                     <menu-group name="filterSettings" class="sr-menu-section">
                         <h3 class="sr-menu-section-title">Answer matching</h3>
+                        <details class="sr-details">
+                            <summary>Answer text substitutions</summary>
+                            <div class="sr-details-body">
+                                <menu-list name="answerSubs">
+                                    <button class="add-another-button">Add another</button>
+                                    <div class="list-entry-container"></div>
+                                    <menu-group class="list-default-entry">
+                                        <menu-textbox name="0" ></menu-textbox>
+                                        <menu-textbox name="1" ></menu-textbox>
+                                        <button class="list-entry-remove-button">remove</button>
+                                        <button class="list-entry-restore-button">restore</button>
+                                    </menu-group>
+                                </menu-list>
+                            </div>
+                        </details>
                         <div class="sr-menu-toggle-grid">
                             <div class="sr-menu-toggle-row">
                                 <menu-checkbox name="noPunctuation"></menu-checkbox>

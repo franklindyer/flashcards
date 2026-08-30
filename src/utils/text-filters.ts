@@ -1,4 +1,5 @@
 export type TextFilterSettings = {
+    answerSubs: [string, string][],
     removeParenDelimited: boolean,
     removeSqDelimited: boolean,
     noPunctuation: boolean,
@@ -10,6 +11,7 @@ export type TextFilterSettings = {
 };
 
 export const defaultTextFilterSettings = {
+    answerSubs: [],
     removeParenDelimited: false,
     removeSqDelimited: false,
     noPunctuation: false,
@@ -59,7 +61,11 @@ function repairTextFilterSettings(tfs: any): TextFilterSettings {
     for (var i in Object.keys(defaultTextFilterSettings)) {
         var k = Object.keys(defaultTextFilterSettings)[i];
         if (!(k in tfs)) {
-            tfs[k] = false;
+            if (k == "answerSubs") {
+                tfs[k] = [];
+            } else {
+                tfs[k] = false;
+            }
         }
     }
     return <TextFilterSettings>tfs;
@@ -67,6 +73,14 @@ function repairTextFilterSettings(tfs: any): TextFilterSettings {
 
 export function applyTextFilter(str: string, tfs: TextFilterSettings) {
     tfs = repairTextFilterSettings(tfs);
+
+    for (var i = 0; i < tfs.answerSubs.length; i++) {
+        var r = tfs.answerSubs[i];
+        var regex = new RegExp(r[0], 'g');
+        var subtxt = r[1];
+        str = str.replace(regex, subtxt);
+    }
+
     if (tfs.removeParenDelimited)
         str = filterHintParens(str);
     if (tfs.removeSqDelimited)
