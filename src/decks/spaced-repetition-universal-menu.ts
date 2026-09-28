@@ -60,6 +60,10 @@ export const srUniversalMenuTpl = `
                             <menu-checkbox name="readCorrectAnswers"></menu-checkbox>
                             <label for="readCorrectAnswers">Speak correct answers</label>
                         </div>
+                        <div class="sr-menu-toggle-row">
+                            <menu-checkbox name="cardTypeSettings.simple-card.doReadAloud" ></menu-checkbox>
+                            <label for="doReadAloud">Read aloud reversed cards</label>
+                        </div>
                         <div class="sr-menu-field-row">
                             <menu-textlist name="inactiveTags"></menu-textlist>
                             <label class="sr-menu-label" for="inactiveTags">Deactivated tags</label>
@@ -132,10 +136,6 @@ export const srUniversalMenuTpl = `
                                                 <div class="sr-menu-toggle-row">
                                                     <menu-checkbox name="doTwoSided" ></menu-checkbox>
                                                     <label for="doTwoSided">Quiz cards in both directions</label>
-                                                </div>
-                                                <div class="sr-menu-toggle-row">
-                                                    <menu-checkbox name="doReadAloud" ></menu-checkbox>
-                                                    <label for="doReadAloud">Read aloud reversed cards</label>
                                                 </div>
                                                 <div class="sr-menu-field-row">
                                                     <menu-number name="probReversed" min="0" max="1" step="0.01" ></menu-number>
