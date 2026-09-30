@@ -128,7 +128,45 @@ The deck settings listed here are referred to as "advanced" simply because they 
 This setting can be set to prioritize either due or new cards, or only study one set. If you enable this setting, cards will be seamlessly inserted into your queue as they become available.
 
 `Card template`:   
-This setting contains the HTML code which determines how the cards are styled. This template is completely customizable. More details and sample templates coming soon.
+Card templates are the HTML code which determines how the cards are styled. The current default template for a two-sided card in a spaced-repetition deck is as follows:
+
+```
+<div style="font-size: {{ fontSize }}vw;">
+    {% if spoken %}
+        <img src="/speaker.png" class="read-aloud-button" alt="{{ prompts[0] }}" />
+    {% else %}
+        {{ prompts[0] }}
+    {% endif %}
+    {% if isPractice %}
+        <span class="cards-left-span">This is a practice card and will not affect progress.</span>
+    {% else %}
+        <span class="cards-left-span">{{ cardsLeft }} {{ studying }} cards left</span>
+    {% endif %}
+</div>
+```
+
+The templates are completely customizable and can be a powerful tool for customizing your decks. For example, these lines can be added within the main `div` of a card template to remove the card transition animation:
+
+```
+<style>
+    .flashcard-slide-in {
+    animation: card-slide-in 0s;
+}
+
+.flashcard-slide-out {
+    animation: card-slide-out 0s;
+    background-color: white;
+}
+
+.flashcard-slide-out-unanswered {
+    animation: card-slide-out 0s;
+}
+
+.flashcard-incorrect {
+    animation: card-wrong 0s;
+}
+</style>
+```
 
 `Card substitution settings`:   
 These settings allow you to create variables of strings which will be substituted at the time the card is generated. This feature is especially useful for creating lists which can be used in conjunction with randomization blocks to generate semi-random cards.
